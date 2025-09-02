@@ -93,13 +93,13 @@ export default function FiltrosAvanzados({ filtros, onChange, onClose }: Filtros
 
         <Grid container spacing={2}>
           {/* Búsqueda por campos específicos */}
-          <Grid item xs={12}>
+          <Grid size={12}>
             <Typography variant="subtitle2" gutterBottom>
               Búsqueda Específica
             </Typography>
           </Grid>
 
-          <Grid item xs={12} md={4}>
+          <Grid size={{ xs: 12, md: 4 }}>
             <TextField
               fullWidth
               label="Código"
@@ -111,7 +111,7 @@ export default function FiltrosAvanzados({ filtros, onChange, onClose }: Filtros
             />
           </Grid>
 
-          <Grid item xs={12} md={4}>
+          <Grid size={{ xs: 12, md: 4 }}>
             <TextField
               fullWidth
               label="Descripción"
@@ -123,7 +123,7 @@ export default function FiltrosAvanzados({ filtros, onChange, onClose }: Filtros
             />
           </Grid>
 
-          <Grid item xs={12} md={4}>
+          <Grid size={{ xs: 12, md: 4 }}>
             <TextField
               fullWidth
               label="Marca"
@@ -136,14 +136,14 @@ export default function FiltrosAvanzados({ filtros, onChange, onClose }: Filtros
           </Grid>
 
           {/* Estado y categorías */}
-          <Grid item xs={12}>
+          <Grid size={12}>
             <Divider sx={{ my: 2 }} />
             <Typography variant="subtitle2" gutterBottom>
               Estado y Categorías
             </Typography>
           </Grid>
 
-          <Grid item xs={12} md={4}>
+          <Grid size={{ xs: 12, md: 4 }}>
             <FormControl fullWidth>
               <InputLabel>Estado</InputLabel>
               <Select
@@ -164,7 +164,7 @@ export default function FiltrosAvanzados({ filtros, onChange, onClose }: Filtros
             </FormControl>
           </Grid>
 
-          <Grid item xs={12} md={4}>
+          <Grid size={{ xs: 12, md: 4 }}>
             <TextField
               fullWidth
               label="ID Rubro"
@@ -177,7 +177,7 @@ export default function FiltrosAvanzados({ filtros, onChange, onClose }: Filtros
             />
           </Grid>
 
-          <Grid item xs={12} md={4}>
+          <Grid size={{ xs: 12, md: 4 }}>
             <TextField
               fullWidth
               label="ID Proveedor"
@@ -191,14 +191,14 @@ export default function FiltrosAvanzados({ filtros, onChange, onClose }: Filtros
           </Grid>
 
           {/* Rango de precios */}
-          <Grid item xs={12}>
+          <Grid size={12}>
             <Divider sx={{ my: 2 }} />
             <Typography variant="subtitle2" gutterBottom>
               Rango de Precios
             </Typography>
           </Grid>
 
-          <Grid item xs={12} md={6}>
+          <Grid size={{ xs: 12, md: 6 }}>
             <TextField
               fullWidth
               label="Precio Mínimo"
@@ -214,7 +214,7 @@ export default function FiltrosAvanzados({ filtros, onChange, onClose }: Filtros
             />
           </Grid>
 
-          <Grid item xs={12} md={6}>
+          <Grid size={{ xs: 12, md: 6 }}>
             <TextField
               fullWidth
               label="Precio Máximo"
@@ -231,14 +231,14 @@ export default function FiltrosAvanzados({ filtros, onChange, onClose }: Filtros
           </Grid>
 
           {/* Filtros booleanos */}
-          <Grid item xs={12}>
+          <Grid size={12}>
             <Divider sx={{ my: 2 }} />
             <Typography variant="subtitle2" gutterBottom>
               Filtros Especiales
             </Typography>
           </Grid>
 
-          <Grid item xs={12} md={3}>
+          <Grid size={{ xs: 12, md: 3 }}>
             <FormControlLabel
               control={
                 <Checkbox
@@ -253,7 +253,7 @@ export default function FiltrosAvanzados({ filtros, onChange, onClose }: Filtros
             />
           </Grid>
 
-          <Grid item xs={12} md={3}>
+          <Grid size={{ xs: 12, md: 3 }}>
             <FormControlLabel
               control={
                 <Checkbox
@@ -268,7 +268,7 @@ export default function FiltrosAvanzados({ filtros, onChange, onClose }: Filtros
             />
           </Grid>
 
-          <Grid item xs={12} md={3}>
+          <Grid size={{ xs: 12, md: 3 }}>
             <FormControlLabel
               control={
                 <Checkbox
@@ -283,7 +283,7 @@ export default function FiltrosAvanzados({ filtros, onChange, onClose }: Filtros
             />
           </Grid>
 
-          <Grid item xs={12} md={3}>
+          <Grid size={{ xs: 12, md: 3 }}>
             <FormControlLabel
               control={
                 <Checkbox
@@ -299,14 +299,14 @@ export default function FiltrosAvanzados({ filtros, onChange, onClose }: Filtros
           </Grid>
 
           {/* Ordenamiento */}
-          <Grid item xs={12}>
+          <Grid size={12}>
             <Divider sx={{ my: 2 }} />
             <Typography variant="subtitle2" gutterBottom>
               Ordenamiento
             </Typography>
           </Grid>
 
-          <Grid item xs={12} md={6}>
+          <Grid size={{ xs: 12, md: 6 }}>
             <FormControl fullWidth>
               <InputLabel>Ordenar por</InputLabel>
               <Select
@@ -326,7 +326,7 @@ export default function FiltrosAvanzados({ filtros, onChange, onClose }: Filtros
             </FormControl>
           </Grid>
 
-          <Grid item xs={12} md={6}>
+          <Grid size={{ xs: 12, md: 6 }}>
             <FormControl fullWidth>
               <InputLabel>Dirección</InputLabel>
               <Select
@@ -344,14 +344,14 @@ export default function FiltrosAvanzados({ filtros, onChange, onClose }: Filtros
           </Grid>
 
           {/* Paginación */}
-          <Grid item xs={12}>
+          <Grid size={12}>
             <Divider sx={{ my: 2 }} />
             <Typography variant="subtitle2" gutterBottom>
               Paginación
             </Typography>
           </Grid>
 
-          <Grid item xs={12} md={6}>
+          <Grid size={{ xs: 12, md: 6 }}>
             <FormControl fullWidth>
               <InputLabel>Elementos por página</InputLabel>
               <Select

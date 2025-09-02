@@ -34,6 +34,24 @@ export interface Articulo {
   Compuesto?: boolean;
   Combustible?: boolean;
   ImpuestoPorcentual?: boolean;
+  // Propiedades adicionales para el formulario
+  stock?: number;
+  stockMinimo?: number;
+  precioVenta?: number;
+  unidadMedida?: string;
+  cantidadPorEmpaque?: number;
+  tipoEmpaque?: string;
+  descuentoPorcentaje?: number;
+  descuentoMonto?: number;
+  fechaInicioPromocion?: string;
+  fechaFinPromocion?: string;
+  publicadoEnTienda?: boolean;
+  descripcionTienda?: string;
+  codigoBarras?: string;
+  manejaStock?: boolean;
+  rubroId?: number;
+  estado?: EstadoArticulo;
+  imagenesUrls?: string[];
   proveedor?: {
     id: number;
     RazonSocial: string;
@@ -81,6 +99,24 @@ export interface CrearArticuloDto {
   Compuesto?: boolean;
   Combustible?: boolean;
   ImpuestoPorcentual?: boolean;
+  // Propiedades adicionales para el formulario
+  stock?: number;
+  stockMinimo?: number;
+  precioVenta?: number;
+  unidadMedida?: string;
+  cantidadPorEmpaque?: number;
+  tipoEmpaque?: string;
+  descuentoPorcentaje?: number;
+  descuentoMonto?: number;
+  fechaInicioPromocion?: string;
+  fechaFinPromocion?: string;
+  publicadoEnTienda?: boolean;
+  descripcionTienda?: string;
+  codigoBarras?: string;
+  manejaStock?: boolean;
+  rubroId?: number;
+  estado?: EstadoArticulo;
+  imagenesUrls?: string[];
 }
 
 export interface ActualizarArticuloDto extends Partial<CrearArticuloDto> {

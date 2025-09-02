@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useMutation, useQuery } from '@apollo/client';
+import { useMutation, useQuery } from '@apollo/client/react';
 import {
   Dialog,
   DialogTitle,
@@ -124,35 +124,35 @@ export default function ModalArticulo({ abierto, articulo, onCerrar }: ModalArti
   }, [articulo, abierto]);
 
   const validarFormulario = (): boolean => {
-    const nuevosErrores: string[] = [];
+    const errores: string[] = [];
 
-    if (!formData.Codigo.trim()) {
-      nuevosErrores.push('El código es obligatorio');
+    if (!formData.Codigo?.trim()) {
+      errores.push('El código es obligatorio');
     }
 
-    if (!formData.Descripcion.trim()) {
-      nuevosErrores.push('La descripción es obligatoria');
+    if (!formData.Descripcion?.trim()) {
+      errores.push('La descripción es obligatoria');
     }
 
-    if (formData.precioVenta <= 0) {
-      nuevosErrores.push('El precio de venta debe ser mayor a 0');
+    if (!(formData.precioVenta ?? 0) || (formData.precioVenta ?? 0) <= 0) {
+      errores.push('El precio de venta debe ser mayor a 0');
     }
 
-    if (formData.cantidadPorEmpaque <= 0) {
-      nuevosErrores.push('La cantidad por empaque debe ser mayor a 0');
+    if ((formData.cantidadPorEmpaque ?? 0) > 0 && (formData.cantidadPorEmpaque ?? 0) <= 0) {
+      errores.push('La cantidad por empaque debe ser mayor a 0');
     }
 
-    if (formData.EnPromocion) {
-      if (!formData.fechaInicioPromocion) {
-        nuevosErrores.push('La fecha de inicio de promoción es obligatoria');
+    // Validar fechas de promoción
+    if (formData.fechaInicioPromocion && formData.fechaFinPromocion) {
+      const fechaInicio = new Date(formData.fechaInicioPromocion);
+      const fechaFin = new Date(formData.fechaFinPromocion);
+      if (fechaInicio >= fechaFin) {
+        errores.push('La fecha de inicio debe ser anterior a la fecha de fin');
       }
-      if (!formData.fechaFinPromocion) {
-        nuevosErrores.push('La fecha de fin de promoción es obligatoria');
-      }
     }
 
-    setErrores(nuevosErrores);
-    return nuevosErrores.length === 0;
+    setErrores(errores);
+    return errores.length === 0;
   };
 
   const handleSubmit = async () => {
@@ -200,14 +200,14 @@ export default function ModalArticulo({ abierto, articulo, onCerrar }: ModalArti
   };
 
   const calcularPrecioConDescuento = () => {
-    let precioFinal = formData.precioVenta;
+    let precioFinal = formData.precioVenta ?? 0;
     
-    if (formData.descuentoPorcentaje > 0) {
-      precioFinal = precioFinal * (1 - formData.descuentoPorcentaje / 100);
+    if ((formData.descuentoPorcentaje ?? 0) > 0) {
+      precioFinal = precioFinal * (1 - (formData.descuentoPorcentaje ?? 0) / 100);
     }
     
-    if (formData.descuentoMonto > 0) {
-      precioFinal = precioFinal - formData.descuentoMonto;
+    if ((formData.descuentoMonto ?? 0) > 0) {
+      precioFinal = precioFinal - (formData.descuentoMonto ?? 0);
     }
     
     return Math.max(0, precioFinal);
@@ -248,13 +248,13 @@ export default function ModalArticulo({ abierto, articulo, onCerrar }: ModalArti
 
           <Grid container spacing={3}>
             {/* Información básica */}
-            <Grid item xs={12}>
+            <Grid size={12}>
               <Typography variant="h6" gutterBottom>
                 Información Básica
               </Typography>
             </Grid>
 
-            <Grid item xs={12} md={4}>
+            <Grid size={{ xs: 12, md: 4 }}>
               <TextField
                 fullWidth
                 label="Código *"
@@ -272,7 +272,7 @@ export default function ModalArticulo({ abierto, articulo, onCerrar }: ModalArti
               />
             </Grid>
 
-            <Grid item xs={12} md={8}>
+            <Grid size={{ xs: 12, md: 8 }}>
               <TextField
                 fullWidth
                 label="Descripción *"
@@ -281,7 +281,7 @@ export default function ModalArticulo({ abierto, articulo, onCerrar }: ModalArti
               />
             </Grid>
 
-            <Grid item xs={12} md={4}>
+            <Grid size={{ xs: 12, md: 4 }}>
               <TextField
                 fullWidth
                 label="Marca"
@@ -290,7 +290,7 @@ export default function ModalArticulo({ abierto, articulo, onCerrar }: ModalArti
               />
             </Grid>
 
-            <Grid item xs={12} md={4}>
+            <Grid size={{ xs: 12, md: 4 }}>
               <TextField
                 fullWidth
                 label="Código de Barras"
@@ -299,7 +299,7 @@ export default function ModalArticulo({ abierto, articulo, onCerrar }: ModalArti
               />
             </Grid>
 
-            <Grid item xs={12} md={4}>
+            <Grid size={{ xs: 12, md: 4 }}>
               <FormControl fullWidth>
                 <InputLabel>Estado</InputLabel>
                 <Select
@@ -317,14 +317,14 @@ export default function ModalArticulo({ abierto, articulo, onCerrar }: ModalArti
             </Grid>
 
             {/* Precios */}
-            <Grid item xs={12}>
+            <Grid size={12}>
               <Divider sx={{ my: 2 }} />
               <Typography variant="h6" gutterBottom>
                 Precios
               </Typography>
             </Grid>
 
-            <Grid item xs={12} md={4}>
+            <Grid size={{ xs: 12, md: 4 }}>
               <TextField
                 fullWidth
                 label="Precio de Compra"
@@ -337,7 +337,7 @@ export default function ModalArticulo({ abierto, articulo, onCerrar }: ModalArti
               />
             </Grid>
 
-            <Grid item xs={12} md={4}>
+            <Grid size={{ xs: 12, md: 4 }}>
               <TextField
                 fullWidth
                 label="Precio de Venta *"
@@ -350,7 +350,7 @@ export default function ModalArticulo({ abierto, articulo, onCerrar }: ModalArti
               />
             </Grid>
 
-            <Grid item xs={12} md={4}>
+            <Grid size={{ xs: 12, md: 4 }}>
               <Box>
                 <Typography variant="body2" color="textSecondary">
                   Precio Final
@@ -362,14 +362,14 @@ export default function ModalArticulo({ abierto, articulo, onCerrar }: ModalArti
             </Grid>
 
             {/* Unidades y empaque */}
-            <Grid item xs={12}>
+            <Grid size={12}>
               <Divider sx={{ my: 2 }} />
               <Typography variant="h6" gutterBottom>
                 Unidades y Empaque
               </Typography>
             </Grid>
 
-            <Grid item xs={12} md={4}>
+            <Grid size={{ xs: 12, md: 4 }}>
               <FormControl fullWidth>
                 <InputLabel>Unidad de Medida</InputLabel>
                 <Select
@@ -386,7 +386,7 @@ export default function ModalArticulo({ abierto, articulo, onCerrar }: ModalArti
               </FormControl>
             </Grid>
 
-            <Grid item xs={12} md={4}>
+            <Grid size={{ xs: 12, md: 4 }}>
               <TextField
                 fullWidth
                 label="Cantidad por Empaque"
@@ -396,7 +396,7 @@ export default function ModalArticulo({ abierto, articulo, onCerrar }: ModalArti
               />
             </Grid>
 
-            <Grid item xs={12} md={4}>
+            <Grid size={{ xs: 12, md: 4 }}>
               <FormControl fullWidth>
                 <InputLabel>Tipo de Empaque</InputLabel>
                 <Select
@@ -414,14 +414,14 @@ export default function ModalArticulo({ abierto, articulo, onCerrar }: ModalArti
             </Grid>
 
             {/* Stock */}
-            <Grid item xs={12}>
+            <Grid size={12}>
               <Divider sx={{ my: 2 }} />
               <Typography variant="h6" gutterBottom>
                 Control de Stock
               </Typography>
             </Grid>
 
-            <Grid item xs={12} md={3}>
+            <Grid size={{ xs: 12, md: 3 }}>
               <FormControlLabel
                 control={
                   <Checkbox
@@ -435,7 +435,7 @@ export default function ModalArticulo({ abierto, articulo, onCerrar }: ModalArti
 
             {formData.manejaStock && (
               <>
-                <Grid item xs={12} md={3}>
+                <Grid size={{ xs: 12, md: 3 }}>
                   <TextField
                     fullWidth
                     label="Stock Actual"
@@ -445,7 +445,7 @@ export default function ModalArticulo({ abierto, articulo, onCerrar }: ModalArti
                   />
                 </Grid>
 
-                <Grid item xs={12} md={3}>
+                <Grid size={{ xs: 12, md: 3 }}>
                   <TextField
                     fullWidth
                     label="Stock Mínimo"
@@ -455,14 +455,14 @@ export default function ModalArticulo({ abierto, articulo, onCerrar }: ModalArti
                   />
                 </Grid>
 
-                <Grid item xs={12} md={3}>
+                <Grid size={{ xs: 12, md: 3 }}>
                   <Box>
                     <Typography variant="body2" color="textSecondary">
                       Estado del Stock
                     </Typography>
-                    {formData.stock <= 0 ? (
+                    {(formData.stock ?? 0) <= 0 ? (
                       <Chip label="Sin stock" color="error" />
-                    ) : formData.stock <= formData.stockMinimo ? (
+                    ) : (formData.stock ?? 0) <= (formData.stockMinimo ?? 0) ? (
                       <Chip label="Stock bajo" color="warning" />
                     ) : (
                       <Chip label="Stock OK" color="success" />
@@ -473,14 +473,14 @@ export default function ModalArticulo({ abierto, articulo, onCerrar }: ModalArti
             )}
 
             {/* Descuentos y promociones */}
-            <Grid item xs={12}>
+            <Grid size={12}>
               <Divider sx={{ my: 2 }} />
               <Typography variant="h6" gutterBottom>
                 Descuentos y Promociones
               </Typography>
             </Grid>
 
-            <Grid item xs={12} md={4}>
+            <Grid size={{ xs: 12, md: 4 }}>
               <TextField
                 fullWidth
                 label="Descuento (%)"
@@ -493,7 +493,7 @@ export default function ModalArticulo({ abierto, articulo, onCerrar }: ModalArti
               />
             </Grid>
 
-            <Grid item xs={12} md={4}>
+            <Grid size={{ xs: 12, md: 4 }}>
               <TextField
                 fullWidth
                 label="Descuento ($)"
@@ -506,7 +506,7 @@ export default function ModalArticulo({ abierto, articulo, onCerrar }: ModalArti
               />
             </Grid>
 
-            <Grid item xs={12} md={4}>
+            <Grid size={{ xs: 12, md: 4 }}>
               <FormControlLabel
                 control={
                   <Checkbox
@@ -520,7 +520,7 @@ export default function ModalArticulo({ abierto, articulo, onCerrar }: ModalArti
 
             {formData.EnPromocion && (
               <>
-                <Grid item xs={12} md={6}>
+                <Grid size={{ xs: 12, md: 6 }}>
                   <DatePicker
                     label="Fecha Inicio Promoción"
                     value={formData.fechaInicioPromocion ? new Date(formData.fechaInicioPromocion) : null}
@@ -532,7 +532,7 @@ export default function ModalArticulo({ abierto, articulo, onCerrar }: ModalArti
                   />
                 </Grid>
 
-                <Grid item xs={12} md={6}>
+                <Grid size={{ xs: 12, md: 6 }}>
                   <DatePicker
                     label="Fecha Fin Promoción"
                     value={formData.fechaFinPromocion ? new Date(formData.fechaFinPromocion) : null}
@@ -547,14 +547,14 @@ export default function ModalArticulo({ abierto, articulo, onCerrar }: ModalArti
             )}
 
             {/* Tienda online */}
-            <Grid item xs={12}>
+            <Grid size={12}>
               <Divider sx={{ my: 2 }} />
               <Typography variant="h6" gutterBottom>
                 Tienda Online
               </Typography>
             </Grid>
 
-            <Grid item xs={12}>
+            <Grid size={12}>
               <FormControlLabel
                 control={
                   <Checkbox
@@ -568,7 +568,7 @@ export default function ModalArticulo({ abierto, articulo, onCerrar }: ModalArti
 
             {formData.publicadoEnTienda && (
               <>
-                <Grid item xs={12}>
+                <Grid size={12}>
                   <TextField
                     fullWidth
                     label="Descripción para Tienda"
@@ -579,7 +579,7 @@ export default function ModalArticulo({ abierto, articulo, onCerrar }: ModalArti
                   />
                 </Grid>
 
-                <Grid item xs={12}>
+                <Grid size={12}>
                   <Typography variant="body2" gutterBottom>
                     Imágenes del Producto
                   </Typography>
