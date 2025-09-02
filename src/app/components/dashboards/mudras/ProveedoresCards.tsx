@@ -56,10 +56,10 @@ const ProveedoresCards = () => {
     <Card 
       sx={{ 
         p: 2,
-        bgcolor: '#E8F5E8',
+        bgcolor: '#E3F2FD',
         borderRadius: 2,
         boxShadow: 2,
-        border: '1px solid #C8E6C9',
+        border: '1px solid #BBDEFB',
         height: '200px',
         minHeight: '200px'
       }}
@@ -69,7 +69,7 @@ const ProveedoresCards = () => {
         fontWeight={600} 
         mb={1} 
         textAlign="left"
-        sx={{ color: '#2E7D32', fontSize: '1.1rem' }}
+        sx={{ color: '#1565C0', fontSize: '1.1rem' }}
       >
         Proveedores
       </Typography>

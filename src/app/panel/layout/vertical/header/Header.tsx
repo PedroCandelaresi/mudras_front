@@ -55,28 +55,42 @@ const Header = () => {
     return date.toLocaleDateString('es-AR', options);
   };
 
+  // Calcular desplazamiento lateral de top bar según estado del sidebar
+  const leftOffsetPx = (() => {
+    // En pantallas grandes respetar el ancho del sidebar (mini o full)
+    if (lgUp) {
+      const isMini = isCollapse === "mini-sidebar" && !isSidebarHover;
+      const width = isMini ? config.miniSidebarWidth : config.sidebarWidth;
+      return `${width}px`;
+    }
+    // En móviles, topbar ocupa todo el ancho
+    return '0px';
+  })();
+
   const AppBarStyled = styled(AppBar)(({ theme }) => ({
-    boxShadow: "none",
+    boxShadow: 'none',
     background: 'linear-gradient(135deg, #2D1810 0%, #4A2318 50%, #3D1B0F 100%)',
-    justifyContent: "center",
-    backdropFilter: "blur(4px)",
-    position: "fixed",
+    justifyContent: 'center',
+    backdropFilter: 'blur(4px)',
+    position: 'fixed',
     top: 0,
-    left: isCollapse === "mini-sidebar" ? '60px' : '220px',
+    left: leftOffsetPx,
     right: 0,
     zIndex: 1300,
-    width: isCollapse === "mini-sidebar" ? 'calc(100vw - 60px)' : 'calc(100vw - 220px)',
+    width: `calc(100vw - ${leftOffsetPx})`,
     transition: theme.transitions.create(['left', 'width'], {
       duration: theme.transitions.duration.standard,
       easing: theme.transitions.easing.sharp,
     }),
-    [theme.breakpoints.up("lg")]: {
-      minHeight: TopbarHeight,
-    },
+    minHeight: TopbarHeight,
   }));
+
   const ToolbarStyled = styled(Toolbar)(({ theme }) => ({
-    width: "100%",
+    width: '100%',
     color: '#FFE4D6',
+    minHeight: TopbarHeight,
+    paddingTop: 0,
+    paddingBottom: 0,
   }));
 
   return (

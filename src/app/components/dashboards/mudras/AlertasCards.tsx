@@ -63,7 +63,7 @@ const AlertasCards = () => {
         bgcolor: '#FFF3E0',
         borderRadius: 2,
         boxShadow: 2,
-        border: '1px solid #FFE0B2',
+        border: '1px solid #FFCC80',
         height: '200px',
         minHeight: '200px'
       }}
@@ -73,7 +73,7 @@ const AlertasCards = () => {
         fontWeight={600} 
         mb={1} 
         textAlign="left"
-        sx={{ color: '#F57C00', fontSize: '1.1rem' }}
+        sx={{ color: '#E64A19', fontSize: '1.1rem' }}
       >
         Alertas
       </Typography>

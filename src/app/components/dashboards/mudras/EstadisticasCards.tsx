@@ -83,10 +83,10 @@ const EstadisticasCards = () => {
     <Card 
       sx={{ 
         p: 2,
-        bgcolor: '#FFF2E6',
+        bgcolor: '#E8F5E9',
         borderRadius: 2,
         boxShadow: 2,
-        border: '1px solid #FFD4A3',
+        border: '1px solid #C8E6C9',
         height: '200px',
         minHeight: '200px'
       }}
@@ -96,7 +96,7 @@ const EstadisticasCards = () => {
         fontWeight={600} 
         mb={1} 
         textAlign="left"
-        sx={{ color: '#CC5500', fontSize: '1.1rem' }}
+        sx={{ color: '#2E7D32', fontSize: '1.1rem' }}
       >
         Artículos
       </Typography>

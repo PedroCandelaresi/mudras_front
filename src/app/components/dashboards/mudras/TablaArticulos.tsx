@@ -26,7 +26,11 @@ import { IconSearch, IconPackage, IconRefresh, IconEdit, IconTrash, IconEye } fr
 import { useState } from 'react';
 import { IconButton, Tooltip } from '@mui/material';
 
-const TablaArticulos = () => {
+interface Props {
+  soloSinStock?: boolean;
+}
+
+const TablaArticulos: React.FC<Props> = ({ soloSinStock = false }) => {
   const { data, loading, error, refetch } = useQuery<ArticulosResponse>(GET_ARTICULOS);
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
@@ -59,13 +63,19 @@ const TablaArticulos = () => {
 
   const articulos: Articulo[] = data?.articulos || [];
   
-  // Filtrar artículos
-  const articulosFiltrados = articulos.filter((articulo) =>
-    articulo.Descripcion?.toLowerCase().includes(filtro.toLowerCase()) ||
-    articulo.Codigo?.toLowerCase().includes(filtro.toLowerCase()) ||
-    articulo.Rubro?.toLowerCase().includes(filtro.toLowerCase()) ||
-    articulo.proveedor?.Nombre?.toLowerCase().includes(filtro.toLowerCase())
-  );
+  // Filtrar artículos por texto y por estado de stock (si aplica)
+  const articulosFiltrados = articulos
+    .filter((articulo) =>
+      articulo.Descripcion?.toLowerCase().includes(filtro.toLowerCase()) ||
+      articulo.Codigo?.toLowerCase().includes(filtro.toLowerCase()) ||
+      articulo.Rubro?.toLowerCase().includes(filtro.toLowerCase()) ||
+      articulo.proveedor?.Nombre?.toLowerCase().includes(filtro.toLowerCase())
+    )
+    .filter((articulo) => {
+      if (!soloSinStock) return true;
+      const stock = parseFloat(String(articulo.Deposito ?? 0));
+      return Number.isFinite(stock) ? stock <= 0 : true;
+    });
 
   const articulosPaginados = articulosFiltrados.slice(
     page * rowsPerPage,
@@ -87,7 +97,7 @@ const TablaArticulos = () => {
   if (loading) {
     return (
       <Paper sx={{ p: 3 }}>
-        <Typography variant="h5" mb={3}>Artículos</Typography>
+        <Typography variant="h5" mb={3} color="success.dark">{soloSinStock ? 'Artículos sin stock' : 'Artículos'}</Typography>
         <TableContainer>
           <Table>
             <TableHead>
@@ -140,9 +150,9 @@ const TablaArticulos = () => {
   return (
     <Paper sx={{ p: 3 }}>
       <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
-        <Typography variant="h5" fontWeight={600} color="warning.main">
+        <Typography variant="h5" fontWeight={600} color="success.dark">
           <IconPackage style={{ marginRight: 8, verticalAlign: 'middle' }} />
-          Artículos
+          {soloSinStock ? 'Artículos sin stock' : 'Artículos'}
         </Typography>
         <Stack direction="row" spacing={2} alignItems="center">
           <TextField
@@ -161,7 +171,7 @@ const TablaArticulos = () => {
           />
           <Button
             variant="outlined"
-            color="warning"
+            color="success"
             startIcon={<IconRefresh />}
             onClick={() => refetch()}
           >
@@ -173,15 +183,15 @@ const TablaArticulos = () => {
       <TableContainer>
         <Table>
           <TableHead>
-            <TableRow sx={{ bgcolor: 'warning.light' }}>
-              <TableCell sx={{ fontWeight: 600, color: 'warning.dark' }}>Código</TableCell>
-              <TableCell sx={{ fontWeight: 600, color: 'warning.dark' }}>Descripción</TableCell>
-              <TableCell sx={{ fontWeight: 600, color: 'warning.dark' }}>Rubro</TableCell>
-              <TableCell sx={{ fontWeight: 600, color: 'warning.dark' }}>Stock</TableCell>
-              <TableCell sx={{ fontWeight: 600, color: 'warning.dark' }}>Precio Venta</TableCell>
-              <TableCell sx={{ fontWeight: 600, color: 'warning.dark' }}>Proveedor</TableCell>
-              <TableCell sx={{ fontWeight: 600, color: 'warning.dark' }}>Estado</TableCell>
-              <TableCell sx={{ fontWeight: 600, color: 'warning.dark', textAlign: 'center' }}>Acciones</TableCell>
+            <TableRow sx={{ bgcolor: 'success.lighter' }}>
+              <TableCell sx={{ fontWeight: 600, color: 'success.dark' }}>Código</TableCell>
+              <TableCell sx={{ fontWeight: 600, color: 'success.dark' }}>Descripción</TableCell>
+              <TableCell sx={{ fontWeight: 600, color: 'success.dark' }}>Rubro</TableCell>
+              <TableCell sx={{ fontWeight: 600, color: 'success.dark' }}>Stock</TableCell>
+              <TableCell sx={{ fontWeight: 600, color: 'success.dark' }}>Precio Venta</TableCell>
+              <TableCell sx={{ fontWeight: 600, color: 'success.dark' }}>Proveedor</TableCell>
+              <TableCell sx={{ fontWeight: 600, color: 'success.dark' }}>Estado</TableCell>
+              <TableCell sx={{ fontWeight: 600, color: 'success.dark', textAlign: 'center' }}>Acciones</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
@@ -190,7 +200,7 @@ const TablaArticulos = () => {
                 key={articulo.id}
                 sx={{ 
                   '&:hover': { 
-                    bgcolor: 'warning.lighter',
+                    bgcolor: 'success.lighter',
                     cursor: 'pointer'
                   }
                 }}
@@ -204,7 +214,7 @@ const TablaArticulos = () => {
                   <Box display="flex" alignItems="center">
                     <Avatar 
                       sx={{ 
-                        bgcolor: 'warning.main', 
+                        bgcolor: 'success.main', 
                         width: 32, 
                         height: 32, 
                         mr: 2,
@@ -223,8 +233,8 @@ const TablaArticulos = () => {
                     label={articulo.Rubro || 'Sin rubro'} 
                     size="small"
                     sx={{ 
-                      bgcolor: 'secondary.light',
-                      color: 'secondary.dark',
+                      bgcolor: 'success.light',
+                      color: 'success.dark',
                       fontWeight: 500
                     }}
                   />
@@ -233,9 +243,9 @@ const TablaArticulos = () => {
                   <Typography 
                     variant="body2" 
                     fontWeight={600}
-                    color={(articulo.Stock ?? 0) <= 0 ? 'error.main' : 'text.primary'}
+                    color={(parseFloat(String(articulo.Deposito ?? 0)) <= 0) ? 'error.main' : 'text.primary'}
                   >
-                    {articulo.Stock ?? 0}
+                    {parseFloat(String(articulo.Deposito ?? 0)) || 0}
                   </Typography>
                 </TableCell>
                 <TableCell>
@@ -250,8 +260,8 @@ const TablaArticulos = () => {
                 </TableCell>
                 <TableCell>
                   <Chip
-                    label={getStockLabel(articulo.Stock || 0, articulo.StockMinimo || 0)}
-                    color={getStockColor(articulo.Stock || 0, articulo.StockMinimo || 0)}
+                    label={getStockLabel(parseFloat(String(articulo.Deposito ?? 0)) || 0, articulo.StockMinimo || 0)}
+                    color={getStockColor(parseFloat(String(articulo.Deposito ?? 0)) || 0, articulo.StockMinimo || 0)}
                     size="small"
                     variant="filled"
                   />
@@ -279,7 +289,7 @@ const TablaArticulos = () => {
                     <Tooltip title="Editar artículo">
                       <IconButton 
                         size="small" 
-                        color="warning"
+                        color="success"
                         onClick={() => handleEditArticulo(articulo)}
                       >
                         <IconEdit size={16} />

@@ -79,7 +79,7 @@ export default function Articulos() {
         <Grid container spacing={3}>
           <Grid size={12}>
             <Stack direction="row" justifyContent="space-between" alignItems="center" mb={3}>
-              <Typography variant="h4" fontWeight={600} color="#FF6B35">
+              <Typography variant="h4" fontWeight={600} color="success.dark">
                 Gestión de Artículos
               </Typography>
               <Stack direction="row" spacing={2}>
@@ -87,11 +87,11 @@ export default function Articulos() {
                   variant="outlined"
                   startIcon={<IconDownload size={18} />}
                   sx={{ 
-                    borderColor: '#FF6B35', 
-                    color: '#FF6B35',
+                    borderColor: 'success.main', 
+                    color: 'success.main',
                     '&:hover': { 
-                      borderColor: '#FF6B35', 
-                      backgroundColor: 'rgba(255, 107, 53, 0.1)' 
+                      borderColor: 'success.main', 
+                      backgroundColor: 'rgba(76, 175, 80, 0.08)'
                     }
                   }}
                 >
@@ -101,11 +101,11 @@ export default function Articulos() {
                   variant="outlined"
                   startIcon={<IconUpload size={18} />}
                   sx={{ 
-                    borderColor: '#FF6B35', 
-                    color: '#FF6B35',
+                    borderColor: 'success.main', 
+                    color: 'success.main',
                     '&:hover': { 
-                      borderColor: '#FF6B35', 
-                      backgroundColor: 'rgba(255, 107, 53, 0.1)' 
+                      borderColor: 'success.main', 
+                      backgroundColor: 'rgba(76, 175, 80, 0.08)'
                     }
                   }}
                 >
@@ -128,11 +128,21 @@ export default function Articulos() {
 
           {/* Tabs para navegación entre secciones */}
           <Grid size={12}>
-            <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 3 }}>
-              <Tabs value={tabValue} onChange={handleTabChange} aria-label="articulos tabs">
+            <Box sx={{ borderBottom: 1, borderColor: 'success.light', mb: 3 }}>
+              <Tabs 
+                value={tabValue} 
+                onChange={handleTabChange} 
+                aria-label="articulos tabs"
+                TabIndicatorProps={{ sx: { backgroundColor: 'success.main', height: 3, borderRadius: 1 } }}
+                sx={{
+                  '& .MuiTab-root': { color: 'success.dark', textTransform: 'none', fontWeight: 600 },
+                  '& .MuiTab-root.Mui-selected': { color: 'success.main' }
+                }}
+              >
                 <Tab label="📦 Artículos" />
                 <Tab label="📋 Movimientos Stock" />
                 <Tab label="📈 Estadísticas Stock" />
+                <Tab label="🚫 Sin stock" />
               </Tabs>
             </Box>
           </Grid>
@@ -147,6 +157,9 @@ export default function Articulos() {
 
               {/* Tab Panel 2 - Estadísticas de Stock */}
               {tabValue === 2 && <EstadisticasStockConDatos />}
+
+              {/* Tab Panel 3 - Artículos sin stock */}
+              {tabValue === 3 && <TablaArticulos soloSinStock />}
             </DashboardCard>
           </Grid>
         </Grid>
@@ -161,3 +174,4 @@ export default function Articulos() {
     </PageContainer>
   );
 }
+
