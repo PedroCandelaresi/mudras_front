@@ -1,0 +1,20 @@
+name: Deploy Front
+on:
+  push:
+    branches: [ "main" ]
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: self-hosted
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build FRONT image
+        run: docker build --build-arg NEXT_PUBLIC_API_URL=/api -t mudras_front:latest .
+
+      - name: Up FRONT with compose
+        run: docker compose --env-file ~/deploy/mudras/.env -f ~/deploy/mudras/docker-compose.yml up -d front
+
+      - name: Prune old images
+        run: docker image prune -f
