@@ -145,3 +145,12 @@ export const TIPOS_EMPAQUE = [
   'pallet',
   'display'
 ];
+
+// Interfaces para las respuestas de GraphQL
+export interface BuscarArticulosResponse {
+  buscarArticulos: ArticulosConPaginacion;
+}
+
+export interface EstadisticasArticulosResponse {
+  estadisticasArticulos: EstadisticasArticulos;
+}

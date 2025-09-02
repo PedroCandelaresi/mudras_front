@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { useQuery } from '@apollo/client';
+import { useQuery } from '@apollo/client/react';
 import { 
   Box, 
   Typography, 
@@ -28,7 +28,13 @@ import { DataGrid, GridColDef, GridActionsCellItem } from '@mui/x-data-grid';
 import { Edit, Delete, QrCode, Visibility } from '@mui/icons-material';
 
 import { BUSCAR_ARTICULOS, GET_ESTADISTICAS_ARTICULOS } from '@/queries/articulos';
-import { Articulo, FiltrosArticulo, EstadoArticulo } from '@/interfaces/articulo';
+import { 
+  Articulo, 
+  FiltrosArticulo, 
+  EstadoArticulo, 
+  BuscarArticulosResponse, 
+  EstadisticasArticulosResponse 
+} from '@/interfaces/articulo';
 import ModalArticulo from '@/components/stock/ModalArticulo';
 import FiltrosAvanzados from '@/components/stock/FiltrosAvanzados';
 import EstadisticasStock from '@/components/stock/EstadisticasStock';
@@ -46,12 +52,12 @@ export default function StockPage() {
   const [articuloSeleccionado, setArticuloSeleccionado] = useState<Articulo | null>(null);
   const [mostrarFiltros, setMostrarFiltros] = useState(false);
 
-  const { data: dataArticulos, loading: loadingArticulos, refetch } = useQuery(BUSCAR_ARTICULOS, {
+  const { data: dataArticulos, loading: loadingArticulos, refetch } = useQuery<BuscarArticulosResponse>(BUSCAR_ARTICULOS, {
     variables: { filtros },
     fetchPolicy: 'cache-and-network'
   });
 
-  const { data: dataEstadisticas } = useQuery(GET_ESTADISTICAS_ARTICULOS, {
+  const { data: dataEstadisticas } = useQuery<EstadisticasArticulosResponse>(GET_ESTADISTICAS_ARTICULOS, {
     fetchPolicy: 'cache-and-network'
   });
 
