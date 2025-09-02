@@ -6,6 +6,7 @@ import DashboardCard from '@/app/components/shared/DashboardCard';
 import TablaArticulos from '@/app/components/dashboards/mudras/TablaArticulos';
 import TablaMovimientosStock from '@/app/components/dashboards/mudras/TablaMovimientosStock';
 import EstadisticasStock from '@/components/stock/EstadisticasStock';
+import ModalNuevoArticulo from '@/app/components/dashboards/mudras/ModalNuevoArticulo';
 import { useState } from 'react';
 import { useQuery } from '@apollo/client/react';
 import { GET_DASHBOARD_STATS } from '@/app/queries/mudras.queries';
@@ -65,6 +66,8 @@ function EstadisticasStockConDatos() {
 
 export default function Articulos() {
   const [tabValue, setTabValue] = useState(0);
+  const [modalNuevoOpen, setModalNuevoOpen] = useState(false);
+  const [userRole, setUserRole] = useState<'admin' | 'diseñadora' | 'vendedor'>('admin'); // Demo: cambiar entre roles
 
   const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
     setTabValue(newValue);
@@ -111,9 +114,10 @@ export default function Articulos() {
                 <Button
                   variant="contained"
                   startIcon={<IconPlus size={18} />}
+                  onClick={() => setModalNuevoOpen(true)}
                   sx={{ 
-                    backgroundColor: '#FF6B35',
-                    '&:hover': { backgroundColor: '#E55A2B' }
+                    backgroundColor: 'success.main',
+                    '&:hover': { backgroundColor: 'success.dark' }
                   }}
                 >
                   Nuevo Artículo
@@ -146,6 +150,13 @@ export default function Articulos() {
             </DashboardCard>
           </Grid>
         </Grid>
+        
+        {/* Modal Nuevo Artículo */}
+        <ModalNuevoArticulo
+          open={modalNuevoOpen}
+          onClose={() => setModalNuevoOpen(false)}
+          userRole={userRole}
+        />
       </Box>
     </PageContainer>
   );
