@@ -6,7 +6,7 @@ import Toolbar from "@mui/material/Toolbar";
 import Typography from "@mui/material/Typography";
 import useMediaQuery from "@mui/material/useMediaQuery";
 import { styled } from "@mui/material/styles";
-import { IconMenu2, IconMoon, IconSun } from "@tabler/icons-react";
+import { IconMenu2 } from "@tabler/icons-react";
 import Notifications from "./Notification";
 import Profile from "./Profile";
 import Search from "./Search";
@@ -67,7 +67,8 @@ const Header = () => {
     zIndex: 1300,
     width: isCollapse === "mini-sidebar" ? 'calc(100vw - 60px)' : 'calc(100vw - 220px)',
     transition: theme.transitions.create(['left', 'width'], {
-      duration: theme.transitions.duration.shortest,
+      duration: theme.transitions.duration.standard,
+      easing: theme.transitions.easing.sharp,
     }),
     [theme.breakpoints.up("lg")]: {
       minHeight: TopbarHeight,
@@ -127,22 +128,6 @@ const Header = () => {
           </Box>
 
           <Stack spacing={1} direction="row" alignItems="center">
-            <IconButton size="small" color="inherit">
-              {activeMode === "light" ? (
-                <IconMoon
-                  size="18"
-                  stroke="1.5"
-                  onClick={() => setActiveMode("dark")}
-                />
-              ) : (
-                <IconSun
-                  size="18"
-                  stroke="1.5"
-                  onClick={() => setActiveMode("light")}
-                />
-              )}
-            </IconButton>
-
             <Notifications />
             {/* ------------------------------------------- */}
             {/* Toggle Right Sidebar for mobile */}

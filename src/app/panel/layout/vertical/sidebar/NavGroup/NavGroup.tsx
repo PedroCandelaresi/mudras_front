@@ -1,6 +1,6 @@
 import ListSubheader from '@mui/material/ListSubheader';
 import { Theme } from '@mui/material/styles';
-import { styled } from '@mui/material/styles';
+import { styled, useTheme } from '@mui/material/styles';
 import { IconDots } from '@tabler/icons-react';
 import React from 'react';
 
@@ -27,6 +27,10 @@ const NavGroup = ({ item, hideMenu }: ItemType) => {
     lineHeight: '20px',
     padding: '2px 8px',
     marginLeft: hideMenu ? '' : '-8px',
+    whiteSpace: 'nowrap',
+    overflow: 'hidden',
+    textOverflow: 'ellipsis',
+    height: '20px', // Altura fija para evitar saltos
   }));
 
   return (

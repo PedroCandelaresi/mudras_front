@@ -30,6 +30,7 @@ export default function NavItem({
   const Icon = item?.icon;
   const theme = useTheme();
   const { t } = useTranslation();
+  
 
   const itemIcon = Icon ? (
     (level ?? 1) > 1 ? (
@@ -42,15 +43,17 @@ export default function NavItem({
   const ListItemStyled = styled(ListItemButton)(() => ({
     whiteSpace: "nowrap",
     marginBottom: "1px",
-    padding: "4px 6px",
+    padding: "4px 8px",
     borderRadius: `${isBorderRadius}px`,
     backgroundColor: (level ?? 1) > 1 ? "transparent !important" : "inherit",
     color:
       (level ?? 1) > 1 && pathDirect === item?.href
         ? `${theme.palette.primary.main}!important`
         : theme.palette.text.secondary,
-    paddingLeft: hideMenu ? "6px" : (level ?? 2) > 2 ? `${(level ?? 1) * 12}px` : "8px",
+    paddingLeft: "8px", // Padding fijo para evitar desplazamientos
     minHeight: "32px",
+    display: "flex",
+    alignItems: "center",
     "&:hover": {
       backgroundColor: theme.palette.primary.light,
       color: theme.palette.primary.main,
@@ -76,9 +79,13 @@ export default function NavItem({
         >
           <ListItemIcon
             sx={{
-              minWidth: hideMenu ? "24px" : "28px",
+              minWidth: "40px",
+              maxWidth: "40px",
               p: "2px 0",
-              justifyContent: hideMenu ? "center" : "flex-start",
+              display: "flex",
+              justifyContent: "center",
+              alignItems: "center",
+              position: "relative",
               color:
                 (level ?? 1) > 1 && pathDirect === item?.href
                   ? `${theme.palette.primary.main}!important`
@@ -89,15 +96,28 @@ export default function NavItem({
           </ListItemIcon>
           <ListItemText
             sx={{
+              overflow: 'hidden',
               '& .MuiListItemText-primary': {
                 fontSize: '0.8rem',
-                fontWeight: 500
+                fontWeight: 500,
+                whiteSpace: 'nowrap',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
               }
             }}>
             {hideMenu ? "" : <>{t(`${item?.title}`)}</>}
             <br />
             {item?.subtitle ? (
-              <Typography variant="caption" sx={{ fontSize: '0.7rem' }}>
+              <Typography 
+                variant="caption" 
+                sx={{ 
+                  fontSize: '0.7rem',
+                  whiteSpace: 'nowrap',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  display: 'block',
+                }}
+              >
                 {hideMenu ? "" : item?.subtitle}
               </Typography>
             ) : (

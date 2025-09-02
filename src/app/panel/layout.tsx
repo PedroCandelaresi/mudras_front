@@ -55,7 +55,8 @@ export default function RootLayout({
           [theme.breakpoints.up("lg")]: {
             ml: isCollapse === "mini-sidebar" ? `87px` : `270px`,
             transition: theme.transitions.create('margin-left', {
-              duration: theme.transitions.duration.shortest,
+              duration: theme.transitions.duration.standard,
+              easing: theme.transitions.easing.sharp,
             }),
           },
           ...(isCollapse === "mini-sidebar" && isSidebarHover && {

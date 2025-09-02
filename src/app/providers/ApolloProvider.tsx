@@ -1,23 +1,31 @@
 'use client';
+
 import { ApolloClient, InMemoryCache, createHttpLink } from '@apollo/client';
 import { setContext } from '@apollo/client/link/context';
 import { ApolloProvider as ApolloClientProvider } from '@apollo/client/react';
-import { ReactNode } from 'react';
+import type { ReactNode } from 'react';
 
-const httpLink = createHttpLink({
-  uri: process.env.NEXT_PUBLIC_GRAPHQL_URL || (typeof window !== 'undefined' 
-    ? `http://${window.location.hostname}:4000/graphql`
-    : 'http://localhost:4000/graphql'),
-});
+/**
+ * Elegimos el endpoint así, SIN usar window ni puertos:
+ * 1) NEXT_PUBLIC_GRAPHQL_URL (si lo definís, ej: "/api/graphql")
+ * 2) NEXT_PUBLIC_API_URL + "/graphql" (si definís "/api")
+ * 3) fallback: "/api/graphql"
+ */
+const graphqlUri =
+  process.env.NEXT_PUBLIC_GRAPHQL_URL ??
+  (process.env.NEXT_PUBLIC_API_URL
+    ? `${process.env.NEXT_PUBLIC_API_URL.replace(/\/$/, '')}/graphql`
+    : '/api/graphql');
+
+const httpLink = createHttpLink({ uri: graphqlUri });
 
 const authLink = setContext((_, { headers }) => {
   const secretKey = process.env.NEXT_PUBLIC_X_SECRET_KEY;
-  
   return {
     headers: {
       ...headers,
-      'X-Secret-Key': secretKey,
-    }
+      ...(secretKey ? { 'X-Secret-Key': secretKey } : {}),
+    },
   };
 });
 
@@ -27,36 +35,20 @@ const client = new ApolloClient({
     typePolicies: {
       Query: {
         fields: {
-          articulos: {
-            merge: false,
-          },
-          proveedores: {
-            merge: false,
-          },
-          movimientosStock: {
-            merge: false,
-          },
-          rubros: {
-            merge: false,
-          },
+          articulos: { merge: false },
+          proveedores: { merge: false },
+          movimientosStock: { merge: false },
+          rubros: { merge: false },
         },
       },
     },
   }),
   defaultOptions: {
-    watchQuery: {
-      errorPolicy: 'all',
-    },
-    query: {
-      errorPolicy: 'all',
-    },
+    watchQuery: { errorPolicy: 'all' },
+    query: { errorPolicy: 'all' },
   },
 });
 
-interface ApolloProviderProps {
-  children: ReactNode;
-}
-
-export function ApolloProvider({ children }: ApolloProviderProps) {
+export function ApolloProvider({ children }: { children: ReactNode }) {
   return <ApolloClientProvider client={client}>{children}</ApolloClientProvider>;
 }

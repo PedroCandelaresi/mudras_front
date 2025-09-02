@@ -68,7 +68,8 @@ const Sidebar = () => {
               paper: {
                 sx: {
                   transition: theme.transitions.create("width", {
-                    duration: theme.transitions.duration.shortest,
+                    duration: theme.transitions.duration.standard,
+                    easing: theme.transitions.easing.sharp,
                   }),
                   width: toggleWidth,
                   boxSizing: "border-box",

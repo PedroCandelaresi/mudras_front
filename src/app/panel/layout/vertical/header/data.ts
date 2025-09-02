@@ -63,21 +63,9 @@ interface ProfileType {
 const profile: ProfileType[] = [
   {
     href: "/apps/user-profile/profile",
-    title: "My Profile",
-    subtitle: "Account Settings",
+    title: "Mi Perfil",
+    subtitle: "Configuración de cuenta",
     icon: "/images/svgs/icon-account.svg",
-  },
-  {
-    href: "/apps/email",
-    title: "My Inbox",
-    subtitle: "Messages & Emails",
-    icon: "/images/svgs/icon-inbox.svg",
-  },
-  {
-    href: "/apps/kanban",
-    title: "My Tasks",
-    subtitle: "To-do and Daily Tasks",
-    icon: "/images/svgs/icon-tasks.svg",
   },
 ];
 
