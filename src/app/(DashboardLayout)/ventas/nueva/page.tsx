@@ -176,7 +176,7 @@ const NuevaVenta = () => {
       <Box>
         <Grid container spacing={3}>
           {/* Información del Cliente */}
-          <Grid item xs={12}>
+          <Grid size={12}>
             <DashboardCard title="Cliente">
               <Stack direction="row" spacing={2} alignItems="center">
                 <Autocomplete
@@ -217,7 +217,7 @@ const NuevaVenta = () => {
           </Grid>
 
           {/* Artículos */}
-          <Grid item xs={12}>
+          <Grid size={12}>
             <DashboardCard title="Artículos">
               <Stack spacing={2}>
                 <Button
@@ -329,7 +329,7 @@ const NuevaVenta = () => {
           </Grid>
 
           {/* Totales y Observaciones */}
-          <Grid item xs={12} md={6}>
+          <Grid size={{ xs: 12, md: 6 }}>
             <DashboardCard title="Observaciones">
               <TextField
                 fullWidth
@@ -342,7 +342,7 @@ const NuevaVenta = () => {
             </DashboardCard>
           </Grid>
 
-          <Grid item xs={12} md={6}>
+          <Grid size={{ xs: 12, md: 6 }}>
             <DashboardCard title="Totales">
               <Stack spacing={2}>
                 <TextField
