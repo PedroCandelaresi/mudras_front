@@ -86,7 +86,7 @@ export default function EstadisticasStock({ estadisticas }: EstadisticasStockPro
       </Typography>
       <Grid container spacing={2}>
         {tarjetas.map((tarjeta, index) => (
-          <Grid item xs={12} sm={6} md={3} lg={12/7} key={index}>
+          <Grid size={{ xs: 12, sm: 6, md: 3, lg: 12/7 }} key={index}>
             <Card 
               sx={{ 
                 height: '100%',
