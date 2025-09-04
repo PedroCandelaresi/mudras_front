@@ -22,11 +22,17 @@ import { useQuery } from '@apollo/client/react';
 import { GET_RUBROS } from '@/app/queries/mudras.queries';
 import { Rubro } from '@/app/interfaces/mudras.types';
 import { RubrosResponse } from '@/app/interfaces/graphql.types';
-import { IconSearch, IconCategory, IconRefresh, IconEdit, IconTrash, IconEye } from '@tabler/icons-react';
+import { IconSearch, IconCategory, IconRefresh, IconEdit, IconTrash, IconEye, IconPlus } from '@tabler/icons-react';
 import { useState } from 'react';
 import { IconButton, Tooltip } from '@mui/material';
+import { etiquetaUnidad, abrevUnidad, type UnidadMedida } from '@/app/utils/unidades';
 
-const TablaRubros = () => {
+interface Props {
+  onNuevoRubro?: () => void;
+  puedeCrear?: boolean;
+}
+
+const TablaRubros: React.FC<Props> = ({ onNuevoRubro, puedeCrear = true }) => {
   const { data, loading, error, refetch } = useQuery<RubrosResponse>(GET_RUBROS);
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
@@ -135,6 +141,21 @@ const TablaRubros = () => {
           Rubros y Categorías
         </Typography>
         <Stack direction="row" spacing={2} alignItems="center">
+          {puedeCrear && (
+            <Button
+              variant="contained"
+              color="success"
+              startIcon={<IconPlus size={18} />}
+              onClick={onNuevoRubro}
+              sx={{
+                textTransform: 'none',
+                bgcolor: 'success.main',
+                '&:hover': { bgcolor: 'success.dark' }
+              }}
+            >
+              Nuevo Rubro
+            </Button>
+          )}
           <TextField
             size="small"
             placeholder="Buscar rubros..."
@@ -166,6 +187,7 @@ const TablaRubros = () => {
             <TableRow sx={{ bgcolor: 'success.light' }}>
               <TableCell sx={{ fontWeight: 600, color: 'success.dark' }}>Categoría</TableCell>
               <TableCell sx={{ fontWeight: 600, color: 'success.dark' }}>Código</TableCell>
+              <TableCell sx={{ fontWeight: 600, color: 'success.dark' }}>Unidad</TableCell>
               <TableCell sx={{ fontWeight: 600, color: 'success.dark' }}>ID</TableCell>
               <TableCell sx={{ fontWeight: 600, color: 'success.dark', textAlign: 'center' }}>Acciones</TableCell>
             </TableRow>
@@ -208,6 +230,11 @@ const TablaRubros = () => {
                       size="small"
                       variant="outlined"
                     />
+                  </TableCell>
+                  <TableCell>
+                    <Typography variant="body2">
+                      {etiquetaUnidad((rubro as any).UnidadPorDefecto as UnidadMedida)} ({abrevUnidad((rubro as any).UnidadPorDefecto as UnidadMedida)})
+                    </Typography>
                   </TableCell>
                   <TableCell>
                     <Typography variant="body2" color="text.secondary" fontFamily="monospace">

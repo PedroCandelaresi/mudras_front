@@ -1,4 +1,5 @@
 // Interfaces para las entidades de Mudras
+import type { UnidadMedida } from '@/app/utils/unidades';
 export interface Articulo {
   id: number;
   Codigo: string;
@@ -15,7 +16,7 @@ export interface Articulo {
   idProveedor?: number;
   Lista2?: number;
   Lista3?: number;
-  Unidad?: string;
+  Unidad?: UnidadMedida; // unidad de medida del artículo (ej. 'gramo', 'unidad')
   Lista4?: number;
   PorcentajeGanancia?: number;
   Calculado?: boolean;
@@ -75,4 +76,5 @@ export interface Rubro {
   Id: number;
   Rubro?: string;
   Codigo?: string;
+  UnidadPorDefecto?: UnidadMedida; // Unidad sugerida para los artículos de este rubro
 }

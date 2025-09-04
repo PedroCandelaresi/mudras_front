@@ -16,25 +16,51 @@ import {
   TextField,
   InputAdornment,
   Button,
-  Stack
+  Stack,
+  Menu,
+  Divider,
+  FormControlLabel,
+  Switch
 } from "@mui/material";
 import { useQuery } from '@apollo/client/react';
 import { GET_ARTICULOS } from '@/app/queries/mudras.queries';
 import { Articulo } from '@/app/interfaces/mudras.types';
 import { ArticulosResponse } from '@/app/interfaces/graphql.types';
-import { IconSearch, IconPackage, IconRefresh, IconEdit, IconTrash, IconEye } from '@tabler/icons-react';
+import { IconSearch, IconPackage, IconRefresh, IconEdit, IconTrash, IconEye, IconPlus, IconDotsVertical } from '@tabler/icons-react';
 import { useState } from 'react';
 import { IconButton, Tooltip } from '@mui/material';
+import { abrevUnidad, type UnidadMedida } from '@/app/utils/unidades';
 
 interface Props {
   soloSinStock?: boolean;
+  onNuevoArticulo?: () => void;
+  puedeCrear?: boolean;
 }
 
-const TablaArticulos: React.FC<Props> = ({ soloSinStock = false }) => {
+const TablaArticulos: React.FC<Props> = ({ soloSinStock = false, onNuevoArticulo, puedeCrear = true }) => {
   const { data, loading, error, refetch } = useQuery<ArticulosResponse>(GET_ARTICULOS);
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [filtro, setFiltro] = useState('');
+  const [densa, setDensa] = useState(true);
+  const [menuAnchor, setMenuAnchor] = useState<null | HTMLElement>(null);
+  const [columnaActiva, setColumnaActiva] = useState<null | 'codigo' | 'descripcion' | 'rubro' | 'proveedor' | 'estado'>(null);
+  const [filtrosColumna, setFiltrosColumna] = useState({
+    codigo: '',
+    descripcion: '',
+    rubro: '',
+    proveedor: '',
+    estado: ''
+  });
+
+  const abrirMenuColumna = (col: typeof columnaActiva) => (e: React.MouseEvent<HTMLElement>) => {
+    setColumnaActiva(col);
+    setMenuAnchor(e.currentTarget);
+  };
+  const cerrarMenuColumna = () => {
+    setMenuAnchor(null);
+    setColumnaActiva(null);
+  };
 
   // Funciones para manejar acciones
   const handleViewArticulo = (articulo: Articulo) => {
@@ -71,6 +97,18 @@ const TablaArticulos: React.FC<Props> = ({ soloSinStock = false }) => {
       articulo.Rubro?.toLowerCase().includes(filtro.toLowerCase()) ||
       articulo.proveedor?.Nombre?.toLowerCase().includes(filtro.toLowerCase())
     )
+    // filtros por columna
+    .filter((a) => (filtrosColumna.codigo ? a.Codigo?.toLowerCase().includes(filtrosColumna.codigo.toLowerCase()) : true))
+    .filter((a) => (filtrosColumna.descripcion ? a.Descripcion?.toLowerCase().includes(filtrosColumna.descripcion.toLowerCase()) : true))
+    .filter((a) => (filtrosColumna.rubro ? a.Rubro?.toLowerCase().includes(filtrosColumna.rubro.toLowerCase()) : true))
+    .filter((a) => (filtrosColumna.proveedor ? a.proveedor?.Nombre?.toLowerCase().includes(filtrosColumna.proveedor.toLowerCase()) : true))
+    .filter((a) => {
+      if (!filtrosColumna.estado) return true;
+      const stock = parseFloat(String(a.Deposito ?? 0)) || 0;
+      const minimo = parseFloat(String(a.StockMinimo ?? 0)) || 0;
+      const etiqueta = getStockLabel(stock, minimo).toLowerCase();
+      return etiqueta.includes(filtrosColumna.estado.toLowerCase());
+    })
     .filter((articulo) => {
       if (!soloSinStock) return true;
       const stock = parseFloat(String(articulo.Deposito ?? 0));
@@ -148,13 +186,28 @@ const TablaArticulos: React.FC<Props> = ({ soloSinStock = false }) => {
   }
 
   return (
-    <Paper sx={{ p: 3 }}>
+    <Paper elevation={0} variant="outlined" sx={{ p: 3, borderColor: 'grey.200', borderRadius: 2, bgcolor: 'background.paper' }}>
       <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
         <Typography variant="h5" fontWeight={600} color="success.dark">
           <IconPackage style={{ marginRight: 8, verticalAlign: 'middle' }} />
           {soloSinStock ? 'Artículos sin stock' : 'Artículos'}
         </Typography>
         <Stack direction="row" spacing={2} alignItems="center">
+          {puedeCrear && (
+            <Button
+              variant="contained"
+              color="success"
+              startIcon={<IconPlus size={18} />}
+              onClick={onNuevoArticulo}
+              sx={{
+                textTransform: 'none',
+                bgcolor: 'success.main',
+                '&:hover': { bgcolor: 'success.dark' }
+              }}
+            >
+              Nuevo Artículo
+            </Button>
+          )}
           <TextField
             size="small"
             placeholder="Buscar artículos..."
@@ -169,6 +222,10 @@ const TablaArticulos: React.FC<Props> = ({ soloSinStock = false }) => {
             }}
             sx={{ minWidth: 250 }}
           />
+          <FormControlLabel 
+            control={<Switch checked={densa} onChange={(e) => setDensa(e.target.checked)} color="success" />} 
+            label="Densa" 
+          />
           <Button
             variant="outlined"
             color="success"
@@ -180,54 +237,82 @@ const TablaArticulos: React.FC<Props> = ({ soloSinStock = false }) => {
         </Stack>
       </Box>
 
-      <TableContainer>
-        <Table>
-          <TableHead>
-            <TableRow sx={{ bgcolor: 'success.lighter' }}>
-              <TableCell sx={{ fontWeight: 600, color: 'success.dark' }}>Código</TableCell>
-              <TableCell sx={{ fontWeight: 600, color: 'success.dark' }}>Descripción</TableCell>
-              <TableCell sx={{ fontWeight: 600, color: 'success.dark' }}>Rubro</TableCell>
-              <TableCell sx={{ fontWeight: 600, color: 'success.dark' }}>Stock</TableCell>
-              <TableCell sx={{ fontWeight: 600, color: 'success.dark' }}>Precio Venta</TableCell>
-              <TableCell sx={{ fontWeight: 600, color: 'success.dark' }}>Proveedor</TableCell>
-              <TableCell sx={{ fontWeight: 600, color: 'success.dark' }}>Estado</TableCell>
-              <TableCell sx={{ fontWeight: 600, color: 'success.dark', textAlign: 'center' }}>Acciones</TableCell>
+      <TableContainer sx={{ maxHeight: '65vh', borderRadius: 2, border: '1px solid', borderColor: 'grey.200', bgcolor: 'background.paper', scrollbarGutter: 'stable both-edges', overflow: 'hidden' }}>
+        <Table stickyHeader size={densa ? 'small' : 'medium'} sx={{ '& .MuiTableCell-head': { bgcolor: '#2f3e2e', color: '#eef5ee' } }}>
+          <TableHead sx={{ position: 'sticky', top: 0, zIndex: 5 }}>
+            <TableRow sx={{ bgcolor: '#2f3e2e', '& th': { top: 0, position: 'sticky', zIndex: 5 }, '& th:first-of-type': { borderTopLeftRadius: 8 }, '& th:last-of-type': { borderTopRightRadius: 8 } }}>
+              <TableCell sx={{ fontWeight: 700, color: '#eef5ee', borderBottom: '3px solid', borderColor: '#6b8f6b' }}>
+                <Box display="flex" alignItems="center" justifyContent="space-between">
+                  Código
+                  <Tooltip title="Filtrar columna">
+                    <IconButton size="small" color="inherit" onClick={abrirMenuColumna('codigo')}>
+                      <IconDotsVertical size={16} />
+                    </IconButton>
+                  </Tooltip>
+                </Box>
+              </TableCell>
+              <TableCell sx={{ fontWeight: 700, color: '#eef5ee', borderBottom: '3px solid', borderColor: '#6b8f6b' }}>
+                <Box display="flex" alignItems="center" justifyContent="space-between">
+                  Descripción
+                  <Tooltip title="Filtrar columna">
+                    <IconButton size="small" color="inherit" onClick={abrirMenuColumna('descripcion')}>
+                      <IconDotsVertical size={16} />
+                    </IconButton>
+                  </Tooltip>
+                </Box>
+              </TableCell>
+              <TableCell sx={{ fontWeight: 700, color: '#eef5ee', borderBottom: '3px solid', borderColor: '#6b8f6b' }}>
+                <Box display="flex" alignItems="center" justifyContent="space-between">
+                  Rubro
+                  <Tooltip title="Filtrar columna">
+                    <IconButton size="small" color="inherit" onClick={abrirMenuColumna('rubro')}>
+                      <IconDotsVertical size={16} />
+                    </IconButton>
+                  </Tooltip>
+                </Box>
+              </TableCell>
+              <TableCell sx={{ fontWeight: 700, color: '#eef5ee', borderBottom: '3px solid', borderColor: '#6b8f6b' }}>
+                Stock
+              </TableCell>
+              <TableCell sx={{ fontWeight: 700, color: '#eef5ee', borderBottom: '3px solid', borderColor: '#6b8f6b' }}>
+                Precio Venta
+              </TableCell>
+              <TableCell sx={{ fontWeight: 700, color: '#eef5ee', borderBottom: '3px solid', borderColor: '#6b8f6b' }}>
+                <Box display="flex" alignItems="center" justifyContent="space-between">
+                  Proveedor
+                  <Tooltip title="Filtrar columna">
+                    <IconButton size="small" color="inherit" onClick={abrirMenuColumna('proveedor')}>
+                      <IconDotsVertical size={16} />
+                    </IconButton>
+                  </Tooltip>
+                </Box>
+              </TableCell>
+              <TableCell sx={{ fontWeight: 700, color: '#eef5ee', borderBottom: '3px solid', borderColor: '#6b8f6b' }}>
+                <Box display="flex" alignItems="center" justifyContent="space-between">
+                  Estado
+                  <Tooltip title="Filtrar columna">
+                    <IconButton size="small" color="inherit" onClick={abrirMenuColumna('estado')}>
+                      <IconDotsVertical size={16} />
+                    </IconButton>
+                  </Tooltip>
+                </Box>
+              </TableCell>
+              <TableCell sx={{ fontWeight: 700, color: '#eef5ee', borderBottom: '3px solid', borderColor: '#6b8f6b', textAlign: 'center' }}>Acciones</TableCell>
+              {/* Columna espaciadora para ancho de scrollbar */}
+              <TableCell sx={{ p: 0, width: '12px', bgcolor: '#2f3e2e', borderBottom: '3px solid', borderColor: '#6b8f6b' }} />
             </TableRow>
           </TableHead>
-          <TableBody>
-            {articulosPaginados.map((articulo) => (
+          <TableBody sx={{ '& .MuiTableCell-root': { py: densa ? 1 : 1.5 } }}>
+            {articulosPaginados.map((articulo, idx) => (
               <TableRow 
                 key={articulo.id}
                 sx={{ 
+                  bgcolor: idx % 2 === 1 ? 'grey.50' : 'inherit',
                   '&:hover': { 
                     bgcolor: 'success.lighter',
-                    cursor: 'pointer'
                   }
                 }}
               >
-                <TableCell>
-                  <Typography variant="body2" fontWeight={500}>
-                    {articulo.Codigo}
-                  </Typography>
-                </TableCell>
-                <TableCell>
-                  <Box display="flex" alignItems="center">
-                    <Avatar 
-                      sx={{ 
-                        bgcolor: 'success.main', 
-                        width: 32, 
-                        height: 32, 
-                        mr: 2,
-                        fontSize: '0.875rem'
-                      }}
-                    >
-                      {articulo.Descripcion?.charAt(0) || 'A'}
-                    </Avatar>
-                    <Typography variant="body2" fontWeight={500}>
-                      {articulo.Descripcion || 'Sin descripción'}
-                    </Typography>
-                  </Box>
-                </TableCell>
                 <TableCell>
                   <Chip 
                     label={articulo.Rubro || 'Sin rubro'} 
@@ -245,12 +330,12 @@ const TablaArticulos: React.FC<Props> = ({ soloSinStock = false }) => {
                     fontWeight={600}
                     color={(parseFloat(String(articulo.Deposito ?? 0)) <= 0) ? 'error.main' : 'text.primary'}
                   >
-                    {parseFloat(String(articulo.Deposito ?? 0)) || 0}
+                    {(parseFloat(String(articulo.Deposito ?? 0)) || 0)} {abrevUnidad(articulo.Unidad as UnidadMedida)}
                   </Typography>
                 </TableCell>
                 <TableCell>
                   <Typography variant="body2" fontWeight={500} color="success.main">
-                    ${articulo.PrecioVenta?.toLocaleString() || '0'}
+                    ${articulo.PrecioVenta?.toLocaleString() || '0'} / {abrevUnidad(articulo.Unidad as UnidadMedida)}
                   </Typography>
                 </TableCell>
                 <TableCell>
@@ -282,8 +367,9 @@ const TablaArticulos: React.FC<Props> = ({ soloSinStock = false }) => {
                         size="small" 
                         color="info"
                         onClick={() => handleViewArticulo(articulo)}
+                        sx={{ p: 0.75 }}
                       >
-                        <IconEye size={16} />
+                        <IconEye size={20} />
                       </IconButton>
                     </Tooltip>
                     <Tooltip title="Editar artículo">
@@ -291,8 +377,9 @@ const TablaArticulos: React.FC<Props> = ({ soloSinStock = false }) => {
                         size="small" 
                         color="success"
                         onClick={() => handleEditArticulo(articulo)}
+                        sx={{ p: 0.75 }}
                       >
-                        <IconEdit size={16} />
+                        <IconEdit size={20} />
                       </IconButton>
                     </Tooltip>
                     <Tooltip title="Eliminar artículo">
@@ -300,17 +387,55 @@ const TablaArticulos: React.FC<Props> = ({ soloSinStock = false }) => {
                         size="small" 
                         color="error"
                         onClick={() => handleDeleteArticulo(articulo)}
+                        sx={{ p: 0.75 }}
                       >
-                        <IconTrash size={16} />
+                        <IconTrash size={20} />
                       </IconButton>
                     </Tooltip>
                   </Box>
                 </TableCell>
+                {/* Celda espaciadora para alinear con header y reservar scroll */}
+                <TableCell sx={{ p: 0, width: '12px' }} />
               </TableRow>
             ))}
           </TableBody>
         </Table>
       </TableContainer>
+
+      {/* Menú de filtros por columna */}
+      <Menu
+        anchorEl={menuAnchor}
+        open={Boolean(menuAnchor)}
+        onClose={cerrarMenuColumna}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+        transformOrigin={{ vertical: 'top', horizontal: 'right' }}
+        slotProps={{ paper: { sx: { p: 1.5, minWidth: 260 } } } as any}
+      >
+        <Typography variant="subtitle2" sx={{ px: 1, pb: 1 }}>
+          {columnaActiva === 'codigo' && 'Filtrar por Código'}
+          {columnaActiva === 'descripcion' && 'Filtrar por Descripción'}
+          {columnaActiva === 'rubro' && 'Filtrar por Rubro'}
+          {columnaActiva === 'proveedor' && 'Filtrar por Proveedor'}
+          {columnaActiva === 'estado' && 'Filtrar por Estado'}
+        </Typography>
+        <Divider sx={{ mb: 1 }} />
+        {columnaActiva && (
+          <Box px={1} pb={1}>
+            <TextField
+              size="small"
+              fullWidth
+              autoFocus
+              placeholder="Escribe para filtrar..."
+              value={filtrosColumna[columnaActiva]}
+              onChange={(e) => setFiltrosColumna((prev) => ({ ...prev, [columnaActiva]: e.target.value }))}
+            />
+            <Stack direction="row" justifyContent="flex-end" spacing={1} mt={1}>
+              <Button size="small" onClick={() => { if (!columnaActiva) return; setFiltrosColumna((p) => ({ ...p, [columnaActiva!]: '' })); }}>Limpiar</Button>
+              <Button size="small" variant="contained" color="success" onClick={cerrarMenuColumna}>Aplicar</Button>
+            </Stack>
+          </Box>
+        )}
+      </Menu>
 
       <TablePagination
         rowsPerPageOptions={[5, 10, 25, 50]}

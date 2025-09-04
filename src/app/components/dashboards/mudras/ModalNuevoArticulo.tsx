@@ -40,6 +40,7 @@ import {
   IconUser,
   IconCrown
 } from '@tabler/icons-react';
+import { UNIDADES, UNIDADES_POR_DEFECTO_POR_RUBRO, abrevUnidad, type UnidadMedida } from '@/app/utils/unidades';
 
 interface ModalNuevoArticuloProps {
   open: boolean;
@@ -84,6 +85,7 @@ const ModalNuevoArticulo: React.FC<ModalNuevoArticuloProps> = ({
     costo: '',
     stock: '',
     stockMinimo: '',
+    unidad: 'unidad' as UnidadMedida,
     
     // Configuración de tienda web
     publicarTienda: false,
@@ -121,6 +123,12 @@ const ModalNuevoArticulo: React.FC<ModalNuevoArticuloProps> = ({
       ...prev,
       [field]: value
     }));
+  };
+
+  const handleCategoriaChange = (categoria: string) => {
+    const clave = categoria?.toLowerCase();
+    const unidadPorDefecto = (UNIDADES_POR_DEFECTO_POR_RUBRO as Record<string, UnidadMedida | undefined>)[clave] || 'unidad';
+    setFormData(prev => ({ ...prev, categoria, unidad: unidadPorDefecto }));
   };
 
   const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>, type: 'principal' | 'secundarias') => {
@@ -262,13 +270,14 @@ const ModalNuevoArticulo: React.FC<ModalNuevoArticuloProps> = ({
                 disabled={isDesigner}
               />
             </Grid>
-            
+
+            {/* Categoría y Unidad */}
             <Grid size={6}>
               <FormControl fullWidth disabled={isDesigner}>
                 <InputLabel>Categoría</InputLabel>
                 <Select
                   value={formData.categoria}
-                  onChange={(e) => handleInputChange('categoria', e.target.value)}
+                  onChange={(e) => handleCategoriaChange(e.target.value)}
                   label="Categoría"
                 >
                   <MenuItem value="cristales">Cristales</MenuItem>
@@ -279,11 +288,29 @@ const ModalNuevoArticulo: React.FC<ModalNuevoArticuloProps> = ({
                 </Select>
               </FormControl>
             </Grid>
-            
+
             <Grid size={6}>
+              <FormControl fullWidth disabled={isDesigner}>
+                <InputLabel>Unidad de Medida</InputLabel>
+                <Select
+                  value={formData.unidad}
+                  label="Unidad de Medida"
+                  onChange={(e) => handleInputChange('unidad', e.target.value as UnidadMedida)}
+                >
+                  {UNIDADES.map((u) => (
+                    <MenuItem key={u.clave} value={u.clave}>
+                      {u.etiqueta} ({u.abreviatura})
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            </Grid>
+
+            {/* Stock y Precios */}
+            <Grid size={4}>
               <TextField
                 fullWidth
-                label="Stock Inicial"
+                label={`Stock Inicial (${abrevUnidad(formData.unidad)})`}
                 type="number"
                 value={formData.stock}
                 onChange={(e) => handleInputChange('stock', e.target.value)}
@@ -291,51 +318,48 @@ const ModalNuevoArticulo: React.FC<ModalNuevoArticuloProps> = ({
               />
             </Grid>
 
-            {canEditPricing && (
-              <>
-                <Grid size={12}>
-                  <Divider sx={{ my: 2 }}>
-                    <Chip label="Precios" icon={<IconPercentage size={16} />} />
-                  </Divider>
-                </Grid>
-                
-                <Grid size={4}>
-                  <TextField
-                    fullWidth
-                    label="Precio de Venta"
-                    type="number"
-                    value={formData.precio}
-                    onChange={(e) => handleInputChange('precio', e.target.value)}
-                    InputProps={{
-                      startAdornment: <Typography sx={{ mr: 1 }}>$</Typography>
-                    }}
-                  />
-                </Grid>
-                
-                <Grid size={4}>
-                  <TextField
-                    fullWidth
-                    label="Costo"
-                    type="number"
-                    value={formData.costo}
-                    onChange={(e) => handleInputChange('costo', e.target.value)}
-                    InputProps={{
-                      startAdornment: <Typography sx={{ mr: 1 }}>$</Typography>
-                    }}
-                  />
-                </Grid>
-                
-                <Grid size={4}>
-                  <TextField
-                    fullWidth
-                    label="Stock Mínimo"
-                    type="number"
-                    value={formData.stockMinimo}
-                    onChange={(e) => handleInputChange('stockMinimo', e.target.value)}
-                  />
-                </Grid>
-              </>
-            )}
+            <Grid size={4}>
+              <TextField
+                fullWidth
+                label="Precio de Venta"
+                type="number"
+                value={formData.precio}
+                onChange={(e) => handleInputChange('precio', e.target.value)}
+                disabled={!canEditPricing}
+                InputProps={{
+                  startAdornment: <Typography sx={{ mr: 1 }}>$</Typography>,
+                  endAdornment: (
+                    <Typography sx={{ ml: 1, color: 'text.secondary' }}>
+                      / {abrevUnidad(formData.unidad)}
+                    </Typography>
+                  )
+                }}
+              />
+            </Grid>
+
+            <Grid size={4}>
+              <TextField
+                fullWidth
+                label="Costo"
+                type="number"
+                value={formData.costo}
+                onChange={(e) => handleInputChange('costo', e.target.value)}
+                disabled={!canEditPricing}
+                InputProps={{
+                  startAdornment: <Typography sx={{ mr: 1 }}>$</Typography>
+                }}
+              />
+            </Grid>
+
+            <Grid size={4}>
+              <TextField
+                fullWidth
+                label="Stock Mínimo"
+                type="number"
+                value={formData.stockMinimo}
+                onChange={(e) => handleInputChange('stockMinimo', e.target.value)}
+              />
+            </Grid>
           </Grid>
         </TabPanel>
 

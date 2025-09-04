@@ -1,6 +1,5 @@
 'use client';
-import { Grid, Box, Typography, Button, Stack, Tabs, Tab } from '@mui/material';
-import { IconPlus, IconDownload, IconUpload } from '@tabler/icons-react';
+import { Grid, Box, Typography, Stack, Tabs, Tab } from '@mui/material';
 import PageContainer from '@/app/components/container/PageContainer';
 import DashboardCard from '@/app/components/shared/DashboardCard';
 import TablaArticulos from '@/app/components/dashboards/mudras/TablaArticulos';
@@ -11,6 +10,7 @@ import { useState } from 'react';
 import { useQuery } from '@apollo/client/react';
 import { GET_DASHBOARD_STATS } from '@/app/queries/mudras.queries';
 import { DashboardStatsResponse } from '@/app/interfaces/graphql.types';
+import { Icon } from '@iconify/react';
 
 // Componente para EstadisticasStock con datos reales
 function EstadisticasStockConDatos() {
@@ -82,75 +82,54 @@ export default function Articulos() {
               <Typography variant="h4" fontWeight={600} color="success.dark">
                 Gestión de Artículos
               </Typography>
-              <Stack direction="row" spacing={2}>
-                <Button
-                  variant="outlined"
-                  startIcon={<IconDownload size={18} />}
-                  sx={{ 
-                    borderColor: 'success.main', 
-                    color: 'success.main',
-                    '&:hover': { 
-                      borderColor: 'success.main', 
-                      backgroundColor: 'rgba(76, 175, 80, 0.08)'
-                    }
-                  }}
-                >
-                  Exportar
-                </Button>
-                <Button
-                  variant="outlined"
-                  startIcon={<IconUpload size={18} />}
-                  sx={{ 
-                    borderColor: 'success.main', 
-                    color: 'success.main',
-                    '&:hover': { 
-                      borderColor: 'success.main', 
-                      backgroundColor: 'rgba(76, 175, 80, 0.08)'
-                    }
-                  }}
-                >
-                  Importar
-                </Button>
-                <Button
-                  variant="contained"
-                  startIcon={<IconPlus size={18} />}
-                  onClick={() => setModalNuevoOpen(true)}
-                  sx={{ 
-                    backgroundColor: 'success.main',
-                    '&:hover': { backgroundColor: 'success.dark' }
-                  }}
-                >
-                  Nuevo Artículo
-                </Button>
-              </Stack>
             </Stack>
           </Grid>
 
           {/* Tabs para navegación entre secciones */}
           <Grid size={12}>
-            <Box sx={{ borderBottom: 1, borderColor: 'success.light', mb: 3 }}>
+            <Box sx={{ mb: 0, bgcolor: '#eaf6ea', borderTopLeftRadius: 8, borderTopRightRadius: 8, borderBottomLeftRadius: 0, borderBottomRightRadius: 0, px: 1, py: 1, border: '1px solid', borderColor: 'success.light', borderBottom: 'none' }}>
               <Tabs 
                 value={tabValue} 
                 onChange={handleTabChange} 
                 aria-label="articulos tabs"
-                TabIndicatorProps={{ sx: { backgroundColor: 'success.main', height: 3, borderRadius: 1 } }}
+                TabIndicatorProps={{ sx: { display: 'none' } }}
                 sx={{
-                  '& .MuiTab-root': { color: 'success.dark', textTransform: 'none', fontWeight: 600 },
-                  '& .MuiTab-root.Mui-selected': { color: 'success.main' }
+                  '& .MuiTabs-flexContainer': { gap: 1 },
+                  '& .MuiTab-root': {
+                    color: 'success.dark',
+                    textTransform: 'none',
+                    fontWeight: 600,
+                    minHeight: 40,
+                    px: 2,
+                    borderRadius: 1.5,
+                    bgcolor: '#e0f0e0',
+                    '&:hover': { bgcolor: '#d6ead6' },
+                    '& .MuiTab-iconWrapper': { mr: 1 }
+                  },
+                  '& .MuiTab-root.Mui-selected': {
+                    bgcolor: 'success.main',
+                    color: 'common.white'
+                  }
                 }}
               >
-                <Tab label="📦 Artículos" />
-                <Tab label="📋 Movimientos Stock" />
-                <Tab label="📈 Estadísticas Stock" />
-                <Tab label="🚫 Sin stock" />
+                <Tab icon={<Icon icon="mdi:package-variant-closed" />} label="Artículos" iconPosition="start" />
+                <Tab icon={<Icon icon="mdi:clipboard-list-outline" />} label="Movimientos Stock" iconPosition="start" />
+                <Tab icon={<Icon icon="mdi:chart-line" />} label="Estadísticas Stock" iconPosition="start" />
+                <Tab icon={<Icon icon="mdi:package-variant-remove" />} label="Sin stock" iconPosition="start" />
               </Tabs>
             </Box>
           </Grid>
           
           <Grid size={12}>
-            <DashboardCard>
+            <Box sx={{ mt: 0, borderTopLeftRadius: 0, borderTopRightRadius: 0, borderTop: '1px solid', borderColor: 'success.light', pt: 0.5, overflow: 'hidden' }}>
+              <DashboardCard>
               {/* Tab Panel 0 - Tabla de Artículos */}
-              {tabValue === 0 && <TablaArticulos />}
+              {tabValue === 0 && (
+                <TablaArticulos 
+                  onNuevoArticulo={() => setModalNuevoOpen(true)}
+                  puedeCrear={userRole === 'admin' || userRole === 'diseñadora'}
+                />
+              )}
 
               {/* Tab Panel 1 - Movimientos de Stock */}
               {tabValue === 1 && <TablaMovimientosStock />}
@@ -159,8 +138,15 @@ export default function Articulos() {
               {tabValue === 2 && <EstadisticasStockConDatos />}
 
               {/* Tab Panel 3 - Artículos sin stock */}
-              {tabValue === 3 && <TablaArticulos soloSinStock />}
-            </DashboardCard>
+              {tabValue === 3 && (
+                <TablaArticulos 
+                  soloSinStock 
+                  onNuevoArticulo={() => setModalNuevoOpen(true)}
+                  puedeCrear={userRole === 'admin' || userRole === 'diseñadora'}
+                />
+              )}
+              </DashboardCard>
+            </Box>
           </Grid>
         </Grid>
         

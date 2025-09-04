@@ -1,3 +1,10 @@
+# Mudras - Frontend
+
+## Reglas globales
+- El nombre del proyecto es "Mudras" siempre.
+- "panel" es el dashboard por defecto del sistema administrativo.
+- Todas las tablas deben replicar la estética y funcionalidad de la tabla de Artículos. Como referencia/estándar usar `src/app/components/dashboards/mudras/TablaArticulos.tsx`. Pueden variar color, contenido y cantidad de columnas, pero no el comportamiento base.
+
 This is a [Next.js](https://nextjs.org/) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
 
 ## Getting Started

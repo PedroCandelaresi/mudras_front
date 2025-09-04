@@ -22,11 +22,16 @@ import { useQuery } from '@apollo/client/react';
 import { GET_PROVEEDORES } from '@/app/queries/mudras.queries';
 import { Proveedor } from '@/app/interfaces/mudras.types';
 import { ProveedoresResponse } from '@/app/interfaces/graphql.types';
-import { IconSearch, IconUsers, IconRefresh, IconPhone, IconMail, IconEdit, IconTrash, IconEye } from '@tabler/icons-react';
+import { IconSearch, IconUsers, IconRefresh, IconPhone, IconMail, IconEdit, IconTrash, IconEye, IconPlus } from '@tabler/icons-react';
 import { useState } from 'react';
 import { IconButton, Tooltip } from '@mui/material';
 
-const TablaProveedores = () => {
+interface Props {
+  onNuevoProveedor?: () => void;
+  puedeCrear?: boolean;
+}
+
+const TablaProveedores: React.FC<Props> = ({ onNuevoProveedor, puedeCrear = true }) => {
   const { data, loading, error, refetch } = useQuery<ProveedoresResponse>(GET_PROVEEDORES);
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
@@ -138,6 +143,21 @@ const TablaProveedores = () => {
           Proveedores
         </Typography>
         <Stack direction="row" spacing={2} alignItems="center">
+          {puedeCrear && (
+            <Button
+              variant="contained"
+              color="secondary"
+              startIcon={<IconPlus size={18} />}
+              onClick={onNuevoProveedor}
+              sx={{
+                textTransform: 'none',
+                bgcolor: 'secondary.main',
+                '&:hover': { bgcolor: 'secondary.dark' }
+              }}
+            >
+              Nuevo Proveedor
+            </Button>
+          )}
           <TextField
             size="small"
             placeholder="Buscar proveedores..."
