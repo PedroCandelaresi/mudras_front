@@ -1,7 +1,6 @@
 'use client';
-import { Grid, Box, Typography, Stack, Tabs, Tab } from '@mui/material';
+import { Box, Typography, Tabs, Tab, Paper } from '@mui/material';
 import PageContainer from '@/app/components/container/PageContainer';
-import DashboardCard from '@/app/components/shared/DashboardCard';
 import TablaArticulos from '@/app/components/dashboards/mudras/TablaArticulos';
 import TablaMovimientosStock from '@/app/components/dashboards/mudras/TablaMovimientosStock';
 import EstadisticasStock from '@/components/stock/EstadisticasStock';
@@ -76,80 +75,68 @@ export default function Articulos() {
   return (
     <PageContainer title="Artículos - Mudras" description="Gestión de artículos">
       <Box>
-        <Grid container spacing={3}>
-          <Grid size={12}>
-            <Stack direction="row" justifyContent="space-between" alignItems="center" mb={3}>
-              <Typography variant="h4" fontWeight={600} color="success.dark">
-                Gestión de Artículos
-              </Typography>
-            </Stack>
-          </Grid>
-
-          {/* Tabs para navegación entre secciones */}
-          <Grid size={12}>
-            <Box sx={{ mb: 0, bgcolor: '#eaf6ea', borderTopLeftRadius: 8, borderTopRightRadius: 8, borderBottomLeftRadius: 0, borderBottomRightRadius: 0, px: 1, py: 1, border: '1px solid', borderColor: 'success.light', borderBottom: 'none' }}>
-              <Tabs 
-                value={tabValue} 
-                onChange={handleTabChange} 
-                aria-label="articulos tabs"
-                TabIndicatorProps={{ sx: { display: 'none' } }}
-                sx={{
-                  '& .MuiTabs-flexContainer': { gap: 1 },
-                  '& .MuiTab-root': {
-                    color: 'success.dark',
-                    textTransform: 'none',
-                    fontWeight: 600,
-                    minHeight: 40,
-                    px: 2,
-                    borderRadius: 1.5,
-                    bgcolor: '#e0f0e0',
-                    '&:hover': { bgcolor: '#d6ead6' },
-                    '& .MuiTab-iconWrapper': { mr: 1 }
-                  },
-                  '& .MuiTab-root.Mui-selected': {
-                    bgcolor: 'success.main',
-                    color: 'common.white'
-                  }
-                }}
-              >
-                <Tab icon={<Icon icon="mdi:package-variant-closed" />} label="Artículos" iconPosition="start" />
-                <Tab icon={<Icon icon="mdi:clipboard-list-outline" />} label="Movimientos Stock" iconPosition="start" />
-                <Tab icon={<Icon icon="mdi:chart-line" />} label="Estadísticas Stock" iconPosition="start" />
-                <Tab icon={<Icon icon="mdi:package-variant-remove" />} label="Sin stock" iconPosition="start" />
-              </Tabs>
-            </Box>
-          </Grid>
-          
-          <Grid size={12}>
-            <Box sx={{ mt: 0, borderTopLeftRadius: 0, borderTopRightRadius: 0, borderTop: '1px solid', borderColor: 'success.light', pt: 0.5, overflow: 'hidden' }}>
-              <DashboardCard>
+        <Typography variant="h4" fontWeight={700} color="success.dark" sx={{ mb: 2 }}>
+          Gestión de Artículos
+        </Typography>
+        <Paper elevation={0} sx={{ border: '1px solid', borderColor: 'success.light', borderRadius: 2, overflow: 'hidden', bgcolor: 'background.paper' }}>
+          {/* Toolbar superior con fondo unificado */}
+          <Box sx={{ bgcolor: 'var(--toolbar-bg)', px: 1, py: 1 }}>
+            <Tabs
+              value={tabValue}
+              onChange={handleTabChange}
+              aria-label="articulos tabs"
+              TabIndicatorProps={{ sx: { display: 'none' } }}
+              sx={{
+                '& .MuiTabs-flexContainer': { gap: 1 },
+                '& .MuiTab-root': {
+                  color: 'success.dark',
+                  textTransform: 'none',
+                  fontWeight: 600,
+                  minHeight: 40,
+                  px: 2,
+                  borderRadius: 1.5,
+                  bgcolor: '#e0f0e0',
+                  '&:hover': { bgcolor: '#d6ead6' },
+                  '& .MuiTab-iconWrapper': { mr: 1 }
+                },
+                '& .MuiTab-root.Mui-selected': {
+                  bgcolor: 'success.main',
+                  color: 'common.white'
+                }
+              }}
+            >
+              <Tab icon={<Icon icon="mdi:package-variant-closed" />} label="Artículos" iconPosition="start" />
+              <Tab icon={<Icon icon="mdi:clipboard-list-outline" />} label="Movimientos Stock" iconPosition="start" />
+              <Tab icon={<Icon icon="mdi:chart-line" />} label="Estadísticas Stock" iconPosition="start" />
+              <Tab icon={<Icon icon="mdi:package-variant-remove" />} label="Sin stock" iconPosition="start" />
+            </Tabs>
+          </Box>
+          {/* Zona superior con mismo fondo y padding; el contenido interno (tabla) maneja su propia card blanca */}
+          <Box sx={{ bgcolor: 'var(--toolbar-bg)', px: 2, pb: 2 }}>
+            <Box sx={{ pt: 2 }}>
               {/* Tab Panel 0 - Tabla de Artículos */}
               {tabValue === 0 && (
-                <TablaArticulos 
+                <TablaArticulos
                   onNuevoArticulo={() => setModalNuevoOpen(true)}
                   puedeCrear={userRole === 'admin' || userRole === 'diseñadora'}
                 />
               )}
-
               {/* Tab Panel 1 - Movimientos de Stock */}
               {tabValue === 1 && <TablaMovimientosStock />}
-
               {/* Tab Panel 2 - Estadísticas de Stock */}
               {tabValue === 2 && <EstadisticasStockConDatos />}
-
               {/* Tab Panel 3 - Artículos sin stock */}
               {tabValue === 3 && (
-                <TablaArticulos 
-                  soloSinStock 
+                <TablaArticulos
+                  soloSinStock
                   onNuevoArticulo={() => setModalNuevoOpen(true)}
                   puedeCrear={userRole === 'admin' || userRole === 'diseñadora'}
                 />
               )}
-              </DashboardCard>
             </Box>
-          </Grid>
-        </Grid>
-        
+          </Box>
+        </Paper>
+
         {/* Modal Nuevo Artículo */}
         <ModalNuevoArticulo
           open={modalNuevoOpen}

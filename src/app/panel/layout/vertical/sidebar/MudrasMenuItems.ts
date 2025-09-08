@@ -134,6 +134,18 @@ const MudrasMenuItems: NavGroup[] = [
   },
   {
     id: uniqueId(),
+    title: "Roles",
+    icon: IconShield,
+    href: "/panel/roles",
+  },
+  {
+    id: uniqueId(),
+    title: "Permisos",
+    icon: IconClipboardList,
+    href: "/panel/permisos",
+  },
+  {
+    id: uniqueId(),
     title: "Contaduría",
     icon: IconFileText,
     href: "/panel/contaduria",

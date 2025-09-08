@@ -11,20 +11,36 @@ import type { ReactNode } from 'react';
  * 2) NEXT_PUBLIC_API_URL + "/graphql" (si definís "/api")
  * 3) fallback: "/api/graphql"
  */
-const graphqlUri =
-  process.env.NEXT_PUBLIC_GRAPHQL_URL ??
-  (process.env.NEXT_PUBLIC_API_URL
-    ? `${process.env.NEXT_PUBLIC_API_URL.replace(/\/$/, '')}/graphql`
-    : '/api/graphql');
+// Usamos SIEMPRE el proxy "/api/graphql" para inyectar Authorization desde cookie httpOnly
+const graphqlUri = '/api/graphql';
 
-const httpLink = createHttpLink({ uri: graphqlUri });
+const httpLink = createHttpLink({ uri: graphqlUri, credentials: 'include' });
 
 const authLink = setContext((_, { headers }) => {
   const secretKey = process.env.NEXT_PUBLIC_X_SECRET_KEY;
+  // Intentamos leer el JWT desde cookies del navegador (solo en cliente)
+  let bearer: string | undefined;
+  if (typeof document !== 'undefined') {
+    const cookies = document.cookie || '';
+    const get = (name: string) => {
+      const m = cookies.match(new RegExp(`(?:^|; )${name.replace(/([.$?*|{}()\[\]\\\/\+^])/g, '\\$1')}=([^;]*)`));
+      return m ? decodeURIComponent(m[1]) : undefined;
+    };
+    const posibles = ['mudras_token', 'mudras_jwt', 'access_token', 'auth_token'];
+    for (const name of posibles) {
+      const val = get(name);
+      if (val) {
+        // Si viene como "Bearer <token>", dejamos así; si no, lo envolvemos
+        bearer = /^Bearer\s+/i.test(val) ? val : `Bearer ${val}`;
+        break;
+      }
+    }
+  }
   return {
     headers: {
       ...headers,
       ...(secretKey ? { 'X-Secret-Key': secretKey } : {}),
+      ...(bearer ? { Authorization: bearer } : {}),
     },
   };
 });

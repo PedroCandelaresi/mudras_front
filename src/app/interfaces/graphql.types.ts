@@ -25,3 +25,10 @@ export interface DashboardStatsResponse {
   articulosSinStock: Articulo[];
   articulosEnPromocion: Articulo[];
 }
+
+export interface BuscarArticulosResponse {
+  buscarArticulos: {
+    total: number;
+    articulos: Articulo[];
+  };
+}

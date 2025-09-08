@@ -379,21 +379,7 @@ const MudrasMenuItems: NavGroup[] = [
     id: uniqueId(),
     title: "Usuarios",
     icon: IconUser,
-    href: "/usuarios",
-    children: [
-      {
-        id: uniqueId(),
-        title: "Gestión de Usuarios",
-        icon: IconUsers,
-        href: "/usuarios/gestion",
-      },
-      {
-        id: uniqueId(),
-        title: "Permisos",
-        icon: IconSettings,
-        href: "/usuarios/permisos",
-      },
-    ],
+    href: "/panel/usuarios",
   },
 ];
 

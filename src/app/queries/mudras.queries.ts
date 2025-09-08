@@ -22,6 +22,77 @@ export const GET_ARTICULOS = gql`
   }
 `;
 
+// Promociones
+export const GET_PROMOCIONES = gql`
+  query GetPromociones {
+    promociones {
+      id
+      nombre
+      inicio
+      fin
+      estado
+      descuento
+    }
+  }
+`;
+
+export const CREAR_PROMOCION = gql`
+  mutation CrearPromocion($input: CrearPromocionInput!) {
+    crearPromocion(input: $input) {
+      id
+      nombre
+      inicio
+      fin
+      estado
+      descuento
+    }
+  }
+`;
+
+export const ACTUALIZAR_PROMOCION = gql`
+  mutation ActualizarPromocion($id: ID!, $input: ActualizarPromocionInput!) {
+    actualizarPromocion(id: $id, input: $input) {
+      id
+      nombre
+      inicio
+      fin
+      estado
+      descuento
+    }
+  }
+`;
+
+export const ELIMINAR_PROMOCION = gql`
+  mutation EliminarPromocion($id: ID!) {
+    eliminarPromocion(id: $id)
+  }
+`;
+
+export const BUSCAR_ARTICULOS = gql`
+  query BuscarArticulos($filtros: FiltrosArticuloDto!) {
+    buscarArticulos(filtros: $filtros) {
+      total
+      articulos {
+        id
+        Codigo
+        Rubro
+        Descripcion
+        Marca
+        PrecioVenta
+        PrecioCompra
+        Deposito
+        StockMinimo
+        EnPromocion
+        Unidad
+        proveedor {
+          IdProveedor
+          Nombre
+        }
+      }
+    }
+  }
+`;
+
 export const GET_ARTICULOS_CON_STOCK = gql`
   query GetArticulosConStock {
     articulosConStock {

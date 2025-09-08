@@ -1,3 +1,4 @@
+"use client";
 import Menuitems from './MudrasMenuItems';
 import { usePathname } from "next/navigation";
 import Box from '@mui/material/Box';
@@ -7,7 +8,8 @@ import { CustomizerContext } from '@/app/context/customizerContext';
 import NavItem from './NavItem';
 import NavCollapse from './NavCollapse';
 import NavGroup from './NavGroup/NavGroup';
-import { useContext } from 'react';
+import { useContext, useEffect, useMemo, useState } from 'react';
+import { obtenerPerfil, type PerfilResponse } from '@/lib/auth';
 
 
 
@@ -21,10 +23,33 @@ const SidebarItems = () => {
   const lgUp = useMediaQuery((theme) => theme.breakpoints.up('lg'));
   const hideMenu = lgUp ? isCollapse == "mini-sidebar" && !isSidebarHover : '';
 
+  const [esAdmin, setEsAdmin] = useState<boolean>(false);
+  const [perfilCargado, setPerfilCargado] = useState<boolean>(false);
+  const [perfilError, setPerfilError] = useState<boolean>(false);
+
+  useEffect(() => {
+    obtenerPerfil()
+      .then((perfil: PerfilResponse['perfil'] | null) => {
+        if (perfil?.roles?.includes('administrador')) setEsAdmin(true);
+      })
+      .catch(() => { setPerfilError(true); })
+      .finally(() => setPerfilCargado(true));
+  }, []);
+
+  const itemsFiltrados = useMemo(() => {
+    // Mientras el perfil no esté cargado o hubo error al obtenerlo, no ocultamos nada para evitar falsos negativos
+    if (!perfilCargado || perfilError) return Menuitems;
+    return Menuitems.filter((item) => {
+      // 'Usuarios' siempre visible para facilitar acceso al CRUD; 'Roles' y 'Permisos' solo para admin
+      if (!esAdmin && (item.title === 'Roles' || item.title === 'Permisos')) return false;
+      return true;
+    });
+  }, [esAdmin, perfilCargado, perfilError]);
+
   return (
     <Box sx={{ px: 1.5 }}>
       <List sx={{ pt: 0, '& .MuiListItemButton-root': { py: 0.5, px: 1, minHeight: 32 } }} className="sidebarNav">
-        {Menuitems.map((item) => {
+        {itemsFiltrados.map((item) => {
           // {/********SubHeader**********/}
           if (item.subheader) {
             return <NavGroup item={item} hideMenu={hideMenu} key={item.subheader} />;

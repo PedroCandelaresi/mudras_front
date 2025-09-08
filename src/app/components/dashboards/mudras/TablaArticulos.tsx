@@ -10,7 +10,6 @@ import {
   Typography,
   Paper,
   Chip,
-  Avatar,
   Skeleton,
   TablePagination,
   TextField,
@@ -19,17 +18,23 @@ import {
   Stack,
   Menu,
   Divider,
-  FormControlLabel,
-  Switch
+  Autocomplete,
 } from "@mui/material";
 import { useQuery } from '@apollo/client/react';
-import { GET_ARTICULOS } from '@/app/queries/mudras.queries';
+import { BUSCAR_ARTICULOS, GET_PROVEEDORES } from '@/app/queries/mudras.queries';
 import { Articulo } from '@/app/interfaces/mudras.types';
-import { ArticulosResponse } from '@/app/interfaces/graphql.types';
-import { IconSearch, IconPackage, IconRefresh, IconEdit, IconTrash, IconEye, IconPlus, IconDotsVertical } from '@tabler/icons-react';
-import { useState } from 'react';
+import { BuscarArticulosResponse } from '@/app/interfaces/graphql.types';
+import { IconSearch, IconPackage, IconTrash, IconEdit, IconEye, IconPlus, IconDotsVertical, IconRefresh } from '@tabler/icons-react';
+import { useState, useEffect } from 'react';
 import { IconButton, Tooltip } from '@mui/material';
 import { abrevUnidad, type UnidadMedida } from '@/app/utils/unidades';
+
+// Interfaz local para proveedores (para tipar la query GET_PROVEEDORES)
+interface ProveedorLista {
+  IdProveedor: number;
+  Nombre: string;
+  Codigo?: string;
+}
 
 interface Props {
   soloSinStock?: boolean;
@@ -38,13 +43,13 @@ interface Props {
 }
 
 const TablaArticulos: React.FC<Props> = ({ soloSinStock = false, onNuevoArticulo, puedeCrear = true }) => {
-  const { data, loading, error, refetch } = useQuery<ArticulosResponse>(GET_ARTICULOS);
   const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(10);
-  const [filtro, setFiltro] = useState('');
-  const [densa, setDensa] = useState(true);
+  const [rowsPerPage, setRowsPerPage] = useState(50);
+  const [filtro, setFiltro] = useState(''); // filtro aplicado
+  const [filtroInput, setFiltroInput] = useState(''); // valor tipeado en la searchbar, se aplica con Enter
   const [menuAnchor, setMenuAnchor] = useState<null | HTMLElement>(null);
   const [columnaActiva, setColumnaActiva] = useState<null | 'codigo' | 'descripcion' | 'rubro' | 'proveedor' | 'estado'>(null);
+  const [filtroColInput, setFiltroColInput] = useState<string>(''); // valor temporal del input de columna
   const [filtrosColumna, setFiltrosColumna] = useState({
     codigo: '',
     descripcion: '',
@@ -52,9 +57,94 @@ const TablaArticulos: React.FC<Props> = ({ soloSinStock = false, onNuevoArticulo
     proveedor: '',
     estado: ''
   });
+  const [proveedorSeleccionadoId, setProveedorSeleccionadoId] = useState<number | null>(null);
+
+  // Cargamos proveedores una sola vez (cache-first) para usar en Autocomplete sin refetch por tecla
+  const { data: dataProveedores } = useQuery<{ proveedores: ProveedorLista[] }>(GET_PROVEEDORES, {
+    fetchPolicy: 'cache-first',
+  });
+  const proveedores: ProveedorLista[] = dataProveedores?.proveedores ?? [];
+
+  // Variables para filtros globales (servidor)
+  const estadoSeleccionado = (filtrosColumna.estado || '').toLowerCase();
+  const filtrosServidor = {
+    busqueda: filtro || undefined,
+    // Campos específicos si están presentes
+    codigo: filtrosColumna.codigo || undefined,
+    descripcion: filtrosColumna.descripcion || undefined,
+    // rubro (nombre) y proveedor (nombre) no tienen filtro directo por nombre en DTO,
+    // se incluyen dentro de busqueda global si están definidos
+    pagina: page,
+    limite: rowsPerPage,
+    ordenarPor: 'Descripcion',
+    direccionOrden: 'ASC' as const,
+    // Flags derivadas según selección de estado y prop soloSinStock
+    soloConStock: estadoSeleccionado === 'con stock' ? true : undefined,
+    soloStockBajo: estadoSeleccionado === 'bajo stock' ? true : undefined,
+    soloSinStock: soloSinStock ? true : (estadoSeleccionado === 'sin stock' ? true : undefined),
+    soloEnPromocion: undefined,
+    proveedorId: proveedorSeleccionadoId ?? undefined,
+  };
+
+  // Logs de depuración: variables de filtros y cookies visibles en cliente (no httpOnly)
+  if (typeof window !== 'undefined') {
+    try {
+      // Aviso: document.cookie no muestra cookies httpOnly
+      // Esto es solo para verificar si existe alguna cookie accesible en cliente.
+      console.debug('[TablaArticulos] document.cookie (cliente, no incluye httpOnly):', document.cookie);
+    } catch {}
+  }
+
+  const variablesQuery = {
+    filtros: {
+      ...filtrosServidor,
+      // Si vienen rubro/proveedor por texto, los añadimos a la búsqueda global
+      busqueda: [
+        filtro,
+        filtrosColumna.rubro,
+        filtrosColumna.proveedor,
+        // No incluir estado textual en la búsqueda global; se mapea a flags específicos
+      ]
+        .filter(Boolean)
+        .join(' ') || undefined,
+    },
+  } as const;
+
+  console.debug('[TablaArticulos] Variables GraphQL ->', variablesQuery);
+
+  const { data, loading, error, refetch } = useQuery<BuscarArticulosResponse>(BUSCAR_ARTICULOS, {
+    variables: variablesQuery,
+    fetchPolicy: 'cache-and-network',
+  });
+
+  // Si hay error, desglosamos ApolloError
+  if (error) {
+    const maybeGqlErrors = (error as unknown as { graphQLErrors?: Array<{ message?: string; path?: ReadonlyArray<string | number>; extensions?: unknown }> }).graphQLErrors ?? [];
+    if (maybeGqlErrors.length) {
+      console.error('[TablaArticulos] graphQLErrors:', maybeGqlErrors.map(e => ({
+        message: e?.message,
+        path: e?.path,
+        extensions: e?.extensions,
+      })));
+    }
+    const maybeNetErr = (error as unknown as { networkError?: unknown }).networkError as unknown as {
+      name?: string; message?: string; statusCode?: number; status?: number; result?: unknown; response?: unknown;
+    } | undefined;
+    if (maybeNetErr) {
+      console.error('[TablaArticulos] networkError:', {
+        name: maybeNetErr?.name,
+        message: maybeNetErr?.message,
+        statusCode: (maybeNetErr as any)?.statusCode ?? (maybeNetErr as any)?.status,
+        result: (maybeNetErr as any)?.result,
+        response: (maybeNetErr as any)?.response,
+      });
+    }
+  }
 
   const abrirMenuColumna = (col: typeof columnaActiva) => (e: React.MouseEvent<HTMLElement>) => {
     setColumnaActiva(col);
+    // Sincronizar input temporal con el valor aplicado actual de esa columna
+    if (col) setFiltroColInput(filtrosColumna[col]);
     setMenuAnchor(e.currentTarget);
   };
   const cerrarMenuColumna = () => {
@@ -87,38 +177,21 @@ const TablaArticulos: React.FC<Props> = ({ soloSinStock = false, onNuevoArticulo
     setPage(0);
   };
 
-  const articulos: Articulo[] = data?.articulos || [];
-  
-  // Filtrar artículos por texto y por estado de stock (si aplica)
-  const articulosFiltrados = articulos
-    .filter((articulo) =>
-      articulo.Descripcion?.toLowerCase().includes(filtro.toLowerCase()) ||
-      articulo.Codigo?.toLowerCase().includes(filtro.toLowerCase()) ||
-      articulo.Rubro?.toLowerCase().includes(filtro.toLowerCase()) ||
-      articulo.proveedor?.Nombre?.toLowerCase().includes(filtro.toLowerCase())
-    )
-    // filtros por columna
-    .filter((a) => (filtrosColumna.codigo ? a.Codigo?.toLowerCase().includes(filtrosColumna.codigo.toLowerCase()) : true))
-    .filter((a) => (filtrosColumna.descripcion ? a.Descripcion?.toLowerCase().includes(filtrosColumna.descripcion.toLowerCase()) : true))
-    .filter((a) => (filtrosColumna.rubro ? a.Rubro?.toLowerCase().includes(filtrosColumna.rubro.toLowerCase()) : true))
-    .filter((a) => (filtrosColumna.proveedor ? a.proveedor?.Nombre?.toLowerCase().includes(filtrosColumna.proveedor.toLowerCase()) : true))
-    .filter((a) => {
-      if (!filtrosColumna.estado) return true;
-      const stock = parseFloat(String(a.Deposito ?? 0)) || 0;
-      const minimo = parseFloat(String(a.StockMinimo ?? 0)) || 0;
-      const etiqueta = getStockLabel(stock, minimo).toLowerCase();
-      return etiqueta.includes(filtrosColumna.estado.toLowerCase());
-    })
-    .filter((articulo) => {
-      if (!soloSinStock) return true;
-      const stock = parseFloat(String(articulo.Deposito ?? 0));
-      return Number.isFinite(stock) ? stock <= 0 : true;
-    });
+  const limpiarFiltros = () => {
+    setFiltro('');
+    setFiltroInput('');
+    setFiltrosColumna({ codigo: '', descripcion: '', rubro: '', proveedor: '', estado: '' });
+    setProveedorSeleccionadoId(null);
+    setPage(0);
+    refetch();
+  };
 
-  const articulosPaginados = articulosFiltrados.slice(
-    page * rowsPerPage,
-    page * rowsPerPage + rowsPerPage
-  );
+  const articulos: Articulo[] = data?.buscarArticulos?.articulos || [];
+  const total: number = data?.buscarArticulos?.total ?? 0;
+  console.debug('[TablaArticulos] Articulos recibidos:', articulos.length, '| total:', total, '| rowsPerPage:', rowsPerPage);
+
+  // Sin scroll interno: la tabla crece y el scroll es el general de la página
+  const usarScrollInterno = false;
 
   const getStockColor = (stock: number, stockMinimo: number) => {
     if (stock <= 0) return 'error';
@@ -177,7 +250,10 @@ const TablaArticulos: React.FC<Props> = ({ soloSinStock = false, onNuevoArticulo
           variant="contained" 
           color="warning"
           startIcon={<IconRefresh />}
-          onClick={() => refetch()}
+          onClick={() => {
+            console.debug('[TablaArticulos] Reintentar con variables ->', variablesQuery);
+            refetch();
+          }}
         >
           Reintentar
         </Button>
@@ -211,8 +287,14 @@ const TablaArticulos: React.FC<Props> = ({ soloSinStock = false, onNuevoArticulo
           <TextField
             size="small"
             placeholder="Buscar artículos..."
-            value={filtro}
-            onChange={(e) => setFiltro(e.target.value)}
+            value={filtroInput}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => { setFiltroInput(e.target.value); }}
+            onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) => {
+              if (e.key === 'Enter') {
+                setFiltro(filtroInput);
+                setPage(0);
+              }
+            }}
             InputProps={{
               startAdornment: (
                 <InputAdornment position="start">
@@ -222,36 +304,42 @@ const TablaArticulos: React.FC<Props> = ({ soloSinStock = false, onNuevoArticulo
             }}
             sx={{ minWidth: 250 }}
           />
-          <FormControlLabel 
-            control={<Switch checked={densa} onChange={(e) => setDensa(e.target.checked)} color="success" />} 
-            label="Densa" 
-          />
+          <Tooltip title="Buscar (Enter)">
+            <span>
+              <Button
+                variant="contained"
+                color="success"
+                startIcon={<IconSearch size={18} />}
+                onClick={() => { setFiltro(filtroInput); setPage(0); }}
+                disabled={loading}
+                sx={{ textTransform: 'none' }}
+              >
+                Buscar
+              </Button>
+            </span>
+          </Tooltip>
           <Button
             variant="outlined"
-            color="success"
-            startIcon={<IconRefresh />}
-            onClick={() => refetch()}
+            color="error"
+            startIcon={<IconTrash />}
+            onClick={limpiarFiltros}
           >
-            Actualizar
+            Limpiar filtros
           </Button>
         </Stack>
       </Box>
 
-      <TableContainer sx={{ maxHeight: '65vh', borderRadius: 2, border: '1px solid', borderColor: 'grey.200', bgcolor: 'background.paper', scrollbarGutter: 'stable both-edges', overflow: 'hidden' }}>
-        <Table stickyHeader size={densa ? 'small' : 'medium'} sx={{ '& .MuiTableCell-head': { bgcolor: '#2f3e2e', color: '#eef5ee' } }}>
+      <TableContainer sx={{ borderRadius: 2, border: '1px solid', borderColor: 'grey.200', bgcolor: 'background.paper' }}>
+        <Table stickyHeader size={'small'} sx={{ '& .MuiTableCell-head': { bgcolor: '#2f3e2e', color: '#eef5ee' } }}>
           <TableHead sx={{ position: 'sticky', top: 0, zIndex: 5 }}>
             <TableRow sx={{ bgcolor: '#2f3e2e', '& th': { top: 0, position: 'sticky', zIndex: 5 }, '& th:first-of-type': { borderTopLeftRadius: 8 }, '& th:last-of-type': { borderTopRightRadius: 8 } }}>
-              <TableCell sx={{ fontWeight: 700, color: '#eef5ee', borderBottom: '3px solid', borderColor: '#6b8f6b' }}>
-                <Box display="flex" alignItems="center" justifyContent="space-between">
-                  Código
-                  <Tooltip title="Filtrar columna">
-                    <IconButton size="small" color="inherit" onClick={abrirMenuColumna('codigo')}>
-                      <IconDotsVertical size={16} />
-                    </IconButton>
-                  </Tooltip>
-                </Box>
-              </TableCell>
-              <TableCell sx={{ fontWeight: 700, color: '#eef5ee', borderBottom: '3px solid', borderColor: '#6b8f6b' }}>
+              <TableCell sx={{
+                fontWeight: 700,
+                color: '#eef5ee',
+                borderBottom: '3px solid',
+                borderColor: '#6b8f6b',
+                width: { xs: '50%', sm: '40%', md: '40%' }
+              }}>
                 <Box display="flex" alignItems="center" justifyContent="space-between">
                   Descripción
                   <Tooltip title="Filtrar columna">
@@ -261,7 +349,13 @@ const TablaArticulos: React.FC<Props> = ({ soloSinStock = false, onNuevoArticulo
                   </Tooltip>
                 </Box>
               </TableCell>
-              <TableCell sx={{ fontWeight: 700, color: '#eef5ee', borderBottom: '3px solid', borderColor: '#6b8f6b' }}>
+              <TableCell sx={{
+                fontWeight: 700,
+                color: '#eef5ee',
+                borderBottom: '3px solid',
+                borderColor: '#6b8f6b',
+                width: { xs: '20%', sm: '15%', md: '10%' }
+              }}>
                 <Box display="flex" alignItems="center" justifyContent="space-between">
                   Rubro
                   <Tooltip title="Filtrar columna">
@@ -274,10 +368,14 @@ const TablaArticulos: React.FC<Props> = ({ soloSinStock = false, onNuevoArticulo
               <TableCell sx={{ fontWeight: 700, color: '#eef5ee', borderBottom: '3px solid', borderColor: '#6b8f6b' }}>
                 Stock
               </TableCell>
-              <TableCell sx={{ fontWeight: 700, color: '#eef5ee', borderBottom: '3px solid', borderColor: '#6b8f6b' }}>
-                Precio Venta
-              </TableCell>
-              <TableCell sx={{ fontWeight: 700, color: '#eef5ee', borderBottom: '3px solid', borderColor: '#6b8f6b' }}>
+              {/* Oculto Precio Venta */}
+              <TableCell sx={{
+                fontWeight: 700,
+                color: '#eef5ee',
+                borderBottom: '3px solid',
+                borderColor: '#6b8f6b',
+                width: { xs: '30%', sm: '35%', md: '30%' }
+              }}>
                 <Box display="flex" alignItems="center" justifyContent="space-between">
                   Proveedor
                   <Tooltip title="Filtrar columna">
@@ -298,12 +396,13 @@ const TablaArticulos: React.FC<Props> = ({ soloSinStock = false, onNuevoArticulo
                 </Box>
               </TableCell>
               <TableCell sx={{ fontWeight: 700, color: '#eef5ee', borderBottom: '3px solid', borderColor: '#6b8f6b', textAlign: 'center' }}>Acciones</TableCell>
-              {/* Columna espaciadora para ancho de scrollbar */}
-              <TableCell sx={{ p: 0, width: '12px', bgcolor: '#2f3e2e', borderBottom: '3px solid', borderColor: '#6b8f6b' }} />
+              {usarScrollInterno && (
+                <TableCell sx={{ p: 0, width: '12px', bgcolor: '#2f3e2e', borderBottom: '3px solid', borderColor: '#6b8f6b' }} />
+              )}
             </TableRow>
           </TableHead>
-          <TableBody sx={{ '& .MuiTableCell-root': { py: densa ? 1 : 1.5 } }}>
-            {articulosPaginados.map((articulo, idx) => (
+          <TableBody sx={{ '& .MuiTableCell-root': { py: 1 } }}>
+            {articulos.map((articulo, idx) => (
               <TableRow 
                 key={articulo.id}
                 sx={{ 
@@ -313,7 +412,14 @@ const TablaArticulos: React.FC<Props> = ({ soloSinStock = false, onNuevoArticulo
                   }
                 }}
               >
-                <TableCell>
+                {/* Descripción (expandida) */}
+                <TableCell sx={{ width: { xs: '50%', sm: '40%', md: '40%' } }}>
+                  <Typography variant="body2" fontWeight={600} sx={{ whiteSpace: 'normal' }}>
+                    {articulo.Descripcion || '-'}
+                  </Typography>
+                </TableCell>
+                {/* Rubro */}
+                <TableCell sx={{ width: { xs: '20%', sm: '15%', md: '10%' } }}>
                   <Chip 
                     label={articulo.Rubro || 'Sin rubro'} 
                     size="small"
@@ -324,6 +430,7 @@ const TablaArticulos: React.FC<Props> = ({ soloSinStock = false, onNuevoArticulo
                     }}
                   />
                 </TableCell>
+                {/* Stock */}
                 <TableCell>
                   <Typography 
                     variant="body2" 
@@ -333,16 +440,14 @@ const TablaArticulos: React.FC<Props> = ({ soloSinStock = false, onNuevoArticulo
                     {(parseFloat(String(articulo.Deposito ?? 0)) || 0)} {abrevUnidad(articulo.Unidad as UnidadMedida)}
                   </Typography>
                 </TableCell>
-                <TableCell>
-                  <Typography variant="body2" fontWeight={500} color="success.main">
-                    ${articulo.PrecioVenta?.toLocaleString() || '0'} / {abrevUnidad(articulo.Unidad as UnidadMedida)}
-                  </Typography>
-                </TableCell>
-                <TableCell>
+                {/* Oculto Precio Venta */}
+                {/* 6) Proveedor */}
+                <TableCell sx={{ width: { xs: '30%', sm: '35%', md: '30%' } }}>
                   <Typography variant="body2" color="text.secondary">
                     {articulo.proveedor?.Nombre || 'Sin proveedor'}
                   </Typography>
                 </TableCell>
+                {/* 7) Estado */}
                 <TableCell>
                   <Chip
                     label={getStockLabel(parseFloat(String(articulo.Deposito ?? 0)) || 0, articulo.StockMinimo || 0)}
@@ -360,6 +465,7 @@ const TablaArticulos: React.FC<Props> = ({ soloSinStock = false, onNuevoArticulo
                     />
                   )}
                 </TableCell>
+                {/* 8) Acciones */}
                 <TableCell>
                   <Box display="flex" justifyContent="center" gap={1}>
                     <Tooltip title="Ver detalles">
@@ -395,12 +501,20 @@ const TablaArticulos: React.FC<Props> = ({ soloSinStock = false, onNuevoArticulo
                   </Box>
                 </TableCell>
                 {/* Celda espaciadora para alinear con header y reservar scroll */}
-                <TableCell sx={{ p: 0, width: '12px' }} />
+                {usarScrollInterno && (
+                  <TableCell sx={{ p: 0, width: '12px' }} />
+                )}
               </TableRow>
             ))}
           </TableBody>
         </Table>
       </TableContainer>
+
+      <Box mt={1} mb={1} display="flex" justifyContent="space-between" alignItems="center">
+        <Typography variant="caption" color="text.secondary">
+          Mostrando {articulos.length} de {rowsPerPage} filas de esta página. {usarScrollInterno ? 'Desplázate dentro de la tabla para ver todas las filas.' : ''}
+        </Typography>
+      </Box>
 
       {/* Menú de filtros por columna */}
       <Menu
@@ -421,26 +535,88 @@ const TablaArticulos: React.FC<Props> = ({ soloSinStock = false, onNuevoArticulo
         <Divider sx={{ mb: 1 }} />
         {columnaActiva && (
           <Box px={1} pb={1}>
-            <TextField
-              size="small"
-              fullWidth
-              autoFocus
-              placeholder="Escribe para filtrar..."
-              value={filtrosColumna[columnaActiva]}
-              onChange={(e) => setFiltrosColumna((prev) => ({ ...prev, [columnaActiva]: e.target.value }))}
-            />
-            <Stack direction="row" justifyContent="flex-end" spacing={1} mt={1}>
-              <Button size="small" onClick={() => { if (!columnaActiva) return; setFiltrosColumna((p) => ({ ...p, [columnaActiva!]: '' })); }}>Limpiar</Button>
-              <Button size="small" variant="contained" color="success" onClick={cerrarMenuColumna}>Aplicar</Button>
-            </Stack>
+            {columnaActiva === 'estado' ? (
+              <Stack spacing={1}>
+                <Stack direction="row" spacing={1} flexWrap="wrap">
+                  {['Sin stock', 'Bajo stock', 'Con stock'].map((op) => (
+                    <Button
+                      key={op}
+                      size="small"
+                      variant={filtrosColumna.estado === op ? 'contained' : 'outlined'}
+                      color="success"
+                      onClick={() => {
+                        setFiltrosColumna((p) => ({ ...p, estado: op }));
+                        setPage(0);
+                        cerrarMenuColumna();
+                      }}
+                      sx={{ textTransform: 'none' }}
+                    >
+                      {op}
+                    </Button>
+                  ))}
+                </Stack>
+                <Stack direction="row" justifyContent="space-between">
+                  <Button size="small" onClick={() => { setFiltrosColumna((p) => ({ ...p, estado: '' })); setPage(0); cerrarMenuColumna(); }}>Limpiar</Button>
+                </Stack>
+              </Stack>
+            ) : columnaActiva === 'proveedor' ? (
+              <>
+                <Autocomplete
+                  size="small"
+                  options={proveedores}
+                  getOptionLabel={(op) => op?.Nombre ?? ''}
+                  value={proveedores.find(p => p.IdProveedor === proveedorSeleccionadoId) ?? null}
+                  onChange={(_e, value) => {
+                    setProveedorSeleccionadoId(value?.IdProveedor ?? null);
+                    setFiltrosColumna((p) => ({ ...p, proveedor: value?.Nombre ?? '' }));
+                    setPage(0);
+                    cerrarMenuColumna();
+                  }}
+                  isOptionEqualToValue={(op, val) => op.IdProveedor === val.IdProveedor}
+                  renderInput={(params) => (
+                    <TextField {...params} placeholder="Buscar proveedor..." fullWidth />
+                  )}
+                />
+                <Stack direction="row" justifyContent="space-between" mt={1}>
+                  <Button size="small" onClick={() => { setProveedorSeleccionadoId(null); setFiltrosColumna((p) => ({ ...p, proveedor: '' })); setPage(0); cerrarMenuColumna(); }}>Limpiar</Button>
+                </Stack>
+              </>
+            ) : (
+              <>
+                <TextField
+                  size="small"
+                  fullWidth
+                  autoFocus
+                  placeholder="Escribe para filtrar..."
+                  value={filtroColInput}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFiltroColInput(e.target.value)}
+                  onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) => {
+                    if (e.key === 'Enter' && columnaActiva) {
+                      setFiltrosColumna((prev) => ({ ...prev, [columnaActiva]: filtroColInput }));
+                      setPage(0);
+                      cerrarMenuColumna();
+                    }
+                  }}
+                />
+                <Stack direction="row" justifyContent="flex-end" spacing={1} mt={1}>
+                  <Button size="small" onClick={() => { setFiltroColInput(''); }}>Limpiar</Button>
+                  <Button size="small" variant="contained" color="success" onClick={() => {
+                    if (!columnaActiva) return;
+                    setFiltrosColumna((p) => ({ ...p, [columnaActiva!]: filtroColInput }));
+                    setPage(0);
+                    cerrarMenuColumna();
+                  }}>Aplicar</Button>
+                </Stack>
+              </>
+            )}
           </Box>
         )}
       </Menu>
 
       <TablePagination
-        rowsPerPageOptions={[5, 10, 25, 50]}
+        rowsPerPageOptions={[50, 100, 150]}
         component="div"
-        count={articulosFiltrados.length}
+        count={total}
         rowsPerPage={rowsPerPage}
         page={page}
         onPageChange={handleChangePage}
