@@ -22,7 +22,7 @@ const esquemaPromocion = z.object({
   nombre: z.string().min(2, "Nombre requerido"),
   inicio: z.string().min(1, "Fecha inicio requerida"),
   fin: z.string().min(1, "Fecha fin requerida"),
-  descuento: z.coerce
+  descuento: z
     .number()
     .min(0, "Mínimo 0")
     .max(100, "Máximo 100"),
