@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-const BACKEND_URL = process.env.BACKEND_URL || 'http://localhost:4000';
+const BACKEND_URL = process.env.BACKEND_URL || process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3000';
 
 export async function POST(req: NextRequest) {
   const body = await req.text(); // mantener el body tal cual
@@ -17,6 +17,9 @@ export async function POST(req: NextRequest) {
   }
   const secretKey = process.env.NEXT_PUBLIC_X_SECRET_KEY;
   if (secretKey) headers['X-Secret-Key'] = secretKey;
+  // Reenviar cookies originales por si el backend lee JWT desde Cookie
+  const incomingCookie = req.headers.get('cookie');
+  if (incomingCookie) headers['Cookie'] = incomingCookie;
 
   const target = `${BACKEND_URL.replace(/\/$/, '')}/graphql`;
   console.info('[API /api/graphql] reenviando a:', target, '| token presente:', Boolean(token));
@@ -24,7 +27,7 @@ export async function POST(req: NextRequest) {
     method: 'POST',
     headers,
     body,
-    // No enviar credenciales al backend porque usamos header Authorization
+    // No usamos credentials aquí; reenviamos manualmente headers necesarios
   });
 
   const text = await upstream.text();
