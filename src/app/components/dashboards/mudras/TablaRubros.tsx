@@ -16,16 +16,19 @@ import {
   TextField,
   InputAdornment,
   Button,
-  Stack
+  Stack,
+  Menu,
+  Divider,
 } from "@mui/material";
 import { useQuery } from '@apollo/client/react';
 import { GET_RUBROS } from '@/app/queries/mudras.queries';
 import { Rubro } from '@/app/interfaces/mudras.types';
 import { RubrosResponse } from '@/app/interfaces/graphql.types';
-import { IconSearch, IconCategory, IconRefresh, IconEdit, IconTrash, IconEye, IconPlus } from '@tabler/icons-react';
+import { IconSearch, IconCategory, IconRefresh, IconEdit, IconTrash, IconEye, IconPlus, IconDotsVertical } from '@tabler/icons-react';
 import { useState } from 'react';
 import { IconButton, Tooltip } from '@mui/material';
 import { etiquetaUnidad, abrevUnidad, type UnidadMedida } from '@/app/utils/unidades';
+import { teal } from '@/ui/colores';
 
 interface Props {
   onNuevoRubro?: () => void;
@@ -37,6 +40,9 @@ const TablaRubros: React.FC<Props> = ({ onNuevoRubro, puedeCrear = true }) => {
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [filtro, setFiltro] = useState('');
+  const [menuAnchor, setMenuAnchor] = useState<null | HTMLElement>(null);
+  const [columnaActiva, setColumnaActiva] = useState<null | 'rubro' | 'codigo'>(null);
+  const [filtroColInput, setFiltroColInput] = useState('');
 
   // Funciones para manejar acciones
   const handleViewRubro = (rubro: Rubro) => {
@@ -134,62 +140,56 @@ const TablaRubros: React.FC<Props> = ({ onNuevoRubro, puedeCrear = true }) => {
   }
 
   return (
-    <Paper sx={{ p: 3 }}>
-      <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
-        <Typography variant="h5" fontWeight={600} color="success.main">
+    <Paper elevation={0} variant="outlined" sx={{ p: 3, borderColor: teal.borderOuter, borderRadius: 2, bgcolor: 'background.paper' }}>
+      <Box display="flex" justifyContent="space-between" alignItems="center" sx={{ px: 1, py: 1, bgcolor: teal.toolbarBg, border: '1px solid', borderColor: teal.toolbarBorder, borderRadius: 1, mb: 2 }}>
+        <Typography variant="h6" fontWeight={700} color={teal.textStrong}>
           <IconCategory style={{ marginRight: 8, verticalAlign: 'middle' }} />
           Rubros y Categorías
         </Typography>
-        <Stack direction="row" spacing={2} alignItems="center">
+        <Box display="flex" alignItems="center" gap={1.5}>
           {puedeCrear && (
-            <Button
-              variant="contained"
-              color="success"
-              startIcon={<IconPlus size={18} />}
-              onClick={onNuevoRubro}
-              sx={{
-                textTransform: 'none',
-                bgcolor: 'success.main',
-                '&:hover': { bgcolor: 'success.dark' }
-              }}
-            >
-              Nuevo Rubro
-            </Button>
+            <Button variant="contained" onClick={onNuevoRubro} sx={{ textTransform: 'none', bgcolor: teal.primary, '&:hover': { bgcolor: teal.primaryHover } }} startIcon={<IconPlus size={18} />}>Nuevo Rubro</Button>
           )}
           <TextField
             size="small"
             placeholder="Buscar rubros..."
             value={filtro}
             onChange={(e) => setFiltro(e.target.value)}
-            InputProps={{
-              startAdornment: (
-                <InputAdornment position="start">
-                  <IconSearch size={20} />
-                </InputAdornment>
-              ),
-            }}
+            InputProps={{ startAdornment: (<InputAdornment position="start"><IconSearch size={20} /></InputAdornment>) }}
             sx={{ minWidth: 250 }}
           />
-          <Button
-            variant="outlined"
-            color="success"
-            startIcon={<IconRefresh />}
-            onClick={() => refetch()}
-          >
-            Actualizar
-          </Button>
-        </Stack>
+          <Button variant="contained" sx={{ textTransform: 'none', bgcolor: teal.primary, '&:hover': { bgcolor: teal.primaryHover } }} onClick={() => setPage(0)}>Buscar</Button>
+          <Button variant="outlined" color="inherit" onClick={() => { setFiltro(''); setPage(0); }} sx={{ textTransform: 'none', borderColor: teal.headerBorder, color: teal.textStrong, '&:hover': { borderColor: teal.textStrong, bgcolor: teal.toolbarBg } }}>Limpiar filtros</Button>
+        </Box>
       </Box>
 
-      <TableContainer>
-        <Table>
-          <TableHead>
-            <TableRow sx={{ bgcolor: 'success.light' }}>
-              <TableCell sx={{ fontWeight: 600, color: 'success.dark' }}>Categoría</TableCell>
-              <TableCell sx={{ fontWeight: 600, color: 'success.dark' }}>Código</TableCell>
-              <TableCell sx={{ fontWeight: 600, color: 'success.dark' }}>Unidad</TableCell>
-              <TableCell sx={{ fontWeight: 600, color: 'success.dark' }}>ID</TableCell>
-              <TableCell sx={{ fontWeight: 600, color: 'success.dark', textAlign: 'center' }}>Acciones</TableCell>
+      <TableContainer sx={{ borderRadius: 2, border: '1px solid', borderColor: teal.borderInner, bgcolor: 'background.paper' }}>
+        <Table stickyHeader size={'small'} sx={{ '& .MuiTableCell-head': { bgcolor: teal.headerBg, color: teal.headerText } }}>
+          <TableHead sx={{ position: 'sticky', top: 0, zIndex: 5 }}>
+            <TableRow sx={{ bgcolor: teal.headerBg, '& th': { top: 0, position: 'sticky', zIndex: 5 } }}>
+              <TableCell sx={{ fontWeight: 700, color: teal.headerText, borderBottom: '3px solid', borderColor: teal.headerBorder }}>
+                <Box display="flex" alignItems="center" justifyContent="space-between">
+                  Categoría
+                  <Tooltip title="Filtrar columna">
+                    <IconButton size="small" color="inherit" onClick={(e) => { setColumnaActiva('rubro'); setFiltroColInput(''); setMenuAnchor(e.currentTarget); }}>
+                      <IconDotsVertical size={16} />
+                    </IconButton>
+                  </Tooltip>
+                </Box>
+              </TableCell>
+              <TableCell sx={{ fontWeight: 700, color: teal.headerText, borderBottom: '3px solid', borderColor: teal.headerBorder }}>
+                <Box display="flex" alignItems="center" justifyContent="space-between">
+                  Código
+                  <Tooltip title="Filtrar columna">
+                    <IconButton size="small" color="inherit" onClick={(e) => { setColumnaActiva('codigo'); setFiltroColInput(''); setMenuAnchor(e.currentTarget); }}>
+                      <IconDotsVertical size={16} />
+                    </IconButton>
+                  </Tooltip>
+                </Box>
+              </TableCell>
+              <TableCell sx={{ fontWeight: 700, color: teal.headerText, borderBottom: '3px solid', borderColor: teal.headerBorder }}>Unidad</TableCell>
+              <TableCell sx={{ fontWeight: 700, color: teal.headerText, borderBottom: '3px solid', borderColor: teal.headerBorder }}>ID</TableCell>
+              <TableCell sx={{ fontWeight: 700, color: teal.headerText, borderBottom: '3px solid', borderColor: teal.headerBorder, textAlign: 'center' }}>Acciones</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
@@ -199,17 +199,16 @@ const TablaRubros: React.FC<Props> = ({ onNuevoRubro, puedeCrear = true }) => {
                 <TableRow 
                   key={rubro.Id}
                   sx={{ 
-                    '&:hover': { 
-                      bgcolor: 'success.lighter',
-                      cursor: 'pointer'
-                    }
+                    bgcolor: index % 2 === 1 ? 'grey.50' : 'inherit',
+                    '&:hover': { bgcolor: teal.rowHover },
+                    cursor: 'pointer'
                   }}
                 >
                   <TableCell>
                     <Box display="flex" alignItems="center">
                       <Avatar 
                         sx={{ 
-                          bgcolor: `${colorScheme}.main`, 
+                          bgcolor: teal.primary, 
                           width: 40, 
                           height: 40, 
                           mr: 2,
@@ -278,6 +277,57 @@ const TablaRubros: React.FC<Props> = ({ onNuevoRubro, puedeCrear = true }) => {
           </TableBody>
         </Table>
       </TableContainer>
+
+      {/* Menú de filtros por columna (simple) */}
+      <Menu
+        anchorEl={menuAnchor}
+        open={Boolean(menuAnchor)}
+        onClose={() => { setMenuAnchor(null); setColumnaActiva(null); }}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+        transformOrigin={{ vertical: 'top', horizontal: 'right' }}
+        slotProps={{ paper: { sx: { p: 1.5, minWidth: 260 } } } as any}
+      >
+        <Typography variant="subtitle2" sx={{ px: 1, pb: 1 }}>
+          {columnaActiva === 'rubro' && 'Filtrar por Categoría'}
+          {columnaActiva === 'codigo' && 'Filtrar por Código'}
+        </Typography>
+        <Divider sx={{ mb: 1 }} />
+        {columnaActiva && (
+          <Box px={1} pb={1}>
+            <TextField
+              size="small"
+              fullWidth
+              autoFocus
+              placeholder="Escribe para filtrar..."
+              value={filtroColInput}
+              onChange={(e) => setFiltroColInput(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  setFiltro(filtroColInput);
+                  setPage(0);
+                  setMenuAnchor(null);
+                  setColumnaActiva(null);
+                }
+              }}
+            />
+            <Stack direction="row" justifyContent="flex-end" spacing={1} mt={1}>
+              <Button size="small" onClick={() => { setFiltroColInput(''); }}>Limpiar</Button>
+              <Button size="small" variant="contained" sx={{ bgcolor: teal.primary, '&:hover': { bgcolor: teal.primaryHover } }} onClick={() => {
+                setFiltro(filtroColInput);
+                setPage(0);
+                setMenuAnchor(null);
+                setColumnaActiva(null);
+              }}>Aplicar</Button>
+            </Stack>
+          </Box>
+        )}
+      </Menu>
+
+      <Box mt={1} mb={1} display="flex" justifyContent="space-between" alignItems="center">
+        <Typography variant="caption" color="text.secondary">
+          Mostrando {rubrosPaginados.length} rubros en esta página.
+        </Typography>
+      </Box>
 
       <TablePagination
         rowsPerPageOptions={[5, 10, 25, 50]}

@@ -1,17 +1,19 @@
 export type Metodo = 'GET' | 'POST' | 'PUT' | 'DELETE';
 
-const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3001';
+// Usamos el proxy interno de Next: /api/rest para unificar origen y cookies
+const baseUrl = '/api/rest';
 
 export async function apiFetch<T = unknown>(path: string, options: { method?: Metodo; body?: any; headers?: Record<string, string> } = {}): Promise<T> {
   const { method = 'GET', body, headers = {} } = options;
-  const res = await fetch(`${backendUrl}${path}`, {
+  const url = `${baseUrl}${path.startsWith('/') ? '' : '/'}${path}`;
+  const res = await fetch(url, {
     method,
     headers: {
       'Content-Type': 'application/json',
       ...headers,
     },
     body: body ? JSON.stringify(body) : undefined,
-    credentials: 'include', // importante para enviar cookies HTTP-only
+    credentials: 'include', // mantiene cookies hacia /api/rest
   });
   if (!res.ok) {
     const text = await res.text().catch(() => '');

@@ -18,20 +18,43 @@ import {
   Stack
 } from "@mui/material";
 import { useQuery } from '@apollo/client/react';
-import { GET_MOVIMIENTOS_STOCK } from '@/app/queries/mudras.queries';
+import { GET_MOVIMIENTOS_STOCK, GET_ARTICULOS } from '@/app/queries/mudras.queries';
 import { Stock } from '@/app/interfaces/mudras.types';
 import { MovimientosStockResponse } from '@/app/interfaces/graphql.types';
-import { IconSearch, IconTrendingUp, IconTrendingDown, IconRefresh, IconEdit, IconTrash, IconEye, IconArrowUp, IconArrowDown } from '@tabler/icons-react';
-import { useState } from 'react';
-import { IconButton, Tooltip } from '@mui/material';
+import { IconSearch, IconTrendingUp, IconTrendingDown, IconRefresh, IconEdit, IconTrash, IconEye, IconArrowUp, IconArrowDown, IconDotsVertical } from '@tabler/icons-react';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { IconButton, Tooltip, Menu, Divider } from '@mui/material';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
+import { verde } from '@/ui/colores';
 
 const TablaMovimientosStock = () => {
-  const { data, loading, error, refetch } = useQuery<MovimientosStockResponse>(GET_MOVIMIENTOS_STOCK);
+  const { data, loading, error, refetch, networkStatus } = useQuery<MovimientosStockResponse>(GET_MOVIMIENTOS_STOCK, {
+    fetchPolicy: 'cache-and-network',
+    notifyOnNetworkStatusChange: true,
+  });
+  const { data: dataArticulos } = useQuery<any>(GET_ARTICULOS, { fetchPolicy: 'cache-first' });
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [filtro, setFiltro] = useState('');
+  const [menuAnchor, setMenuAnchor] = useState<null | HTMLElement>(null);
+  const [columnaActiva, setColumnaActiva] = useState<null | 'descripcion' | 'usuario'>(null);
+  const [filtrosColumna, setFiltrosColumna] = useState<{ descripcion?: string; usuario?: string; }>({});
+  const [filtroColInput, setFiltroColInput] = useState('');
+
+  // Reintento controlado si aparece el error de toISOString en la primera ráfaga
+  const reintentoHecho = useRef(false);
+  useEffect(() => {
+    if (error && !reintentoHecho.current) {
+      const msg = String(error.message || '').toLowerCase();
+      if (msg.includes('toisostring')) {
+        reintentoHecho.current = true;
+        setTimeout(() => {
+          try { void refetch(); } catch {}
+        }, 200);
+      }
+    }
+  }, [error, refetch]);
 
   // Funciones para manejar acciones
   const handleViewMovimiento = (movimiento: Stock) => {
@@ -58,11 +81,25 @@ const TablaMovimientosStock = () => {
     setPage(0);
   };
 
-  const movimientos: Stock[] = data?.movimientosStock || [];
+  const movimientos: Stock[] = Array.isArray(data?.movimientosStock) ? (data!.movimientosStock as Stock[]) : [];
+  const articulos = Array.isArray(dataArticulos?.articulos) ? dataArticulos!.articulos as any[] : [];
+  const mapaDescripcionPorCodigo = useMemo(() => {
+    const m = new Map<string, string>();
+    for (const a of articulos) {
+      if (a?.Codigo) m.set(String(a.Codigo), a?.Descripcion ?? '');
+    }
+    return m;
+  }, [articulos]);
   
-  const movimientosFiltrados = movimientos.filter((movimiento) =>
-    movimiento.Codigo?.toLowerCase().includes(filtro.toLowerCase())
-  );
+  const movimientosFiltrados = movimientos.filter((movimiento) => {
+    const desc = mapaDescripcionPorCodigo.get(String(movimiento?.Codigo ?? ''))?.toLowerCase() ?? '';
+    const usuarioTxt = String(movimiento?.Usuario ?? '').toLowerCase();
+    const q = filtro.toLowerCase();
+    const pasaTexto = !q || desc.includes(q) || usuarioTxt.includes(q);
+    const pasaDesc = filtrosColumna.descripcion ? desc.includes(filtrosColumna.descripcion.toLowerCase()) : true;
+    const pasaUsuario = filtrosColumna.usuario ? usuarioTxt.includes(filtrosColumna.usuario.toLowerCase()) : true;
+    return pasaTexto && pasaDesc && pasaUsuario;
+  });
 
   const movimientosPaginados = movimientosFiltrados.slice(
     page * rowsPerPage,
@@ -107,11 +144,57 @@ const TablaMovimientosStock = () => {
             </TableBody>
           </Table>
         </TableContainer>
+
+      {/* Menú de filtros por columna */}
+      <Menu
+        anchorEl={menuAnchor}
+        open={Boolean(menuAnchor)}
+        onClose={() => { setMenuAnchor(null); setColumnaActiva(null); }}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+        transformOrigin={{ vertical: 'top', horizontal: 'right' }}
+        slotProps={{ paper: { sx: { p: 1.5, minWidth: 260 } } } as any}
+      >
+        <Typography variant="subtitle2" sx={{ px: 1, pb: 1 }}>
+          {columnaActiva === 'descripcion' && 'Filtrar por Descripción'}
+          {columnaActiva === 'usuario' && 'Filtrar por Usuario'}
+        </Typography>
+        <Divider sx={{ mb: 1 }} />
+        {columnaActiva && (
+          <Box px={1} pb={1}>
+            <TextField
+              size="small"
+              fullWidth
+              autoFocus
+              placeholder="Escribe para filtrar..."
+              value={filtroColInput}
+              onChange={(e) => setFiltroColInput(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  setFiltrosColumna((prev) => ({ ...prev, [columnaActiva!]: filtroColInput }));
+                  setPage(0);
+                  setMenuAnchor(null);
+                  setColumnaActiva(null);
+                }
+              }}
+            />
+            <Stack direction="row" justifyContent="flex-end" spacing={1} mt={1}>
+              <Button size="small" onClick={() => { setFiltroColInput(''); setFiltrosColumna((prev) => ({ ...prev, [columnaActiva!]: '' })); }}>Limpiar</Button>
+              <Button size="small" variant="contained" sx={{ bgcolor: verde.primary, '&:hover': { bgcolor: verde.primaryHover } }} onClick={() => {
+                setFiltrosColumna((prev) => ({ ...prev, [columnaActiva!]: filtroColInput }));
+                setPage(0);
+                setMenuAnchor(null);
+                setColumnaActiva(null);
+              }}>Aplicar</Button>
+            </Stack>
+          </Box>
+        )}
+      </Menu>
       </Paper>
     );
   }
 
-  if (error) {
+  const noHayDatos = !Array.isArray(data?.movimientosStock) || (data?.movimientosStock?.length || 0) === 0;
+  if (error && noHayDatos) {
     return (
       <Paper sx={{ p: 3, textAlign: 'center' }}>
         <Typography color="error" variant="h6" mb={2}>
@@ -133,50 +216,57 @@ const TablaMovimientosStock = () => {
   }
 
   return (
-    <Paper sx={{ p: 3 }}>
-      <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
-        <Typography variant="h5" fontWeight={600} color="info.main">
+    <Paper elevation={0} variant="outlined" sx={{ p: 3, borderColor: verde.headerBorder, borderRadius: 2, bgcolor: 'background.paper' }}>
+      {/* Toolbar superior estilo Artículos */}
+      <Box display="flex" justifyContent="space-between" alignItems="center" sx={{ px: 1, py: 1, bgcolor: verde.toolbarBg, border: '1px solid', borderColor: verde.toolbarBorder, borderRadius: 1, mb: 2 }}>
+        <Typography variant="h6" fontWeight={700} color={verde.textStrong}>
           <IconTrendingUp style={{ marginRight: 8, verticalAlign: 'middle' }} />
           Movimientos de Stock
         </Typography>
-        <Stack direction="row" spacing={2} alignItems="center">
+        <Box display="flex" alignItems="center" gap={1.5}>
           <TextField
             size="small"
             placeholder="Buscar por código..."
             value={filtro}
             onChange={(e) => setFiltro(e.target.value)}
-            InputProps={{
-              startAdornment: (
-                <InputAdornment position="start">
-                  <IconSearch size={20} />
-                </InputAdornment>
-              ),
-            }}
+            InputProps={{ startAdornment: (<InputAdornment position="start"><IconSearch size={20} /></InputAdornment>) }}
             sx={{ minWidth: 250 }}
           />
-          <Button
-            variant="outlined"
-            color="info"
-            startIcon={<IconRefresh />}
-            onClick={() => refetch()}
-          >
-            Actualizar
-          </Button>
-        </Stack>
+          <Button variant="contained" sx={{ textTransform: 'none', bgcolor: verde.primary, '&:hover': { bgcolor: verde.primaryHover } }} onClick={() => setPage(0)}>Buscar</Button>
+          <Button variant="outlined" color="inherit" onClick={() => { setFiltro(''); setPage(0); }} sx={{ textTransform: 'none', borderColor: verde.headerBorder, color: verde.textStrong, '&:hover': { borderColor: verde.textStrong, bgcolor: verde.toolbarBg } }}>Limpiar filtros</Button>
+        </Box>
       </Box>
 
-      <TableContainer>
-        <Table>
-          <TableHead>
-            <TableRow sx={{ bgcolor: 'info.light' }}>
-              <TableCell sx={{ fontWeight: 600, color: 'info.dark' }}>Fecha</TableCell>
-              <TableCell sx={{ fontWeight: 600, color: 'info.dark' }}>Código Artículo</TableCell>
-              <TableCell sx={{ fontWeight: 600, color: 'info.dark' }}>Stock Anterior</TableCell>
-              <TableCell sx={{ fontWeight: 600, color: 'info.dark' }}>Stock Actual</TableCell>
-              <TableCell sx={{ fontWeight: 600, color: 'info.dark' }}>Diferencia</TableCell>
-              <TableCell sx={{ fontWeight: 600, color: 'info.dark' }}>Tipo Movimiento</TableCell>
-              <TableCell sx={{ fontWeight: 600, color: 'info.dark' }}>Usuario</TableCell>
-              <TableCell sx={{ fontWeight: 600, color: 'info.dark', textAlign: 'center' }}>Acciones</TableCell>
+      <TableContainer sx={{ borderRadius: 2, border: '1px solid', borderColor: verde.borderInner, bgcolor: 'background.paper' }}>
+        <Table stickyHeader size={'small'} sx={{ '& .MuiTableCell-head': { bgcolor: verde.headerBg, color: verde.headerText } }}>
+          <TableHead sx={{ position: 'sticky', top: 0, zIndex: 5 }}>
+            <TableRow sx={{ bgcolor: verde.headerBg, '& th': { top: 0, position: 'sticky', zIndex: 5 } }}>
+              <TableCell sx={{ fontWeight: 700, color: verde.headerText, borderBottom: '3px solid', borderColor: verde.headerBorder }}>Fecha</TableCell>
+              <TableCell sx={{ fontWeight: 700, color: verde.headerText, borderBottom: '3px solid', borderColor: verde.headerBorder }}>
+                <Box display="flex" alignItems="center" justifyContent="space-between">
+                  Descripción
+                  <Tooltip title="Filtrar columna">
+                    <IconButton size="small" color="inherit" onClick={(e) => { setColumnaActiva('descripcion'); setFiltroColInput(filtrosColumna.descripcion || ''); setMenuAnchor(e.currentTarget); }}>
+                      <IconDotsVertical size={16} />
+                    </IconButton>
+                  </Tooltip>
+                </Box>
+              </TableCell>
+              <TableCell sx={{ fontWeight: 700, color: verde.headerText, borderBottom: '3px solid', borderColor: verde.headerBorder }}>Stock Anterior</TableCell>
+              <TableCell sx={{ fontWeight: 700, color: verde.headerText, borderBottom: '3px solid', borderColor: verde.headerBorder }}>Stock Actual</TableCell>
+              <TableCell sx={{ fontWeight: 700, color: verde.headerText, borderBottom: '3px solid', borderColor: verde.headerBorder }}>Diferencia</TableCell>
+              <TableCell sx={{ fontWeight: 700, color: verde.headerText, borderBottom: '3px solid', borderColor: verde.headerBorder }}>Tipo Movimiento</TableCell>
+              <TableCell sx={{ fontWeight: 700, color: verde.headerText, borderBottom: '3px solid', borderColor: verde.headerBorder }}>
+                <Box display="flex" alignItems="center" justifyContent="space-between">
+                  Usuario
+                  <Tooltip title="Filtrar columna">
+                    <IconButton size="small" color="inherit" onClick={(e) => { setColumnaActiva('usuario'); setFiltroColInput(filtrosColumna.usuario || ''); setMenuAnchor(e.currentTarget); }}>
+                      <IconDotsVertical size={16} />
+                    </IconButton>
+                  </Tooltip>
+                </Box>
+              </TableCell>
+              <TableCell sx={{ fontWeight: 700, color: verde.headerText, borderBottom: '3px solid', borderColor: verde.headerBorder, textAlign: 'center' }}>Acciones</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
@@ -188,20 +278,19 @@ const TablaMovimientosStock = () => {
                 <TableRow 
                   key={movimiento.Id}
                   sx={{ 
-                    '&:hover': { 
-                      bgcolor: 'info.lighter',
-                      cursor: 'pointer'
-                    }
+                    '&:hover': { bgcolor: verde.toolbarBg },
+                    cursor: 'pointer'
                   }}
                 >
                   <TableCell>
                     <Typography variant="body2" fontWeight={500}>
-                      {movimiento.Fecha 
+                      {movimiento?.Fecha 
                         ? (() => {
                             try {
-                              const fecha = typeof movimiento.Fecha === 'string' 
-                                ? new Date(movimiento.Fecha) 
-                                : movimiento.Fecha;
+                              const raw = movimiento.Fecha as any;
+                              const fecha = typeof raw === 'string' || typeof raw === 'number'
+                                ? new Date(raw)
+                                : (raw instanceof Date ? raw : new Date());
                               return format(fecha, 'dd/MM/yyyy', { locale: es });
                             } catch (error) {
                               return 'Fecha inválida';
@@ -212,8 +301,8 @@ const TablaMovimientosStock = () => {
                     </Typography>
                   </TableCell>
                   <TableCell>
-                    <Typography variant="body2" fontWeight={600} fontFamily="monospace">
-                      {movimiento.Codigo || 'Sin código'}
+                    <Typography variant="body2" fontWeight={600} sx={{ whiteSpace: 'normal' }}>
+                      {mapaDescripcionPorCodigo.get(String(movimiento?.Codigo ?? '')) || '-'}
                     </Typography>
                   </TableCell>
                   <TableCell>

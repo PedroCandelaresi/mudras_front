@@ -24,7 +24,8 @@ import { Proveedor } from '@/app/interfaces/mudras.types';
 import { ProveedoresResponse } from '@/app/interfaces/graphql.types';
 import { IconSearch, IconUsers, IconRefresh, IconPhone, IconMail, IconEdit, IconTrash, IconEye, IconPlus } from '@tabler/icons-react';
 import { useState } from 'react';
-import { IconButton, Tooltip } from '@mui/material';
+import { IconButton, Tooltip, Menu, Divider } from '@mui/material';
+import { azul } from '@/ui/colores';
 
 interface Props {
   onNuevoProveedor?: () => void;
@@ -36,6 +37,10 @@ const TablaProveedores: React.FC<Props> = ({ onNuevoProveedor, puedeCrear = true
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [filtro, setFiltro] = useState('');
+  const [menuAnchor, setMenuAnchor] = useState<null | HTMLElement>(null);
+  const [columnaActiva, setColumnaActiva] = useState<null | 'nombre' | 'contacto' | 'localidad' | 'cuit'>(null);
+  const [filtrosColumna, setFiltrosColumna] = useState<{ nombre?: string; contacto?: string; localidad?: string; cuit?: string; }>({});
+  const [filtroColInput, setFiltroColInput] = useState('');
 
   // Funciones para manejar acciones
   const handleViewProveedor = (proveedor: Proveedor) => {
@@ -64,12 +69,20 @@ const TablaProveedores: React.FC<Props> = ({ onNuevoProveedor, puedeCrear = true
 
   const proveedores: Proveedor[] = data?.proveedores || [];
   
-  const proveedoresFiltrados = proveedores.filter((proveedor) =>
-    proveedor.Nombre?.toLowerCase().includes(filtro.toLowerCase()) ||
-    proveedor.Contacto?.toLowerCase().includes(filtro.toLowerCase()) ||
-    proveedor.Localidad?.toLowerCase().includes(filtro.toLowerCase()) ||
-    proveedor.CUIT?.includes(filtro)
-  );
+  const proveedoresFiltrados = proveedores.filter((p) => {
+    const text = filtro.toLowerCase();
+    const pasaTexto = !text || (
+      (p.Nombre || '').toLowerCase().includes(text) ||
+      (p.Contacto || '').toLowerCase().includes(text) ||
+      (p.Localidad || '').toLowerCase().includes(text) ||
+      (p.CUIT || '').includes(text)
+    );
+    const pasaNombre = filtrosColumna.nombre ? (p.Nombre || '').toLowerCase().includes(filtrosColumna.nombre.toLowerCase()) : true;
+    const pasaContacto = filtrosColumna.contacto ? (p.Contacto || '').toLowerCase().includes(filtrosColumna.contacto.toLowerCase()) : true;
+    const pasaLocalidad = filtrosColumna.localidad ? (p.Localidad || '').toLowerCase().includes(filtrosColumna.localidad.toLowerCase()) : true;
+    const pasaCuit = filtrosColumna.cuit ? (p.CUIT || '').toLowerCase().includes(filtrosColumna.cuit.toLowerCase()) : true;
+    return pasaTexto && pasaNombre && pasaContacto && pasaLocalidad && pasaCuit;
+  });
 
   const proveedoresPaginados = proveedoresFiltrados.slice(
     page * rowsPerPage,
@@ -110,6 +123,53 @@ const TablaProveedores: React.FC<Props> = ({ onNuevoProveedor, puedeCrear = true
             </TableBody>
           </Table>
         </TableContainer>
+
+      {/* Menú de filtros por columna */}
+      <Menu
+        anchorEl={menuAnchor}
+        open={Boolean(menuAnchor)}
+        onClose={() => { setMenuAnchor(null); setColumnaActiva(null); }}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+        transformOrigin={{ vertical: 'top', horizontal: 'right' }}
+        slotProps={{ paper: { sx: { p: 1.5, minWidth: 260 } } } as any}
+      >
+        <Typography variant="subtitle2" sx={{ px: 1, pb: 1 }}>
+          {columnaActiva === 'nombre' && 'Filtrar por Proveedor'}
+          {columnaActiva === 'contacto' && 'Filtrar por Contacto'}
+          {columnaActiva === 'localidad' && 'Filtrar por Ubicación'}
+          {columnaActiva === 'cuit' && 'Filtrar por CUIT'}
+        </Typography>
+        <Divider sx={{ mb: 1 }} />
+        {columnaActiva && (
+          <Box px={1} pb={1}>
+            <TextField
+              size="small"
+              fullWidth
+              autoFocus
+              placeholder="Escribe para filtrar..."
+              value={filtroColInput}
+              onChange={(e) => setFiltroColInput(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  setFiltrosColumna((prev) => ({ ...prev, [columnaActiva!]: filtroColInput }));
+                  setPage(0);
+                  setMenuAnchor(null);
+                  setColumnaActiva(null);
+                }
+              }}
+            />
+            <Stack direction="row" justifyContent="flex-end" spacing={1} mt={1}>
+              <Button size="small" onClick={() => { setFiltroColInput(''); setFiltrosColumna((prev) => ({ ...prev, [columnaActiva!]: '' })); }}>Limpiar</Button>
+              <Button size="small" variant="contained" sx={{ bgcolor: azul.primary, '&:hover': { bgcolor: azul.primaryHover } }} onClick={() => {
+                setFiltrosColumna((prev) => ({ ...prev, [columnaActiva!]: filtroColInput }));
+                setPage(0);
+                setMenuAnchor(null);
+                setColumnaActiva(null);
+              }}>Aplicar</Button>
+            </Stack>
+          </Box>
+        )}
+      </Menu>
       </Paper>
     );
   }
@@ -136,83 +196,94 @@ const TablaProveedores: React.FC<Props> = ({ onNuevoProveedor, puedeCrear = true
   }
 
   return (
-    <Paper sx={{ p: 3 }}>
-      <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
-        <Typography variant="h5" fontWeight={600} color="secondary.main">
+    <Paper elevation={0} variant="outlined" sx={{ p: 3, borderColor: azul.borderOuter, borderRadius: 2, bgcolor: 'background.paper' }}>
+      <Box display="flex" justifyContent="space-between" alignItems="center" sx={{ px: 1, py: 1, bgcolor: azul.toolbarBg, border: '1px solid', borderColor: azul.toolbarBorder, borderRadius: 1, mb: 2 }}>
+        <Typography variant="h6" fontWeight={700} color={azul.textStrong}>
           <IconUsers style={{ marginRight: 8, verticalAlign: 'middle' }} />
           Proveedores
         </Typography>
-        <Stack direction="row" spacing={2} alignItems="center">
+        <Box display="flex" alignItems="center" gap={1.5}>
           {puedeCrear && (
-            <Button
-              variant="contained"
-              color="secondary"
-              startIcon={<IconPlus size={18} />}
-              onClick={onNuevoProveedor}
-              sx={{
-                textTransform: 'none',
-                bgcolor: 'secondary.main',
-                '&:hover': { bgcolor: 'secondary.dark' }
-              }}
-            >
-              Nuevo Proveedor
-            </Button>
+            <Button variant="contained" onClick={onNuevoProveedor} sx={{ textTransform: 'none', bgcolor: azul.primary, '&:hover': { bgcolor: azul.primaryHover } }} startIcon={<IconPlus size={18} />}>Nuevo Proveedor</Button>
           )}
           <TextField
             size="small"
             placeholder="Buscar proveedores..."
             value={filtro}
             onChange={(e) => setFiltro(e.target.value)}
-            InputProps={{
-              startAdornment: (
-                <InputAdornment position="start">
-                  <IconSearch size={20} />
-                </InputAdornment>
-              ),
-            }}
+            InputProps={{ startAdornment: (<InputAdornment position="start"><IconSearch size={20} /></InputAdornment>) }}
             sx={{ minWidth: 250 }}
           />
-          <Button
-            variant="outlined"
-            color="secondary"
-            startIcon={<IconRefresh />}
-            onClick={() => refetch()}
-          >
-            Actualizar
-          </Button>
-        </Stack>
+          <Button variant="contained" sx={{ textTransform: 'none', bgcolor: azul.primary, '&:hover': { bgcolor: azul.primaryHover } }} onClick={() => setPage(0)}>Buscar</Button>
+          <Button variant="outlined" color="inherit" onClick={() => { setFiltro(''); setPage(0); }} sx={{ textTransform: 'none', borderColor: azul.headerBorder, color: azul.textStrong, '&:hover': { borderColor: azul.textStrong, bgcolor: azul.toolbarBg } }}>Limpiar filtros</Button>
+        </Box>
       </Box>
 
-      <TableContainer>
-        <Table>
-          <TableHead>
-            <TableRow sx={{ bgcolor: 'secondary.light' }}>
-              <TableCell sx={{ fontWeight: 600, color: 'secondary.dark' }}>Proveedor</TableCell>
-              <TableCell sx={{ fontWeight: 600, color: 'secondary.dark' }}>Contacto</TableCell>
-              <TableCell sx={{ fontWeight: 600, color: 'secondary.dark' }}>Teléfono</TableCell>
-              <TableCell sx={{ fontWeight: 600, color: 'secondary.dark' }}>Email</TableCell>
-              <TableCell sx={{ fontWeight: 600, color: 'secondary.dark' }}>Ubicación</TableCell>
-              <TableCell sx={{ fontWeight: 600, color: 'secondary.dark' }}>CUIT</TableCell>
-              <TableCell sx={{ fontWeight: 600, color: 'warning.dark' }}>Saldo</TableCell>
-              <TableCell sx={{ fontWeight: 600, color: 'warning.dark', textAlign: 'center' }}>Acciones</TableCell>
+      <TableContainer sx={{ borderRadius: 2, border: '1px solid', borderColor: azul.borderInner, bgcolor: 'background.paper' }}>
+        <Table stickyHeader size={'small'} sx={{ '& .MuiTableCell-head': { bgcolor: azul.headerBg, color: azul.headerText } }}>
+          <TableHead sx={{ position: 'sticky', top: 0, zIndex: 5 }}>
+            <TableRow sx={{ bgcolor: azul.headerBg, '& th': { top: 0, position: 'sticky', zIndex: 5 } }}>
+              <TableCell sx={{ fontWeight: 700, color: azul.headerText, borderBottom: '3px solid', borderColor: azul.headerBorder }}>
+                <Box display="flex" alignItems="center" justifyContent="space-between">
+                  Proveedor
+                  <Tooltip title="Filtrar columna">
+                    <IconButton size="small" color="inherit" onClick={(e) => { setColumnaActiva('nombre'); setFiltroColInput(filtrosColumna.nombre || ''); setMenuAnchor(e.currentTarget); }}>
+                      <IconSearch size={16} />
+                    </IconButton>
+                  </Tooltip>
+                </Box>
+              </TableCell>
+              <TableCell sx={{ fontWeight: 700, color: azul.headerText, borderBottom: '3px solid', borderColor: azul.headerBorder }}>
+                <Box display="flex" alignItems="center" justifyContent="space-between">
+                  Contacto
+                  <Tooltip title="Filtrar columna">
+                    <IconButton size="small" color="inherit" onClick={(e) => { setColumnaActiva('contacto'); setFiltroColInput(filtrosColumna.contacto || ''); setMenuAnchor(e.currentTarget); }}>
+                      <IconSearch size={16} />
+                    </IconButton>
+                  </Tooltip>
+                </Box>
+              </TableCell>
+              <TableCell sx={{ fontWeight: 700, color: azul.headerText, borderBottom: '3px solid', borderColor: azul.headerBorder }}>Teléfono</TableCell>
+              <TableCell sx={{ fontWeight: 700, color: azul.headerText, borderBottom: '3px solid', borderColor: azul.headerBorder }}>Email</TableCell>
+              <TableCell sx={{ fontWeight: 700, color: azul.headerText, borderBottom: '3px solid', borderColor: azul.headerBorder }}>
+                <Box display="flex" alignItems="center" justifyContent="space-between">
+                  Ubicación
+                  <Tooltip title="Filtrar columna">
+                    <IconButton size="small" color="inherit" onClick={(e) => { setColumnaActiva('localidad'); setFiltroColInput(filtrosColumna.localidad || ''); setMenuAnchor(e.currentTarget); }}>
+                      <IconSearch size={16} />
+                    </IconButton>
+                  </Tooltip>
+                </Box>
+              </TableCell>
+              <TableCell sx={{ fontWeight: 700, color: azul.headerText, borderBottom: '3px solid', borderColor: azul.headerBorder }}>
+                <Box display="flex" alignItems="center" justifyContent="space-between">
+                  CUIT
+                  <Tooltip title="Filtrar columna">
+                    <IconButton size="small" color="inherit" onClick={(e) => { setColumnaActiva('cuit'); setFiltroColInput(filtrosColumna.cuit || ''); setMenuAnchor(e.currentTarget); }}>
+                      <IconSearch size={16} />
+                    </IconButton>
+                  </Tooltip>
+                </Box>
+              </TableCell>
+              <TableCell sx={{ fontWeight: 700, color: azul.headerText, borderBottom: '3px solid', borderColor: azul.headerBorder }}>Saldo</TableCell>
+              <TableCell sx={{ fontWeight: 700, color: azul.headerText, borderBottom: '3px solid', borderColor: azul.headerBorder, textAlign: 'center' }}>Acciones</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
-            {proveedoresPaginados.map((proveedor) => (
+            {proveedoresPaginados.map((proveedor, idx) => (
               <TableRow 
                 key={proveedor.IdProveedor}
                 sx={{ 
-                  '&:hover': { 
-                    bgcolor: 'secondary.lighter',
-                    cursor: 'pointer'
-                  }
+                  bgcolor: idx % 2 === 1 ? 'grey.50' : 'inherit',
+                  '&:hover': { bgcolor: azul.rowHover },
+                  cursor: 'pointer'
                 }}
               >
                 <TableCell>
                   <Box display="flex" alignItems="center">
                     <Avatar 
                       sx={{ 
-                        bgcolor: 'secondary.main', 
+                        bgcolor: azul.primary, 
                         width: 40, 
                         height: 40, 
                         mr: 2,

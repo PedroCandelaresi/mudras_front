@@ -10,6 +10,8 @@ import { useQuery } from '@apollo/client/react';
 import { GET_DASHBOARD_STATS } from '@/app/queries/mudras.queries';
 import { DashboardStatsResponse } from '@/app/interfaces/graphql.types';
 import { Icon } from '@iconify/react';
+import { verde } from '@/ui/colores';
+import { GraficoBarras } from '@/components/estadisticas/GraficoBarras';
 
 // Componente para EstadisticasStock con datos reales
 function EstadisticasStockConDatos() {
@@ -75,12 +77,12 @@ export default function Articulos() {
   return (
     <PageContainer title="Artículos - Mudras" description="Gestión de artículos">
       <Box>
-        <Typography variant="h4" fontWeight={700} color="success.dark" sx={{ mb: 2 }}>
+        <Typography variant="h4" fontWeight={700} color={verde.textStrong} sx={{ mb: 2 }}>
           Gestión de Artículos
         </Typography>
-        <Paper elevation={0} sx={{ border: '1px solid', borderColor: 'success.light', borderRadius: 2, overflow: 'hidden', bgcolor: 'background.paper' }}>
-          {/* Toolbar superior con fondo unificado */}
-          <Box sx={{ bgcolor: 'var(--toolbar-bg)', px: 1, py: 1 }}>
+        <Paper elevation={0} sx={{ border: '1px solid', borderColor: verde.headerBorder, borderRadius: 2, overflow: 'hidden', bgcolor: 'background.paper' }}>
+          {/* Toolbar superior con fondo unificado (igual a Usuarios) */}
+          <Box sx={{ bgcolor: verde.toolbarBg, px: 1, py: 1 }}>
             <Tabs
               value={tabValue}
               onChange={handleTabChange}
@@ -89,7 +91,7 @@ export default function Articulos() {
               sx={{
                 '& .MuiTabs-flexContainer': { gap: 1 },
                 '& .MuiTab-root': {
-                  color: 'success.dark',
+                  color: verde.textStrong,
                   textTransform: 'none',
                   fontWeight: 600,
                   minHeight: 40,
@@ -100,32 +102,47 @@ export default function Articulos() {
                   '& .MuiTab-iconWrapper': { mr: 1 }
                 },
                 '& .MuiTab-root.Mui-selected': {
-                  bgcolor: 'success.main',
+                  bgcolor: verde.primary,
                   color: 'common.white'
                 }
               }}
             >
+              <Tab icon={<Icon icon="mdi:chart-line" />} label="Estadísticas" iconPosition="start" />
               <Tab icon={<Icon icon="mdi:package-variant-closed" />} label="Artículos" iconPosition="start" />
               <Tab icon={<Icon icon="mdi:clipboard-list-outline" />} label="Movimientos Stock" iconPosition="start" />
-              <Tab icon={<Icon icon="mdi:chart-line" />} label="Estadísticas Stock" iconPosition="start" />
               <Tab icon={<Icon icon="mdi:package-variant-remove" />} label="Sin stock" iconPosition="start" />
             </Tabs>
           </Box>
-          {/* Zona superior con mismo fondo y padding; el contenido interno (tabla) maneja su propia card blanca */}
-          <Box sx={{ bgcolor: 'var(--toolbar-bg)', px: 2, pb: 2 }}>
+          {/* Zona de contenido con mismo fondo y padding (igual a Usuarios) */}
+          <Box sx={{ bgcolor: verde.toolbarBg, px: 2, pb: 2 }}>
             <Box sx={{ pt: 2 }}>
-              {/* Tab Panel 0 - Tabla de Artículos */}
+              {/* Tab 0 - Estadísticas */}
               {tabValue === 0 && (
+                <Box>
+                  <GraficoBarras
+                    titulo="Ventas por artículo (demo)"
+                    datos={[
+                      { etiqueta: 'Sahumerios', valor: 120, color: '#66bb6a' },
+                      { etiqueta: 'Dijes', valor: 95, color: '#43a047' },
+                      { etiqueta: 'Cristales', valor: 80, color: '#2e7d32' },
+                      { etiqueta: 'Aceites', valor: 60, color: '#1b5e20' },
+                    ]}
+                    anchoBarra={72}
+                    colorBorde={verde.headerBorder}
+                  />
+                </Box>
+              )}
+
+              {/* Tab 1 - Tabla de Artículos */}
+              {tabValue === 1 && (
                 <TablaArticulos
                   onNuevoArticulo={() => setModalNuevoOpen(true)}
                   puedeCrear={userRole === 'admin' || userRole === 'diseñadora'}
                 />
               )}
-              {/* Tab Panel 1 - Movimientos de Stock */}
-              {tabValue === 1 && <TablaMovimientosStock />}
-              {/* Tab Panel 2 - Estadísticas de Stock */}
-              {tabValue === 2 && <EstadisticasStockConDatos />}
-              {/* Tab Panel 3 - Artículos sin stock */}
+              {/* Tab 2 - Movimientos de Stock */}
+              {tabValue === 2 && <TablaMovimientosStock />}
+              {/* Tab 3 - Artículos sin stock */}
               {tabValue === 3 && (
                 <TablaArticulos
                   soloSinStock

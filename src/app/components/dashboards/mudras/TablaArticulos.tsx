@@ -25,6 +25,7 @@ import { BUSCAR_ARTICULOS, GET_PROVEEDORES } from '@/app/queries/mudras.queries'
 import { Articulo } from '@/app/interfaces/mudras.types';
 import { BuscarArticulosResponse } from '@/app/interfaces/graphql.types';
 import { IconSearch, IconPackage, IconTrash, IconEdit, IconEye, IconPlus, IconDotsVertical, IconRefresh } from '@tabler/icons-react';
+import { verde } from '@/ui/colores';
 import { useState, useEffect } from 'react';
 import { IconButton, Tooltip } from '@mui/material';
 import { abrevUnidad, type UnidadMedida } from '@/app/utils/unidades';
@@ -262,24 +263,19 @@ const TablaArticulos: React.FC<Props> = ({ soloSinStock = false, onNuevoArticulo
   }
 
   return (
-    <Paper elevation={0} variant="outlined" sx={{ p: 3, borderColor: 'grey.200', borderRadius: 2, bgcolor: 'background.paper' }}>
-      <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
-        <Typography variant="h5" fontWeight={600} color="success.dark">
+    <Paper elevation={0} variant="outlined" sx={{ p: 3, borderColor: verde.headerBorder, borderRadius: 2, bgcolor: 'background.paper' }}>
+      <Box display="flex" justifyContent="space-between" alignItems="center" sx={{ px: 1, py: 1, bgcolor: verde.toolbarBg, border: '1px solid', borderColor: verde.toolbarBorder, borderRadius: 1, mb: 2 }}>
+        <Typography variant="h6" fontWeight={700} color={verde.textStrong}>
           <IconPackage style={{ marginRight: 8, verticalAlign: 'middle' }} />
           {soloSinStock ? 'Artículos sin stock' : 'Artículos'}
         </Typography>
-        <Stack direction="row" spacing={2} alignItems="center">
+        <Box display="flex" alignItems="center" gap={1.5}>
           {puedeCrear && (
             <Button
               variant="contained"
-              color="success"
+              sx={{ textTransform: 'none', bgcolor: verde.primary, '&:hover': { bgcolor: verde.primaryHover } }}
               startIcon={<IconPlus size={18} />}
               onClick={onNuevoArticulo}
-              sx={{
-                textTransform: 'none',
-                bgcolor: 'success.main',
-                '&:hover': { bgcolor: 'success.dark' }
-              }}
             >
               Nuevo Artículo
             </Button>
@@ -295,24 +291,17 @@ const TablaArticulos: React.FC<Props> = ({ soloSinStock = false, onNuevoArticulo
                 setPage(0);
               }
             }}
-            InputProps={{
-              startAdornment: (
-                <InputAdornment position="start">
-                  <IconSearch size={20} />
-                </InputAdornment>
-              ),
-            }}
+            InputProps={{ startAdornment: (<InputAdornment position="start"><IconSearch size={20} /></InputAdornment>) }}
             sx={{ minWidth: 250 }}
           />
           <Tooltip title="Buscar (Enter)">
             <span>
               <Button
                 variant="contained"
-                color="success"
+                sx={{ textTransform: 'none', bgcolor: verde.primary, '&:hover': { bgcolor: verde.primaryHover } }}
                 startIcon={<IconSearch size={18} />}
                 onClick={() => { setFiltro(filtroInput); setPage(0); }}
                 disabled={loading}
-                sx={{ textTransform: 'none' }}
               >
                 Buscar
               </Button>
@@ -320,24 +309,25 @@ const TablaArticulos: React.FC<Props> = ({ soloSinStock = false, onNuevoArticulo
           </Tooltip>
           <Button
             variant="outlined"
-            color="error"
+            color="inherit"
             startIcon={<IconTrash />}
             onClick={limpiarFiltros}
+            sx={{ textTransform: 'none', borderColor: verde.headerBorder, color: verde.textStrong, '&:hover': { borderColor: verde.textStrong, bgcolor: verde.toolbarBg } }}
           >
             Limpiar filtros
           </Button>
-        </Stack>
+        </Box>
       </Box>
 
-      <TableContainer sx={{ borderRadius: 2, border: '1px solid', borderColor: 'grey.200', bgcolor: 'background.paper' }}>
-        <Table stickyHeader size={'small'} sx={{ '& .MuiTableCell-head': { bgcolor: '#2f3e2e', color: '#eef5ee' } }}>
+      <TableContainer sx={{ borderRadius: 2, border: '1px solid', borderColor: verde.borderInner, bgcolor: 'background.paper' }}>
+        <Table stickyHeader size={'small'} sx={{ '& .MuiTableCell-head': { bgcolor: verde.headerBg, color: verde.headerText } }}>
           <TableHead sx={{ position: 'sticky', top: 0, zIndex: 5 }}>
-            <TableRow sx={{ bgcolor: '#2f3e2e', '& th': { top: 0, position: 'sticky', zIndex: 5 }, '& th:first-of-type': { borderTopLeftRadius: 8 }, '& th:last-of-type': { borderTopRightRadius: 8 } }}>
+            <TableRow sx={{ bgcolor: verde.headerBg, '& th': { top: 0, position: 'sticky', zIndex: 5 }, '& th:first-of-type': { borderTopLeftRadius: 8 }, '& th:last-of-type': { borderTopRightRadius: 8 } }}>
               <TableCell sx={{
                 fontWeight: 700,
-                color: '#eef5ee',
+                color: verde.headerText,
                 borderBottom: '3px solid',
-                borderColor: '#6b8f6b',
+                borderColor: verde.headerBorder,
                 width: { xs: '50%', sm: '40%', md: '40%' }
               }}>
                 <Box display="flex" alignItems="center" justifyContent="space-between">
@@ -351,9 +341,9 @@ const TablaArticulos: React.FC<Props> = ({ soloSinStock = false, onNuevoArticulo
               </TableCell>
               <TableCell sx={{
                 fontWeight: 700,
-                color: '#eef5ee',
+                color: verde.headerText,
                 borderBottom: '3px solid',
-                borderColor: '#6b8f6b',
+                borderColor: verde.headerBorder,
                 width: { xs: '20%', sm: '15%', md: '10%' }
               }}>
                 <Box display="flex" alignItems="center" justifyContent="space-between">
@@ -365,15 +355,15 @@ const TablaArticulos: React.FC<Props> = ({ soloSinStock = false, onNuevoArticulo
                   </Tooltip>
                 </Box>
               </TableCell>
-              <TableCell sx={{ fontWeight: 700, color: '#eef5ee', borderBottom: '3px solid', borderColor: '#6b8f6b' }}>
+              <TableCell sx={{ fontWeight: 700, color: verde.headerText, borderBottom: '3px solid', borderColor: verde.headerBorder }}>
                 Stock
               </TableCell>
               {/* Oculto Precio Venta */}
               <TableCell sx={{
                 fontWeight: 700,
-                color: '#eef5ee',
+                color: verde.headerText,
                 borderBottom: '3px solid',
-                borderColor: '#6b8f6b',
+                borderColor: verde.headerBorder,
                 width: { xs: '30%', sm: '35%', md: '30%' }
               }}>
                 <Box display="flex" alignItems="center" justifyContent="space-between">
@@ -385,7 +375,7 @@ const TablaArticulos: React.FC<Props> = ({ soloSinStock = false, onNuevoArticulo
                   </Tooltip>
                 </Box>
               </TableCell>
-              <TableCell sx={{ fontWeight: 700, color: '#eef5ee', borderBottom: '3px solid', borderColor: '#6b8f6b' }}>
+              <TableCell sx={{ fontWeight: 700, color: verde.headerText, borderBottom: '3px solid', borderColor: verde.headerBorder }}>
                 <Box display="flex" alignItems="center" justifyContent="space-between">
                   Estado
                   <Tooltip title="Filtrar columna">
@@ -395,7 +385,7 @@ const TablaArticulos: React.FC<Props> = ({ soloSinStock = false, onNuevoArticulo
                   </Tooltip>
                 </Box>
               </TableCell>
-              <TableCell sx={{ fontWeight: 700, color: '#eef5ee', borderBottom: '3px solid', borderColor: '#6b8f6b', textAlign: 'center' }}>Acciones</TableCell>
+              <TableCell sx={{ fontWeight: 700, color: verde.headerText, borderBottom: '3px solid', borderColor: verde.headerBorder, textAlign: 'center' }}>Acciones</TableCell>
               {usarScrollInterno && (
                 <TableCell sx={{ p: 0, width: '12px', bgcolor: '#2f3e2e', borderBottom: '3px solid', borderColor: '#6b8f6b' }} />
               )}
@@ -407,9 +397,7 @@ const TablaArticulos: React.FC<Props> = ({ soloSinStock = false, onNuevoArticulo
                 key={articulo.id}
                 sx={{ 
                   bgcolor: idx % 2 === 1 ? 'grey.50' : 'inherit',
-                  '&:hover': { 
-                    bgcolor: 'success.lighter',
-                  }
+                  '&:hover': { bgcolor: verde.toolbarBg }
                 }}
               >
                 {/* Descripción (expandida) */}

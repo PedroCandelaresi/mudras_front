@@ -1,18 +1,27 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-const BACKEND_URL = process.env.BACKEND_URL || 'http://localhost:4000';
+const BACKEND_URL = process.env.BACKEND_URL || process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:4000';
 
 export async function POST(req: NextRequest) {
   const body = await req.json();
-  const res = await fetch(`${BACKEND_URL}/auth/login`, {
+  const res = await fetch(`${BACKEND_URL.replace(/\/$/, '')}/auth/login`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: {
+      'Content-Type': 'application/json',
+      ...(process.env.NEXT_PUBLIC_X_SECRET_KEY ? { 'X-Secret-Key': process.env.NEXT_PUBLIC_X_SECRET_KEY } : {}),
+    },
     body: JSON.stringify(body),
   });
 
   if (!res.ok) {
     const text = await res.text();
     return new NextResponse(text || 'Credenciales inválidas', { status: res.status });
+  }
+
+  const contentType = res.headers.get('content-type') || '';
+  if (!/application\/json/i.test(contentType)) {
+    const text = await res.text();
+    return new NextResponse(text || 'Respuesta no JSON del backend', { status: 502 });
   }
 
   const data = await res.json();

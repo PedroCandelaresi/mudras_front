@@ -13,15 +13,26 @@ import * as dropdownData from './data';
 
 import { IconUser, IconLogout } from '@tabler/icons-react';
 import { Stack } from '@mui/system';
+import { useRouter } from 'next/navigation';
+import { usePermisos } from '@/lib/permisos';
 
 
 const Profile = () => {
   const [anchorEl2, setAnchorEl2] = useState<HTMLElement | null>(null);
+  const router = useRouter();
+  const { perfil } = usePermisos();
   const handleClick2 = (event: React.MouseEvent<HTMLElement>) => {
     setAnchorEl2(event.currentTarget);
   };
   const handleClose2 = () => {
     setAnchorEl2(null);
+  };
+
+  const handleLogout = async () => {
+    try {
+      await fetch('/api/auth/logout', { method: 'POST' });
+    } catch (_) {}
+    router.replace('/login');
   };
 
   return (
@@ -69,10 +80,10 @@ const Profile = () => {
           <Avatar src={"/images/profile/user-1.jpg"} alt={"ProfileImg"} sx={{ width: 50, height: 50 }} />
           <Box>
             <Typography variant="subtitle2" color="textPrimary" fontWeight={600}>
-              Mathew Anderson
+              {perfil?.username || perfil?.sub || 'Usuario'}
             </Typography>
             <Typography variant="subtitle2" color="textSecondary">
-              Administrador
+              {(perfil?.roles && perfil.roles[0]) ? perfil.roles[0] : 'Cuenta'}
             </Typography>
           </Box>
         </Stack>
@@ -117,8 +128,8 @@ const Profile = () => {
         
         {/* Cerrar Sesión */}
         <Box sx={{ py: 1.5, px: 0 }}>
-          <Link href="/auth/auth1/login">
-            <Stack direction="row" spacing={2} alignItems="center">
+          <Button onClick={handleLogout} variant="text" color="error" sx={{ p: 0, textTransform: 'none', width: '100%' }}>
+            <Stack direction="row" spacing={2} alignItems="center" sx={{ width: '100%', justifyContent: 'flex-start' }}>
               <Box
                 width="40px"
                 height="40px"
@@ -140,7 +151,7 @@ const Profile = () => {
                 </Typography>
               </Box>
             </Stack>
-          </Link>
+          </Button>
         </Box>
       </Menu>
     </Box>

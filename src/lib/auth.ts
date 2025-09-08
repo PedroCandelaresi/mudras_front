@@ -19,3 +19,12 @@ export async function obtenerPerfil(): Promise<PerfilResponse['perfil'] | null> 
     return null;
   }
 }
+
+export async function obtenerPermisosEfectivos(): Promise<string[]> {
+  try {
+    const res = await apiFetch<{ permisos: string[] }>(`/auth/permisos`);
+    return res.permisos || [];
+  } catch {
+    return [];
+  }
+}
