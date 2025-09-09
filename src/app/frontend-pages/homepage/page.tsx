@@ -16,7 +16,7 @@ import ScrollToTop from '../../components/frontend-pages/shared/scroll-to-top';
 
 const HomePage = () => {
   return (
-    <PageContainer title="Homepage" description="this is Homepage">
+    <PageContainer title="Homepage Mudras" description="this is Homepage">
       <HeaderAlert />
       <HpHeader />
       <Banner />
