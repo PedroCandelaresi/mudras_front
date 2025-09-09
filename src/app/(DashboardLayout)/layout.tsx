@@ -2,7 +2,7 @@
 import Box from "@mui/material/Box";
 import Container from "@mui/material/Container";
 import { styled, useTheme } from "@mui/material/styles";
-import React, { useContext } from "react";
+import React, { useContext, useEffect, useState } from "react";
 import Header from "./layout/vertical/header/Header";
 import Sidebar from "./layout/vertical/sidebar/Sidebar";
 import Customizer from "./layout/shared/customizer/Customizer";
@@ -10,6 +10,7 @@ import Navigation from "./layout/horizontal/navbar/Navigation";
 import HorizontalHeader from "./layout/horizontal/header/Header";
 import { CustomizerContext } from "@/app/context/customizerContext";
 import config from "@/app/context/config";
+import { useRouter } from "next/navigation";
 
 const MainWrapper = styled("div")(() => ({
   display: "flex",
@@ -40,6 +41,30 @@ export default function RootLayout({
   const { activeLayout, isLayout, activeMode, isCollapse, isSidebarHover } = useContext(CustomizerContext);
   const theme = useTheme();
   const MiniSidebarWidth = config.miniSidebarWidth;
+  const router = useRouter();
+  const [authReady, setAuthReady] = useState(false);
+
+  // Guard de autenticación: si no hay sesión, redirige a /login
+  useEffect(() => {
+    let cancelado = false;
+    (async () => {
+      try {
+        const res = await fetch('/api/auth/perfil', { credentials: 'include' });
+        if (!res.ok && !cancelado) {
+          router.replace('/login');
+          return;
+        }
+      } catch (_) {
+        if (!cancelado) {
+          router.replace('/login');
+          return;
+        }
+      } finally {
+        if (!cancelado) setAuthReady(true);
+      }
+    })();
+    return () => { cancelado = true; };
+  }, [router]);
   return (
     <MainWrapper className={activeMode === 'dark' ? 'darkbg mainwrapper' : 'mainwrapper'}>
       <title>Mudras Gestión</title>
@@ -95,9 +120,11 @@ export default function RootLayout({
           {/* ------------------------------------------- */}
 
           <Box sx={{ minHeight: "calc(100vh - 170px)" }}>
-            {/* <Outlet /> */}
-            {children}
-            {/* <Index /> */}
+            {!authReady ? (
+              <Box sx={{ p: 3, color: 'text.secondary' }}>Verificando sesión…</Box>
+            ) : (
+              children
+            )}
           </Box>
 
           {/* ------------------------------------------- */}
