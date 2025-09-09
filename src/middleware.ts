@@ -7,7 +7,7 @@ const PUBLIC_PATHS = new Set<string>([
   '/registro',
 ]);
 
-export function middleware(req: NextRequest) {
+export async function middleware(req: NextRequest) {
   const { pathname, search } = req.nextUrl;
 
   // Permitir siempre APIs y assets
@@ -24,12 +24,33 @@ export function middleware(req: NextRequest) {
     || req.cookies.get('access_token')?.value
     || req.cookies.get('auth_token')?.value;
 
-  if (isPanel && !token) {
-    const url = req.nextUrl.clone();
-    url.pathname = '/login';
-    // redirigir con query 'siguiente' para volver post-login
-    url.search = `?siguiente=${encodeURIComponent(pathname + (search || ''))}`;
-    return NextResponse.redirect(url);
+  // Si intenta acceder al panel, validamos la sesión realmente contra /api/auth/perfil
+  if (isPanel) {
+    if (!token) {
+      const url = req.nextUrl.clone();
+      url.pathname = '/login';
+      url.search = `?siguiente=${encodeURIComponent(pathname + (search || ''))}`;
+      return NextResponse.redirect(url);
+    }
+    // Validación fuerte: verificamos que el token sea válido consultando el perfil
+    try {
+      const origin = req.nextUrl.origin;
+      const perfilRes = await fetch(`${origin}/api/auth/perfil`, {
+        method: 'GET',
+        headers: { Cookie: req.headers.get('cookie') || '' },
+      });
+      if (!perfilRes.ok) {
+        const url = req.nextUrl.clone();
+        url.pathname = '/login';
+        url.search = `?siguiente=${encodeURIComponent(pathname + (search || ''))}`;
+        return NextResponse.redirect(url);
+      }
+    } catch {
+      const url = req.nextUrl.clone();
+      url.pathname = '/login';
+      url.search = `?siguiente=${encodeURIComponent(pathname + (search || ''))}`;
+      return NextResponse.redirect(url);
+    }
   }
 
   // Si está logueado y va a /login, redirigir al panel
