@@ -38,6 +38,7 @@ import {
   IconSun
 } from '@tabler/icons-react';
 import Link from 'next/link';
+import { CarruselDestacados } from '@/components/tienda/CarruselDestacados';
 
 const categorias = [
   {
@@ -418,6 +419,14 @@ export default function TiendaMudras() {
             <Typography variant="h6" color="text.secondary" fontWeight={300}>
               Los favoritos de nuestra comunidad
             </Typography>
+          </Box>
+          {/* Carrusel de destacados */}
+          <Box mb={{ xs: 6, md: 8 }}>
+            <CarruselDestacados
+              items={productosDestacados}
+              autoPlayMs={6000}
+              onAgregar={() => agregarAlCarrito()}
+            />
           </Box>
           
           <Grid container spacing={4}>
