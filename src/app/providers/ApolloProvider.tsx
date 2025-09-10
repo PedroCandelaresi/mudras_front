@@ -25,17 +25,19 @@ const httpLink = createHttpLink({
 const authLink = setContext((_, { headers }) => {
   const secretKey = process.env.NEXT_PUBLIC_X_SECRET_KEY;
   
-  // En producción, las cookies httpOnly no son accesibles desde JavaScript
-  // Dependemos de que el navegador las envíe automáticamente con credentials: 'include'
-  // Solo agregamos headers adicionales si es necesario
+  console.log('🚀 [APOLLO] Configurando headers para GraphQL request');
+  console.log('🚀 [APOLLO] X-Secret-Key presente:', secretKey ? 'SÍ' : 'NO');
+  console.log('🚀 [APOLLO] Headers actuales:', headers);
+  
+  const finalHeaders = {
+    ...headers,
+    ...(secretKey ? { 'X-Secret-Key': secretKey } : {}),
+  };
+  
+  console.log('🚀 [APOLLO] Headers finales:', finalHeaders);
   
   return {
-    headers: {
-      ...headers,
-      ...(secretKey ? { 'X-Secret-Key': secretKey } : {}),
-      // No intentamos leer cookies manualmente en producción
-      // Las cookies httpOnly se envían automáticamente
-    },
+    headers: finalHeaders,
   };
 });
 

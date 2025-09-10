@@ -96,6 +96,9 @@ const TablaArticulos: React.FC<Props> = ({ soloSinStock = false, onNuevoArticulo
     } catch {}
   }
 
+  console.log('📊 [TABLA_ARTICULOS] Filtros aplicados:', filtrosServidor);
+  console.log('📊 [TABLA_ARTICULOS] Usuario autenticado, cargando artículos...');
+
   const variablesQuery = {
     filtros: {
       ...filtrosServidor,
@@ -117,6 +120,16 @@ const TablaArticulos: React.FC<Props> = ({ soloSinStock = false, onNuevoArticulo
     variables: variablesQuery,
     fetchPolicy: 'cache-and-network',
   });
+
+  // Logs separados para evitar problemas de tipos
+  if (data) {
+    console.log('📊 [TABLA_ARTICULOS] Query completada exitosamente:', data);
+    console.log('📊 [TABLA_ARTICULOS] Total artículos encontrados:', data?.buscarArticulos?.total || 0);
+  }
+  
+  if (error) {
+    console.error('📊 [TABLA_ARTICULOS] Error en query:', error);
+  }
 
   // Si hay error, desglosamos ApolloError
   if (error) {
@@ -187,7 +200,7 @@ const TablaArticulos: React.FC<Props> = ({ soloSinStock = false, onNuevoArticulo
     refetch();
   };
 
-  const articulos: Articulo[] = data?.buscarArticulos?.articulos || [];
+  const articulos: Articulo[] = (data?.buscarArticulos?.articulos || []).filter((articulo): articulo is Articulo => articulo != null);
   const total: number = data?.buscarArticulos?.total ?? 0;
   console.debug('[TablaArticulos] Articulos recibidos:', articulos.length, '| total:', total, '| rowsPerPage:', rowsPerPage);
 
