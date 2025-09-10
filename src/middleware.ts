@@ -32,20 +32,9 @@ export async function middleware(req: NextRequest) {
       url.search = `?siguiente=${encodeURIComponent(pathname + (search || ''))}`;
       return NextResponse.redirect(url);
     }
-    // Validación fuerte: verificamos que el token sea válido consultando el perfil
-    try {
-      const origin = req.nextUrl.origin;
-      const perfilRes = await fetch(`${origin}/api/auth/perfil`, {
-        method: 'GET',
-        headers: { Cookie: req.headers.get('cookie') || '' },
-      });
-      if (!perfilRes.ok) {
-        const url = req.nextUrl.clone();
-        url.pathname = '/login';
-        url.search = `?siguiente=${encodeURIComponent(pathname + (search || ''))}`;
-        return NextResponse.redirect(url);
-      }
-    } catch {
+    // Validación básica del token - evitamos fetch interno para prevenir bucles
+    // En producción, el token será validado por el backend en cada request
+    if (!token || token.length < 10) {
       const url = req.nextUrl.clone();
       url.pathname = '/login';
       url.search = `?siguiente=${encodeURIComponent(pathname + (search || ''))}`;
