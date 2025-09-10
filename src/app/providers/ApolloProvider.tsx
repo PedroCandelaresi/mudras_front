@@ -14,33 +14,27 @@ import type { ReactNode } from 'react';
 // Usamos SIEMPRE el proxy "/api/graphql" para inyectar Authorization desde cookie httpOnly
 const graphqlUri = process.env.NEXT_PUBLIC_GRAPHQL_ENDPOINT || '/api/graphql';
 
-const httpLink = createHttpLink({ uri: graphqlUri, credentials: 'include' });
+const httpLink = createHttpLink({ 
+  uri: graphqlUri, 
+  credentials: 'include',
+  fetchOptions: {
+    credentials: 'include',
+  },
+});
 
 const authLink = setContext((_, { headers }) => {
   const secretKey = process.env.NEXT_PUBLIC_X_SECRET_KEY;
-  // Intentamos leer el JWT desde cookies del navegador (solo en cliente)
-  let bearer: string | undefined;
-  if (typeof document !== 'undefined') {
-    const cookies = document.cookie || '';
-    const get = (name: string) => {
-      const m = cookies.match(new RegExp(`(?:^|; )${name.replace(/([.$?*|{}()\[\]\\\/\+^])/g, '\\$1')}=([^;]*)`));
-      return m ? decodeURIComponent(m[1]) : undefined;
-    };
-    const posibles = ['mudras_token', 'mudras_jwt', 'access_token', 'auth_token'];
-    for (const name of posibles) {
-      const val = get(name);
-      if (val) {
-        // Si viene como "Bearer <token>", dejamos así; si no, lo envolvemos
-        bearer = /^Bearer\s+/i.test(val) ? val : `Bearer ${val}`;
-        break;
-      }
-    }
-  }
+  
+  // En producción, las cookies httpOnly no son accesibles desde JavaScript
+  // Dependemos de que el navegador las envíe automáticamente con credentials: 'include'
+  // Solo agregamos headers adicionales si es necesario
+  
   return {
     headers: {
       ...headers,
       ...(secretKey ? { 'X-Secret-Key': secretKey } : {}),
-      ...(bearer ? { Authorization: bearer } : {}),
+      // No intentamos leer cookies manualmente en producción
+      // Las cookies httpOnly se envían automáticamente
     },
   };
 });

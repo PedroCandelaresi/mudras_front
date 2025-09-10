@@ -70,7 +70,7 @@ export async function GET(req: NextRequest) {
 
   // 3) Check a través del proxy REST /api/rest
   try {
-    const restProxy = await fetch(`${req.nextUrl.origin}/api/rest/auth/perfil`, {
+    const restProxy = await fetch(`${req.nextUrl.origin}/api/auth/perfil`, {
       method: 'GET',
       headers: {
         ...(incomingCookie ? { Cookie: incomingCookie } : {}),
