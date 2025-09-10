@@ -12,7 +12,7 @@ import type { ReactNode } from 'react';
  * 3) fallback: "/api/graphql"
  */
 // Usamos SIEMPRE el proxy "/api/graphql" para inyectar Authorization desde cookie httpOnly
-const graphqlUri = '/api/graphql';
+const graphqlUri = process.env.NEXT_PUBLIC_GRAPHQL_ENDPOINT || '/api/graphql';
 
 const httpLink = createHttpLink({ uri: graphqlUri, credentials: 'include' });
 
