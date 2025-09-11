@@ -1,8 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-const BACKEND_URL = process.env.BACKEND_URL || 'http://localhost:4000';
+const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL;
 
 export async function GET(req: NextRequest) {
+  if (!BACKEND_URL) {
+    return new NextResponse('BACKEND_URL no configurada', { status: 500 });
+  }
+
   const token = req.cookies.get('mudras_token')?.value;
   if (!token) {
     return new NextResponse('No autenticado', { status: 401 });
