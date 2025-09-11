@@ -8,10 +8,17 @@ export async function POST(req: NextRequest) {
   }
 
   const body = await req.text(); // mantener el body tal cual
+  
+  // Debug: revisar cookies disponibles
+  const allCookies = req.cookies.getAll();
+  console.log('🚀 [GRAPHQL_PROXY] Cookies disponibles:', allCookies.map(c => c.name));
+  
   const token = req.cookies.get('mudras_token')?.value
     || req.cookies.get('mudras_jwt')?.value
     || req.cookies.get('access_token')?.value
     || req.cookies.get('auth_token')?.value;
+
+  console.log('🚀 [GRAPHQL_PROXY] Token extraído:', token ? 'PRESENTE' : 'AUSENTE');
 
   const headers: Record<string, string> = {
     'Content-Type': req.headers.get('content-type') || 'application/json',
@@ -24,6 +31,8 @@ export async function POST(req: NextRequest) {
   // Reenviar cookies originales por si el backend lee JWT desde Cookie
   const incomingCookie = req.headers.get('cookie');
   if (incomingCookie) headers['Cookie'] = incomingCookie;
+
+  console.log('🚀 [GRAPHQL_PROXY] Headers enviados:', Object.keys(headers));
 
   const target = `${BACKEND_URL.replace(/\/$/, '')}/graphql`;
   console.info('[API /api/graphql] reenviando a:', target, '| token presente:', Boolean(token));
