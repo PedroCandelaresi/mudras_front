@@ -1,7 +1,7 @@
 export type Metodo = 'GET' | 'POST' | 'PUT' | 'DELETE';
 
-// Usamos el proxy interno de Next: /api/rest para unificar origen y cookies
-const baseUrl = '/api/rest';
+// Usamos rutas directas de la API de Next.js
+const baseUrl = '/api';
 
 export async function apiFetch<T = unknown>(path: string, options: { method?: Metodo; body?: any; headers?: Record<string, string> } = {}): Promise<T> {
   const { method = 'GET', body, headers = {} } = options;

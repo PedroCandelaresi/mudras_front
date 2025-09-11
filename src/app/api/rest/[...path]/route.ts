@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-const BACKEND_URL = process.env.BACKEND_URL || process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:4000';
+const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL;
 
 export async function GET(req: NextRequest, ctx: { params: Promise<{ path: string[] }> }) {
   const { path } = await ctx.params;
@@ -20,6 +20,10 @@ export async function DELETE(req: NextRequest, ctx: { params: Promise<{ path: st
 }
 
 async function proxy(req: NextRequest, path: string[]) {
+  if (!BACKEND_URL) {
+    return new NextResponse('BACKEND_URL no configurada', { status: 500 });
+  }
+
   const targetPath = '/' + (path?.join('/') || '');
   const qs = req.nextUrl.search || '';
   const targetUrl = `${BACKEND_URL.replace(/\/$/, '')}${targetPath}${qs}`;
