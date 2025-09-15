@@ -7,23 +7,20 @@ on:
 jobs:
   deploy:
     runs-on: self-hosted
+    env:
+      DOCKER_BUILDKIT: "1"
     steps:
       - uses: actions/checkout@v4
 
-      - name: Load NEXT_PUBLIC build env
-        shell: bash
-        run: |
-          set -a
-          . /home/mudras/env/front/.env
-          set +a
+      # (Opcional) verificar que el .env existe
+      - name: Check front .env exists
+        run: ls -l /home/mudras/env/front/.env
 
-      - name: Build FRONT image
+      - name: Build FRONT image (with secret)
+        working-directory: /home/mudras/runner-front/_work/mudras_front/mudras_front
         run: |
           docker build \
-            --build-arg NEXT_PUBLIC_GRAPHQL_URL \
-            --build-arg NEXT_PUBLIC_BACKEND_URL \
-            --build-arg NEXT_PUBLIC_API_URL \
-            --build-arg NEXT_PUBLIC_X_SECRET_KEY \
+            --secret id=front_env,src=/home/mudras/env/front/.env \
             -t mudras_front:latest .
 
       - name: Up FRONT with compose
