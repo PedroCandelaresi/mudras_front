@@ -1,12 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL;
-
-console.log('🚀 [LOGIN] BACKEND_URL:', BACKEND_URL);
-console.log('🚀 [LOGIN] process.env.NEXT_PUBLIC_BACKEND_URL:', process.env.NEXT_PUBLIC_BACKEND_URL);
-console.log('🚀 [LOGIN] process.env.BACKEND_URL:', process.env.BACKEND_URL);
-
 export async function POST(req: NextRequest) {
+  const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL;
+
+  console.log('🚀 [LOGIN] BACKEND_URL:', BACKEND_URL);
+  console.log('🚀 [LOGIN] process.env.NEXT_PUBLIC_BACKEND_URL:', process.env.NEXT_PUBLIC_BACKEND_URL);
+  console.log('🚀 [LOGIN] process.env.BACKEND_URL:', process.env.BACKEND_URL);
+  
   if (!BACKEND_URL) {
     return new NextResponse('BACKEND_URL no configurada', { status: 500 });
   }
