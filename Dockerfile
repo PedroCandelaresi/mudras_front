@@ -1,3 +1,5 @@
+# syntax=docker/dockerfile:1.6
+
 # ---------- deps ----------
     FROM node:20-bookworm-slim AS deps
     WORKDIR /app
@@ -15,19 +17,17 @@
     FROM deps AS build
     WORKDIR /app
     
-    # ⬇️ aceptar todos los args públicos
-    ARG NEXT_PUBLIC_GRAPHQL_URL
-    ARG NEXT_PUBLIC_BACKEND_URL
-    ARG NEXT_PUBLIC_API_URL
-    ARG NEXT_PUBLIC_X_SECRET_KEY
-    
-    # ⬇️ exportarlos al entorno del build (Next los lee en build)
-    ENV NEXT_PUBLIC_GRAPHQL_URL=$NEXT_PUBLIC_GRAPHQL_URL
-    ENV NEXT_PUBLIC_BACKEND_URL=$NEXT_PUBLIC_BACKEND_URL
-    ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
-    ENV NEXT_PUBLIC_X_SECRET_KEY=$NEXT_PUBLIC_X_SECRET_KEY
-    
+    # Copiamos el código (incluí .dockerignore correcto)
     COPY . .
+    
+    # Montamos el secret y lo copiamos a /app/.env para el build de Next
+    RUN --mount=type=secret,id=front_env,dst=/tmp/.env \
+        cp /tmp/.env ./.env
+    
+    # Si querés ver qué variables cargó Next, podés (opcional):
+    # RUN cat .env
+    
+    # Build de Next (leerá .env automáticamente)
     RUN npm run build
     
     # ---------- runner ----------
@@ -39,10 +39,17 @@
         NPM_CONFIG_LEGACY_PEER_DEPS=true \
         NPM_CONFIG_AUDIT=false \
         NPM_CONFIG_FUND=false
+    
     COPY package*.json ./
     RUN npm ci --omit=dev
+    
+    # App compilada
     COPY --from=build /app/.next ./.next
     COPY --from=build /app/public ./public
+    
+    # (Opcional) Copiar también el .env al runtime por si lo querés conservar visible:
+    COPY --from=build /app/.env ./.env
+    
     EXPOSE 3000
     CMD ["npm","run","start","--","-p","3000","-H","0.0.0.0"]
     
