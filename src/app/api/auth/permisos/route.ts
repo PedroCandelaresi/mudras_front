@@ -18,22 +18,25 @@ function pickAgent(url: string) {
 const INTERNAL_BASE = process.env.INTERNAL_BACKEND_URL;          // p.ej. http://host.docker.internal:4000/api
 const PUBLIC_BASE   = process.env.NEXT_PUBLIC_BACKEND_URL;       // p.ej. https://mudras.nqn.net.ar/api
 
-export async function POST(req: NextRequest) {
+export async function GET(req: NextRequest) {
   const base = INTERNAL_BASE || PUBLIC_BASE;
   if (!base) return new NextResponse('BACKEND_URL no configurada', { status: 500 });
 
-  console.log('🚀 [LOGIN] BASE URL usada por SSR:', base);
+  const token =
+    req.cookies.get('mudras_token')?.value ||
+    req.cookies.get('mudras_jwt')?.value ||
+    req.cookies.get('access_token')?.value ||
+    req.cookies.get('auth_token')?.value;
+
+  if (!token) return new NextResponse('No autenticado', { status: 401 });
 
   try {
-    const body = await req.json();
-
-    const res = await fetch(join(base, '/auth/login'), {
-      method: 'POST',
+    const res = await fetch(join(base, '/auth/permisos'), {
+      method: 'GET',
       headers: {
-        'Content-Type': 'application/json',
+        Authorization: /^Bearer\s+/i.test(token) ? token : `Bearer ${token}`,
         ...(process.env.X_SECRET_KEY ? { 'X-Secret-Key': process.env.X_SECRET_KEY } : {}),
       },
-      body: JSON.stringify(body),
       cache: 'no-store',
       // @ts-ignore
       agent: pickAgent(base),
@@ -41,36 +44,19 @@ export async function POST(req: NextRequest) {
 
     if (!res.ok) {
       const text = await res.text();
-      return new NextResponse(text || 'Credenciales inválidas', {
-        status: res.status,
-      });
+      return new NextResponse(text || 'Error al obtener permisos', { status: res.status });
     }
 
-    const contentType = res.headers.get('content-type') || '';
-    if (!/application\/json/i.test(contentType)) {
+    const ct = res.headers.get('content-type') || '';
+    if (!/application\/json/i.test(ct)) {
       const text = await res.text();
-      return new NextResponse(text || 'Respuesta no JSON del backend', {
-        status: 502,
-      });
+      return new NextResponse(text || 'Respuesta no JSON del backend', { status: 502 });
     }
 
     const data = await res.json();
-    const token: string | undefined = data.accessToken;
-
-    const respuesta = NextResponse.json({ usuario: data.usuario });
-    if (token) {
-      respuesta.cookies.set('mudras_token', token, {
-        httpOnly: true,
-        sameSite: 'lax',
-        secure: process.env.NODE_ENV === 'production',
-        path: '/',
-        maxAge: 60 * 60,
-      });
-    }
-
-    return respuesta;
+    return NextResponse.json(data);
   } catch (err: any) {
-    console.error('❌ [LOGIN] Error fetch backend:', err?.message || err);
+    console.error('❌ [/api/auth/permisos] Error backend:', err?.message || err);
     return new NextResponse('Error conectando al backend', { status: 502 });
   }
 }

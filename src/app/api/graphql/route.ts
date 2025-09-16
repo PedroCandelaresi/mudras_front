@@ -13,6 +13,9 @@ function join(base: string, path: string) {
   return `${base.replace(/\/$/, '')}/${path.replace(/^\//, '')}`;
 }
 
+const INTERNAL_BASE = process.env.INTERNAL_BACKEND_URL;          // p.ej. http://host.docker.internal:4000/api
+const PUBLIC_BASE   = process.env.NEXT_PUBLIC_BACKEND_URL;       // p.ej. https://mudras.nqn.net.ar/api
+
 function getTarget(): string | null {
   const igql = process.env.INTERNAL_GRAPHQL_URL;
   if (igql) return igql;
@@ -28,10 +31,8 @@ function pickAgent(url: string) {
 }
 
 async function proxy(req: NextRequest, method: 'POST' | 'GET') {
-  const target = getTarget();
-  if (!target) {
-    return new NextResponse('INTERNAL_GRAPHQL_URL no configurada', { status: 500 });
-  }
+  const base = INTERNAL_BASE || PUBLIC_BASE;
+  if (!base) return new NextResponse('BACKEND_URL no configurada', { status: 500 });
 
   // ✅ Tomar token desde cookies del request (no usamos cookies() para evitar el warning)
   const token =
@@ -50,8 +51,8 @@ async function proxy(req: NextRequest, method: 'POST' | 'GET') {
   const secret = process.env.X_SECRET_KEY;
   if (secret) headers['X-Secret-Key'] = secret;
 
-  const url = method === 'GET' ? `${target}${new URL(req.url).search}` : target;
-  const agent = pickAgent(target);
+  const url = method === 'GET' ? `${base}${new URL(req.url).search}` : base;
+  const agent = pickAgent(base);
 
   const upstream = await fetch(url, {
     method,

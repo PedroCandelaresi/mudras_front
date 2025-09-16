@@ -1,6 +1,22 @@
 import { NextRequest, NextResponse } from 'next/server';
+import http from 'node:http';
+import https from 'node:https';
 
-const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL;
+export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
+
+const httpAgent = new http.Agent({ keepAlive: true });
+const httpsAgent = new https.Agent({ keepAlive: true });
+
+function join(base: string, path: string) {
+  return `${base.replace(/\/$/, '')}/${path.replace(/^\//, '')}`;
+}
+function pickAgent(url: string) {
+  return url.startsWith('https://') ? httpsAgent : httpAgent;
+}
+
+const INTERNAL_BASE = process.env.INTERNAL_BACKEND_URL;          // p.ej. http://host.docker.internal:4000/api
+const PUBLIC_BASE   = process.env.NEXT_PUBLIC_BACKEND_URL;       // p.ej. https://mudras.nqn.net.ar/api
 
 export async function GET(req: NextRequest, ctx: { params: Promise<{ path: string[] }> }) {
   const { path } = await ctx.params;
@@ -20,13 +36,12 @@ export async function DELETE(req: NextRequest, ctx: { params: Promise<{ path: st
 }
 
 async function proxy(req: NextRequest, path: string[]) {
-  if (!BACKEND_URL) {
-    return new NextResponse('BACKEND_URL no configurada', { status: 500 });
-  }
+  const base = INTERNAL_BASE || PUBLIC_BASE;
+  if (!base) return new NextResponse('BACKEND_URL no configurada', { status: 500 });
 
   const targetPath = '/' + (path?.join('/') || '');
   const qs = req.nextUrl.search || '';
-  const targetUrl = `${BACKEND_URL.replace(/\/$/, '')}${targetPath}${qs}`;
+  const targetUrl = join(base, targetPath) + qs;
 
   const headers: Record<string, string> = {};
   // Content-Type si existe
@@ -41,7 +56,7 @@ async function proxy(req: NextRequest, path: string[]) {
   if (token) headers['Authorization'] = /^Bearer\s+/i.test(token) ? token : `Bearer ${token}`;
 
   // Reenviar X-Secret-Key si está configurado
-  const secretKey = process.env.NEXT_PUBLIC_X_SECRET_KEY;
+  const secretKey = process.env.X_SECRET_KEY;
   if (secretKey) headers['X-Secret-Key'] = secretKey;
 
   // Reenviar todas las cookies hacia el backend (para guards que lean cookie directamente)
@@ -53,6 +68,8 @@ async function proxy(req: NextRequest, path: string[]) {
     method: req.method,
     headers,
     cache: 'no-store',
+    // @ts-ignore
+    agent: pickAgent(base),
   };
 
   // Body si corresponde
