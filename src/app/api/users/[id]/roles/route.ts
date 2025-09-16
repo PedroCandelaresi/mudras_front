@@ -19,7 +19,8 @@ function pickAgent(url: string) {
 const INTERNAL_BASE = process.env.INTERNAL_BACKEND_URL;
 const PUBLIC_BASE = process.env.NEXT_PUBLIC_BACKEND_URL;
 
-export async function POST(req: NextRequest, { params }: { params: { id: string } }) {
+export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   const base = INTERNAL_BASE || PUBLIC_BASE;
   if (!base) return new NextResponse('BACKEND_URL no configurada', { status: 500 });
 
@@ -34,7 +35,7 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
   try {
     const body = await req.json();
 
-    const res = await fetch(join(base, `/users/${params.id}/roles`), {
+    const res = await fetch(join(base, `/users/${id}/roles`), {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

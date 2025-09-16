@@ -19,7 +19,8 @@ function pickAgent(url: string) {
 const INTERNAL_BASE = process.env.INTERNAL_BACKEND_URL;
 const PUBLIC_BASE = process.env.NEXT_PUBLIC_BACKEND_URL;
 
-export async function PUT(req: NextRequest, { params }: { params: { id: string } }) {
+export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   const base = INTERNAL_BASE || PUBLIC_BASE;
   if (!base) return new NextResponse('BACKEND_URL no configurada', { status: 500 });
 
@@ -34,7 +35,7 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
   try {
     const body = await req.json();
 
-    const res = await fetch(join(base, `/permissions/${params.id}`), {
+    const res = await fetch(join(base, `/permissions/${id}`), {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
@@ -60,7 +61,8 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
   }
 }
 
-export async function DELETE(req: NextRequest, { params }: { params: { id: string } }) {
+export async function DELETE(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   const base = INTERNAL_BASE || PUBLIC_BASE;
   if (!base) return new NextResponse('BACKEND_URL no configurada', { status: 500 });
 
@@ -73,7 +75,7 @@ export async function DELETE(req: NextRequest, { params }: { params: { id: strin
   if (!token) return new NextResponse('No autenticado', { status: 401 });
 
   try {
-    const res = await fetch(join(base, `/permissions/${params.id}`), {
+    const res = await fetch(join(base, `/permissions/${id}`), {
       method: 'DELETE',
       headers: {
         Authorization: /^Bearer\s+/i.test(token) ? token : `Bearer ${token}`,
