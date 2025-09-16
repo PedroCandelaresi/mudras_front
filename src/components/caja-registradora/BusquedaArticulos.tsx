@@ -266,7 +266,7 @@ export const BusquedaArticulos: React.FC<BusquedaArticulosProps> = ({
       {termino.trim().length >= 2 && !loading && resultados.length === 0 && (
         <Box textAlign="center" py={3}>
           <Typography color="text.secondary">
-            No se encontraron artículos para "{termino}"
+            No se encontraron artículos para &quot;{termino}&quot;
           </Typography>
         </Box>
       )}

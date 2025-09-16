@@ -44,12 +44,12 @@ const TablaPromociones: React.FC<Props> = ({ puedeCrear = true }) => {
   const [modalCrear, setModalCrear] = useState(false);
   const [editando, setEditando] = useState<PromocionItem | null>(null);
 
-  const promociones: PromocionItem[] = data?.promociones ?? [];
   const filtrados = useMemo<PromocionItem[]>(() => {
+    const promociones: PromocionItem[] = data?.promociones ?? [];
     const q = busqueda.trim().toLowerCase();
     if (!q) return promociones;
     return promociones.filter((p: PromocionItem) => p.nombre.toLowerCase().includes(q) || p.estado.toLowerCase().includes(q));
-  }, [promociones, busqueda]);
+  }, [data?.promociones, busqueda]);
 
   const paginados = useMemo(() => {
     const start = page * rowsPerPage;

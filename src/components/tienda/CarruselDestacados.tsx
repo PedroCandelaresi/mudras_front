@@ -40,7 +40,7 @@ export function CarruselDestacados({ items, autoPlayMs = 5000, onAgregar }: Prop
     timerRef.current && clearTimeout(timerRef.current);
     timerRef.current = setTimeout(() => siguiente(), autoPlayMs);
     return () => { if (timerRef.current) clearTimeout(timerRef.current); };
-  }, [index, total, autoPlayMs]);
+  }, [index, total, autoPlayMs, siguiente]);
 
   if (!actual) return null;
 
