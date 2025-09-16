@@ -29,9 +29,9 @@ import { es } from 'date-fns/locale';
 import { verde } from '@/ui/colores';
 
 const TablaMovimientosStock = () => {
-  const { data, loading, error, refetch, networkStatus } = useQuery<MovimientosStockResponse>(GET_MOVIMIENTOS_STOCK, {
-    fetchPolicy: 'cache-and-network',
-    notifyOnNetworkStatusChange: true,
+  const { data, loading, error, refetch } = useQuery<MovimientosStockResponse>(GET_MOVIMIENTOS_STOCK, {
+    fetchPolicy: 'cache-first',
+    errorPolicy: 'all',
   });
   const { data: dataArticulos } = useQuery<any>(GET_ARTICULOS, { fetchPolicy: 'cache-first' });
   const [page, setPage] = useState(0);

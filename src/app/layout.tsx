@@ -18,7 +18,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body>
+      <body className="app-wood">
         <NextTopLoader color="#FF6B35" />
         <ApolloProvider>
           <CustomizerContextProvider>

@@ -1,3 +1,4 @@
+/* --- Lo tuyo, conservar --- */
 html { overflow-y: scroll; }
 
 /* Variables de diseño globales para Mudras */
@@ -5,3 +6,36 @@ html { overflow-y: scroll; }
   /* Fondo suave para toolbars/zona superior en vistas de gestión */
   --toolbar-bg: #ECFDF5; /* emerald-50 por defecto; ajustable según tema */
 }
+
+/* --- Añadidos para fondo global --- */
+html, body { height: 100%; }
+
+/* Fondo madera blanco/gris para TODO el sitio (aplicado con class en <body>) */
+body.app-wood {
+  min-height: 100dvh;
+  background-image:
+    /* base suave */
+    linear-gradient(180deg, #f7f7f8, #efeff1),
+    /* vetas horizontales finas */
+    repeating-linear-gradient(0deg, rgba(0,0,0,.03) 0 1px, transparent 1px 3px),
+    /* micro-grano vertical */
+    repeating-linear-gradient(90deg, rgba(0,0,0,.02) 0 2px, transparent 2px 10px);
+  background-blend-mode: multiply;
+  background-size: 100% 100%, 100% 8px, 12px 100%;
+  background-attachment: local; /* usa 'fixed' si querés efecto parallax */
+}
+
+/* (Opcional) variante con listones anchos */
+body.app-wood-planks {
+  min-height: 100dvh;
+  background-image:
+    repeating-linear-gradient(90deg, #f8f9fa 0 280px, #f1f2f4 280px 560px),
+    repeating-linear-gradient(0deg, rgba(0,0,0,.02) 0 1px, transparent 1px 3px),
+    repeating-linear-gradient(90deg, rgba(0,0,0,.015) 0 2px, transparent 2px 10px);
+  background-blend-mode: normal, multiply, multiply;
+  background-size: 560px 100%, 100% 8px, 12px 100%;
+  background-attachment: local;
+}
+
+/* (Opcional) helper por si algún wrapper trae fondo sólido y tapa la textura */
+.content-transparent { background: transparent !important; }
