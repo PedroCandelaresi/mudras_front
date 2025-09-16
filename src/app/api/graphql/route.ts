@@ -1,52 +1,85 @@
+// app/api/graphql/route.ts
 import { NextRequest, NextResponse } from 'next/server';
+import http from 'node:http';
+import https from 'node:https';
 
-const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL;
+export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
 
-export async function POST(req: NextRequest) {
-  if (!BACKEND_URL) {
-    return new NextResponse('BACKEND_URL no configurada', { status: 500 });
+const httpAgent = new http.Agent({ keepAlive: true });
+const httpsAgent = new https.Agent({ keepAlive: true });
+
+function join(base: string, path: string) {
+  return `${base.replace(/\/$/, '')}/${path.replace(/^\//, '')}`;
+}
+
+function getTarget(): string | null {
+  const igql = process.env.INTERNAL_GRAPHQL_URL;
+  if (igql) return igql;
+  const ibase = process.env.INTERNAL_BACKEND_URL;
+  if (ibase) return join(ibase, '/graphql');
+  // último recurso: podría crear loop si apunta al dominio público
+  const pub = process.env.NEXT_PUBLIC_GRAPHQL_URL;
+  return pub ?? null;
+}
+
+function pickAgent(url: string) {
+  return url.startsWith('https://') ? httpsAgent : httpAgent;
+}
+
+async function proxy(req: NextRequest, method: 'POST' | 'GET') {
+  const target = getTarget();
+  if (!target) {
+    return new NextResponse('INTERNAL_GRAPHQL_URL no configurada', { status: 500 });
   }
 
-  const body = await req.text(); // mantener el body tal cual
-  
-  // Debug: revisar cookies disponibles
-  const allCookies = req.cookies.getAll();
-  console.log('🚀 [GRAPHQL_PROXY] Cookies disponibles:', allCookies.map(c => c.name));
-  
-  const token = req.cookies.get('mudras_token')?.value
-    || req.cookies.get('mudras_jwt')?.value
-    || req.cookies.get('access_token')?.value
-    || req.cookies.get('auth_token')?.value;
+  // ✅ Tomar token desde cookies del request (no usamos cookies() para evitar el warning)
+  const token =
+    req.cookies.get('mudras_token')?.value ||
+    req.cookies.get('mudras_jwt')?.value ||
+    req.cookies.get('access_token')?.value ||
+    req.cookies.get('auth_token')?.value;
 
-  console.log('🚀 [GRAPHQL_PROXY] Token extraído:', token ? 'PRESENTE' : 'AUSENTE');
-
-  const headers: Record<string, string> = {
-    'Content-Type': req.headers.get('content-type') || 'application/json',
-  };
+  const headers: Record<string, string> = {};
+  if (method === 'POST') {
+    headers['Content-Type'] = req.headers.get('content-type') || 'application/json';
+  }
   if (token) {
     headers['Authorization'] = /^Bearer\s+/i.test(token) ? token : `Bearer ${token}`;
   }
-  const secretKey = process.env.NEXT_PUBLIC_X_SECRET_KEY;
-  if (secretKey) headers['X-Secret-Key'] = secretKey;
-  // Reenviar cookies originales por si el backend lee JWT desde Cookie
-  const incomingCookie = req.headers.get('cookie');
-  if (incomingCookie) headers['Cookie'] = incomingCookie;
+  const secret = process.env.X_SECRET_KEY;
+  if (secret) headers['X-Secret-Key'] = secret;
 
-  console.log('🚀 [GRAPHQL_PROXY] Headers enviados:', Object.keys(headers));
+  const url = method === 'GET' ? `${target}${new URL(req.url).search}` : target;
+  const agent = pickAgent(target);
 
-  const target = `${BACKEND_URL.replace(/\/$/, '')}/graphql`;
-  console.info('[API /api/graphql] reenviando a:', target, '| token presente:', Boolean(token));
-  const upstream = await fetch(target, {
-    method: 'POST',
+  const upstream = await fetch(url, {
+    method,
     headers,
-    body,
-    // No usamos credentials aquí; reenviamos manualmente headers necesarios
+    body: method === 'POST' ? await req.text() : undefined,
+    // @ts-ignore: Node runtime acepta 'agent'
+    agent,
   });
 
-  const text = await upstream.text();
-  const res = new NextResponse(text, {
+  // No dejamos que el backend setee cookies directo al cliente
+  const respHeaders = new Headers(upstream.headers);
+  respHeaders.delete('set-cookie');
+
+  return new NextResponse(upstream.body, {
     status: upstream.status,
-    headers: { 'Content-Type': upstream.headers.get('content-type') || 'application/json' },
+    headers: respHeaders,
   });
-  return res;
+}
+
+export async function POST(req: NextRequest) {
+  return proxy(req, 'POST');
+}
+
+export async function GET(req: NextRequest) {
+  return proxy(req, 'GET');
+}
+
+// Opcional: preflights
+export async function OPTIONS() {
+  return new NextResponse(null, { status: 204 });
 }
