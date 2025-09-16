@@ -78,17 +78,22 @@ async function proxy(req: NextRequest, path: string[]) {
     init.body = bodyText;
   }
 
-  console.info('[API /api/rest] ->', req.method, targetUrl);
-  const upstream = await fetch(targetUrl, init);
-  const text = await upstream.text();
-  if (!upstream.ok) {
-    console.warn('[API /api/rest] <-', upstream.status, upstream.statusText, '| body:', text?.slice(0, 300));
-  } else {
-    console.info('[API /api/rest] <-', upstream.status, upstream.headers.get('content-type'));
-  }
+  try {
+    console.info('[API /api/rest] ->', req.method, targetUrl);
+    const upstream = await fetch(targetUrl, init);
+    const text = await upstream.text();
+    if (!upstream.ok) {
+      console.warn('[API /api/rest] <-', upstream.status, upstream.statusText, '| body:', text?.slice(0, 300));
+    } else {
+      console.info('[API /api/rest] <-', upstream.status, upstream.headers.get('content-type'));
+    }
 
-  return new NextResponse(text, {
-    status: upstream.status,
-    headers: { 'Content-Type': upstream.headers.get('content-type') || 'application/json' },
-  });
+    return new NextResponse(text, {
+      status: upstream.status,
+      headers: { 'Content-Type': upstream.headers.get('content-type') || 'application/json' },
+    });
+  } catch (err: any) {
+    console.error('❌ [/api/rest] Error backend:', err?.message || err);
+    return new NextResponse('Error conectando al backend', { status: 502 });
+  }
 }
