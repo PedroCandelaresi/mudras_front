@@ -15,14 +15,27 @@ COPY . .
 RUN --mount=type=secret,id=front_env cp /run/secrets/front_env ./.env
 RUN npm run build
 
+# ---------- runner ----------
 FROM node:20-bookworm-slim AS runner
 WORKDIR /app
-ENV NODE_ENV=production NEXT_TELEMETRY_DISABLED=1 CI=true NPM_CONFIG_LEGACY_PEER_DEPS=true NPM_CONFIG_AUDIT=false NPM_CONFIG_FUND=false
+ENV NODE_ENV=production \
+    NEXT_TELEMETRY_DISABLED=1 \
+    CI=true \
+    NPM_CONFIG_LEGACY_PEER_DEPS=true \
+    NPM_CONFIG_AUDIT=false \
+    NPM_CONFIG_FUND=false
+
+# 👇 NECESARIO para HTTPS (Let's Encrypt, etc.)
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    ca-certificates curl \
+    && rm -rf /var/lib/apt/lists/*
+
 COPY package*.json ./
 RUN npm ci --omit=dev
 COPY --from=build /app/.next ./.next
 COPY --from=build /app/public ./public
-# opcional: dejar el .env en runtime
+# (opcional) conservar el .env en runtime
 COPY --from=build /app/.env ./.env
+
 EXPOSE 3000
 CMD ["npm","run","start","--","-p","3000","-H","0.0.0.0"]
