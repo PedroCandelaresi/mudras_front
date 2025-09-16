@@ -39,3 +39,40 @@ body.app-wood-planks {
 
 /* (Opcional) helper por si algún wrapper trae fondo sólido y tapa la textura */
 .content-transparent { background: transparent !important; }
+
+/* === Efecto metal cepillado para sidebar, sin alterar color base === */
+.sidebar-brushed {
+  position: relative; /* para el ::before */
+  isolation: isolate; /* que la mezcla no afecte a hermanos */
+}
+
+.sidebar-brushed::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+
+  /* 3 capas: grano horizontal + grano vertical + brillo suave */
+  background-image:
+    /* grano fino horizontal (vetas) */
+    repeating-linear-gradient(0deg, rgba(255,255,255,.10) 0 1px, rgba(0,0,0,.08) 1px 2px),
+    /* grano sutil vertical para “cepillado” */
+    repeating-linear-gradient(90deg, rgba(255,255,255,.04) 0 2px, rgba(0,0,0,.03) 2px 6px),
+    /* brillo/sheen central */
+    linear-gradient(90deg, rgba(255,255,255,.18) 0%, rgba(255,255,255,.05) 28%, rgba(0,0,0,.08) 60%, rgba(255,255,255,.15) 100%);
+  background-blend-mode: overlay, multiply, soft-light;
+  background-size: 100% 8px, 12px 100%, 100% 100%;
+  border-radius: inherit;           /* respeta esquinas si las hay */
+  mix-blend-mode: overlay;          /* mezcla con el color original */
+  opacity: .9;                      /* bajá/subí para más/menos efecto */
+}
+
+/* (opcional) animación de brillo muy lento */
+@keyframes metalSheen {
+  0%   { background-position: 0 0, 0 0, -30% 0; }
+  100% { background-position: 0 0, 0 0, 130% 0; }
+}
+.sidebar-brushed.sheen::before {
+  animation: metalSheen 12s linear infinite;
+}
