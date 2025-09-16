@@ -95,7 +95,7 @@ const MudrasMenuItems: NavGroup[] = [
     id: uniqueId(),
     title: "Caja Registradora",
     icon: IconCash,
-    href: "/panel/caja",
+    href: "/panel/ventas/caja",
   },
   {
     id: uniqueId(),
