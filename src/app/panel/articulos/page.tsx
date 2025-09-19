@@ -5,13 +5,17 @@ import TablaArticulos from '@/app/components/dashboards/mudras/TablaArticulos';
 import TablaMovimientosStock from '@/app/components/dashboards/mudras/TablaMovimientosStock';
 import EstadisticasStock from '@/components/stock/EstadisticasStock';
 import ModalNuevoArticulo from '@/app/components/dashboards/mudras/ModalNuevoArticulo';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useQuery } from '@apollo/client/react';
 import { GET_DASHBOARD_STATS } from '@/app/queries/mudras.queries';
+import { OBTENER_PUNTOS_MUDRAS, OBTENER_STOCK_PUNTO_MUDRAS } from '@/queries/puntos-mudras';
 import { DashboardStatsResponse } from '@/app/interfaces/graphql.types';
+import { PuntoMudras } from '@/interfaces/puntos-mudras';
 import { Icon } from '@iconify/react';
 import { verde } from '@/ui/colores';
 import { GraficoBarras } from '@/components/estadisticas/GraficoBarras';
+import TablaStockPuntoVenta from '@/components/stock/TablaStockPuntoVenta';
+import ModalModificarStock from '@/components/stock/ModalModificarStock';
 
 // Componente para EstadisticasStock con datos reales
 function EstadisticasStockConDatos() {
@@ -68,11 +72,50 @@ function EstadisticasStockConDatos() {
 export default function Articulos() {
   const [tabValue, setTabValue] = useState(0);
   const [modalNuevoOpen, setModalNuevoOpen] = useState(false);
-  const [userRole, setUserRole] = useState<'admin' | 'diseñadora' | 'vendedor'>('admin'); // Demo: cambiar entre roles
+  const [modalStockOpen, setModalStockOpen] = useState(false);
+  const [articuloSeleccionado, setArticuloSeleccionado] = useState<any>(null);
+  const [userRole, setUserRole] = useState<'admin' | 'diseñadora' | 'vendedor'>('admin');
+  const [puntosVenta, setPuntosVenta] = useState<PuntoMudras[]>([]);
+  const [refetchTrigger, setRefetchTrigger] = useState(0);
+
+  // Obtener puntos de venta
+  const { data: puntosData, refetch: refetchPuntos } = useQuery(OBTENER_PUNTOS_MUDRAS, {
+    variables: {
+      filtros: { tipo: 'venta', activo: true }
+    }
+  });
+
+  useEffect(() => {
+    if (puntosData?.obtenerPuntosMudras?.puntos) {
+      setPuntosVenta(puntosData.obtenerPuntosMudras.puntos);
+    }
+  }, [puntosData]);
+
+  // Refetch cuando se actualiza el trigger
+  useEffect(() => {
+    if (refetchTrigger > 0) {
+      refetchPuntos();
+    }
+  }, [refetchTrigger, refetchPuntos]);
 
   const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
     setTabValue(newValue);
   };
+
+  const handleModificarStock = (articulo: any) => {
+    setArticuloSeleccionado(articulo);
+    setModalStockOpen(true);
+  };
+
+  const handleStockActualizado = () => {
+    setRefetchTrigger(prev => prev + 1);
+    setModalStockOpen(false);
+    setArticuloSeleccionado(null);
+  };
+
+  // Calcular número total de tabs (4 fijos + puntos de venta)
+  const tabsBasicos = 4;
+  const totalTabs = tabsBasicos + puntosVenta.length;
 
   return (
     <PageContainer title="Artículos - Mudras" description="Gestión de artículos">
@@ -87,6 +130,8 @@ export default function Articulos() {
               value={tabValue}
               onChange={handleTabChange}
               aria-label="articulos tabs"
+              variant="scrollable"
+              scrollButtons="auto"
               TabIndicatorProps={{ sx: { display: 'none' } }}
               sx={{
                 '& .MuiTabs-flexContainer': { gap: 1 },
@@ -111,6 +156,15 @@ export default function Articulos() {
               <Tab icon={<Icon icon="mdi:package-variant-closed" />} label="Artículos" iconPosition="start" />
               <Tab icon={<Icon icon="mdi:clipboard-list-outline" />} label="Movimientos Stock" iconPosition="start" />
               <Tab icon={<Icon icon="mdi:package-variant-remove" />} label="Sin stock" iconPosition="start" />
+              {/* Tabs dinámicos para puntos de venta */}
+              {puntosVenta.map((punto, index) => (
+                <Tab 
+                  key={punto.id}
+                  icon={<Icon icon="mdi:store" />} 
+                  label={punto.nombre} 
+                  iconPosition="start" 
+                />
+              ))}
             </Tabs>
           </Box>
           {/* Zona de contenido con mismo fondo y padding */}
@@ -136,20 +190,34 @@ export default function Articulos() {
               {/* Tab 1 - Tabla de Artículos */}
               {tabValue === 1 && (
                 <TablaArticulos
-                  onNuevoArticulo={() => setModalNuevoOpen(true)}
                   puedeCrear={userRole === 'admin' || userRole === 'diseñadora'}
+                  onNuevoClick={() => setModalNuevoOpen(true)}
+                  onModificarStock={handleModificarStock}
                 />
               )}
               {/* Tab 2 - Movimientos de Stock */}
               {tabValue === 2 && <TablaMovimientosStock />}
-              {/* Tab 3 - Artículos sin stock */}
+              {/* Tab 3 - Sin stock */}
               {tabValue === 3 && (
-                <TablaArticulos
-                  soloSinStock
-                  onNuevoArticulo={() => setModalNuevoOpen(true)}
-                  puedeCrear={userRole === 'admin' || userRole === 'diseñadora'}
+                <TablaArticulos 
+                  filtroSinStock={true}
+                  puedeCrear={false}
+                  onModificarStock={handleModificarStock}
                 />
               )}
+              
+              {/* Tabs dinámicos para stock por punto de venta */}
+              {puntosVenta.map((punto, index) => {
+                const tabIndex = tabsBasicos + index;
+                return tabValue === tabIndex && (
+                  <TablaStockPuntoVenta 
+                    key={punto.id}
+                    puntoVenta={punto}
+                    onModificarStock={handleModificarStock}
+                    refetchTrigger={refetchTrigger}
+                  />
+                );
+              })}
             </Box>
           </Box>
         </Paper>
@@ -158,10 +226,17 @@ export default function Articulos() {
         <ModalNuevoArticulo
           open={modalNuevoOpen}
           onClose={() => setModalNuevoOpen(false)}
-          userRole={userRole}
+        />
+        
+        {/* Modal Modificar Stock */}
+        <ModalModificarStock
+          open={modalStockOpen}
+          onClose={() => setModalStockOpen(false)}
+          articulo={articuloSeleccionado}
+          puntosVenta={puntosVenta}
+          onStockActualizado={handleStockActualizado}
         />
       </Box>
     </PageContainer>
   );
 }
-

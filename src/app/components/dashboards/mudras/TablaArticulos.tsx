@@ -39,11 +39,21 @@ interface ProveedorLista {
 
 interface Props {
   soloSinStock?: boolean;
+  filtroSinStock?: boolean;
   onNuevoArticulo?: () => void;
+  onNuevoClick?: () => void;
+  onModificarStock?: (articulo: any) => void;
   puedeCrear?: boolean;
 }
 
-const TablaArticulos: React.FC<Props> = ({ soloSinStock = false, onNuevoArticulo, puedeCrear = true }) => {
+const TablaArticulos: React.FC<Props> = ({ 
+  soloSinStock = false, 
+  filtroSinStock = false, 
+  onNuevoArticulo, 
+  onNuevoClick, 
+  onModificarStock,
+  puedeCrear = true 
+}) => {
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(50);
   const [filtro, setFiltro] = useState(''); // filtro aplicado
