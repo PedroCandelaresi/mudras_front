@@ -40,7 +40,7 @@ const FVCheckbox = () => {
           {formik.errors.color && (
             <FormHelperText error id="standard-weight-helper-text-email-login">
               {' '}
-              {formik.errors.color}{' '}
+              {String(formik.errors.color)}{' '}
             </FormHelperText>
           )}
         </Box>

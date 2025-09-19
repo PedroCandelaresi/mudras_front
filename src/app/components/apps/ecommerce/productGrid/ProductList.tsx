@@ -111,7 +111,7 @@ const ProductList = ({ onClick }: Props) => {
                       width={270}
                       height={300}
                       sx={{
-                        borderRadius: (theme) => theme.shape.borderRadius / 5,
+                        borderRadius: (theme) => theme.shape.borderRadius,
                       }}
                     ></Skeleton>
                   </>

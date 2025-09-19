@@ -212,7 +212,7 @@ export default function Dashboard() {
                         outerRadius={55}
                         paddingAngle={3}
                         dataKey="value"
-                        label={({ percent = 0 }) => `${Math.round(percent * 100)}%`}
+                        label={(props: any) => `${Math.round((props.percent || 0) * 100)}%`}
                       >
                         {donutEstadoStock.map((entry) => {
                           const key = entry.name;

@@ -80,9 +80,9 @@ export default function Articulos() {
         <Typography variant="h4" fontWeight={700} color={verde.textStrong} sx={{ mb: 2 }}>
           Gestión de Artículos
         </Typography>
-        <Paper elevation={0} sx={{ border: '1px solid', borderColor: verde.headerBorder, borderRadius: 2, overflow: 'hidden', bgcolor: 'background.paper' }}>
-          {/* Toolbar superior con fondo unificado (igual a Usuarios) */}
-          <Box sx={{ bgcolor: verde.toolbarBg, px: 1, py: 1 }}>
+        <Paper elevation={0} sx={{ border: '1px solid', borderColor: '#2e7d32', borderRadius: 2, overflow: 'hidden', bgcolor: '#c8e6c9' }}>
+          {/* Toolbar superior con fondo unificado */}
+          <Box sx={{ bgcolor: 'transparent', px: 2, py: 2, borderRadius: 0 }}>
             <Tabs
               value={tabValue}
               onChange={handleTabChange}
@@ -91,18 +91,18 @@ export default function Articulos() {
               sx={{
                 '& .MuiTabs-flexContainer': { gap: 1 },
                 '& .MuiTab-root': {
-                  color: verde.textStrong,
+                  color: 'white',
                   textTransform: 'none',
                   fontWeight: 600,
                   minHeight: 40,
                   px: 2,
                   borderRadius: 1.5,
-                  bgcolor: '#e0f0e0',
-                  '&:hover': { bgcolor: '#d6ead6' },
+                  bgcolor: '#4caf50',
+                  '&:hover': { bgcolor: '#66bb6a' },
                   '& .MuiTab-iconWrapper': { mr: 1 }
                 },
                 '& .MuiTab-root.Mui-selected': {
-                  bgcolor: verde.primary,
+                  bgcolor: '#2e7d32',
                   color: 'common.white'
                 }
               }}
@@ -113,8 +113,8 @@ export default function Articulos() {
               <Tab icon={<Icon icon="mdi:package-variant-remove" />} label="Sin stock" iconPosition="start" />
             </Tabs>
           </Box>
-          {/* Zona de contenido con mismo fondo y padding (igual a Usuarios) */}
-          <Box sx={{ bgcolor: verde.toolbarBg, px: 2, pb: 2 }}>
+          {/* Zona de contenido con mismo fondo y padding */}
+          <Box sx={{ bgcolor: 'transparent', px: 2, pb: 2, pt: 2, borderRadius: 0 }}>
             <Box sx={{ pt: 2 }}>
               {/* Tab 0 - Estadísticas */}
               {tabValue === 0 && (

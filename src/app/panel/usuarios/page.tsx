@@ -186,9 +186,9 @@ export default function Usuarios() {
         <Typography variant="h4" fontWeight={700} color="#5d4037" sx={{ mb: 2 }}>
           Gestión de Usuarios
         </Typography>
-        <Paper elevation={0} sx={{ border: '1px solid', borderColor: '#bcaaa4', borderRadius: 2, overflow: 'hidden', bgcolor: 'background.paper' }}>
+        <Paper elevation={0} sx={{ border: '1px solid', borderColor: '#5d4037', borderRadius: 2, overflow: 'hidden', bgcolor: '#d7ccc8' }}>
           {/* Toolbar superior con tabs estilo Artículos pero en paleta marrón */}
-          <Box sx={{ bgcolor: '#efebe9', px: 1, py: 1 }}>
+          <Box sx={{ bgcolor: 'transparent', px: 2, py: 2, borderRadius: 0 }}>
             <Tabs
               value={tab}
               onChange={(_e, v) => setTab(v)}
@@ -197,18 +197,18 @@ export default function Usuarios() {
               sx={{
                 '& .MuiTabs-flexContainer': { gap: 1 },
                 '& .MuiTab-root': {
-                  color: '#5d4037',
+                  color: 'white',
                   textTransform: 'none',
                   fontWeight: 600,
                   minHeight: 40,
                   px: 2,
                   borderRadius: 1.5,
-                  bgcolor: '#d7ccc8',
-                  '&:hover': { bgcolor: '#ccbdb8' },
+                  bgcolor: '#8d6e63',
+                  '&:hover': { bgcolor: '#a1887f' },
                   '& .MuiTab-iconWrapper': { mr: 1 }
                 },
                 '& .MuiTab-root.Mui-selected': {
-                  bgcolor: '#8d6e63',
+                  bgcolor: '#5d4037',
                   color: 'common.white'
                 }
               }}
@@ -219,7 +219,7 @@ export default function Usuarios() {
             </Tabs>
           </Box>
           {/* Contenido con mismo fondo y padding */}
-          <Box sx={{ bgcolor: '#efebe9', px: 2, pb: 2 }}>
+          <Box sx={{ bgcolor: 'transparent', px: 2, pb: 2, pt: 2, borderRadius: 0 }}>
             <Box sx={{ pt: 2 }}>
               {/* Pestaña Usuarios */}
               {tab === 0 && (

@@ -26,9 +26,22 @@ import {
   IconX,
   IconShoppingCart,
 } from '@tabler/icons-react';
-import { ArticuloConStock } from '../../queries/caja-registradora';
+import { ArticuloCaja } from '../../queries/caja-registradora';
 
-interface ArticuloCapturado extends ArticuloConStock {
+interface ArticuloCapturado {
+  id: number;
+  Codigo: string;
+  Descripcion: string;
+  PrecioVenta: number;
+  Deposito: string;
+  StockMinimo: number;
+  EnPromocion: boolean;
+  Unidad: string;
+  Rubro: string;
+  proveedor: {
+    IdProveedor: number;
+    Nombre: string;
+  };
   cantidad: number;
   subtotal: number;
   seleccionado: boolean;
@@ -163,7 +176,8 @@ export const TablaArticulosCapturados: React.FC<TablaArticulosCapturadosProps> =
           </TableHead>
           <TableBody>
             {articulos.map((articulo) => {
-              const stockDespues = articulo.stockDisponible - articulo.cantidad;
+              const stockActual = parseFloat(String(articulo.Deposito || 0));
+              const stockDespues = stockActual - articulo.cantidad;
               const alertaStock = stockDespues < articulo.StockMinimo;
 
               return (
@@ -194,7 +208,7 @@ export const TablaArticulosCapturados: React.FC<TablaArticulosCapturadosProps> =
                         {articulo.Descripcion}
                       </Typography>
                       <Typography variant="caption" color="text.secondary">
-                        {articulo.rubro.Descripcion}
+                        {articulo.Rubro}
                       </Typography>
                       {articulo.EnPromocion && (
                         <Chip

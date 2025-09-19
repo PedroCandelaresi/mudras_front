@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { useQuery, useMutation } from '@apollo/client';
+import { useQuery, useMutation } from '@apollo/client/react';
 import {
   Box,
   Paper,
@@ -12,14 +12,15 @@ import {
   FormControl,
   InputLabel,
   Select,
-  MenuItem,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
   TableHead,
   TableRow,
+  TableCell,
+  TableBody,
+  TableContainer,
   TablePagination,
+  Table,
+  MenuItem,
+  Pagination,
   Chip,
   IconButton,
   Dialog,
@@ -30,6 +31,8 @@ import {
   CircularProgress,
   Card,
   CardContent,
+  Divider,
+  Stack,
 } from '@mui/material';
 import {
   IconSearch,
@@ -47,10 +50,15 @@ import { es } from 'date-fns/locale';
 import {
   OBTENER_HISTORIAL_VENTAS,
   OBTENER_DETALLE_VENTA,
+  OBTENER_PUESTOS_VENTA,
   CANCELAR_VENTA_CAJA,
   PROCESAR_DEVOLUCION,
-  VentaCaja,
+  REINTENTAR_EMISION_AFIP,
+  HistorialVentasResponse,
+  DetalleVentaResponse,
+  PuestosVentaResponse,
   FiltrosHistorialInput,
+  VentaCaja,
 } from '../../queries/caja-registradora';
 
 const ESTADOS_VENTA = [
@@ -70,12 +78,12 @@ export const HistorialVentas: React.FC = () => {
   const [modalDetalleAbierto, setModalDetalleAbierto] = useState(false);
 
   // Queries
-  const { data, loading, error, refetch } = useQuery(OBTENER_HISTORIAL_VENTAS, {
+  const { data, loading, error, refetch } = useQuery<HistorialVentasResponse>(OBTENER_HISTORIAL_VENTAS, {
     variables: { filtros },
     fetchPolicy: 'cache-and-network',
   });
 
-  const { data: detalleData, loading: loadingDetalle } = useQuery(OBTENER_DETALLE_VENTA, {
+  const { data: detalleData, loading: loadingDetalle } = useQuery<DetalleVentaResponse>(OBTENER_DETALLE_VENTA, {
     variables: { id: ventaSeleccionada?.id || 0 },
     skip: !ventaSeleccionada?.id,
   });
@@ -168,7 +176,7 @@ export const HistorialVentas: React.FC = () => {
           </Box>
 
           <Grid container spacing={2} alignItems="center">
-            <Grid item xs={12} sm={6} md={3}>
+            <Grid size={{ xs: 12, sm: 6, md: 3 }}>
               <DatePicker
                 label="Fecha Desde"
                 value={filtros.fechaDesde ? new Date(filtros.fechaDesde) : null}
@@ -182,7 +190,7 @@ export const HistorialVentas: React.FC = () => {
               />
             </Grid>
 
-            <Grid item xs={12} sm={6} md={3}>
+            <Grid size={{ xs: 12, sm: 6, md: 3 }}>
               <DatePicker
                 label="Fecha Hasta"
                 value={filtros.fechaHasta ? new Date(filtros.fechaHasta) : null}
@@ -196,7 +204,7 @@ export const HistorialVentas: React.FC = () => {
               />
             </Grid>
 
-            <Grid item xs={12} sm={6} md={2}>
+            <Grid size={{ xs: 12, sm: 6, md: 2 }}>
               <FormControl fullWidth size="small">
                 <InputLabel>Estado</InputLabel>
                 <Select
@@ -214,7 +222,7 @@ export const HistorialVentas: React.FC = () => {
               </FormControl>
             </Grid>
 
-            <Grid item xs={12} sm={6} md={3}>
+            <Grid size={{ xs: 12, sm: 6, md: 3 }}>
               <TextField
                 fullWidth
                 size="small"
@@ -227,7 +235,7 @@ export const HistorialVentas: React.FC = () => {
               />
             </Grid>
 
-            <Grid item xs={12} sm={6} md={1}>
+            <Grid size={{ xs: 12, sm: 6, md: 1 }}>
               <Button
                 fullWidth
                 variant="outlined"
@@ -243,7 +251,7 @@ export const HistorialVentas: React.FC = () => {
         {/* Resumen */}
         {resumen && (
           <Grid container spacing={2} sx={{ mb: 3 }}>
-            <Grid item xs={12} sm={6} md={3}>
+            <Grid size={{ xs: 12, sm: 6, md: 3 }}>
               <Card>
                 <CardContent>
                   <Typography color="text.secondary" gutterBottom>
@@ -255,7 +263,7 @@ export const HistorialVentas: React.FC = () => {
                 </CardContent>
               </Card>
             </Grid>
-            <Grid item xs={12} sm={6} md={3}>
+            <Grid size={{ xs: 12, sm: 6, md: 3 }}>
               <Card>
                 <CardContent>
                   <Typography color="text.secondary" gutterBottom>
@@ -267,7 +275,7 @@ export const HistorialVentas: React.FC = () => {
                 </CardContent>
               </Card>
             </Grid>
-            <Grid item xs={12} sm={6} md={3}>
+            <Grid size={{ xs: 12, sm: 6, md: 3 }}>
               <Card>
                 <CardContent>
                   <Typography color="text.secondary" gutterBottom>
@@ -279,7 +287,7 @@ export const HistorialVentas: React.FC = () => {
                 </CardContent>
               </Card>
             </Grid>
-            <Grid item xs={12} sm={6} md={3}>
+            <Grid size={{ xs: 12, sm: 6, md: 3 }}>
               <Card>
                 <CardContent>
                   <Typography color="text.secondary" gutterBottom>
@@ -431,7 +439,7 @@ export const HistorialVentas: React.FC = () => {
             ) : detalleData?.obtenerDetalleVenta ? (
               <Grid container spacing={3}>
                 {/* Información general */}
-                <Grid item xs={12} md={6}>
+                <Grid size={{ xs: 12, md: 6 }}>
                   <Typography variant="h6" gutterBottom>
                     Información General
                   </Typography>
@@ -448,7 +456,7 @@ export const HistorialVentas: React.FC = () => {
                 </Grid>
 
                 {/* Totales */}
-                <Grid item xs={12} md={6}>
+                <Grid size={{ xs: 12, md: 6 }}>
                   <Typography variant="h6" gutterBottom>
                     Totales
                   </Typography>
@@ -466,7 +474,7 @@ export const HistorialVentas: React.FC = () => {
                 </Grid>
 
                 {/* Artículos */}
-                <Grid item xs={12}>
+                <Grid size={{ xs: 12 }}>
                   <Typography variant="h6" gutterBottom>
                     Artículos
                   </Typography>
@@ -497,7 +505,7 @@ export const HistorialVentas: React.FC = () => {
                 </Grid>
 
                 {/* Pagos */}
-                <Grid item xs={12}>
+                <Grid size={{ xs: 12 }}>
                   <Typography variant="h6" gutterBottom>
                     Pagos
                   </Typography>

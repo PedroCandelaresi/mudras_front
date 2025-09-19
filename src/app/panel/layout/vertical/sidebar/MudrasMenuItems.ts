@@ -93,7 +93,7 @@ const MudrasMenuItems: NavGroup[] = [
   },
   {
     id: uniqueId(),
-    title: "Caja Registradora",
+    title: "Caja",
     icon: IconCash,
     href: "/panel/ventas/caja",
   },
@@ -131,6 +131,12 @@ const MudrasMenuItems: NavGroup[] = [
     title: "Usuarios",
     icon: IconUser,
     href: "/panel/usuarios",
+  },
+  {
+    id: uniqueId(),
+    title: "Puntos Mudras",
+    icon: IconBoxSeam,
+    href: "/panel/puntos-mudras",
   },
   {
     id: uniqueId(),

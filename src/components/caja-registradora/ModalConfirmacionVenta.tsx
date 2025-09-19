@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { useMutation, useQuery } from '@apollo/client';
+import { useMutation, useQuery } from '@apollo/client/react';
 import {
   Dialog,
   DialogTitle,
@@ -37,8 +37,18 @@ import {
   IconCash,
   IconBuildingBank,
 } from '@tabler/icons-react';
-import { CREAR_VENTA_CAJA, OBTENER_PUESTOS_VENTA } from '../../queries/caja-registradora';
-import { CrearVentaCajaInput, PuestoVenta } from '../../queries/caja-registradora';
+import {
+  CREAR_VENTA_CAJA,
+  OBTENER_PUESTOS_VENTA,
+  ArticuloCaja,
+  PuestoVenta,
+  VentaCaja,
+  MetodoPago,
+  PagoVenta,
+  CrearVentaCajaResponse,
+  PuestosVentaResponse,
+  CrearVentaCajaInput,
+} from '../../queries/caja-registradora';
 
 interface ArticuloVenta {
   id: number;
@@ -49,15 +59,6 @@ interface ArticuloVenta {
   subtotal: number;
 }
 
-interface PagoVenta {
-  metodoPago: 'EFECTIVO' | 'TARJETA_DEBITO' | 'TARJETA_CREDITO' | 'TRANSFERENCIA' | 'CHEQUE' | 'CUENTA_CORRIENTE' | 'OTRO';
-  monto: number;
-  referencia?: string;
-  numeroTarjetaUltimos4?: string;
-  tipoTarjeta?: string;
-  numeroCuotas?: number;
-  observaciones?: string;
-}
 
 interface ModalConfirmacionVentaProps {
   open: boolean;
@@ -100,10 +101,10 @@ export const ModalConfirmacionVenta: React.FC<ModalConfirmacionVentaProps> = ({
   });
 
   // Queries
-  const { data: puestosData, loading: loadingPuestos } = useQuery(OBTENER_PUESTOS_VENTA);
+  const { data: puestosData, loading: loadingPuestos } = useQuery<PuestosVentaResponse>(OBTENER_PUESTOS_VENTA);
 
   // Mutations
-  const [crearVenta, { loading: creandoVenta }] = useMutation(CREAR_VENTA_CAJA, {
+  const [crearVenta, { loading: creandoVenta }] = useMutation<CrearVentaCajaResponse>(CREAR_VENTA_CAJA, {
     onCompleted: (data) => {
       onVentaCreada(data.crearVentaCaja);
       handleClose();
@@ -201,14 +202,14 @@ export const ModalConfirmacionVenta: React.FC<ModalConfirmacionVentaProps> = ({
       <DialogContent dividers>
         <Grid container spacing={3}>
           {/* Configuración de venta */}
-          <Grid item xs={12} md={6}>
+          <Grid size={{ xs: 12, md: 6 }}>
             <Paper elevation={1} sx={{ p: 2, mb: 2 }}>
               <Typography variant="h6" gutterBottom>
                 Configuración de Venta
               </Typography>
 
               <Grid container spacing={2}>
-                <Grid item xs={12}>
+                <Grid size={{ xs: 12 }}>
                   <FormControl fullWidth>
                     <InputLabel>Tipo de Venta</InputLabel>
                     <Select
@@ -225,7 +226,7 @@ export const ModalConfirmacionVenta: React.FC<ModalConfirmacionVentaProps> = ({
                   </FormControl>
                 </Grid>
 
-                <Grid item xs={12}>
+                <Grid size={{ xs: 12 }}>
                   <FormControl fullWidth>
                     <InputLabel>Puesto de Venta</InputLabel>
                     <Select
@@ -246,7 +247,7 @@ export const ModalConfirmacionVenta: React.FC<ModalConfirmacionVentaProps> = ({
                   </FormControl>
                 </Grid>
 
-                <Grid item xs={12}>
+                <Grid size={{ xs: 12 }}>
                   <TextField
                     fullWidth
                     label="Observaciones"
@@ -308,7 +309,7 @@ export const ModalConfirmacionVenta: React.FC<ModalConfirmacionVentaProps> = ({
           </Grid>
 
           {/* Configuración de pagos */}
-          <Grid item xs={12} md={6}>
+          <Grid size={{ xs: 12, md: 6 }}>
             <Paper elevation={1} sx={{ p: 2 }}>
               <Typography variant="h6" gutterBottom>
                 Métodos de Pago
@@ -316,8 +317,8 @@ export const ModalConfirmacionVenta: React.FC<ModalConfirmacionVentaProps> = ({
 
               {/* Agregar nuevo pago */}
               <Box sx={{ mb: 2, p: 2, bgcolor: 'grey.50', borderRadius: 1 }}>
-                <Grid container spacing={2} alignItems="center">
-                  <Grid item xs={12} sm={6}>
+                <Grid container spacing={2} alignItems="center" justifyContent="center">
+                  <Grid size={{ xs: 12, sm: 6 }}>
                     <FormControl fullWidth size="small">
                       <InputLabel>Método</InputLabel>
                       <Select
@@ -337,7 +338,7 @@ export const ModalConfirmacionVenta: React.FC<ModalConfirmacionVentaProps> = ({
                     </FormControl>
                   </Grid>
                   
-                  <Grid item xs={12} sm={4}>
+                  <Grid size={{ xs: 12, sm: 4 }}>
                     <TextField
                       fullWidth
                       size="small"
@@ -349,7 +350,7 @@ export const ModalConfirmacionVenta: React.FC<ModalConfirmacionVentaProps> = ({
                     />
                   </Grid>
                   
-                  <Grid item xs={12} sm={2}>
+                  <Grid size={{ xs: 12, sm: 2 }}>
                     <Button
                       fullWidth
                       variant="contained"

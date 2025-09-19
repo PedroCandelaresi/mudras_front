@@ -1,5 +1,46 @@
 import { gql } from '@apollo/client';
 
+// Interfaces para Ventas
+export interface ItemVenta {
+  articuloId: number;
+  cantidad: number;
+  precioUnitario: number;
+  subtotal: number;
+}
+
+export interface CrearVentaInput {
+  puntoVentaId: number;
+  metodoPago: 'efectivo' | 'tarjeta' | 'transferencia' | 'qr';
+  montoRecibido?: number;
+  cambio?: number;
+  items: ItemVenta[];
+}
+
+export interface CrearMovimientoStockVentaInput {
+  articuloId: number;
+  puntoMudrasId: number;
+  cantidad: number;
+  referenciaExterna?: string;
+  motivo?: string;
+}
+
+export interface ItemVentaStockInput {
+  articuloId: number;
+  cantidad: number;
+}
+
+export interface Venta {
+  id: number;
+  numeroVenta: string;
+  puntoVentaId: number;
+  total: number;
+  metodoPago: string;
+  montoRecibido?: number;
+  cambio?: number;
+  fechaVenta: string;
+  items: ItemVenta[];
+}
+
 // Queries para Artículos
 export const GET_ARTICULOS = gql`
   query GetArticulos {
@@ -192,6 +233,76 @@ export const GET_DASHBOARD_STATS = gql`
     }
     proveedores {
       IdProveedor
+    }
+  }
+`;
+
+// Queries para Puntos Mudras de Venta
+export const GET_PUNTOS_VENTA = gql`
+  query GetPuntosVenta {
+    obtenerPuntosMudras(filtros: { tipo: "venta", activo: true }) {
+      total
+      puntos {
+        id
+        nombre
+        tipo
+        descripcion
+        direccion
+        activo
+        permiteVentasOnline
+      }
+    }
+  }
+`;
+
+// Mutations para Ventas
+export const CREAR_VENTA = gql`
+  mutation CrearVenta($input: CrearVentaInput!) {
+    crearVenta(input: $input) {
+      id
+      numeroVenta
+      puntoVentaId
+      total
+      metodoPago
+      fechaVenta
+      items {
+        articuloId
+        cantidad
+        precioUnitario
+        subtotal
+      }
+    }
+  }
+`;
+
+// Mutation para crear movimiento de stock de salida
+export const CREAR_MOVIMIENTO_STOCK_VENTA = gql`
+  mutation CrearMovimientoStockVenta($input: CrearMovimientoStockVentaInput!) {
+    crearMovimientoStockVenta(input: $input) {
+      id
+      articuloId
+      puntoMudrasId
+      tipoMovimiento
+      cantidad
+      cantidadAnterior
+      cantidadNueva
+      referenciaExterna
+      fechaMovimiento
+    }
+  }
+`;
+
+// Mutation para actualizar stock después de venta
+export const ACTUALIZAR_STOCK_VENTA = gql`
+  mutation ActualizarStockVenta($items: [ItemVentaStockInput!]!, $puntoVentaId: Int!) {
+    actualizarStockVenta(items: $items, puntoVentaId: $puntoVentaId) {
+      success
+      message
+      stockActualizado {
+        articuloId
+        cantidadAnterior
+        cantidadNueva
+      }
     }
   }
 `;

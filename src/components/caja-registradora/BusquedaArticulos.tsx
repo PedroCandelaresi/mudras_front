@@ -24,12 +24,11 @@ import {
   IconPlus,
   IconAlertTriangle,
 } from '@tabler/icons-react';
-import { BUSCAR_ARTICULOS_CAJA } from '../../queries/caja-registradora';
-import { ArticuloConStock } from '../../queries/caja-registradora';
+import { BUSCAR_ARTICULOS_CAJA, BuscarArticulosCajaResponse, ArticuloCaja, FiltrosArticuloDto } from '../../queries/caja-registradora';
 
 interface BusquedaArticulosProps {
   puestoVentaId: number;
-  onAgregarArticulo: (articulo: ArticuloConStock, cantidad: number) => void;
+  onAgregarArticulo: (articulo: ArticuloCaja, cantidad: number) => void;
   articulosEnCarrito: { [key: number]: number }; // articuloId -> cantidad
 }
 
@@ -39,21 +38,26 @@ export const BusquedaArticulos: React.FC<BusquedaArticulosProps> = ({
   articulosEnCarrito,
 }) => {
   const [termino, setTermino] = useState('');
-  const [resultados, setResultados] = useState<ArticuloConStock[]>([]);
+  const [resultados, setResultados] = useState<ArticuloCaja[]>([]);
   const [cantidades, setCantidades] = useState<{ [key: number]: number }>({});
 
-  const { data, loading, error, refetch } = useQuery(BUSCAR_ARTICULOS_CAJA, {
+  const { data, loading, error, refetch } = useQuery<BuscarArticulosCajaResponse>(BUSCAR_ARTICULOS_CAJA, {
     variables: {
-      puestoVentaId,
-      termino: termino.trim(),
+      filtros: {
+        busqueda: termino.trim(),
+        soloConStock: true,
+        limite: 20,
+        ordenarPor: 'Descripcion',
+        direccionOrden: 'ASC' as const
+      } as FiltrosArticuloDto
     },
     skip: termino.trim().length < 2,
   });
 
   // Actualizar resultados cuando cambian los datos
   useEffect(() => {
-    if (data && (data as any).buscarArticulosCaja) {
-      setResultados((data as any).buscarArticulosCaja);
+    if (data?.buscarArticulos?.articulos) {
+      setResultados(data.buscarArticulos.articulos);
     } else if (termino.trim().length < 2) {
       setResultados([]);
     }
@@ -69,8 +73,13 @@ export const BusquedaArticulos: React.FC<BusquedaArticulosProps> = ({
   const handleBuscarPorCodigo = () => {
     if (termino.trim()) {
       refetch({
-        puestoVentaId,
-        termino: termino.trim(),
+        filtros: {
+          busqueda: termino.trim(),
+          soloConStock: true,
+          limite: 20,
+          ordenarPor: 'Descripcion',
+          direccionOrden: 'ASC' as const
+        } as FiltrosArticuloDto
       });
     }
   };
@@ -90,7 +99,7 @@ export const BusquedaArticulos: React.FC<BusquedaArticulosProps> = ({
     }));
   };
 
-  const handleAgregar = (articulo: ArticuloConStock) => {
+  const handleAgregar = (articulo: ArticuloCaja) => {
     const cantidad = cantidades[articulo.id] || 1;
     if (cantidad > 0) {
       onAgregarArticulo(articulo, cantidad);
@@ -102,15 +111,17 @@ export const BusquedaArticulos: React.FC<BusquedaArticulosProps> = ({
     }
   };
 
-  const calcularStockDespuesVenta = (articulo: ArticuloConStock): number => {
+  const calcularStockDespuesVenta = (articulo: ArticuloCaja): number => {
     const cantidadEnCarrito = articulosEnCarrito[articulo.id] || 0;
     const cantidadAAgregar = cantidades[articulo.id] || 1;
-    return articulo.stockDisponible - cantidadEnCarrito - cantidadAAgregar;
+    const stockActual = parseFloat(String(articulo.Deposito || 0));
+    return stockActual - cantidadEnCarrito - cantidadAAgregar;
   };
 
-  const puedeAgregar = (articulo: ArticuloConStock): boolean => {
+  const puedeAgregar = (articulo: ArticuloCaja): boolean => {
     const stockDespues = calcularStockDespuesVenta(articulo);
-    return stockDespues >= 0 || articulo.stockDisponible > 0;
+    const stockActual = parseFloat(String(articulo.Deposito || 0));
+    return stockDespues >= 0 || stockActual > 0;
   };
 
   return (
@@ -186,7 +197,7 @@ export const BusquedaArticulos: React.FC<BusquedaArticulosProps> = ({
                       {articulo.Codigo} - {articulo.Descripcion}
                     </Typography>
                     <Typography variant="body2" color="text.secondary">
-                      {articulo.rubro.Descripcion} • ${articulo.PrecioVenta.toFixed(2)}
+                      {articulo.Rubro} • ${articulo.PrecioVenta.toFixed(2)}
                     </Typography>
                   </Box>
                   
@@ -195,7 +206,7 @@ export const BusquedaArticulos: React.FC<BusquedaArticulosProps> = ({
                     {articulo.EnPromocion && (
                       <Chip label="Promoción" color="secondary" size="small" />
                     )}
-                    {articulo.alertaStock && (
+                    {parseFloat(String(articulo.Deposito || 0)) <= articulo.StockMinimo && (
                       <Chip
                         icon={<IconAlertTriangle size={16} />}
                         label="Stock Bajo"
@@ -210,7 +221,7 @@ export const BusquedaArticulos: React.FC<BusquedaArticulosProps> = ({
                 <Box display="flex" justifyContent="space-between" alignItems="center" width="100%">
                   <Box>
                     <Typography variant="body2">
-                      Stock disponible: <strong>{articulo.stockDisponible}</strong>
+                      Stock disponible: <strong>{parseFloat(String(articulo.Deposito || 0))}</strong>
                     </Typography>
                     {cantidadEnCarrito > 0 && (
                       <Typography variant="body2" color="info.main">

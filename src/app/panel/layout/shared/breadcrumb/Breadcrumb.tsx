@@ -24,7 +24,7 @@ const Breadcrumb = ({ subtitle, items, title, children }: BreadCrumbType) => (
     container
     sx={{
       backgroundColor: "primary.light",
-      borderRadius: (theme: Theme) => theme.shape.borderRadius / 4,
+      borderRadius: (theme: Theme) => theme.shape.borderRadius,
       p: "30px 25px 20px",
       marginBottom: "30px",
       position: "relative",

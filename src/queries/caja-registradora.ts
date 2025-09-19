@@ -2,21 +2,23 @@ import { gql } from '@apollo/client';
 
 // Queries
 export const BUSCAR_ARTICULOS_CAJA = gql`
-  query BuscarArticulosCaja($input: BuscarArticuloInput!) {
-    buscarArticulosCaja(input: $input) {
-      id
-      Codigo
-      Descripcion
-      PrecioVenta
-      Deposito
-      StockMinimo
-      EnPromocion
-      stockDisponible
-      stockDespuesVenta
-      alertaStock
-      rubro {
+  query BuscarArticulosCaja($filtros: FiltrosArticuloDto!) {
+    buscarArticulos(filtros: $filtros) {
+      total
+      articulos {
         id
+        Codigo
         Descripcion
+        PrecioVenta
+        Deposito
+        StockMinimo
+        EnPromocion
+        Unidad
+        Rubro
+        proveedor {
+          IdProveedor
+          Nombre
+        }
       }
     }
   }
@@ -320,11 +322,19 @@ export interface ComprobanteAfip {
   mensajeError?: string;
 }
 
-export interface BuscarArticuloInput {
-  termino?: string;
-  codigoBarras?: string;
-  puestoVentaId: number;
+export interface FiltrosArticuloDto {
+  busqueda?: string;
+  codigo?: string;
+  descripcion?: string;
+  proveedorId?: number;
+  soloConStock?: boolean;
+  soloStockBajo?: boolean;
+  soloSinStock?: boolean;
+  soloEnPromocion?: boolean;
+  pagina?: number;
   limite?: number;
+  ordenarPor?: string;
+  direccionOrden?: 'ASC' | 'DESC';
 }
 
 export interface CrearVentaCajaInput {
@@ -360,4 +370,69 @@ export interface FiltrosHistorialInput {
   numeroVenta?: string;
   pagina?: number;
   limite?: number;
+}
+
+export interface HistorialVentasResponse {
+  obtenerHistorialVentas: {
+    ventas: VentaCaja[];
+    totalRegistros: number;
+    totalPaginas: number;
+    paginaActual: number;
+    resumen: {
+      totalVentas: number;
+      montoTotal: number;
+      ventasPorEstado: {
+        estado: string;
+        cantidad: number;
+        monto: number;
+      }[];
+    };
+  };
+}
+
+export interface DetalleVentaResponse {
+  obtenerDetalleVenta: VentaCaja;
+}
+
+export interface PuestosVentaResponse {
+  obtenerPuestosVenta: PuestoVenta[];
+}
+
+export interface CrearVentaCajaResponse {
+  crearVentaCaja: VentaCaja;
+}
+
+export interface ArticuloCaja {
+  id: number;
+  Codigo: string;
+  Descripcion: string;
+  PrecioVenta: number;
+  Deposito: string;
+  StockMinimo: number;
+  EnPromocion: boolean;
+  Unidad: string;
+  Rubro: string;
+  proveedor: {
+    IdProveedor: number;
+    Nombre: string;
+  };
+}
+
+export interface BuscarArticulosCajaResponse {
+  buscarArticulos: {
+    total: number;
+    articulos: ArticuloCaja[];
+  };
+}
+
+export type MetodoPago = 'EFECTIVO' | 'TARJETA_DEBITO' | 'TARJETA_CREDITO' | 'TRANSFERENCIA' | 'CHEQUE' | 'CUENTA_CORRIENTE' | 'OTRO';
+
+export interface PagoVenta {
+  metodoPago: MetodoPago;
+  monto: number;
+  referencia?: string;
+  numeroTarjetaUltimos4?: string;
+  tipoTarjeta?: string;
+  numeroCuotas?: number;
+  observaciones?: string;
 }

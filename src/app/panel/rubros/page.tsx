@@ -17,9 +17,9 @@ export default function Rubros() {
         <Typography variant="h4" fontWeight={700} color={teal.textStrong} sx={{ mb: 2 }}>
           Gestión de Rubros y Categorías
         </Typography>
-        <Paper elevation={0} sx={{ border: '1px solid', borderColor: teal.headerBorder, borderRadius: 2, overflow: 'hidden', bgcolor: 'background.paper' }}>
+        <Paper elevation={0} sx={{ border: '1px solid', borderColor: '#00695c', borderRadius: 2, overflow: 'hidden', bgcolor: '#b2dfdb' }}>
           {/* Toolbar superior estilo Usuarios */}
-          <Box sx={{ bgcolor: teal.toolbarBg, px: 1, py: 1 }}>
+          <Box sx={{ bgcolor: 'transparent', px: 2, py: 2, borderRadius: 0 }}>
             <Tabs
               value={tabValue}
               onChange={handleTabChange}
@@ -28,18 +28,18 @@ export default function Rubros() {
               sx={{
                 '& .MuiTabs-flexContainer': { gap: 1 },
                 '& .MuiTab-root': {
-                  color: teal.textStrong,
+                  color: 'white',
                   textTransform: 'none',
                   fontWeight: 600,
                   minHeight: 40,
                   px: 2,
                   borderRadius: 1.5,
-                  bgcolor: '#e6faf8',
-                  '&:hover': { bgcolor: '#d9f4f1' },
+                  bgcolor: '#26a69a',
+                  '&:hover': { bgcolor: '#4db6ac' },
                   '& .MuiTab-iconWrapper': { mr: 1 }
                 },
                 '& .MuiTab-root.Mui-selected': {
-                  bgcolor: teal.primary,
+                  bgcolor: '#00695c',
                   color: 'common.white'
                 }
               }}
@@ -49,7 +49,7 @@ export default function Rubros() {
             </Tabs>
           </Box>
           {/* Contenido */}
-          <Box sx={{ bgcolor: teal.toolbarBg, px: 2, pb: 2 }}>
+          <Box sx={{ bgcolor: 'transparent', px: 2, pb: 2, pt: 2, borderRadius: 0 }}>
             <Box sx={{ pt: 2 }}>
               {tabValue === 0 && (
                 <Box>

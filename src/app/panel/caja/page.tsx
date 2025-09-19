@@ -21,7 +21,10 @@ import {
   InputLabel,
   Select,
   MenuItem,
-  Alert
+  Alert,
+  Paper,
+  Tabs,
+  Tab
 } from '@mui/material';
 import {
   IconShoppingCart,
@@ -36,11 +39,14 @@ import {
   IconCalculator,
   IconX
 } from '@tabler/icons-react';
+import { Store } from '@mui/icons-material';
+import { Icon } from '@iconify/react';
 import PageContainer from '@/app/components/container/PageContainer';
 import DashboardCard from '@/app/components/shared/DashboardCard';
-import { useQuery } from '@apollo/client/react';
-import { GET_ARTICULOS } from '@/app/queries/mudras.queries';
+import { useQuery, useMutation } from '@apollo/client/react';
+import { GET_ARTICULOS, GET_PUNTOS_VENTA, CREAR_VENTA, ACTUALIZAR_STOCK_VENTA, CrearVentaInput, ItemVentaStockInput } from '@/app/queries/mudras.queries';
 import { ArticulosResponse } from '@/app/interfaces/graphql.types';
+import { verde } from '@/ui/colores';
 
 interface ArticuloCarrito {
   id: string;
@@ -63,10 +69,23 @@ export default function Caja() {
   const [montoRecibido, setMontoRecibido] = useState<number>(0);
   const [dialogPago, setDialogPago] = useState(false);
   const [ventaCompletada, setVentaCompletada] = useState(false);
+  const [puntoVentaSeleccionado, setPuntoVentaSeleccionado] = useState<number | null>(null);
+  const [procesandoVenta, setProcesandoVenta] = useState(false);
   
   const { data: articulosData, loading } = useQuery<ArticulosResponse>(GET_ARTICULOS);
+  const { data: puntosVentaData } = useQuery(GET_PUNTOS_VENTA);
+  const [crearVenta] = useMutation(CREAR_VENTA);
+  const [actualizarStockVenta] = useMutation(ACTUALIZAR_STOCK_VENTA);
   
   const articulos = articulosData?.articulos || [];
+  const puntosVenta = (puntosVentaData as any)?.obtenerPuntosMudras?.puntos || [];
+  
+  // Seleccionar primer punto de venta por defecto
+  useEffect(() => {
+    if (puntosVenta.length > 0 && !puntoVentaSeleccionado) {
+      setPuntoVentaSeleccionado(puntosVenta[0].id);
+    }
+  }, [puntosVenta, puntoVentaSeleccionado]);
   
   // Filtrar artículos por búsqueda
   const articulosFiltrados = articulos.filter((articulo: any) =>
@@ -135,33 +154,103 @@ export default function Caja() {
   };
 
   // Procesar venta
-  const procesarVenta = () => {
-    if (carrito.length === 0) return;
+  const procesarVenta = async () => {
+    if (carrito.length === 0 || !puntoVentaSeleccionado) return;
     
-    // Aquí iría la lógica para guardar la venta en la BD
-    console.log('Procesando venta:', {
-      items: carrito,
-      total: totalCarrito,
-      metodoPago,
-      montoRecibido,
-      cambio
-    });
+    setProcesandoVenta(true);
     
-    setVentaCompletada(true);
-    setDialogPago(false);
-    
-    // Limpiar después de 3 segundos
-    setTimeout(() => {
-      limpiarCarrito();
-    }, 3000);
+    try {
+      // Preparar datos de la venta
+      const ventaInput: CrearVentaInput = {
+        puntoVentaId: puntoVentaSeleccionado,
+        metodoPago,
+        montoRecibido: metodoPago === 'efectivo' ? montoRecibido : totalCarrito,
+        cambio: metodoPago === 'efectivo' ? cambio : 0,
+        items: carrito.map(item => ({
+          articuloId: parseInt(item.id),
+          cantidad: item.cantidad,
+          precioUnitario: item.precio,
+          subtotal: item.precio * item.cantidad
+        }))
+      };
+      
+      // Crear la venta
+      const { data: ventaData } = await crearVenta({
+        variables: { input: ventaInput }
+      });
+      
+      // Actualizar stock
+      const itemsStock: ItemVentaStockInput[] = carrito.map(item => ({
+        articuloId: parseInt(item.id),
+        cantidad: item.cantidad
+      }));
+      
+      await actualizarStockVenta({
+        variables: {
+          items: itemsStock,
+          puntoVentaId: puntoVentaSeleccionado
+        }
+      });
+      
+      console.log('Venta procesada exitosamente:', (ventaData as any)?.crearVenta);
+      
+      setVentaCompletada(true);
+      setDialogPago(false);
+      
+      // Limpiar después de 3 segundos
+      setTimeout(() => {
+        limpiarCarrito();
+      }, 3000);
+      
+    } catch (error) {
+      console.error('Error al procesar venta:', error);
+      // Aquí podrías mostrar un mensaje de error al usuario
+    } finally {
+      setProcesandoVenta(false);
+    }
   };
 
   return (
     <PageContainer title="Caja Registradora - Mudras" description="Sistema de punto de venta">
       <Box>
-        <Grid container spacing={3}>
-          {/* Búsqueda y Productos */}
-          <Grid size={8}>
+        <Typography variant="h4" fontWeight={700} color={verde.textStrong} sx={{ mb: 2 }}>
+          Caja Registradora
+        </Typography>
+        <Paper elevation={0} sx={{ border: '1px solid', borderColor: '#2e7d32', borderRadius: 2, overflow: 'hidden', bgcolor: '#c8e6c9' }}>
+          {/* Toolbar superior */}
+          <Box sx={{ bgcolor: 'transparent', px: 2, py: 2, borderRadius: 0 }}>
+            <Tabs
+              value={0}
+              aria-label="caja tabs"
+              TabIndicatorProps={{ sx: { display: 'none' } }}
+              sx={{
+                '& .MuiTabs-flexContainer': { gap: 1 },
+                '& .MuiTab-root': {
+                  color: 'white',
+                  textTransform: 'none',
+                  fontWeight: 600,
+                  minHeight: 40,
+                  px: 2,
+                  borderRadius: 1.5,
+                  bgcolor: '#4caf50',
+                  '&:hover': { bgcolor: '#66bb6a' },
+                  '& .MuiTab-iconWrapper': { mr: 1 }
+                },
+                '& .MuiTab-root.Mui-selected': {
+                  bgcolor: '#2e7d32',
+                  color: 'common.white'
+                }
+              }}
+            >
+              <Tab icon={<Icon icon="mdi:cash-register" />} label="Punto de Venta" iconPosition="start" />
+            </Tabs>
+          </Box>
+          {/* Contenido */}
+          <Box sx={{ bgcolor: 'transparent', px: 2, pb: 2, pt: 2, borderRadius: 0 }}>
+            <Box sx={{ pt: 2 }}>
+              <Grid container spacing={3}>
+                {/* Búsqueda y Productos */}
+                <Grid size={8}>
             <DashboardCard>
               <Box p={2}>
                 <Typography variant="h5" fontWeight={600} color="primary.main" mb={3}>
@@ -228,8 +317,8 @@ export default function Caja() {
             </DashboardCard>
           </Grid>
 
-          {/* Carrito y Pago */}
-          <Grid size={4}>
+                {/* Carrito y Pago */}
+                <Grid size={4}>
             <DashboardCard>
               <Box p={2}>
                 <Stack direction="row" justifyContent="space-between" alignItems="center" mb={2}>
@@ -339,8 +428,11 @@ export default function Caja() {
                 )}
               </Box>
             </DashboardCard>
-          </Grid>
-        </Grid>
+                </Grid>
+              </Grid>
+            </Box>
+          </Box>
+        </Paper>
         
         {/* Dialog de Pago */}
         <Dialog open={dialogPago} onClose={() => setDialogPago(false)} maxWidth="sm" fullWidth>
@@ -361,6 +453,24 @@ export default function Caja() {
                 Total: ${totalCarrito.toLocaleString()}
               </Typography>
             </Box>
+            
+            <FormControl fullWidth sx={{ mb: 3 }}>
+              <InputLabel>Punto de Venta</InputLabel>
+              <Select
+                value={puntoVentaSeleccionado || ''}
+                onChange={(e) => setPuntoVentaSeleccionado(Number(e.target.value))}
+                label="Punto de Venta"
+              >
+                {puntosVenta.map((punto: any) => (
+                  <MenuItem key={punto.id} value={punto.id}>
+                    <Stack direction="row" alignItems="center" spacing={1}>
+                      <Store sx={{ fontSize: 20 }} />
+                      <span>{punto.nombre}</span>
+                    </Stack>
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
             
             <FormControl fullWidth sx={{ mb: 3 }}>
               <InputLabel>Método de Pago</InputLabel>
@@ -430,13 +540,13 @@ export default function Caja() {
             <Button
               variant="contained"
               onClick={procesarVenta}
-              disabled={metodoPago === 'efectivo' ? cambio < 0 : false}
+              disabled={procesandoVenta || !puntoVentaSeleccionado || (metodoPago === 'efectivo' ? cambio < 0 : false)}
               sx={{ 
                 backgroundColor: 'success.main',
                 '&:hover': { backgroundColor: 'success.dark' }
               }}
             >
-              Confirmar Venta
+              {procesandoVenta ? 'Procesando...' : 'Confirmar Venta'}
             </Button>
           </DialogActions>
         </Dialog>

@@ -81,3 +81,40 @@ export const violeta = {
 };
 
 export type PaletaVioleta = typeof violeta;
+
+// Puntos de Venta = gris verdoso oscuro
+export const grisVerdoso = {
+  headerBg: '#2d3e2d',
+  headerText: '#e8f5e8',
+  headerBorder: '#5a7a5a',
+  toolbarBg: '#e8f2e8',
+  toolbarBorder: '#b8d0b8',
+  borderOuter: '#5a7a5a',
+  borderInner: '#b8d0b8',
+  primary: '#4a6741',
+  primaryHover: '#3d5536',
+  textStrong: '#2d3e2d',
+  chipBg: '#b8d0b8',
+  chipText: '#2d3e2d',
+  rowHover: '#e8f2e8',
+};
+
+// Depósitos = gris rojizo oscuro
+export const grisRojizo = {
+  headerBg: '#3e2d2d',
+  headerText: '#f5e8e8',
+  headerBorder: '#7a5a5a',
+  toolbarBg: '#f2e8e8',
+  toolbarBorder: '#d0b8b8',
+  borderOuter: '#7a5a5a',
+  borderInner: '#d0b8b8',
+  primary: '#674141',
+  primaryHover: '#553636',
+  textStrong: '#3e2d2d',
+  chipBg: '#d0b8b8',
+  chipText: '#3e2d2d',
+  rowHover: '#f2e8e8',
+};
+
+export type PaletaGrisVerdoso = typeof grisVerdoso;
+export type PaletaGrisRojizo = typeof grisRojizo;
