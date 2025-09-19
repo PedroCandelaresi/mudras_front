@@ -8,7 +8,7 @@ import ModalNuevoArticulo from '@/app/components/dashboards/mudras/ModalNuevoArt
 import { useState, useEffect } from 'react';
 import { useQuery } from '@apollo/client/react';
 import { GET_DASHBOARD_STATS } from '@/app/queries/mudras.queries';
-import { OBTENER_PUNTOS_MUDRAS, OBTENER_STOCK_PUNTO_MUDRAS } from '@/queries/puntos-mudras';
+import { OBTENER_PUNTOS_MUDRAS, ObtenerPuntosMudrasResponse } from '@/queries/puntos-mudras';
 import { DashboardStatsResponse } from '@/app/interfaces/graphql.types';
 import { PuntoMudras } from '@/interfaces/puntos-mudras';
 import { Icon } from '@iconify/react';
@@ -79,7 +79,7 @@ export default function Articulos() {
   const [refetchTrigger, setRefetchTrigger] = useState(0);
 
   // Obtener puntos de venta
-  const { data: puntosData, refetch: refetchPuntos } = useQuery(OBTENER_PUNTOS_MUDRAS, {
+  const { data: puntosData, refetch: refetchPuntos } = useQuery<ObtenerPuntosMudrasResponse>(OBTENER_PUNTOS_MUDRAS, {
     variables: {
       filtros: { tipo: 'venta', activo: true }
     }

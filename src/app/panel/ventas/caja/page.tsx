@@ -10,6 +10,12 @@ import { HistorialVentas } from '../../../../components/caja-registradora/Histor
 import { ArticuloConStock } from '../../../../queries/caja-registradora';
 
 interface ArticuloCapturado extends ArticuloConStock {
+  Unidad: string;
+  Rubro: string;
+  proveedor: {
+    IdProveedor: number;
+    Nombre: string;
+  };
   cantidad: number;
   subtotal: number;
   seleccionado: boolean;
@@ -51,6 +57,12 @@ export default function CajaRegistradoraPage() {
         // Agregar nuevo artículo
         return [...prev, {
           ...articulo,
+          Unidad: 'UN', // Valor por defecto
+          Rubro: articulo.rubro?.Descripcion || 'Sin rubro',
+          proveedor: {
+            IdProveedor: 0,
+            Nombre: 'Sin proveedor'
+          },
           cantidad,
           subtotal: cantidad * articulo.PrecioVenta,
           seleccionado: true, // Por defecto seleccionado

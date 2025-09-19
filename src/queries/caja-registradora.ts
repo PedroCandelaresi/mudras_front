@@ -407,7 +407,7 @@ export interface ArticuloCaja {
   Codigo: string;
   Descripcion: string;
   PrecioVenta: number;
-  Deposito: string;
+  Deposito: number;
   StockMinimo: number;
   EnPromocion: boolean;
   Unidad: string;

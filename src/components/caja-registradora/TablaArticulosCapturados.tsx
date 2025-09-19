@@ -33,11 +33,18 @@ interface ArticuloCapturado {
   Codigo: string;
   Descripcion: string;
   PrecioVenta: number;
-  Deposito: string;
+  Deposito: number;
   StockMinimo: number;
   EnPromocion: boolean;
+  stockDisponible: number;
+  stockDespuesVenta: number;
+  alertaStock: boolean;
   Unidad: string;
   Rubro: string;
+  rubro: {
+    id: number;
+    Descripcion: string;
+  };
   proveedor: {
     IdProveedor: number;
     Nombre: string;
