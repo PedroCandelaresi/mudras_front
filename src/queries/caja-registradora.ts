@@ -412,6 +412,13 @@ export interface ArticuloCaja {
   EnPromocion: boolean;
   Unidad: string;
   Rubro: string;
+  stockDisponible: number;
+  stockDespuesVenta: number;
+  alertaStock: boolean;
+  rubro: {
+    id: number;
+    Descripcion: string;
+  };
   proveedor: {
     IdProveedor: number;
     Nombre: string;
