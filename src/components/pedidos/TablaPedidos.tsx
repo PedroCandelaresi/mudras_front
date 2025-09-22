@@ -19,7 +19,7 @@ interface Props {
 
 export function TablaPedidos({ items = [], puedeCrear = false }: Props) {
   const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(25);
+  const [rowsPerPage, setRowsPerPage] = useState(50);
   const [busqueda, setBusqueda] = useState("");
   const [pedidoSel, setPedidoSel] = useState<PedidoItem | null>(null);
 
@@ -32,13 +32,56 @@ export function TablaPedidos({ items = [], puedeCrear = false }: Props) {
     return arr;
   }, [items, busqueda]);
 
+  const totalPaginas = Math.ceil(filtrados.length / rowsPerPage);
+  const paginaActual = page + 1;
+
+  const generarNumerosPaginas = () => {
+    const paginas = [];
+    const maxVisible = 7; // Máximo de páginas visibles
+    
+    if (totalPaginas <= maxVisible) {
+      // Si hay pocas páginas, mostrar todas
+      for (let i = 1; i <= totalPaginas; i++) {
+        paginas.push(i);
+      }
+    } else {
+      // Lógica para truncar páginas
+      if (paginaActual <= 4) {
+        // Inicio: 1, 2, 3, 4, 5, ..., última
+        for (let i = 1; i <= 5; i++) {
+          paginas.push(i);
+        }
+        paginas.push('...');
+        paginas.push(totalPaginas);
+      } else if (paginaActual >= totalPaginas - 3) {
+        // Final: 1, ..., n-4, n-3, n-2, n-1, n
+        paginas.push(1);
+        paginas.push('...');
+        for (let i = totalPaginas - 4; i <= totalPaginas; i++) {
+          paginas.push(i);
+        }
+      } else {
+        // Medio: 1, ..., actual-1, actual, actual+1, ..., última
+        paginas.push(1);
+        paginas.push('...');
+        for (let i = paginaActual - 1; i <= paginaActual + 1; i++) {
+          paginas.push(i);
+        }
+        paginas.push('...');
+        paginas.push(totalPaginas);
+      }
+    }
+    
+    return paginas;
+  };
+
   const paginados = useMemo(() => {
     const start = page * rowsPerPage;
     return filtrados.slice(start, start + rowsPerPage);
   }, [filtrados, page, rowsPerPage]);
 
   return (
-    <Paper elevation={0} variant="outlined" sx={{ p: 3, borderRadius: 2 }}>
+    <Paper elevation={0} sx={{ p: 3, border: 'none', boxShadow: 'none', borderRadius: 2, bgcolor: 'background.paper' }}>
       <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
         <Typography variant="h5" fontWeight={600} color="success.dark">
           <IconReceipt style={{ marginRight: 8, verticalAlign: 'middle' }} />
@@ -114,16 +157,105 @@ export function TablaPedidos({ items = [], puedeCrear = false }: Props) {
         </Table>
       </TableContainer>
 
-      <TablePagination
-        rowsPerPageOptions={[25, 50, 100]}
-        component="div"
-        count={filtrados.length}
-        rowsPerPage={rowsPerPage}
-        page={page}
-        onPageChange={(_, p) => setPage(p)}
-        onRowsPerPageChange={(e) => { setRowsPerPage(parseInt(e.target.value, 10)); setPage(0); }}
-        labelRowsPerPage="Filas por página:"
-      />
+      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', p: 2, borderTop: '1px solid', borderColor: 'divider' }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+          <Typography variant="body2" color="text.secondary">
+            Filas por página:
+          </Typography>
+          <TextField
+            select
+            size="small"
+            value={rowsPerPage}
+            onChange={(e) => { setRowsPerPage(parseInt(e.target.value, 10)); setPage(0); }}
+            sx={{ minWidth: 80 }}
+          >
+            {[50, 100, 150].map((option) => (
+              <option key={option} value={option}>
+                {option}
+              </option>
+            ))}
+          </TextField>
+        </Box>
+        
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+          <Typography variant="body2" color="text.secondary">
+            {`${page * rowsPerPage + 1}-${Math.min((page + 1) * rowsPerPage, filtrados.length)} de ${filtrados.length}`}
+          </Typography>
+          
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+            {generarNumerosPaginas().map((numeroPagina, index) => (
+              <Box key={index}>
+                {numeroPagina === '...' ? (
+                  <Typography variant="body2" color="text.secondary" sx={{ px: 1 }}>
+                    ...
+                  </Typography>
+                ) : (
+                  <Button
+                    size="small"
+                    variant={paginaActual === numeroPagina ? 'contained' : 'text'}
+                    onClick={() => setPage((numeroPagina as number) - 1)}
+                    sx={{
+                      minWidth: 32,
+                      height: 32,
+                      textTransform: 'none',
+                      fontSize: '0.875rem',
+                      ...(paginaActual === numeroPagina ? {
+                        bgcolor: 'error.main',
+                        color: 'white',
+                        '&:hover': { bgcolor: 'error.dark' }
+                      } : {
+                        color: 'text.secondary',
+                        '&:hover': { bgcolor: 'error.light', color: 'error.dark' }
+                      })
+                    }}
+                  >
+                    {numeroPagina}
+                  </Button>
+                )}
+              </Box>
+            ))}
+          </Box>
+          
+          <Box sx={{ display: 'flex', alignItems: 'center' }}>
+            <IconButton
+              size="small"
+              onClick={() => setPage(0)}
+              disabled={page === 0}
+              sx={{ color: 'text.secondary' }}
+              title="Primera página"
+            >
+              ⏮
+            </IconButton>
+            <IconButton
+              size="small"
+              onClick={() => setPage(page - 1)}
+              disabled={page === 0}
+              sx={{ color: 'text.secondary' }}
+              title="Página anterior"
+            >
+              ◀
+            </IconButton>
+            <IconButton
+              size="small"
+              onClick={() => setPage(page + 1)}
+              disabled={page >= totalPaginas - 1}
+              sx={{ color: 'text.secondary' }}
+              title="Página siguiente"
+            >
+              ▶
+            </IconButton>
+            <IconButton
+              size="small"
+              onClick={() => setPage(totalPaginas - 1)}
+              disabled={page >= totalPaginas - 1}
+              sx={{ color: 'text.secondary' }}
+              title="Última página"
+            >
+              ⏭
+            </IconButton>
+          </Box>
+        </Box>
+      </Box>
 
       <ModalBase
         abierto={Boolean(pedidoSel)}

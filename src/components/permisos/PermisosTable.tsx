@@ -64,7 +64,7 @@ export function PermisosTable({ onCrear, onEditar, onEliminar, refetchToken }: P
   }
 
   return (
-    <Paper elevation={0} variant="outlined" sx={{ p: 3, borderColor: marron.borderOuter, borderRadius: 2, bgcolor: 'background.paper' }}>
+    <Paper elevation={0} sx={{ p: 3, border: 'none', boxShadow: 'none', borderRadius: 2, bgcolor: 'background.paper' }}>
       <Box display="flex" justifyContent="space-between" alignItems="center" sx={{ px: 1, py: 1, bgcolor: marron.toolbarBg, border: '1px solid', borderColor: marron.toolbarBorder, borderRadius: 1, mb: 2 }}>
         <Typography variant="h6" fontWeight={700} color={marron.textStrong}>Permisos</Typography>
         <Box display="flex" alignItems="center" gap={1.5}>

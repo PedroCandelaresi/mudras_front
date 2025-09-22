@@ -1,9 +1,9 @@
 'use client';
 import { Grid, Box, Typography, Button, Stack } from '@mui/material';
-import { IconPlus, IconDownload, IconCurrencyDollar } from '@tabler/icons-react';
+import { IconPlus, IconDownload, IconCurrencyDollar, IconTags } from '@tabler/icons-react';
 import PageContainer from '@/app/components/container/PageContainer';
 import DashboardCard from '@/app/components/shared/DashboardCard';
-import TablaProveedores from '@/app/components/dashboards/mudras/TablaProveedores';
+import TablaProveedores from '@/components/proveedores/TablaProveedores';
 
 const GestionProveedores = () => {
   return (
@@ -16,6 +16,21 @@ const GestionProveedores = () => {
                 Gestión de Proveedores
               </Typography>
               <Stack direction="row" spacing={2}>
+                <Button
+                  variant="outlined"
+                  startIcon={<IconTags size={18} />}
+                  href="/gestion/proveedores/rubros"
+                  sx={{ 
+                    borderColor: '#FF6B35', 
+                    color: '#FF6B35',
+                    '&:hover': { 
+                      borderColor: '#FF6B35', 
+                      backgroundColor: 'rgba(255, 107, 53, 0.1)' 
+                    }
+                  }}
+                >
+                  Rubros por Proveedor
+                </Button>
                 <Button
                   variant="outlined"
                   startIcon={<IconCurrencyDollar size={18} />}

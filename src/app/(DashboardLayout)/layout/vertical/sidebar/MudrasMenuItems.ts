@@ -120,6 +120,12 @@ const MudrasMenuItems: NavGroup[] = [
       },
       {
         id: uniqueId(),
+        title: "Rubros por Proveedor",
+        icon: IconTags,
+        href: "/gestion/proveedores/rubros",
+      },
+      {
+        id: uniqueId(),
         title: "Cuentas Corrientes",
         icon: IconCurrencyDollar,
         href: "/gestion/proveedores/cuentas",
@@ -155,26 +161,6 @@ const MudrasMenuItems: NavGroup[] = [
         title: "Inventario",
         icon: IconClipboardList,
         href: "/gestion/stock/inventario",
-      },
-    ],
-  },
-  {
-    id: uniqueId(),
-    title: "Categorías",
-    icon: IconCategory,
-    href: "/gestion/rubros",
-    children: [
-      {
-        id: uniqueId(),
-        title: "Ver Todas",
-        icon: IconEye,
-        href: "/gestion/rubros",
-      },
-      {
-        id: uniqueId(),
-        title: "Agregar Nueva",
-        icon: IconPlus,
-        href: "/gestion/rubros/nueva",
       },
     ],
   },

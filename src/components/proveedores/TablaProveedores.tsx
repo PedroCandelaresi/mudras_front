@@ -19,13 +19,13 @@ import {
   Stack
 } from "@mui/material";
 import { useQuery } from '@apollo/client/react';
-import { GET_PROVEEDORES } from '@/app/queries/mudras.queries';
-import { Proveedor } from '@/app/interfaces/mudras.types';
-import { ProveedoresResponse } from '@/app/interfaces/graphql.types';
-import { IconSearch, IconUsers, IconRefresh, IconPhone, IconMail, IconEdit, IconTrash, IconEye, IconPlus } from '@tabler/icons-react';
+import { GET_PROVEEDORES } from '@/queries/proveedores';
+import { Proveedor, ProveedoresResponse } from '@/interfaces/proveedores';
+import { IconSearch, IconUsers, IconRefresh, IconPhone, IconMail, IconEdit, IconTrash, IconEye, IconPlus, IconDotsVertical } from '@tabler/icons-react';
 import { useState } from 'react';
 import { IconButton, Tooltip, Menu, Divider } from '@mui/material';
 import { azul } from '@/ui/colores';
+import { ModalDetallesProveedor, ModalEditarProveedor, ModalEliminarProveedor } from '@/components/proveedores';
 
 interface Props {
   onNuevoProveedor?: () => void;
@@ -35,27 +35,57 @@ interface Props {
 const TablaProveedores: React.FC<Props> = ({ onNuevoProveedor, puedeCrear = true }) => {
   const { data, loading, error, refetch } = useQuery<ProveedoresResponse>(GET_PROVEEDORES);
   const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(10);
+  const [rowsPerPage, setRowsPerPage] = useState(50);
   const [filtro, setFiltro] = useState('');
   const [menuAnchor, setMenuAnchor] = useState<null | HTMLElement>(null);
-  const [columnaActiva, setColumnaActiva] = useState<null | 'nombre' | 'contacto' | 'localidad' | 'cuit'>(null);
-  const [filtrosColumna, setFiltrosColumna] = useState<{ nombre?: string; contacto?: string; localidad?: string; cuit?: string; }>({});
+  const [columnaActiva, setColumnaActiva] = useState<null | 'nombre' | 'codigo' | 'cuit'>(null);
+  const [filtrosColumna, setFiltrosColumna] = useState<{ nombre?: string; codigo?: string; cuit?: string; }>({});
   const [filtroColInput, setFiltroColInput] = useState('');
+
+  // Estados para modales
+  const [modalDetalles, setModalDetalles] = useState(false);
+  const [modalEditar, setModalEditar] = useState(false);
+  const [modalEliminar, setModalEliminar] = useState(false);
+  const [proveedorSeleccionado, setProveedorSeleccionado] = useState<Proveedor | null>(null);
 
   // Funciones para manejar acciones
   const handleViewProveedor = (proveedor: Proveedor) => {
-    console.log('Ver proveedor:', proveedor);
-    // TODO: Implementar modal de vista detallada
+    setProveedorSeleccionado(proveedor);
+    setModalDetalles(true);
   };
 
   const handleEditProveedor = (proveedor: Proveedor) => {
-    console.log('Editar proveedor:', proveedor);
-    // TODO: Implementar modal de edición
+    setProveedorSeleccionado(proveedor);
+    setModalEditar(true);
   };
 
   const handleDeleteProveedor = (proveedor: Proveedor) => {
-    console.log('Eliminar proveedor:', proveedor);
-    // TODO: Implementar confirmación y eliminación
+    setProveedorSeleccionado(proveedor);
+    setModalEliminar(true);
+  };
+
+  const handleNuevoProveedor = () => {
+    setProveedorSeleccionado(null);
+    setModalEditar(true);
+  };
+
+  const handleProveedorGuardado = () => {
+    refetch();
+    setModalEditar(false);
+    setProveedorSeleccionado(null);
+  };
+
+  const handleProveedorEliminado = () => {
+    refetch();
+    setModalEliminar(false);
+    setProveedorSeleccionado(null);
+  };
+
+  const cerrarModales = () => {
+    setModalDetalles(false);
+    setModalEditar(false);
+    setModalEliminar(false);
+    setProveedorSeleccionado(null);
   };
 
   const handleChangePage = (event: unknown, newPage: number) => {
@@ -69,20 +99,63 @@ const TablaProveedores: React.FC<Props> = ({ onNuevoProveedor, puedeCrear = true
 
   const proveedores: Proveedor[] = data?.proveedores || [];
   
-  const proveedoresFiltrados = proveedores.filter((p) => {
-    const text = filtro.toLowerCase();
-    const pasaTexto = !text || (
-      (p.Nombre || '').toLowerCase().includes(text) ||
-      (p.Contacto || '').toLowerCase().includes(text) ||
-      (p.Localidad || '').toLowerCase().includes(text) ||
-      (p.CUIT || '').includes(text)
-    );
-    const pasaNombre = filtrosColumna.nombre ? (p.Nombre || '').toLowerCase().includes(filtrosColumna.nombre.toLowerCase()) : true;
-    const pasaContacto = filtrosColumna.contacto ? (p.Contacto || '').toLowerCase().includes(filtrosColumna.contacto.toLowerCase()) : true;
-    const pasaLocalidad = filtrosColumna.localidad ? (p.Localidad || '').toLowerCase().includes(filtrosColumna.localidad.toLowerCase()) : true;
-    const pasaCuit = filtrosColumna.cuit ? (p.CUIT || '').toLowerCase().includes(filtrosColumna.cuit.toLowerCase()) : true;
-    return pasaTexto && pasaNombre && pasaContacto && pasaLocalidad && pasaCuit;
+  const proveedoresFiltrados = proveedores.filter(proveedor => {
+    const cumpleFiltroGeneral = filtro === '' || 
+      proveedor.Nombre.toLowerCase().includes(filtro.toLowerCase()) ||
+      proveedor.Codigo?.toString().toLowerCase().includes(filtro.toLowerCase()) ||
+      proveedor.CUIT?.toLowerCase().includes(filtro.toLowerCase());
+
+    const cumpleFiltrosColumna = Object.entries(filtrosColumna).every(([campo, valor]) => {
+      if (!valor) return true;
+      const valorCampo = proveedor[campo as keyof Proveedor];
+      return valorCampo?.toString().toLowerCase().includes(valor.toLowerCase());
+    });
+
+    return cumpleFiltroGeneral && cumpleFiltrosColumna;
   });
+
+  const totalPaginas = Math.ceil(proveedoresFiltrados.length / rowsPerPage);
+  const paginaActual = page + 1;
+
+  const generarNumerosPaginas = () => {
+    const paginas = [];
+    const maxVisible = 7; // Máximo de páginas visibles
+    
+    if (totalPaginas <= maxVisible) {
+      // Si hay pocas páginas, mostrar todas
+      for (let i = 1; i <= totalPaginas; i++) {
+        paginas.push(i);
+      }
+    } else {
+      // Lógica para truncar páginas
+      if (paginaActual <= 4) {
+        // Inicio: 1, 2, 3, 4, 5, ..., última
+        for (let i = 1; i <= 5; i++) {
+          paginas.push(i);
+        }
+        paginas.push('...');
+        paginas.push(totalPaginas);
+      } else if (paginaActual >= totalPaginas - 3) {
+        // Final: 1, ..., n-4, n-3, n-2, n-1, n
+        paginas.push(1);
+        paginas.push('...');
+        for (let i = totalPaginas - 4; i <= totalPaginas; i++) {
+          paginas.push(i);
+        }
+      } else {
+        // Medio: 1, ..., actual-1, actual, actual+1, ..., última
+        paginas.push(1);
+        paginas.push('...');
+        for (let i = paginaActual - 1; i <= paginaActual + 1; i++) {
+          paginas.push(i);
+        }
+        paginas.push('...');
+        paginas.push(totalPaginas);
+      }
+    }
+    
+    return paginas;
+  };
 
   const proveedoresPaginados = proveedoresFiltrados.slice(
     page * rowsPerPage,
@@ -97,13 +170,13 @@ const TablaProveedores: React.FC<Props> = ({ onNuevoProveedor, puedeCrear = true
 
   if (loading) {
     return (
-      <Paper sx={{ p: 3 }}>
+      <Paper elevation={0} sx={{ p: 3, border: 'none', boxShadow: 'none', borderRadius: 2, bgcolor: 'background.paper' }}>
         <Typography variant="h5" mb={3}>Proveedores</Typography>
         <TableContainer>
           <Table>
             <TableHead>
               <TableRow>
-                {['Nombre', 'Contacto', 'Teléfono', 'Email', 'Localidad', 'CUIT', 'Saldo'].map((header) => (
+                {['Proveedor', 'Código', 'Teléfono', 'Email', 'CUIT'].map((header) => (
                   <TableCell key={header}>
                     <Skeleton variant="text" width="100%" />
                   </TableCell>
@@ -113,7 +186,7 @@ const TablaProveedores: React.FC<Props> = ({ onNuevoProveedor, puedeCrear = true
             <TableBody>
               {[1, 2, 3, 4, 5].map((row) => (
                 <TableRow key={row}>
-                  {[1, 2, 3, 4, 5, 6, 7].map((cell) => (
+                  {[1, 2, 3, 4, 5].map((cell) => (
                     <TableCell key={cell}>
                       <Skeleton variant="text" width="100%" />
                     </TableCell>
@@ -135,8 +208,7 @@ const TablaProveedores: React.FC<Props> = ({ onNuevoProveedor, puedeCrear = true
       >
         <Typography variant="subtitle2" sx={{ px: 1, pb: 1 }}>
           {columnaActiva === 'nombre' && 'Filtrar por Proveedor'}
-          {columnaActiva === 'contacto' && 'Filtrar por Contacto'}
-          {columnaActiva === 'localidad' && 'Filtrar por Ubicación'}
+          {columnaActiva === 'codigo' && 'Filtrar por Código'}
           {columnaActiva === 'cuit' && 'Filtrar por CUIT'}
         </Typography>
         <Divider sx={{ mb: 1 }} />
@@ -176,7 +248,7 @@ const TablaProveedores: React.FC<Props> = ({ onNuevoProveedor, puedeCrear = true
 
   if (error) {
     return (
-      <Paper sx={{ p: 3, textAlign: 'center' }}>
+      <Paper elevation={0} sx={{ p: 3, textAlign: 'center', border: 'none', boxShadow: 'none', borderRadius: 2, bgcolor: 'background.paper' }}>
         <Typography color="error" variant="h6" mb={2}>
           Error al cargar proveedores
         </Typography>
@@ -196,7 +268,7 @@ const TablaProveedores: React.FC<Props> = ({ onNuevoProveedor, puedeCrear = true
   }
 
   return (
-    <Paper elevation={0} variant="outlined" sx={{ p: 3, borderColor: azul.borderOuter, borderRadius: 2, bgcolor: 'background.paper' }}>
+    <Paper elevation={0} sx={{ p: 3, border: 'none', boxShadow: 'none' , borderRadius: 2, bgcolor: 'background.paper' }}>
       <Box display="flex" justifyContent="space-between" alignItems="center" sx={{ px: 1, py: 1, bgcolor: azul.toolbarBg, border: '1px solid', borderColor: azul.toolbarBorder, borderRadius: 1, mb: 2 }}>
         <Typography variant="h6" fontWeight={700} color={azul.textStrong}>
           <IconUsers style={{ marginRight: 8, verticalAlign: 'middle' }} />
@@ -204,7 +276,7 @@ const TablaProveedores: React.FC<Props> = ({ onNuevoProveedor, puedeCrear = true
         </Typography>
         <Box display="flex" alignItems="center" gap={1.5}>
           {puedeCrear && (
-            <Button variant="contained" onClick={onNuevoProveedor} sx={{ textTransform: 'none', bgcolor: azul.primary, '&:hover': { bgcolor: azul.primaryHover } }} startIcon={<IconPlus size={18} />}>Nuevo Proveedor</Button>
+            <Button variant="contained" onClick={onNuevoProveedor || handleNuevoProveedor} sx={{ textTransform: 'none', bgcolor: azul.primary, '&:hover': { bgcolor: azul.primaryHover } }} startIcon={<IconPlus size={18} />}>Nuevo Proveedor</Button>
           )}
           <TextField
             size="small"
@@ -228,17 +300,17 @@ const TablaProveedores: React.FC<Props> = ({ onNuevoProveedor, puedeCrear = true
                   Proveedor
                   <Tooltip title="Filtrar columna">
                     <IconButton size="small" color="inherit" onClick={(e) => { setColumnaActiva('nombre'); setFiltroColInput(filtrosColumna.nombre || ''); setMenuAnchor(e.currentTarget); }}>
-                      <IconSearch size={16} />
+                      <IconDotsVertical size={16} />
                     </IconButton>
                   </Tooltip>
                 </Box>
               </TableCell>
               <TableCell sx={{ fontWeight: 700, color: azul.headerText, borderBottom: '3px solid', borderColor: azul.headerBorder }}>
                 <Box display="flex" alignItems="center" justifyContent="space-between">
-                  Contacto
+                  Código
                   <Tooltip title="Filtrar columna">
-                    <IconButton size="small" color="inherit" onClick={(e) => { setColumnaActiva('contacto'); setFiltroColInput(filtrosColumna.contacto || ''); setMenuAnchor(e.currentTarget); }}>
-                      <IconSearch size={16} />
+                    <IconButton size="small" color="inherit" onClick={(e) => { setColumnaActiva('codigo'); setFiltroColInput(filtrosColumna.codigo || ''); setMenuAnchor(e.currentTarget); }}>
+                      <IconDotsVertical size={16} />
                     </IconButton>
                   </Tooltip>
                 </Box>
@@ -247,25 +319,14 @@ const TablaProveedores: React.FC<Props> = ({ onNuevoProveedor, puedeCrear = true
               <TableCell sx={{ fontWeight: 700, color: azul.headerText, borderBottom: '3px solid', borderColor: azul.headerBorder }}>Email</TableCell>
               <TableCell sx={{ fontWeight: 700, color: azul.headerText, borderBottom: '3px solid', borderColor: azul.headerBorder }}>
                 <Box display="flex" alignItems="center" justifyContent="space-between">
-                  Ubicación
-                  <Tooltip title="Filtrar columna">
-                    <IconButton size="small" color="inherit" onClick={(e) => { setColumnaActiva('localidad'); setFiltroColInput(filtrosColumna.localidad || ''); setMenuAnchor(e.currentTarget); }}>
-                      <IconSearch size={16} />
-                    </IconButton>
-                  </Tooltip>
-                </Box>
-              </TableCell>
-              <TableCell sx={{ fontWeight: 700, color: azul.headerText, borderBottom: '3px solid', borderColor: azul.headerBorder }}>
-                <Box display="flex" alignItems="center" justifyContent="space-between">
                   CUIT
                   <Tooltip title="Filtrar columna">
                     <IconButton size="small" color="inherit" onClick={(e) => { setColumnaActiva('cuit'); setFiltroColInput(filtrosColumna.cuit || ''); setMenuAnchor(e.currentTarget); }}>
-                      <IconSearch size={16} />
+                      <IconDotsVertical size={16} />
                     </IconButton>
                   </Tooltip>
                 </Box>
               </TableCell>
-              <TableCell sx={{ fontWeight: 700, color: azul.headerText, borderBottom: '3px solid', borderColor: azul.headerBorder }}>Saldo</TableCell>
               <TableCell sx={{ fontWeight: 700, color: azul.headerText, borderBottom: '3px solid', borderColor: azul.headerBorder, textAlign: 'center' }}>Acciones</TableCell>
             </TableRow>
           </TableHead>
@@ -296,15 +357,12 @@ const TablaProveedores: React.FC<Props> = ({ onNuevoProveedor, puedeCrear = true
                       <Typography variant="body2" fontWeight={600}>
                         {proveedor.Nombre || 'Sin nombre'}
                       </Typography>
-                      <Typography variant="caption" color="text.secondary">
-                        Código: {proveedor.Codigo || 'N/A'}
-                      </Typography>
                     </Box>
                   </Box>
                 </TableCell>
                 <TableCell>
-                  <Typography variant="body2">
-                    {proveedor.Contacto || 'Sin contacto'}
+                  <Typography variant="body2" fontWeight={600} fontFamily="monospace">
+                    {proveedor.Codigo || 'N/A'}
                   </Typography>
                 </TableCell>
                 <TableCell>
@@ -332,53 +390,64 @@ const TablaProveedores: React.FC<Props> = ({ onNuevoProveedor, puedeCrear = true
                   </Box>
                 </TableCell>
                 <TableCell>
-                  <Typography variant="body2">
-                    {proveedor.Localidad && proveedor.Provincia 
-                      ? `${proveedor.Localidad}, ${proveedor.Provincia}`
-                      : proveedor.Localidad || proveedor.Provincia || 'Sin ubicación'
-                    }
-                  </Typography>
-                </TableCell>
-                <TableCell>
                   <Typography variant="body2" fontFamily="monospace">
                     {proveedor.CUIT || 'Sin CUIT'}
                   </Typography>
-                </TableCell>
-                <TableCell>
-                  <Chip
-                    label={`$${(proveedor.Saldo || 0).toLocaleString()}`}
-                    color={getSaldoColor(proveedor.Saldo || 0)}
-                    size="small"
-                    variant="filled"
-                  />
                 </TableCell>
                 <TableCell>
                   <Box display="flex" justifyContent="center" gap={1}>
                     <Tooltip title="Ver detalles">
                       <IconButton 
                         size="small" 
-                        color="info"
                         onClick={() => handleViewProveedor(proveedor)}
+                        sx={{
+                          bgcolor: '#1976d2',
+                          color: 'white',
+                          borderRadius: 1.5,
+                          width: 32,
+                          height: 32,
+                          '&:hover': {
+                            bgcolor: '#1565c0'
+                          }
+                        }}
                       >
-                        <IconEye size={16} />
+                        <IconEye size={18} />
                       </IconButton>
                     </Tooltip>
                     <Tooltip title="Editar proveedor">
                       <IconButton 
                         size="small" 
-                        color="warning"
                         onClick={() => handleEditProveedor(proveedor)}
+                        sx={{
+                          bgcolor: '#2e7d32',
+                          color: 'white',
+                          borderRadius: 1.5,
+                          width: 32,
+                          height: 32,
+                          '&:hover': {
+                            bgcolor: '#1b5e20'
+                          }
+                        }}
                       >
-                        <IconEdit size={16} />
+                        <IconEdit size={18} />
                       </IconButton>
                     </Tooltip>
                     <Tooltip title="Eliminar proveedor">
                       <IconButton 
                         size="small" 
-                        color="error"
                         onClick={() => handleDeleteProveedor(proveedor)}
+                        sx={{
+                          bgcolor: '#d32f2f',
+                          color: 'white',
+                          borderRadius: 1.5,
+                          width: 32,
+                          height: 32,
+                          '&:hover': {
+                            bgcolor: '#c62828'
+                          }
+                        }}
                       >
-                        <IconTrash size={16} />
+                        <IconTrash size={18} />
                       </IconButton>
                     </Tooltip>
                   </Box>
@@ -389,18 +458,126 @@ const TablaProveedores: React.FC<Props> = ({ onNuevoProveedor, puedeCrear = true
         </Table>
       </TableContainer>
 
-      <TablePagination
-        rowsPerPageOptions={[5, 10, 25, 50]}
-        component="div"
-        count={proveedoresFiltrados.length}
-        rowsPerPage={rowsPerPage}
-        page={page}
-        onPageChange={handleChangePage}
-        onRowsPerPageChange={handleChangeRowsPerPage}
-        labelRowsPerPage="Filas por página:"
-        labelDisplayedRows={({ from, to, count }) => 
-          `${from}-${to} de ${count !== -1 ? count : `más de ${to}`}`
-        }
+      {/* Paginación personalizada */}
+      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', p: 2, borderTop: '1px solid', borderColor: 'divider' }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+          <Typography variant="body2" color="text.secondary">
+            Filas por página:
+          </Typography>
+          <TextField
+            select
+            size="small"
+            value={rowsPerPage}
+            onChange={handleChangeRowsPerPage}
+            sx={{ minWidth: 80 }}
+          >
+            {[50, 100, 150].map((option) => (
+              <option key={option} value={option}>
+                {option}
+              </option>
+            ))}
+          </TextField>
+        </Box>
+        
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+          <Typography variant="body2" color="text.secondary">
+            {`${page * rowsPerPage + 1}-${Math.min((page + 1) * rowsPerPage, proveedoresFiltrados.length)} de ${proveedoresFiltrados.length}`}
+          </Typography>
+          
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+            {generarNumerosPaginas().map((numeroPagina, index) => (
+              <Box key={index}>
+                {numeroPagina === '...' ? (
+                  <Typography variant="body2" color="text.secondary" sx={{ px: 1 }}>
+                    ...
+                  </Typography>
+                ) : (
+                  <Button
+                    size="small"
+                    variant={paginaActual === numeroPagina ? 'contained' : 'text'}
+                    onClick={() => handleChangePage(null, (numeroPagina as number) - 1)}
+                    sx={{
+                      minWidth: 32,
+                      height: 32,
+                      textTransform: 'none',
+                      fontSize: '0.875rem',
+                      ...(paginaActual === numeroPagina ? {
+                        bgcolor: azul.primary,
+                        color: 'white',
+                        '&:hover': { bgcolor: azul.primaryHover }
+                      } : {
+                        color: 'text.secondary',
+                        '&:hover': { bgcolor: azul.rowHover }
+                      })
+                    }}
+                  >
+                    {numeroPagina}
+                  </Button>
+                )}
+              </Box>
+            ))}
+          </Box>
+          
+          <Box sx={{ display: 'flex', alignItems: 'center' }}>
+            <IconButton
+              size="small"
+              onClick={() => handleChangePage(null, 0)}
+              disabled={page === 0}
+              sx={{ color: 'text.secondary' }}
+              title="Primera página"
+            >
+              ⏮
+            </IconButton>
+            <IconButton
+              size="small"
+              onClick={() => handleChangePage(null, page - 1)}
+              disabled={page === 0}
+              sx={{ color: 'text.secondary' }}
+              title="Página anterior"
+            >
+              ◀
+            </IconButton>
+            <IconButton
+              size="small"
+              onClick={() => handleChangePage(null, page + 1)}
+              disabled={page >= totalPaginas - 1}
+              sx={{ color: 'text.secondary' }}
+              title="Página siguiente"
+            >
+              ▶
+            </IconButton>
+            <IconButton
+              size="small"
+              onClick={() => handleChangePage(null, totalPaginas - 1)}
+              disabled={page >= totalPaginas - 1}
+              sx={{ color: 'text.secondary' }}
+              title="Última página"
+            >
+              ⏭
+            </IconButton>
+          </Box>
+        </Box>
+      </Box>
+
+      {/* Modales */}
+      <ModalDetallesProveedor
+        open={modalDetalles}
+        onClose={cerrarModales}
+        proveedor={proveedorSeleccionado}
+      />
+
+      <ModalEditarProveedor
+        open={modalEditar}
+        onClose={cerrarModales}
+        proveedor={proveedorSeleccionado}
+        onProveedorGuardado={handleProveedorGuardado}
+      />
+
+      <ModalEliminarProveedor
+        open={modalEliminar}
+        onClose={cerrarModales}
+        proveedor={proveedorSeleccionado}
+        onProveedorEliminado={handleProveedorEliminado}
       />
     </Paper>
   );

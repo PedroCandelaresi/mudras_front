@@ -28,23 +28,32 @@ export const verde = {
   primary: '#2e7d32', // MUI success.main aprox
   primaryHover: '#1b5e20',
   textStrong: '#2f3e2e',
-  rowHover: 'success.lighter',
+  chipBg: '#b7d1b7',
+  chipText: '#2f3e2e',
+  rowHover: '#eaf3ea',
+  actionHover: '#c8e6c9',
+  alternateRow: '#f1f8e9',
 };
 
 export type Paleta = typeof marron | typeof verde;
+export type PaletaVerde = typeof verde;
 
 export const azul = {
-  headerBg: '#1e3a5f',
-  headerText: '#e6f0ff',
-  headerBorder: '#5b8bd9',
-  toolbarBg: '#eaf2ff',
-  toolbarBorder: '#c7d8f8',
-  borderOuter: '#5b8bd9',
-  borderInner: '#c7d8f8',
-  primary: '#1e88e5',
-  primaryHover: '#1565c0',
-  textStrong: '#123052',
-  rowHover: '#eaf2ff',
+  headerBg: '#0f2a44',
+  headerText: '#e1ecf4',
+  headerBorder: '#2d5aa0',
+  toolbarBg: '#e8f1f8',
+  toolbarBorder: '#b8d4ea',
+  borderOuter: '#2d5aa0',
+  borderInner: '#b8d4ea',
+  primary: '#1565c0',
+  primaryHover: '#0d47a1',
+  textStrong: '#0a1929',
+  chipBg: '#b8d4ea',
+  chipText: '#0a1929',
+  rowHover: '#e8f1f8',
+  alternateRow: '#f0f7ff',
+  actionHover: '#cce7ff',
 };
 
 export type PaletaAzul = typeof azul;

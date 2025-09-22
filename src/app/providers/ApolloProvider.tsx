@@ -51,13 +51,27 @@ const client = new ApolloClient({
           proveedores: { merge: false },
           movimientosStock: { merge: false },
           rubros: { merge: false },
+          obtenerRubros: { merge: false },
+          buscarRubros: { merge: false },
+          proveedoresPorRubro: { merge: false },
+          articulosPorRubro: { merge: false },
         },
       },
     },
   }),
   defaultOptions: {
-    watchQuery: { errorPolicy: 'all' },
-    query: { errorPolicy: 'all' },
+    watchQuery: { 
+      errorPolicy: 'all',
+      fetchPolicy: 'cache-and-network'
+    },
+    query: { 
+      errorPolicy: 'all',
+      fetchPolicy: 'cache-first'
+    },
+    mutate: {
+      errorPolicy: 'all',
+      fetchPolicy: 'no-cache'
+    }
   },
 });
 

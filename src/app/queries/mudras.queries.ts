@@ -214,10 +214,27 @@ export const GET_MOVIMIENTOS_STOCK = gql`
 // Queries para Rubros
 export const GET_RUBROS = gql`
   query GetRubros {
-    rubros {
-      Id
-      Rubro
-      Codigo
+    obtenerRubros {
+      id
+      nombre
+      codigo
+      cantidadArticulos
+      cantidadProveedores
+    }
+  }
+`;
+
+export const BUSCAR_RUBROS = gql`
+  query BuscarRubros($pagina: Int!, $limite: Int!, $busqueda: String) {
+    buscarRubros(pagina: $pagina, limite: $limite, busqueda: $busqueda) {
+      total
+      rubros {
+        id
+        nombre
+        codigo
+        cantidadArticulos
+        cantidadProveedores
+      }
     }
   }
 `;
@@ -240,9 +257,7 @@ export const GET_DASHBOARD_STATS = gql`
 // Queries para Puntos Mudras de Venta
 export const GET_PUNTOS_VENTA = gql`
   query GetPuntosVenta {
-    obtenerPuntosMudras(filtros: { tipo: "venta", activo: true }) {
-      total
-      puntos {
+    obtenerPuntosMudras {
         id
         nombre
         tipo
@@ -252,7 +267,6 @@ export const GET_PUNTOS_VENTA = gql`
         permiteVentasOnline
       }
     }
-  }
 `;
 
 // Mutations para Ventas

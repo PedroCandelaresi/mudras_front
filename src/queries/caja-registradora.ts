@@ -123,8 +123,8 @@ export const OBTENER_DETALLE_VENTA = gql`
           Codigo
           Descripcion
           rubro {
-            id
-            Descripcion
+            Id
+            Rubro
           }
         }
       }

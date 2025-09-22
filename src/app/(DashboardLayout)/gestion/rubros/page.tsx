@@ -3,7 +3,7 @@ import { Grid, Box, Typography, Button, Stack } from '@mui/material';
 import { IconPlus, IconDownload, IconPalette } from '@tabler/icons-react';
 import PageContainer from '@/app/components/container/PageContainer';
 import DashboardCard from '@/app/components/shared/DashboardCard';
-import TablaRubros from '@/app/components/dashboards/mudras/TablaRubros';
+import TablaRubros from '@/components/rubros/TablaRubros';
 
 const GestionRubros = () => {
   return (
@@ -12,7 +12,7 @@ const GestionRubros = () => {
         <Grid container spacing={3}>
           <Grid size={12}>
             <Stack direction="row" justifyContent="space-between" alignItems="center" mb={3}>
-              <Typography variant="h4" fontWeight={600} color="#FF6B35">
+              <Typography variant="h4" fontWeight={600} color="#f48fb1">
                 Gestión de Categorías
               </Typography>
               <Stack direction="row" spacing={2}>
@@ -20,11 +20,11 @@ const GestionRubros = () => {
                   variant="outlined"
                   startIcon={<IconPalette size={18} />}
                   sx={{ 
-                    borderColor: '#FF6B35', 
-                    color: '#FF6B35',
+                    borderColor: '#f48fb1', 
+                    color: '#f48fb1',
                     '&:hover': { 
-                      borderColor: '#FF6B35', 
-                      backgroundColor: 'rgba(255, 107, 53, 0.1)' 
+                      borderColor: '#f48fb1', 
+                      backgroundColor: 'rgba(244, 143, 177, 0.1)' 
                     }
                   }}
                 >
@@ -34,11 +34,11 @@ const GestionRubros = () => {
                   variant="outlined"
                   startIcon={<IconDownload size={18} />}
                   sx={{ 
-                    borderColor: '#FF6B35', 
-                    color: '#FF6B35',
+                    borderColor: '#f48fb1', 
+                    color: '#f48fb1',
                     '&:hover': { 
-                      borderColor: '#FF6B35', 
-                      backgroundColor: 'rgba(255, 107, 53, 0.1)' 
+                      borderColor: '#f48fb1', 
+                      backgroundColor: 'rgba(244, 143, 177, 0.1)' 
                     }
                   }}
                 >
@@ -48,8 +48,8 @@ const GestionRubros = () => {
                   variant="contained"
                   startIcon={<IconPlus size={18} />}
                   sx={{ 
-                    backgroundColor: '#FF6B35',
-                    '&:hover': { backgroundColor: '#E55A2B' }
+                    backgroundColor: '#f48fb1',
+                    '&:hover': { backgroundColor: '#f06292' }
                   }}
                 >
                   Nueva Categoría

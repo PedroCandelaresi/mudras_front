@@ -8,8 +8,8 @@ import { CustomizerContext } from '@/app/context/customizerContext';
 import NavItem from './NavItem';
 import NavCollapse from './NavCollapse';
 import NavGroup from './NavGroup/NavGroup';
-import { useContext, useEffect, useMemo, useState } from 'react';
-import { obtenerPerfil, type PerfilResponse } from '@/lib/auth';
+import { useContext, useMemo } from 'react';
+import { usePermisos } from '@/lib/permisos';
 
 
 
@@ -23,28 +23,17 @@ const SidebarItems = () => {
   const lgUp = useMediaQuery((theme) => theme.breakpoints.up('lg'));
   const hideMenu = lgUp ? isCollapse == "mini-sidebar" && !isSidebarHover : '';
 
-  const [esAdmin, setEsAdmin] = useState<boolean>(false);
-  const [perfilCargado, setPerfilCargado] = useState<boolean>(false);
-  const [perfilError, setPerfilError] = useState<boolean>(false);
-
-  useEffect(() => {
-    obtenerPerfil()
-      .then((perfil: PerfilResponse['perfil'] | null) => {
-        if (perfil?.roles?.includes('administrador')) setEsAdmin(true);
-      })
-      .catch(() => { setPerfilError(true); })
-      .finally(() => setPerfilCargado(true));
-  }, []);
+  const { esAdmin, cargando: perfilCargando } = usePermisos();
 
   const itemsFiltrados = useMemo(() => {
-    // Mientras el perfil no esté cargado o hubo error al obtenerlo, no ocultamos nada para evitar falsos negativos
-    if (!perfilCargado || perfilError) return Menuitems;
+    // Mientras el perfil no esté cargado, no ocultamos nada para evitar falsos negativos
+    if (perfilCargando) return Menuitems;
     return Menuitems.filter((item) => {
       // 'Usuarios' siempre visible para facilitar acceso al CRUD; 'Roles' y 'Permisos' solo para admin
       if (!esAdmin && (item.title === 'Roles' || item.title === 'Permisos')) return false;
       return true;
     });
-  }, [esAdmin, perfilCargado, perfilError]);
+  }, [esAdmin, perfilCargando]);
 
   return (
     <Box sx={{ px: 1.5 }}>

@@ -9,6 +9,7 @@ import { ThemeSettings } from "@/utils/theme/Theme";
 import { AppRouterCacheProvider } from '@mui/material-nextjs/v14-appRouter';
 import "@/utils/i18n";
 import { CustomizerContext } from '@/app/context/customizerContext';
+import { PieDePagina } from '@/app/components/shared/PieDePagina';
 
 
 const MyApp = ({ children }: { children: React.ReactNode }) => {
@@ -22,6 +23,7 @@ const MyApp = ({ children }: { children: React.ReactNode }) => {
                     <RTL direction={activeDir}>
                         <CssBaseline />
                         {children}
+                        <PieDePagina />
                     </RTL>
                 </ThemeProvider>
             </AppRouterCacheProvider>

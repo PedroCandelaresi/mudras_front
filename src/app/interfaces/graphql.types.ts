@@ -14,7 +14,22 @@ export interface MovimientosStockResponse {
 }
 
 export interface RubrosResponse {
-  rubros: Rubro[];
+  obtenerRubros: RubroConEstadisticas[];
+}
+
+export interface BuscarRubrosResponse {
+  buscarRubros: {
+    total: number;
+    rubros: RubroConEstadisticas[];
+  };
+}
+
+export interface RubroConEstadisticas {
+  id: number;
+  nombre: string;
+  codigo?: string;
+  cantidadArticulos: number;
+  cantidadProveedores: number;
 }
 
 export interface DashboardStatsResponse {

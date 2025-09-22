@@ -1,11 +1,12 @@
 'use client';
-import { Box, Typography, Paper, Tabs, Tab } from '@mui/material';
+import { Box, Typography, Tabs, Tab } from '@mui/material';
 import PageContainer from '@/app/components/container/PageContainer';
 import TablaVentas from '@/app/components/dashboards/mudras/TablaVentas';
 import { verde } from '@/ui/colores';
 import { useState } from 'react';
 import { Icon } from '@iconify/react';
 import { GraficoBarras } from '@/components/estadisticas/GraficoBarras';
+import { TexturedPanel } from '@/app/components/ui-components/TexturedFrame/TexturedPanel';
 
 export default function Ventas() {
   const [tabValue, setTabValue] = useState(0);
@@ -16,9 +17,26 @@ export default function Ventas() {
         <Typography variant="h4" fontWeight={700} color={verde.textStrong} sx={{ mb: 2 }}>
           Gestión de Ventas
         </Typography>
-        <Paper elevation={0} sx={{ border: '1px solid', borderColor: '#2e7d32', borderRadius: 2, overflow: 'hidden', bgcolor: '#c8e6c9' }}>
+        <TexturedPanel
+          accent="#2e7d32"
+          radius={14}
+          contentPadding={12}
+          bgTintPercent={22}
+          bgAlpha={0.98}
+          tintMode="soft-light"
+          tintOpacity={0.42}
+          textureScale={1.1}
+          textureBaseOpacity={0.18}
+          textureBoostOpacity={0.12}
+          textureContrast={0.92}
+          textureBrightness={1.03}
+          bevelWidth={12}
+          bevelIntensity={1.0}
+          glossStrength={1.0}
+          vignetteStrength={0.9}
+        >
           {/* Tabs superiores */}
-          <Box sx={{ bgcolor: 'transparent', px: 2, py: 2, borderRadius: 0 }}>
+          <Box sx={{ bgcolor: 'transparent', px: 2, py: 1.5 }}>
             <Tabs
               value={tabValue}
               onChange={handleTabChange}
@@ -49,7 +67,7 @@ export default function Ventas() {
           </Box>
 
           {/* Contenido */}
-          <Box sx={{ bgcolor: 'transparent', px: 2, pb: 2, pt: 2, borderRadius: 0 }}>
+          <Box sx={{ bgcolor: 'transparent', px: 2, pb: 2, pt: 1.5 }}>
             <Box sx={{ pt: 2 }}>
               {tabValue === 0 && (
                 <Box>
@@ -72,7 +90,7 @@ export default function Ventas() {
               )}
             </Box>
           </Box>
-        </Paper>
+        </TexturedPanel>
       </Box>
     </PageContainer>
   );

@@ -1,4 +1,5 @@
-'use client';
+"use client";
+import { TexturedPanel } from '@/app/components/ui-components/TexturedFrame/TexturedPanel';
 
 import React, { useState } from 'react';
 import { 
@@ -6,8 +7,7 @@ import {
   Typography, 
   Tabs, 
   Tab, 
-  Chip,
-  Paper
+  Chip
 } from '@mui/material';
 import { Icon } from '@iconify/react';
 import { useQuery } from '@apollo/client/react';
@@ -100,9 +100,26 @@ export default function PuntosMudrasPage() {
         <Typography variant="h4" fontWeight={700} color={grisVerdoso.textStrong} sx={{ mb: 2 }}>
           Gestión de Puntos Mudras
         </Typography>
-        <Paper elevation={0} sx={{ border: '1px solid', borderColor: '#424242', borderRadius: 2, overflow: 'hidden', bgcolor: '#e0e0e0' }}>
+        <TexturedPanel
+          accent="#424242"
+          radius={14}
+          contentPadding={12}
+          bgTintPercent={20}
+          bgAlpha={0.98}
+          tintMode="soft-light"
+          tintOpacity={0.36}
+          textureScale={1.08}
+          textureBaseOpacity={0.18}
+          textureBoostOpacity={0.10}
+          textureContrast={0.92}
+          textureBrightness={1.02}
+          bevelWidth={12}
+          bevelIntensity={0.95}
+          glossStrength={0.9}
+          vignetteStrength={0.8}
+        >
           {/* Toolbar superior con tabs */}
-          <Box sx={{ bgcolor: 'transparent', px: 2, py: 2, borderRadius: 0 }}>
+          <Box sx={{ bgcolor: 'transparent', px: 2, py: 1.5 }}>
             <Tabs
               value={tabActual}
               onChange={handleChangeTab}
@@ -152,7 +169,7 @@ export default function PuntosMudrasPage() {
             </Tabs>
           </Box>
           {/* Zona de contenido con mismo fondo y padding */}
-          <Box sx={{ bgcolor: 'transparent', px: 2, pb: 2, pt: 2, borderRadius: 0 }}>
+          <Box sx={{ bgcolor: 'transparent', px: 2, pb: 2, pt: 1.5 }}>
             <Box sx={{ pt: 2 }}>
               {/* Tab 0 - Puntos de Venta */}
               {tabActual === 0 && (
@@ -175,7 +192,7 @@ export default function PuntosMudrasPage() {
               )}
             </Box>
           </Box>
-        </Paper>
+        </TexturedPanel>
       </Box>
 
       {/* Modal para crear/editar puntos */}

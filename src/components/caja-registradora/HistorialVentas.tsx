@@ -153,7 +153,7 @@ export const HistorialVentas: React.FC = () => {
     <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={es}>
       <Box>
         {/* Filtros */}
-        <Paper elevation={2} sx={{ p: 3, mb: 3 }}>
+        <Paper elevation={0} sx={{ p: 3, mb: 3, border: 'none', boxShadow: 'none', borderRadius: 2, bgcolor: 'background.paper' }}>
           <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
             <Typography variant="h6">
               Historial de Ventas
@@ -303,7 +303,7 @@ export const HistorialVentas: React.FC = () => {
         )}
 
         {/* Tabla de ventas */}
-        <Paper elevation={2}>
+        <Paper elevation={0} sx={{ border: 'none', boxShadow: 'none', borderRadius: 2, bgcolor: 'background.paper' }}>
           {loading && (
             <Box display="flex" justifyContent="center" p={3}>
               <CircularProgress />

@@ -1,73 +1,15 @@
 'use client';
-import { Box, Typography, Tabs, Tab, Paper } from '@mui/material';
+import { Box, Typography, Tabs, Tab } from '@mui/material';
 import PageContainer from '@/app/components/container/PageContainer';
-import TablaArticulos from '@/app/components/dashboards/mudras/TablaArticulos';
+import { TablaArticulos, ModalNuevoArticulo } from '@/components/articulos';
 import TablaMovimientosStock from '@/app/components/dashboards/mudras/TablaMovimientosStock';
-import EstadisticasStock from '@/components/stock/EstadisticasStock';
-import ModalNuevoArticulo from '@/app/components/dashboards/mudras/ModalNuevoArticulo';
-import { useState, useEffect } from 'react';
-import { useQuery } from '@apollo/client/react';
-import { GET_DASHBOARD_STATS } from '@/app/queries/mudras.queries';
-import { OBTENER_PUNTOS_MUDRAS, ObtenerPuntosMudrasResponse } from '@/queries/puntos-mudras';
-import { DashboardStatsResponse } from '@/app/interfaces/graphql.types';
-import { PuntoMudras } from '@/interfaces/puntos-mudras';
-import { Icon } from '@iconify/react';
+import { useState } from 'react';
 import { verde } from '@/ui/colores';
 import { GraficoBarras } from '@/components/estadisticas/GraficoBarras';
-import TablaStockPuntoVenta from '@/components/stock/TablaStockPuntoVenta';
+import { Icon } from '@iconify/react';
 import ModalModificarStock from '@/components/stock/ModalModificarStock';
+import { TexturedPanel } from '@/app/components/ui-components/TexturedFrame/TexturedPanel';
 
-// Componente para EstadisticasStock con datos reales
-function EstadisticasStockConDatos() {
-  const { data, loading } = useQuery<DashboardStatsResponse>(GET_DASHBOARD_STATS);
-  
-  if (loading) {
-    return <Box p={3}>Cargando estadísticas...</Box>;
-  }
-
-  // Calcular estadísticas reales usando los datos de la base de datos
-  const totalArticulos = data?.articulos?.length || 0;
-  
-  const articulosConStock = data?.articulos?.filter((art: any) => {
-    const stock = parseFloat(String(art.Deposito || 0));
-    return stock > 0;
-  }).length || 0;
-  
-  const articulosStockBajo = data?.articulos?.filter((art: any) => {
-    const stock = parseFloat(String(art.Deposito || 0));
-    const stockMinimo = parseFloat(String(art.StockMinimo || 0));
-    return stock > 0 && stockMinimo > 0 && stock <= stockMinimo;
-  }).length || 0;
-  
-  const articulosSinStock = data?.articulos?.filter((art: any) => {
-    const stock = parseFloat(String(art.Deposito || 0));
-    return stock === 0 || art.Deposito === null || art.Deposito === undefined;
-  }).length || 0;
-
-  const articulosActivos = data?.articulos?.filter((art: any) => art.Estado === 'ACTIVO').length || 0;
-
-  const articulosEnPromocion = data?.articulos?.filter((art: any) => Boolean(art.EnPromocion)).length || 0;
-
-  const valorTotal = data?.articulos?.reduce((total: number, art: any) => {
-    const stock = parseFloat(String(art.Deposito || 0));
-    const precio = parseFloat(String(art.PrecioVenta || 0));
-    return total + (stock * precio);
-  }, 0) || 0;
-
-  const estadisticas = {
-    totalArticulos,
-    articulosActivos,
-    articulosConStock,
-    articulosSinStock,
-    articulosStockBajo,
-    articulosEnPromocion,
-    articulosPublicadosEnTienda: 0,
-    valorTotalStock: valorTotal,
-    valorTotalInventario: valorTotal
-  };
-
-  return <EstadisticasStock estadisticas={estadisticas} />;
-}
 
 export default function Articulos() {
   const [tabValue, setTabValue] = useState(0);
@@ -75,31 +17,14 @@ export default function Articulos() {
   const [modalStockOpen, setModalStockOpen] = useState(false);
   const [articuloSeleccionado, setArticuloSeleccionado] = useState<any>(null);
   const [userRole, setUserRole] = useState<'admin' | 'diseñadora' | 'vendedor'>('admin');
-  const [puntosVenta, setPuntosVenta] = useState<PuntoMudras[]>([]);
-  const [refetchTrigger, setRefetchTrigger] = useState(0);
-
-  // Obtener puntos de venta
-  const { data: puntosData, refetch: refetchPuntos } = useQuery<ObtenerPuntosMudrasResponse>(OBTENER_PUNTOS_MUDRAS, {
-    variables: {
-      filtros: { tipo: 'venta', activo: true }
-    }
-  });
-
-  useEffect(() => {
-    if (puntosData?.obtenerPuntosMudras?.puntos) {
-      setPuntosVenta(puntosData.obtenerPuntosMudras.puntos);
-    }
-  }, [puntosData]);
-
-  // Refetch cuando se actualiza el trigger
-  useEffect(() => {
-    if (refetchTrigger > 0) {
-      refetchPuntos();
-    }
-  }, [refetchTrigger, refetchPuntos]);
 
   const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
     setTabValue(newValue);
+  };
+
+  const handleStockActualizado = () => {
+    setModalStockOpen(false);
+    setArticuloSeleccionado(null);
   };
 
   const handleModificarStock = (articulo: any) => {
@@ -107,25 +32,32 @@ export default function Articulos() {
     setModalStockOpen(true);
   };
 
-  const handleStockActualizado = () => {
-    setRefetchTrigger(prev => prev + 1);
-    setModalStockOpen(false);
-    setArticuloSeleccionado(null);
-  };
-
-  // Calcular número total de tabs (4 fijos + puntos de venta)
-  const tabsBasicos = 4;
-  const totalTabs = tabsBasicos + puntosVenta.length;
-
   return (
     <PageContainer title="Artículos - Mudras" description="Gestión de artículos">
       <Box>
         <Typography variant="h4" fontWeight={700} color={verde.textStrong} sx={{ mb: 2 }}>
           Gestión de Artículos
         </Typography>
-        <Paper elevation={0} sx={{ border: '1px solid', borderColor: '#2e7d32', borderRadius: 2, overflow: 'hidden', bgcolor: '#c8e6c9' }}>
+        <TexturedPanel
+          accent="#2e7d32"
+          radius={14}
+          contentPadding={12}
+          bgTintPercent={22}
+          bgAlpha={0.98}
+          tintMode="soft-light"
+          tintOpacity={0.42}
+          textureScale={1.1}
+          textureBaseOpacity={0.18}
+          textureBoostOpacity={0.12}
+          textureContrast={0.92}
+          textureBrightness={1.03}
+          bevelWidth={12}
+          bevelIntensity={1.0}
+          glossStrength={1.0}
+          vignetteStrength={0.9}
+        >
           {/* Toolbar superior con fondo unificado */}
-          <Box sx={{ bgcolor: 'transparent', px: 2, py: 2, borderRadius: 0 }}>
+          <Box sx={{ bgcolor: 'transparent', px: 2, py: 1.5 }}>
             <Tabs
               value={tabValue}
               onChange={handleTabChange}
@@ -152,75 +84,22 @@ export default function Articulos() {
                 }
               }}
             >
-              <Tab icon={<Icon icon="mdi:chart-line" />} label="Estadísticas" iconPosition="start" />
-              <Tab icon={<Icon icon="mdi:package-variant-closed" />} label="Artículos" iconPosition="start" />
+              <Tab icon={<Icon icon="mdi:package-variant" />} label="Artículos" iconPosition="start" />
               <Tab icon={<Icon icon="mdi:clipboard-list-outline" />} label="Movimientos Stock" iconPosition="start" />
-              <Tab icon={<Icon icon="mdi:package-variant-remove" />} label="Sin stock" iconPosition="start" />
-              {/* Tabs dinámicos para puntos de venta */}
-              {puntosVenta.map((punto, index) => (
-                <Tab 
-                  key={punto.id}
-                  icon={<Icon icon="mdi:store" />} 
-                  label={punto.nombre} 
-                  iconPosition="start" 
-                />
-              ))}
             </Tabs>
           </Box>
           {/* Zona de contenido con mismo fondo y padding */}
-          <Box sx={{ bgcolor: 'transparent', px: 2, pb: 2, pt: 2, borderRadius: 0 }}>
+          <Box sx={{ bgcolor: 'transparent', px: 2, pb: 2, pt: 1.5 }}>
             <Box sx={{ pt: 2 }}>
-              {/* Tab 0 - Estadísticas */}
               {tabValue === 0 && (
-                <Box>
-                  <GraficoBarras
-                    titulo="Ventas por artículo (demo)"
-                    datos={[
-                      { etiqueta: 'Sahumerios', valor: 120, color: '#66bb6a' },
-                      { etiqueta: 'Dijes', valor: 95, color: '#43a047' },
-                      { etiqueta: 'Cristales', valor: 80, color: '#2e7d32' },
-                      { etiqueta: 'Aceites', valor: 60, color: '#1b5e20' },
-                    ]}
-                    anchoBarra={72}
-                    colorBorde={verde.headerBorder}
-                  />
-                </Box>
+                <TablaArticulos puedeCrear={userRole === 'admin' || userRole === 'diseñadora'} onModificarStock={handleModificarStock} />
               )}
-
-              {/* Tab 1 - Tabla de Artículos */}
               {tabValue === 1 && (
-                <TablaArticulos
-                  puedeCrear={userRole === 'admin' || userRole === 'diseñadora'}
-                  onNuevoClick={() => setModalNuevoOpen(true)}
-                  onModificarStock={handleModificarStock}
-                />
+                <TablaMovimientosStock />
               )}
-              {/* Tab 2 - Movimientos de Stock */}
-              {tabValue === 2 && <TablaMovimientosStock />}
-              {/* Tab 3 - Sin stock */}
-              {tabValue === 3 && (
-                <TablaArticulos 
-                  filtroSinStock={true}
-                  puedeCrear={false}
-                  onModificarStock={handleModificarStock}
-                />
-              )}
-              
-              {/* Tabs dinámicos para stock por punto de venta */}
-              {puntosVenta.map((punto, index) => {
-                const tabIndex = tabsBasicos + index;
-                return tabValue === tabIndex && (
-                  <TablaStockPuntoVenta 
-                    key={punto.id}
-                    puntoVenta={punto}
-                    onModificarStock={handleModificarStock}
-                    refetchTrigger={refetchTrigger}
-                  />
-                );
-              })}
             </Box>
           </Box>
-        </Paper>
+        </TexturedPanel>
 
         {/* Modal Nuevo Artículo */}
         <ModalNuevoArticulo
@@ -233,7 +112,7 @@ export default function Articulos() {
           open={modalStockOpen}
           onClose={() => setModalStockOpen(false)}
           articulo={articuloSeleccionado}
-          puntosVenta={puntosVenta}
+          puntosVenta={[]}
           onStockActualizado={handleStockActualizado}
         />
       </Box>

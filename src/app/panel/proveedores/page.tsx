@@ -1,25 +1,51 @@
 'use client';
-import { Box, Typography, Paper, Tabs, Tab } from '@mui/material';
+import { Box, Typography, Tabs, Tab } from '@mui/material';
 import PageContainer from '@/app/components/container/PageContainer';
-import TablaProveedores from '@/app/components/dashboards/mudras/TablaProveedores';
+import TablaProveedores from '@/components/proveedores/TablaProveedores';
 import { useState } from 'react';
 import { azul } from '@/ui/colores';
-import { GraficoBarras } from '@/components/estadisticas/GraficoBarras';
+import { rosa } from '@/components/rubros/colores-rosa';
 import { Icon } from '@iconify/react';
+import TablaRubros from '@/components/rubros/TablaRubros';
+import { TexturedPanel } from '@/app/components/ui-components/TexturedFrame/TexturedPanel';
 
 export default function Proveedores() {
   const [userRole] = useState<'admin' | 'diseñadora' | 'vendedor'>('admin');
   const [tabValue, setTabValue] = useState(0);
   const handleTabChange = (_e: React.SyntheticEvent, v: number) => setTabValue(v);
+
   return (
     <PageContainer title="Proveedores - Mudras" description="Gestión de proveedores">
       <Box>
-        <Typography variant="h4" fontWeight={700} color={azul.textStrong} sx={{ mb: 2 }}>
-          Gestión de Proveedores
-        </Typography>
-        <Paper elevation={0} sx={{ border: '1px solid', borderColor: '#1565c0', borderRadius: 2, overflow: 'hidden', bgcolor: '#bbdefb' }}>
-          {/* Toolbar superior estilo Usuarios */}
-          <Box sx={{ bgcolor: 'transparent', px: 2, py: 2, borderRadius: 0 }}>
+
+        {/* Marco metálico fino + textura sutil (dinámico según tab) */}
+        <TexturedPanel
+          accent={tabValue === 1 ? rosa.primary : "#1976d2"}
+          radius={14}
+          contentPadding={12}
+        
+          // Fondo + Color
+          bgTintPercent={22}
+          bgAlpha={0.98}
+          tintMode="soft-light"
+          tintOpacity={0.42}
+        
+          // Textura (sutil, sin competir con el borde)
+          textureScale={1.1}
+          textureBaseOpacity={0.18}
+          textureBoostOpacity={0.12}
+          textureContrast={0.92}
+          textureBrightness={1.03}
+        
+          // Bisel (ahora sí se nota)
+          bevelWidth={12}          // ya no se usa en shadows, pero mantenemos API
+          bevelIntensity={1.0}
+        
+          glossStrength={1.0}
+          vignetteStrength={0.9}
+        >
+          {/* Toolbar superior (mismos estilos que tenías) */}
+          <Box sx={{ bgcolor: 'transparent', px: 2, py: 1.5 }}>
             <Tabs
               value={tabValue}
               onChange={handleTabChange}
@@ -34,44 +60,33 @@ export default function Proveedores() {
                   minHeight: 40,
                   px: 2,
                   borderRadius: 1.5,
-                  bgcolor: '#42a5f5',
-                  '&:hover': { bgcolor: '#64b5f6' },
+                  bgcolor: tabValue === 1 ? rosa.primary : '#42a5f5',
+                  '&:hover': { bgcolor: tabValue === 1 ? rosa.accent : '#64b5f6' },
                   '& .MuiTab-iconWrapper': { mr: 1 }
                 },
                 '& .MuiTab-root.Mui-selected': {
-                  bgcolor: '#1565c0',
+                  bgcolor: tabValue === 1 ? '#e91e63' : '#1565c0',
                   color: 'common.white'
                 }
               }}
             >
-              <Tab icon={<Icon icon="mdi:chart-line" />} label="Estadísticas" iconPosition="start" />
               <Tab icon={<Icon icon="mdi:account-group" />} label="Proveedores" iconPosition="start" />
+              <Tab icon={<Icon icon="mdi:tag" />} label="Rubros" iconPosition="start" />
             </Tabs>
           </Box>
+
           {/* Contenido */}
-          <Box sx={{ bgcolor: 'transparent', px: 2, pb: 2, pt: 2, borderRadius: 0 }}>
+          <Box sx={{ bgcolor: 'transparent', px: 2, pb: 2, pt: 1.5 }}>
             <Box sx={{ pt: 2 }}>
               {tabValue === 0 && (
-                <Box>
-                  <GraficoBarras
-                    titulo="Proveedores con más ventas (demo)"
-                    datos={[
-                      { etiqueta: 'NDALI', valor: 140, color: '#64b5f6' },
-                      { etiqueta: 'VALLARIS', valor: 120, color: '#42a5f5' },
-                      { etiqueta: 'ILUMINARTE', valor: 85, color: '#1e88e5' },
-                      { etiqueta: 'AYURDEVAS', valor: 70, color: '#1565c0' },
-                    ]}
-                    anchoBarra={72}
-                    colorBorde={azul.headerBorder}
-                  />
-                </Box>
+                <TablaProveedores puedeCrear={userRole === 'admin' || userRole === 'diseñadora'} />
               )}
               {tabValue === 1 && (
-                <TablaProveedores puedeCrear={userRole === 'admin' || userRole === 'diseñadora'} />
+                <TablaRubros puedeCrear={userRole === 'admin' || userRole === 'diseñadora'} />
               )}
             </Box>
           </Box>
-        </Paper>
+        </TexturedPanel>
       </Box>
     </PageContainer>
   );

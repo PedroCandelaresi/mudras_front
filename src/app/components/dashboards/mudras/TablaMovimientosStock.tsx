@@ -11,7 +11,6 @@ import {
   Paper,
   Chip,
   Skeleton,
-  TablePagination,
   TextField,
   InputAdornment,
   Button,
@@ -35,7 +34,7 @@ const TablaMovimientosStock = () => {
   });
   const { data: dataArticulos } = useQuery<any>(GET_ARTICULOS, { fetchPolicy: 'cache-first' });
   const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(10);
+  const [rowsPerPage, setRowsPerPage] = useState(50);
   const [filtro, setFiltro] = useState('');
   const [menuAnchor, setMenuAnchor] = useState<null | HTMLElement>(null);
   const [columnaActiva, setColumnaActiva] = useState<null | 'descripcion' | 'usuario'>(null);
@@ -101,6 +100,49 @@ const TablaMovimientosStock = () => {
     return pasaTexto && pasaDesc && pasaUsuario;
   });
 
+  const totalPaginas = Math.ceil(movimientosFiltrados.length / rowsPerPage);
+  const paginaActual = page + 1;
+
+  const generarNumerosPaginas = () => {
+    const paginas = [];
+    const maxVisible = 7; // Máximo de páginas visibles
+    
+    if (totalPaginas <= maxVisible) {
+      // Si hay pocas páginas, mostrar todas
+      for (let i = 1; i <= totalPaginas; i++) {
+        paginas.push(i);
+      }
+    } else {
+      // Lógica para truncar páginas
+      if (paginaActual <= 4) {
+        // Inicio: 1, 2, 3, 4, 5, ..., última
+        for (let i = 1; i <= 5; i++) {
+          paginas.push(i);
+        }
+        paginas.push('...');
+        paginas.push(totalPaginas);
+      } else if (paginaActual >= totalPaginas - 3) {
+        // Final: 1, ..., n-4, n-3, n-2, n-1, n
+        paginas.push(1);
+        paginas.push('...');
+        for (let i = totalPaginas - 4; i <= totalPaginas; i++) {
+          paginas.push(i);
+        }
+      } else {
+        // Medio: 1, ..., actual-1, actual, actual+1, ..., última
+        paginas.push(1);
+        paginas.push('...');
+        for (let i = paginaActual - 1; i <= paginaActual + 1; i++) {
+          paginas.push(i);
+        }
+        paginas.push('...');
+        paginas.push(totalPaginas);
+      }
+    }
+    
+    return paginas;
+  };
+
   const movimientosPaginados = movimientosFiltrados.slice(
     page * rowsPerPage,
     page * rowsPerPage + rowsPerPage
@@ -118,7 +160,7 @@ const TablaMovimientosStock = () => {
 
   if (loading) {
     return (
-      <Paper sx={{ p: 3 }}>
+      <Paper elevation={0} sx={{ p: 3, border: 'none', boxShadow: 'none', borderRadius: 2, bgcolor: 'background.paper' }}>
         <Typography variant="h5" mb={3}>Movimientos de Stock</Typography>
         <TableContainer>
           <Table>
@@ -196,7 +238,7 @@ const TablaMovimientosStock = () => {
   const noHayDatos = !Array.isArray(data?.movimientosStock) || (data?.movimientosStock?.length || 0) === 0;
   if (error && noHayDatos) {
     return (
-      <Paper sx={{ p: 3, textAlign: 'center' }}>
+      <Paper elevation={0} sx={{ p: 3, textAlign: 'center', border: 'none', boxShadow: 'none', borderRadius: 2, bgcolor: 'background.paper' }}>
         <Typography color="error" variant="h6" mb={2}>
           Error al cargar movimientos de stock
         </Typography>
@@ -216,7 +258,7 @@ const TablaMovimientosStock = () => {
   }
 
   return (
-    <Paper elevation={0} variant="outlined" sx={{ p: 3, borderColor: verde.headerBorder, borderRadius: 2, bgcolor: 'background.paper' }}>
+    <Paper elevation={0} sx={{ p: 3, border: 'none', boxShadow: 'none', borderRadius: 2, bgcolor: 'background.paper' }}>
       {/* Toolbar superior estilo Artículos */}
       <Box display="flex" justifyContent="space-between" alignItems="center" sx={{ px: 1, py: 1, bgcolor: verde.toolbarBg, border: '1px solid', borderColor: verde.toolbarBorder, borderRadius: 1, mb: 2 }}>
         <Typography variant="h6" fontWeight={700} color={verde.textStrong}>
@@ -388,19 +430,106 @@ const TablaMovimientosStock = () => {
         </Table>
       </TableContainer>
 
-      <TablePagination
-        rowsPerPageOptions={[5, 10, 25, 50]}
-        component="div"
-        count={movimientosFiltrados.length}
-        rowsPerPage={rowsPerPage}
-        page={page}
-        onPageChange={handleChangePage}
-        onRowsPerPageChange={handleChangeRowsPerPage}
-        labelRowsPerPage="Filas por página:"
-        labelDisplayedRows={({ from, to, count }) => 
-          `${from}-${to} de ${count !== -1 ? count : `más de ${to}`}`
-        }
-      />
+      {/* Paginación personalizada */}
+      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', p: 2, borderTop: '1px solid', borderColor: 'divider' }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+          <Typography variant="body2" color="text.secondary">
+            Filas por página:
+          </Typography>
+          <TextField
+            select
+            size="small"
+            value={rowsPerPage}
+            onChange={handleChangeRowsPerPage}
+            sx={{ minWidth: 80 }}
+          >
+            {[50, 100, 150].map((option) => (
+              <option key={option} value={option}>
+                {option}
+              </option>
+            ))}
+          </TextField>
+        </Box>
+        
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+          <Typography variant="body2" color="text.secondary">
+            {`${page * rowsPerPage + 1}-${Math.min((page + 1) * rowsPerPage, movimientosFiltrados.length)} de ${movimientosFiltrados.length}`}
+          </Typography>
+          
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+            {generarNumerosPaginas().map((numeroPagina, index) => (
+              <Box key={index}>
+                {numeroPagina === '...' ? (
+                  <Typography variant="body2" color="text.secondary" sx={{ px: 1 }}>
+                    ...
+                  </Typography>
+                ) : (
+                  <Button
+                    size="small"
+                    variant={paginaActual === numeroPagina ? 'contained' : 'text'}
+                    onClick={() => handleChangePage(null, (numeroPagina as number) - 1)}
+                    sx={{
+                      minWidth: 32,
+                      height: 32,
+                      textTransform: 'none',
+                      fontSize: '0.875rem',
+                      ...(paginaActual === numeroPagina ? {
+                        bgcolor: verde.primary,
+                        color: 'white',
+                        '&:hover': { bgcolor: verde.primaryHover }
+                      } : {
+                        color: 'text.secondary',
+                        '&:hover': { bgcolor: verde.rowHover }
+                      })
+                    }}
+                  >
+                    {numeroPagina}
+                  </Button>
+                )}
+              </Box>
+            ))}
+          </Box>
+          
+          <Box sx={{ display: 'flex', alignItems: 'center' }}>
+            <IconButton
+              size="small"
+              onClick={() => handleChangePage(null, 0)}
+              disabled={page === 0}
+              sx={{ color: 'text.secondary' }}
+              title="Primera página"
+            >
+              ⏮
+            </IconButton>
+            <IconButton
+              size="small"
+              onClick={() => handleChangePage(null, page - 1)}
+              disabled={page === 0}
+              sx={{ color: 'text.secondary' }}
+              title="Página anterior"
+            >
+              ◀
+            </IconButton>
+            <IconButton
+              size="small"
+              onClick={() => handleChangePage(null, page + 1)}
+              disabled={page >= totalPaginas - 1}
+              sx={{ color: 'text.secondary' }}
+              title="Página siguiente"
+            >
+              ▶
+            </IconButton>
+            <IconButton
+              size="small"
+              onClick={() => handleChangePage(null, totalPaginas - 1)}
+              disabled={page >= totalPaginas - 1}
+              sx={{ color: 'text.secondary' }}
+              title="Última página"
+            >
+              ⏭
+            </IconButton>
+          </Box>
+        </Box>
+      </Box>
     </Paper>
   );
 };

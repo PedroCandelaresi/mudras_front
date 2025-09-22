@@ -103,10 +103,8 @@ export interface TransferirStockInput {
 
 // Queries GraphQL
 export const OBTENER_PUNTOS_MUDRAS = gql`
-  query ObtenerPuntosMudras($filtros: FiltrosPuntosMudrasInput) {
-    obtenerPuntosMudras(filtros: $filtros) {
-      total
-      puntos {
+  query ObtenerPuntosMudras {
+    obtenerPuntosMudras {
         id
         nombre
         tipo
@@ -122,7 +120,6 @@ export const OBTENER_PUNTOS_MUDRAS = gql`
         fechaActualizacion
       }
     }
-  }
 `;
 
 export const OBTENER_PUNTO_MUDRAS_POR_ID = gql`
@@ -304,10 +301,7 @@ export const INICIALIZAR_STOCK_PUNTO = gql`
 
 // Responses para TypeScript
 export interface ObtenerPuntosMudrasResponse {
-  obtenerPuntosMudras: {
-    total: number;
-    puntos: PuntoMudras[];
-  };
+  obtenerPuntosMudras: PuntoMudras[];
 }
 
 export interface ObtenerPuntoMudrasPorIdResponse {

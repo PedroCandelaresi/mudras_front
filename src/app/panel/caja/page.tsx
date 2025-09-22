@@ -78,7 +78,7 @@ export default function Caja() {
   const [actualizarStockVenta] = useMutation(ACTUALIZAR_STOCK_VENTA);
   
   const articulos = articulosData?.articulos || [];
-  const puntosVenta = (puntosVentaData as any)?.obtenerPuntosMudras?.puntos || [];
+  const puntosVenta = (puntosVentaData as any)?.obtenerPuntosMudras || [];
   
   // Seleccionar primer punto de venta por defecto
   useEffect(() => {

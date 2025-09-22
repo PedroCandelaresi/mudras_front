@@ -18,7 +18,8 @@ import {
   Box,
   Skeleton,
   Button,
-  Tooltip
+  Tooltip,
+  TablePagination
 } from '@mui/material';
 import { Search, Store, Warehouse, MoreVert } from '@mui/icons-material';
 import { IconSearch, IconPlus, IconTrash, IconEdit, IconEye, IconRefresh } from '@tabler/icons-react';
@@ -47,18 +48,11 @@ export default function TablaPuntosMudras({ tipo, onEditarPunto, onVerInventario
   const [puntoSeleccionado, setPuntoSeleccionado] = useState<PuntoMudras | null>(null);
   const [modalEliminarAbierto, setModalEliminarAbierto] = useState(false);
   const [eliminando, setEliminando] = useState(false);
+  const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(50);
 
   // Query para obtener puntos desde el backend
-  const { data, loading, error, refetch } = useQuery<ObtenerPuntosMudrasResponse>(OBTENER_PUNTOS_MUDRAS, {
-    variables: {
-      filtros: {
-        tipo: tipo === 'venta' ? 'venta' : 'deposito',
-        busqueda: busqueda.trim() || undefined,
-        limite: 50
-      } as FiltrosPuntosMudras
-    },
-    fetchPolicy: 'cache-and-network'
-  });
+  const { data, loading, error, refetch } = useQuery<ObtenerPuntosMudrasResponse>(OBTENER_PUNTOS_MUDRAS);
 
   // Mutation para eliminar punto
   const [eliminarPunto] = useMutation(ELIMINAR_PUNTO_MUDRAS, {
@@ -69,6 +63,8 @@ export default function TablaPuntosMudras({ tipo, onEditarPunto, onVerInventario
       setPuntoSeleccionado(null);
       refetch();
       setMenuAnchor(null);
+      // Disparar evento para actualizar tabs en otras páginas
+      window.dispatchEvent(new CustomEvent('puntosVentaActualizados'));
     },
     onError: (error) => {
       console.error('❌ [ELIMINACION] Error al eliminar punto:', error);
@@ -90,14 +86,71 @@ export default function TablaPuntosMudras({ tipo, onEditarPunto, onVerInventario
     ]
   });
 
-  const puntos = data?.obtenerPuntosMudras?.puntos || [];
+  const puntos = data?.obtenerPuntosMudras || [];
 
-  const puntosFiltrados = puntos.filter(punto => 
-    !busqueda.trim() || 
-    punto.nombre.toLowerCase().includes(busqueda.toLowerCase()) ||
-    (punto.descripcion && punto.descripcion.toLowerCase().includes(busqueda.toLowerCase())) ||
-    punto.direccion.toLowerCase().includes(busqueda.toLowerCase())
+  const puntosFiltrados = puntos.filter(punto => {
+    if (!busqueda) return true;
+    return punto.nombre.toLowerCase().includes(busqueda.toLowerCase()) ||
+           punto.direccion?.toLowerCase().includes(busqueda.toLowerCase()) ||
+           punto.telefono?.toLowerCase().includes(busqueda.toLowerCase());
+  });
+
+  const totalPaginas = Math.ceil(puntosFiltrados.length / rowsPerPage);
+  const paginaActual = page + 1;
+
+  const generarNumerosPaginas = () => {
+    const paginas = [];
+    const maxVisible = 7; // Máximo de páginas visibles
+    
+    if (totalPaginas <= maxVisible) {
+      // Si hay pocas páginas, mostrar todas
+      for (let i = 1; i <= totalPaginas; i++) {
+        paginas.push(i);
+      }
+    } else {
+      // Lógica para truncar páginas
+      if (paginaActual <= 4) {
+        // Inicio: 1, 2, 3, 4, 5, ..., última
+        for (let i = 1; i <= 5; i++) {
+          paginas.push(i);
+        }
+        paginas.push('...');
+        paginas.push(totalPaginas);
+      } else if (paginaActual >= totalPaginas - 3) {
+        // Final: 1, ..., n-4, n-3, n-2, n-1, n
+        paginas.push(1);
+        paginas.push('...');
+        for (let i = totalPaginas - 4; i <= totalPaginas; i++) {
+          paginas.push(i);
+        }
+      } else {
+        // Medio: 1, ..., actual-1, actual, actual+1, ..., última
+        paginas.push(1);
+        paginas.push('...');
+        for (let i = paginaActual - 1; i <= paginaActual + 1; i++) {
+          paginas.push(i);
+        }
+        paginas.push('...');
+        paginas.push(totalPaginas);
+      }
+    }
+    
+    return paginas;
+  };
+
+  const puntosPaginados = puntosFiltrados.slice(
+    page * rowsPerPage,
+    page * rowsPerPage + rowsPerPage
   );
+
+  const handleChangePage = (event: unknown, newPage: number) => {
+    setPage(newPage);
+  };
+
+  const handleChangeRowsPerPage = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setRowsPerPage(parseInt(event.target.value, 10));
+    setPage(0);
+  };
 
   const handleMenuClick = (event: React.MouseEvent<HTMLElement>, punto: PuntoMudras) => {
     setMenuAnchor(event.currentTarget);
@@ -129,6 +182,16 @@ export default function TablaPuntosMudras({ tipo, onEditarPunto, onVerInventario
 
   const handleConfirmarEliminacion = () => {
     console.log('🗑️ [ELIMINACION] Abriendo modal para punto:', puntoSeleccionado);
+    
+    // Verificar si es el único punto de su tipo
+    const puntosDelMismoTipo = puntos.filter(p => p.tipo === tipo);
+    if (puntosDelMismoTipo.length <= 1) {
+      alert(`No se puede eliminar este ${tipo === 'venta' ? 'punto de venta' : 'depósito'} porque debe existir al menos uno.`);
+      setMenuAnchor(null);
+      setPuntoSeleccionado(null);
+      return;
+    }
+    
     setModalEliminarAbierto(true);
     // NO limpiar puntoSeleccionado aquí - lo necesitamos para el modal
     setMenuAnchor(null); // Solo cerrar el menú
@@ -203,25 +266,18 @@ export default function TablaPuntosMudras({ tipo, onEditarPunto, onVerInventario
         </Typography>
         <TableContainer>
           <Table>
-            <TableHead>
-              <TableRow>
-                {['Nombre', 'Tipo', 'Dirección', 'Estado', 'Acciones'].map((header) => (
-                  <TableCell key={header}>
-                    <Skeleton variant="text" width="100%" />
-                  </TableCell>
-                ))}
-              </TableRow>
-            </TableHead>
             <TableBody>
-              {[1, 2, 3, 4, 5].map((row) => (
-                <TableRow key={row}>
-                  {[1, 2, 3, 4, 5].map((cell) => (
-                    <TableCell key={cell}>
-                      <Skeleton variant="text" width="100%" />
-                    </TableCell>
-                  ))}
-                </TableRow>
-              ))}
+            {Array.from({ length: 5 }).map((_, index) => (
+              <TableRow key={index}>
+                <TableCell><Skeleton variant="text" /></TableCell>
+                <TableCell><Skeleton variant="text" /></TableCell>
+                <TableCell><Skeleton variant="text" /></TableCell>
+                <TableCell><Skeleton variant="text" /></TableCell>
+                <TableCell><Skeleton variant="text" /></TableCell>
+                <TableCell><Skeleton variant="text" /></TableCell>
+                <TableCell><Skeleton variant="rectangular" width={40} height={40} /></TableCell>
+              </TableRow>
+            ))}
             </TableBody>
           </Table>
         </TableContainer>
@@ -417,18 +473,21 @@ export default function TablaPuntosMudras({ tipo, onEditarPunto, onVerInventario
                         </IconButton>
                       </Tooltip>
                     )}
-                    <Tooltip title="Eliminar punto">
-                      <IconButton 
-                        size="small" 
-                        color="error"
-                        onClick={() => {
-                          setPuntoSeleccionado(punto);
-                          handleConfirmarEliminacion();
-                        }}
-                        sx={{ p: 0.75 }}
-                      >
-                        <IconTrash size={20} />
-                      </IconButton>
+                    <Tooltip title={puntos.filter(p => p.tipo === tipo).length <= 1 ? `No se puede eliminar el único ${tipo === 'venta' ? 'punto de venta' : 'depósito'}` : "Eliminar punto"}>
+                      <span>
+                        <IconButton 
+                          size="small" 
+                          color="error"
+                          disabled={puntos.filter(p => p.tipo === tipo).length <= 1}
+                          onClick={() => {
+                            setPuntoSeleccionado(punto);
+                            handleConfirmarEliminacion();
+                          }}
+                          sx={{ p: 0.75, opacity: puntos.filter(p => p.tipo === tipo).length <= 1 ? 0.3 : 1 }}
+                        >
+                          <IconTrash size={20} />
+                        </IconButton>
+                      </span>
                     </Tooltip>
                   </Box>
                 </TableCell>
@@ -438,10 +497,105 @@ export default function TablaPuntosMudras({ tipo, onEditarPunto, onVerInventario
         </Table>
       </TableContainer>
 
-      <Box mt={1} mb={1} display="flex" justifyContent="space-between" alignItems="center">
-        <Typography variant="caption" color="text.secondary">
-          Mostrando {puntosFiltrados.length} {tipo === 'venta' ? 'puntos de venta' : 'depósitos'}
-        </Typography>
+      {/* Paginación personalizada */}
+      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', p: 2, borderTop: '1px solid', borderColor: 'divider' }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+          <Typography variant="body2" color="text.secondary">
+            Filas por página:
+          </Typography>
+          <TextField
+            select
+            size="small"
+            value={rowsPerPage}
+            onChange={handleChangeRowsPerPage}
+            sx={{ minWidth: 80 }}
+          >
+            {[50, 100, 150].map((option) => (
+              <option key={option} value={option}>
+                {option}
+              </option>
+            ))}
+          </TextField>
+        </Box>
+        
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+          <Typography variant="body2" color="text.secondary">
+            {`${page * rowsPerPage + 1}-${Math.min((page + 1) * rowsPerPage, puntosFiltrados.length)} de ${puntosFiltrados.length}`}
+          </Typography>
+          
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+            {generarNumerosPaginas().map((numeroPagina, index) => (
+              <Box key={index}>
+                {numeroPagina === '...' ? (
+                  <Typography variant="body2" color="text.secondary" sx={{ px: 1 }}>
+                    ...
+                  </Typography>
+                ) : (
+                  <Button
+                    size="small"
+                    variant={paginaActual === numeroPagina ? 'contained' : 'text'}
+                    onClick={() => handleChangePage(null, (numeroPagina as number) - 1)}
+                    sx={{
+                      minWidth: 32,
+                      height: 32,
+                      textTransform: 'none',
+                      fontSize: '0.875rem',
+                      ...(paginaActual === numeroPagina ? {
+                        bgcolor: grisVerdoso.primary,
+                        color: 'white',
+                        '&:hover': { bgcolor: grisVerdoso.primaryHover }
+                      } : {
+                        color: 'text.secondary',
+                        '&:hover': { bgcolor: grisVerdoso.rowHover }
+                      })
+                    }}
+                  >
+                    {numeroPagina}
+                  </Button>
+                )}
+              </Box>
+            ))}
+          </Box>
+          
+          <Box sx={{ display: 'flex', alignItems: 'center' }}>
+            <IconButton
+              size="small"
+              onClick={() => handleChangePage(null, 0)}
+              disabled={page === 0}
+              sx={{ color: 'text.secondary' }}
+              title="Primera página"
+            >
+              ⏮
+            </IconButton>
+            <IconButton
+              size="small"
+              onClick={() => handleChangePage(null, page - 1)}
+              disabled={page === 0}
+              sx={{ color: 'text.secondary' }}
+              title="Página anterior"
+            >
+              ◀
+            </IconButton>
+            <IconButton
+              size="small"
+              onClick={() => handleChangePage(null, page + 1)}
+              disabled={page >= totalPaginas - 1}
+              sx={{ color: 'text.secondary' }}
+              title="Página siguiente"
+            >
+              ▶
+            </IconButton>
+            <IconButton
+              size="small"
+              onClick={() => handleChangePage(null, totalPaginas - 1)}
+              disabled={page >= totalPaginas - 1}
+              sx={{ color: 'text.secondary' }}
+              title="Última página"
+            >
+              ⏭
+            </IconButton>
+          </Box>
+        </Box>
       </Box>
 
       {/* Mensaje si no hay resultados */}

@@ -17,6 +17,7 @@ import { CreatePermisoModal, type CrearPermisoForm } from '@/components/permisos
 import { EditPermisoModal, type EditarPermisoForm } from '@/components/permisos/EditPermisoModal';
 import { Icon } from '@iconify/react';
 import { useSearchParams } from 'next/navigation';
+import { TexturedPanel } from '@/app/components/ui-components/TexturedFrame/TexturedPanel';
 
 export default function Usuarios() {
   const { tienePermiso } = usePermisos();
@@ -186,9 +187,26 @@ export default function Usuarios() {
         <Typography variant="h4" fontWeight={700} color="#5d4037" sx={{ mb: 2 }}>
           Gestión de Usuarios
         </Typography>
-        <Paper elevation={0} sx={{ border: '1px solid', borderColor: '#5d4037', borderRadius: 2, overflow: 'hidden', bgcolor: '#d7ccc8' }}>
+        <TexturedPanel
+          accent="#5d4037"
+          radius={14}
+          contentPadding={12}
+          bgTintPercent={22}
+          bgAlpha={0.98}
+          tintMode="soft-light"
+          tintOpacity={0.42}
+          textureScale={1.1}
+          textureBaseOpacity={0.18}
+          textureBoostOpacity={0.12}
+          textureContrast={0.92}
+          textureBrightness={1.03}
+          bevelWidth={12}
+          bevelIntensity={1.0}
+          glossStrength={1.0}
+          vignetteStrength={0.9}
+        >
           {/* Toolbar superior con tabs estilo Artículos pero en paleta marrón */}
-          <Box sx={{ bgcolor: 'transparent', px: 2, py: 2, borderRadius: 0 }}>
+          <Box sx={{ bgcolor: 'transparent', px: 2, py: 1.5 }}>
             <Tabs
               value={tab}
               onChange={(_e, v) => setTab(v)}
@@ -219,7 +237,7 @@ export default function Usuarios() {
             </Tabs>
           </Box>
           {/* Contenido con mismo fondo y padding */}
-          <Box sx={{ bgcolor: 'transparent', px: 2, pb: 2, pt: 2, borderRadius: 0 }}>
+          <Box sx={{ bgcolor: 'transparent', px: 2, pb: 2, pt: 1.5 }}>
             <Box sx={{ pt: 2 }}>
               {/* Pestaña Usuarios */}
               {tab === 0 && (
@@ -243,7 +261,7 @@ export default function Usuarios() {
               )}
             </Box>
           </Box>
-        </Paper>
+        </TexturedPanel>
 
         {/* Modales Usuarios */}
         <CreateUserModal open={crearAbierto} onClose={() => setCrearAbierto(false)} onSubmit={crearUsuario} />

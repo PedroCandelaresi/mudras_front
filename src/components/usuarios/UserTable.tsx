@@ -96,7 +96,7 @@ export function UserTable({ onCrear, onEditar, onRoles, onEliminar, refetchToken
   };
 
   return (
-    <Paper elevation={0} variant="outlined" sx={{ p: 3, borderColor: marron.borderOuter, borderRadius: 2, bgcolor: 'background.paper' }}>
+    <Paper elevation={0} sx={{ p: 3, border: 'none', boxShadow: 'none', borderRadius: 2, bgcolor: 'background.paper' }}>
       {/* Toolbar superior estilo Artículos pero en marrón */}
       <Box display="flex" justifyContent="space-between" alignItems="center" sx={{ px: 1, py: 1, bgcolor: marron.toolbarBg, border: '1px solid', borderColor: marron.toolbarBorder, borderRadius: 1 }}>
         <Typography variant="h6" fontWeight={700} color={marron.textStrong}>Usuarios</Typography>

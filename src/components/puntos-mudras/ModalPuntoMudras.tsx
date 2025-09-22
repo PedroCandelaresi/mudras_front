@@ -217,6 +217,8 @@ export const ModalPuntoMudras = ({
       }
 
       onExito();
+      // Disparar evento para actualizar tabs en otras páginas
+      window.dispatchEvent(new CustomEvent('puntosVentaActualizados'));
       handleCerrar();
     } catch (error: any) {
       console.error('Error al guardar punto:', error);

@@ -61,10 +61,10 @@ const Header = () => {
     if (lgUp) {
       const isMini = isCollapse === "mini-sidebar" && !isSidebarHover;
       const width = isMini ? config.miniSidebarWidth : config.sidebarWidth;
-      return `${width}px`;
+      return width; // Devolver número, no string
     }
     // En móviles, topbar ocupa todo el ancho
-    return '0px';
+    return 0;
   })();
 
   const AppBarStyled = styled(AppBar)(({ theme }) => ({
@@ -74,14 +74,18 @@ const Header = () => {
     backdropFilter: 'blur(4px)',
     position: 'fixed',
     top: 0,
-    left: leftOffsetPx,
+    left: `${leftOffsetPx}px`,
     right: 0,
     zIndex: 1300,
-    width: `calc(100vw - ${leftOffsetPx})`,
+    width: `calc(100vw - ${leftOffsetPx}px)`,
+    
+    // Animar tanto left como width para que acompañe suavemente
     transition: theme.transitions.create(['left', 'width'], {
-      duration: theme.transitions.duration.standard,
-      easing: theme.transitions.easing.sharp,
+      duration: `${config.transitionDuration}ms`,
+      easing: config.transitionEasing,
     }),
+    
+    willChange: 'left, width',
     minHeight: TopbarHeight,
   }));
 

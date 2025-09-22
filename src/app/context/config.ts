@@ -14,6 +14,9 @@ const config = {
   sidebarWidth: 230,
   miniSidebarWidth: 80,
   topbarHeight: 56,
+  // Configuración de transiciones sincronizadas
+  transitionDuration: 300, // milisegundos
+  transitionEasing: 'cubic-bezier(0.4, 0, 0.2, 1)', // Material Design standard
 };
 
 export default config;

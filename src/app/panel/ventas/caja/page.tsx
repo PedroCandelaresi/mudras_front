@@ -8,6 +8,7 @@ import { TablaArticulosCapturados } from '../../../../components/caja-registrado
 import { ModalConfirmacionVenta } from '../../../../components/caja-registradora/ModalConfirmacionVenta';
 import { HistorialVentas } from '../../../../components/caja-registradora/HistorialVentas';
 import { ArticuloConStock } from '../../../../queries/caja-registradora';
+import { TexturedPanel } from '@/app/components/ui-components/TexturedFrame/TexturedPanel';
 
 interface ArticuloCapturado extends ArticuloConStock {
   Unidad: string;
@@ -240,16 +241,35 @@ export default function CajaRegistradoraPage() {
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ duration: 0.5, delay: 0.2 }}
               >
-                <TablaArticulosCapturados
-                  articulos={articulos}
-                  onActualizarCantidad={handleActualizarCantidad}
-                  onEliminarArticulo={handleEliminarArticulo}
-                  onToggleSeleccion={handleToggleSeleccion}
-                  onToggleSeleccionTodos={handleToggleSeleccionTodos}
-                  onNuevaVenta={handleNuevaVenta}
-                  todosSeleccionados={todosSeleccionados}
-                  algunoSeleccionado={algunoSeleccionado}
-                />
+                <TexturedPanel
+                  accent="#1976d2"
+                  radius={14}
+                  contentPadding={12}
+                  bgTintPercent={22}
+                  bgAlpha={0.98}
+                  tintMode="soft-light"
+                  tintOpacity={0.42}
+                  textureScale={1.1}
+                  textureBaseOpacity={0.18}
+                  textureBoostOpacity={0.12}
+                  textureContrast={0.92}
+                  textureBrightness={1.03}
+                  bevelWidth={12}
+                  bevelIntensity={1.0}
+                  glossStrength={1.0}
+                  vignetteStrength={0.9}
+                >
+                  <TablaArticulosCapturados
+                    articulos={articulos}
+                    onActualizarCantidad={handleActualizarCantidad}
+                    onEliminarArticulo={handleEliminarArticulo}
+                    onToggleSeleccion={handleToggleSeleccion}
+                    onToggleSeleccionTodos={handleToggleSeleccionTodos}
+                    onNuevaVenta={handleNuevaVenta}
+                    todosSeleccionados={todosSeleccionados}
+                    algunoSeleccionado={algunoSeleccionado}
+                  />
+                </TexturedPanel>
               </motion.div>
             </Grid>
           </Grid>
@@ -259,7 +279,26 @@ export default function CajaRegistradoraPage() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5 }}
           >
-            <HistorialVentas />
+            <TexturedPanel
+              accent="#1976d2"
+              radius={14}
+              contentPadding={12}
+              bgTintPercent={22}
+              bgAlpha={0.98}
+              tintMode="soft-light"
+              tintOpacity={0.42}
+              textureScale={1.1}
+              textureBaseOpacity={0.18}
+              textureBoostOpacity={0.12}
+              textureContrast={0.92}
+              textureBrightness={1.03}
+              bevelWidth={12}
+              bevelIntensity={1.0}
+              glossStrength={1.0}
+              vignetteStrength={0.9}
+            >
+              <HistorialVentas />
+            </TexturedPanel>
           </motion.div>
         )}
       </motion.div>
