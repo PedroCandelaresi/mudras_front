@@ -1,8 +1,8 @@
 "use client";
 
-import React, { useEffect, useMemo, useRef, useState } from "react";
-import { Box, IconButton, Typography, Chip, Button, Stack, useTheme, alpha } from "@mui/material";
-import { IconChevronLeft, IconChevronRight, IconStar, IconShoppingCart, IconHeart } from "@tabler/icons-react";
+import React, { useEffect, useMemo, useRef, useState, useCallback } from "react";
+import { Box, Typography, IconButton, useTheme, alpha, Chip, Stack, Button } from '@mui/material';
+import { Icon } from '@iconify/react';
 import { motion, AnimatePresence } from "framer-motion";
 
 export interface DestacadoItem {
@@ -30,7 +30,7 @@ export function CarruselDestacados({ items, autoPlayMs = 5000, onAgregar }: Prop
   const total = items.length;
   const actual = items[index] as DestacadoItem | undefined;
 
-  const siguiente = () => setIndex((i) => (i + 1) % total);
+  const siguiente = useCallback(() => setIndex((i) => (i + 1) % total), [total]);
   const anterior = () => setIndex((i) => (i - 1 + total) % total);
   const irA = (i: number) => setIndex(i % total);
 
@@ -65,7 +65,7 @@ export function CarruselDestacados({ items, autoPlayMs = 5000, onAgregar }: Prop
               </Box>
               <Box sx={{ position: "absolute", top: 12, right: 12 }}>
                 <IconButton sx={{ bgcolor: alpha("#fff", 0.8), '&:hover': { bgcolor: '#fff' } }}>
-                  <IconHeart size={18} />
+                  <Icon icon="mdi:heart" width={18} />
                 </IconButton>
               </Box>
               {/* Placeholder visual del producto */}
@@ -83,10 +83,10 @@ export function CarruselDestacados({ items, autoPlayMs = 5000, onAgregar }: Prop
           {total > 1 && (
             <>
               <IconButton onClick={anterior} size="small" sx={{ position: "absolute", top: "50%", left: 8, transform: "translateY(-50%)", bgcolor: alpha("#fff", 0.8), '&:hover': { bgcolor: '#fff' } }}>
-                <IconChevronLeft />
+                <Icon icon="mdi:chevron-left" />
               </IconButton>
               <IconButton onClick={siguiente} size="small" sx={{ position: "absolute", top: "50%", right: 8, transform: "translateY(-50%)", bgcolor: alpha("#fff", 0.8), '&:hover': { bgcolor: '#fff' } }}>
-                <IconChevronRight />
+                <Icon icon="mdi:chevron-right" />
               </IconButton>
             </>
           )}
@@ -98,7 +98,7 @@ export function CarruselDestacados({ items, autoPlayMs = 5000, onAgregar }: Prop
             {actual.nombre}
           </Typography>
           <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 1 }}>
-            <IconStar size={16} color="#FFD700" fill="#FFD700" />
+            <Icon icon="mdi:star" width={16} color="#FFD700" />
             <Typography variant="body2" color="text.secondary">{(actual.rating ?? 4.7).toFixed(1)}</Typography>
           </Stack>
           <Stack direction="row" alignItems="baseline" spacing={1}>
@@ -110,7 +110,7 @@ export function CarruselDestacados({ items, autoPlayMs = 5000, onAgregar }: Prop
             <Typography variant="h4" color="primary" fontWeight={800}>${actual.precio}</Typography>
           </Stack>
           <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} mt={3}>
-            <Button variant="contained" startIcon={<IconShoppingCart size={18} />} onClick={() => onAgregar?.(actual)}>
+            <Button variant="contained" startIcon={<Icon icon="mdi:shopping-cart" width={18} />} onClick={() => onAgregar?.(actual)}>
               Agregar al carrito
             </Button>
             <Button variant="outlined">Ver detalles</Button>

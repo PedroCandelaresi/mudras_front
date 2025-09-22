@@ -271,17 +271,17 @@ const ModalDetallesProveedor = ({ open, onClose, proveedor }: ModalDetallesProve
           </Box>
 
           {/* Información de contacto mejorada */}
-          <Grid container spacing={3} sx={{ mb: 4 }}>
-            <Grid item xs={12} md={6}>
-              <Card sx={{ 
-                height: '100%',
-                borderRadius: 3,
-                border: '1px solid',
-                borderColor: azul.borderInner,
-                boxShadow: '0 4px 20px rgba(0,0,0,0.08)',
-                transition: 'all 0.3s ease',
-                '&:hover': {
-                  transform: 'translateY(-2px)',
+          <Box display="flex" gap={3} mb={4} flexWrap="wrap">
+            <Card sx={{ 
+              flex: '1 1 300px',
+              minWidth: 300,
+              borderRadius: 3,
+              border: '1px solid',
+              borderColor: azul.borderInner,
+              boxShadow: '0 4px 20px rgba(0,0,0,0.08)',
+              transition: 'all 0.3s ease',
+              '&:hover': {
+                transform: 'translateY(-2px)',
                   boxShadow: '0 8px 30px rgba(0,0,0,0.12)'
                 }
               }}>
@@ -398,20 +398,20 @@ const ModalDetallesProveedor = ({ open, onClose, proveedor }: ModalDetallesProve
                   </Box>
                 </CardContent>
               </Card>
-            </Grid>
-            <Grid item xs={12} md={6}>
-              <Card sx={{ 
-                height: '100%',
-                borderRadius: 3,
-                border: '1px solid',
-                borderColor: azul.borderInner,
-                boxShadow: '0 4px 20px rgba(0,0,0,0.08)',
-                transition: 'all 0.3s ease',
-                '&:hover': {
-                  transform: 'translateY(-2px)',
-                  boxShadow: '0 8px 30px rgba(0,0,0,0.12)'
-                }
-              }}>
+            
+            <Card sx={{ 
+              flex: '1 1 300px',
+              minWidth: 300,
+              borderRadius: 3,
+              border: '1px solid',
+              borderColor: azul.borderInner,
+              boxShadow: '0 4px 20px rgba(0,0,0,0.08)',
+              transition: 'all 0.3s ease',
+              '&:hover': {
+                transform: 'translateY(-2px)',
+                boxShadow: '0 8px 30px rgba(0,0,0,0.12)'
+              }
+            }}>
                 <CardContent sx={{ p: 3 }}>
                   <Box display="flex" alignItems="center" gap={2} mb={3}>
                     <Box sx={{
@@ -525,8 +525,7 @@ const ModalDetallesProveedor = ({ open, onClose, proveedor }: ModalDetallesProve
                   </Box>
                 </CardContent>
               </Card>
-            </Grid>
-          </Grid>
+          </Box>
 
           {/* Observaciones */}
           {proveedorCompleto?.Observaciones && (
@@ -755,7 +754,7 @@ const ModalDetallesProveedor = ({ open, onClose, proveedor }: ModalDetallesProve
                         </TableCell>
                         <TableCell>
                           <Chip 
-                            label={articulo.Rubro || 'Sin rubro'} 
+                            label={(articulo as any).rubroNombre || 'Sin rubro'} 
                             size="small"
                             sx={{ 
                               bgcolor: 'success.light',

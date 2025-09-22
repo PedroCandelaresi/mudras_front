@@ -15,7 +15,7 @@ interface Props {
   setTextoConfirmacion: (v: string) => void;
 }
 
-export function ModalEliminarArticuloRubro({ open, onClose, onConfirm, articuloSeleccionado, cantidadSeleccionados, textoConfirmacion, setTextoConfirmacion }: Props): JSX.Element {
+export function ModalEliminarArticuloRubro({ open, onClose, onConfirm, articuloSeleccionado, cantidadSeleccionados, textoConfirmacion, setTextoConfirmacion }: Props) {
   const multiple = cantidadSeleccionados > 1;
   return (
     <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth sx={{ '& .MuiDialog-paper': { borderRadius: 3, overflow: 'hidden' } }}>

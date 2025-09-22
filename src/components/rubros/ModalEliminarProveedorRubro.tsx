@@ -16,7 +16,7 @@ interface Props {
   setTextoConfirmacion: (v: string) => void;
 }
 
-export function ModalEliminarProveedorRubro({ open, onClose, onConfirm, proveedor, rubro, textoConfirmacion, setTextoConfirmacion }: Props): JSX.Element {
+export function ModalEliminarProveedorRubro({ open, onClose, onConfirm, proveedor, rubro, textoConfirmacion, setTextoConfirmacion }: Props) {
   return (
     <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth sx={{ '& .MuiDialog-paper': { borderRadius: 3, overflow: 'hidden' } }}>
       <DialogTitle sx={{ background: 'linear-gradient(135deg, #d32f2f 0%, #b71c1c 100%)', color: 'white', display: 'flex', alignItems: 'center', gap: 2, py: 3, position: 'relative' }}>

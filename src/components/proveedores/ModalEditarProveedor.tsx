@@ -327,315 +327,399 @@ const ModalEditarProveedor = ({ open, onClose, proveedor, onProveedorGuardado }:
           </Alert>
         )}
 
-        <Grid container spacing={3}>
+        <Box>
           {/* Información básica */}
-          <Grid item xs={12}>
-            <Typography variant="h6" fontWeight={600} color={azul.primary} mb={2}>
-              Información Básica
-            </Typography>
-          </Grid>
+          <Typography variant="h6" fontWeight={600} color={azul.primary} mb={2}>
+            Información Básica
+          </Typography>
 
-          <Grid item xs={12} sm={6} md={4}>
-            <TextField
-              fullWidth
-              label="Código"
-              value={formData.Codigo}
-              onChange={handleInputChange('Codigo')}
-              type="number"
-              helperText="Código único para códigos de barras"
-              sx={{
-                '& .MuiOutlinedInput-root': {
-                  '&:hover fieldset': {
-                    borderColor: azul.primary,
+          <Box display="flex" gap={2} flexWrap="wrap" mb={3}>
+            <Box flex="1 1 250px" minWidth={250}>
+              <TextField
+                fullWidth
+                label="Código"
+                value={formData.Codigo}
+                onChange={handleInputChange('Codigo')}
+                type="number"
+                helperText="Código único para códigos de barras"
+                sx={{
+                  '& .MuiOutlinedInput-root': {
+                    '&:hover fieldset': {
+                      borderColor: azul.primary,
+                    },
+                    '&.Mui-focused fieldset': {
+                      borderColor: azul.primary,
+                    },
                   },
-                  '&.Mui-focused fieldset': {
-                    borderColor: azul.primary,
-                  },
-                },
-                '& .MuiInputLabel-root.Mui-focused': {
-                  color: azul.primary,
-                }
-              }}
-            />
-          </Grid>
+                  '& .MuiInputLabel-root.Mui-focused': {
+                    color: azul.primary,
+                  }
+                }}
+              />
+            </Box>
 
-          <Grid item xs={12} sm={6} md={8}>
-            <TextField
-              fullWidth
-              label="Nombre *"
-              value={formData.Nombre}
-              onChange={handleInputChange('Nombre')}
-              required
-              sx={{
-                '& .MuiOutlinedInput-root': {
-                  '&:hover fieldset': {
-                    borderColor: azul.primary,
+            <Box flex="2 1 400px" minWidth={300}>
+              <TextField
+                fullWidth
+                label="Nombre *"
+                value={formData.Nombre}
+                onChange={handleInputChange('Nombre')}
+                required
+                sx={{
+                  '& .MuiOutlinedInput-root': {
+                    '&:hover fieldset': {
+                      borderColor: azul.primary,
+                    },
+                    '&.Mui-focused fieldset': {
+                      borderColor: azul.primary,
+                    },
                   },
-                  '&.Mui-focused fieldset': {
-                    borderColor: azul.primary,
-                  },
-                },
-                '& .MuiInputLabel-root.Mui-focused': {
-                  color: azul.primary,
-                }
-              }}
-            />
-          </Grid>
+                  '& .MuiInputLabel-root.Mui-focused': {
+                    color: azul.primary,
+                  }
+                }}
+              />
+            </Box>
+          </Box>
 
-          <Grid item xs={12} sm={6}>
-            <TextField
-              fullWidth
-              label="Contacto"
-              value={formData.Contacto}
-              onChange={handleInputChange('Contacto')}
-              sx={{
-                '& .MuiOutlinedInput-root': {
-                  '&:hover fieldset': {
-                    borderColor: azul.primary,
+          <Box display="flex" gap={2} flexWrap="wrap" mb={3}>
+            <Box flex="1 1 250px" minWidth={250}>
+              <TextField
+                fullWidth
+                label="Contacto"
+                value={formData.Contacto}
+                onChange={handleInputChange('Contacto')}
+                sx={{
+                  '& .MuiOutlinedInput-root': {
+                    '&:hover fieldset': {
+                      borderColor: azul.primary,
+                    },
+                    '&.Mui-focused fieldset': {
+                      borderColor: azul.primary,
+                    },
                   },
-                  '&.Mui-focused fieldset': {
-                    borderColor: azul.primary,
-                  },
-                },
-                '& .MuiInputLabel-root.Mui-focused': {
-                  color: azul.primary,
-                }
-              }}
-            />
-          </Grid>
+                  '& .MuiInputLabel-root.Mui-focused': {
+                    color: azul.primary,
+                  }
+                }}
+              />
+            </Box>
 
-          <Grid item xs={12} sm={6}>
-            <TextField
-              fullWidth
-              label="Rubro"
-              value={formData.Rubro}
-              onChange={handleInputChange('Rubro')}
-              sx={{
-                '& .MuiOutlinedInput-root': {
-                  '&:hover fieldset': {
-                    borderColor: azul.primary,
+            <Box flex="1 1 250px" minWidth={250}>
+              <TextField
+                fullWidth
+                label="Rubro"
+                value={formData.Rubro}
+                onChange={handleInputChange('Rubro')}
+                sx={{
+                  '& .MuiOutlinedInput-root': {
+                    '&:hover fieldset': {
+                      borderColor: azul.primary,
+                    },
+                    '&.Mui-focused fieldset': {
+                      borderColor: azul.primary,
+                    },
                   },
-                  '&.Mui-focused fieldset': {
-                    borderColor: azul.primary,
-                  },
-                },
-                '& .MuiInputLabel-root.Mui-focused': {
-                  color: azul.primary,
-                }
-              }}
-            />
-          </Grid>
+                  '& .MuiInputLabel-root.Mui-focused': {
+                    color: azul.primary,
+                  }
+                }}
+              />
+            </Box>
+          </Box>
 
           {/* Información de contacto */}
-          <Grid item xs={12}>
-            <Typography variant="h6" fontWeight={600} color={azul.primary} mb={2} mt={2}>
-              Información de Contacto
-            </Typography>
-          </Grid>
+          <Typography variant="h6" fontWeight={600} color={azul.primary} mb={2} mt={2}>
+            Información de Contacto
+          </Typography>
 
-          <Grid item xs={12} sm={6}>
-            <TextField
-              fullWidth
-              label="Teléfono"
-              value={formData.Telefono}
-              onChange={handleInputChange('Telefono')}
-              sx={{
-                '& .MuiOutlinedInput-root': {
-                  '&:hover fieldset': {
-                    borderColor: azul.primary,
+          <Box display="flex" gap={2} flexWrap="wrap" mb={3}>
+            <Box flex="1 1 250px" minWidth={250}>
+              <TextField
+                fullWidth
+                label="Teléfono"
+                value={formData.Telefono}
+                onChange={handleInputChange('Telefono')}
+                sx={{
+                  '& .MuiOutlinedInput-root': {
+                    '&:hover fieldset': {
+                      borderColor: azul.primary,
+                    },
+                    '&.Mui-focused fieldset': {
+                      borderColor: azul.primary,
+                    },
                   },
-                  '&.Mui-focused fieldset': {
-                    borderColor: azul.primary,
-                  },
-                },
-                '& .MuiInputLabel-root.Mui-focused': {
-                  color: azul.primary,
-                }
-              }}
-            />
-          </Grid>
+                  '& .MuiInputLabel-root.Mui-focused': {
+                    color: azul.primary,
+                  }
+                }}
+              />
+            </Box>
 
-          <Grid item xs={12} sm={6}>
-            <TextField
-              fullWidth
-              label="Celular"
-              value={formData.Celular}
-              onChange={handleInputChange('Celular')}
-              sx={{
-                '& .MuiOutlinedInput-root': {
-                  '&:hover fieldset': {
-                    borderColor: azul.primary,
+            <Box flex="1 1 250px" minWidth={250}>
+              <TextField
+                fullWidth
+                label="Celular"
+                value={formData.Celular}
+                onChange={handleInputChange('Celular')}
+                sx={{
+                  '& .MuiOutlinedInput-root': {
+                    '&:hover fieldset': {
+                      borderColor: azul.primary,
+                    },
+                    '&.Mui-focused fieldset': {
+                      borderColor: azul.primary,
+                    },
                   },
-                  '&.Mui-focused fieldset': {
-                    borderColor: azul.primary,
-                  },
-                },
-                '& .MuiInputLabel-root.Mui-focused': {
-                  color: azul.primary,
-                }
-              }}
-            />
-          </Grid>
+                  '& .MuiInputLabel-root.Mui-focused': {
+                    color: azul.primary,
+                  }
+                }}
+              />
+            </Box>
+          </Box>
 
-          <Grid item xs={12} sm={6}>
-            <TextField
-              fullWidth
-              label="Email"
-              value={formData.Mail}
-              onChange={handleInputChange('Mail')}
-              type="email"
-              sx={{
-                '& .MuiOutlinedInput-root': {
-                  '&:hover fieldset': {
-                    borderColor: azul.primary,
+          <Box display="flex" gap={2} flexWrap="wrap" mb={3}>
+            <Box flex="1 1 250px" minWidth={250}>
+              <TextField
+                fullWidth
+                label="Email"
+                value={formData.Mail}
+                onChange={handleInputChange('Mail')}
+                type="email"
+                sx={{
+                  '& .MuiOutlinedInput-root': {
+                    '&:hover fieldset': {
+                      borderColor: azul.primary,
+                    },
+                    '&.Mui-focused fieldset': {
+                      borderColor: azul.primary,
+                    },
                   },
-                  '&.Mui-focused fieldset': {
-                    borderColor: azul.primary,
-                  },
-                },
-                '& .MuiInputLabel-root.Mui-focused': {
-                  color: azul.primary,
-                }
-              }}
-            />
-          </Grid>
+                  '& .MuiInputLabel-root.Mui-focused': {
+                    color: azul.primary,
+                  }
+                }}
+              />
+            </Box>
 
-          <Grid item xs={12} sm={6}>
-            <TextField
-              fullWidth
-              label="Sitio Web"
-              value={formData.Web}
-              onChange={handleInputChange('Web')}
-              sx={{
-                '& .MuiOutlinedInput-root': {
-                  '&:hover fieldset': {
-                    borderColor: azul.primary,
+            <Box flex="1 1 250px" minWidth={250}>
+              <TextField
+                fullWidth
+                label="Sitio Web"
+                value={formData.Web}
+                onChange={handleInputChange('Web')}
+                sx={{
+                  '& .MuiOutlinedInput-root': {
+                    '&:hover fieldset': {
+                      borderColor: azul.primary,
+                    },
+                    '&.Mui-focused fieldset': {
+                      borderColor: azul.primary,
+                    },
                   },
-                  '&.Mui-focused fieldset': {
-                    borderColor: azul.primary,
-                  },
-                },
-                '& .MuiInputLabel-root.Mui-focused': {
-                  color: azul.primary,
-                }
-              }}
-            />
-          </Grid>
+                  '& .MuiInputLabel-root.Mui-focused': {
+                    color: azul.primary,
+                  }
+                }}
+              />
+            </Box>
+          </Box>
 
-          <Grid item xs={12} sm={6}>
-            <TextField
-              fullWidth
-              label="Fax"
-              value={formData.Fax}
-              onChange={handleInputChange('Fax')}
-              sx={{
-                '& .MuiOutlinedInput-root': {
-                  '&:hover fieldset': {
-                    borderColor: azul.primary,
+          <Box display="flex" gap={2} flexWrap="wrap" mb={3}>
+            <Box flex="1 1 250px" minWidth={250}>
+              <TextField
+                fullWidth
+                label="Fax"
+                value={formData.Fax}
+                onChange={handleInputChange('Fax')}
+                sx={{
+                  '& .MuiOutlinedInput-root': {
+                    '&:hover fieldset': {
+                      borderColor: azul.primary,
+                    },
+                    '&.Mui-focused fieldset': {
+                      borderColor: azul.primary,
+                    },
                   },
-                  '&.Mui-focused fieldset': {
-                    borderColor: azul.primary,
-                  },
-                },
-                '& .MuiInputLabel-root.Mui-focused': {
-                  color: azul.primary,
-                }
-              }}
-            />
-          </Grid>
+                  '& .MuiInputLabel-root.Mui-focused': {
+                    color: azul.primary,
+                  }
+                }}
+              />
+            </Box>
+          </Box>
 
           {/* Información fiscal */}
-          <Grid item xs={12}>
-            <Typography variant="h6" fontWeight={600} color={azul.primary} mb={2} mt={2}>
-              Información Fiscal
-            </Typography>
-          </Grid>
+          <Typography variant="h6" fontWeight={600} color={azul.primary} mb={2} mt={2}>
+            Información Fiscal
+          </Typography>
 
-          <Grid item xs={12} sm={6}>
-            <TextField
-              fullWidth
-              label="CUIT"
-              value={formData.CUIT}
-              onChange={handleInputChange('CUIT')}
-              placeholder="XX-XXXXXXXX-X"
-              helperText="Formato: XX-XXXXXXXX-X"
-              sx={{
-                '& .MuiOutlinedInput-root': {
-                  '&:hover fieldset': {
-                    borderColor: azul.primary,
-                  },
-                  '&.Mui-focused fieldset': {
-                    borderColor: azul.primary,
-                  },
-                },
-                '& .MuiInputLabel-root.Mui-focused': {
-                  color: azul.primary,
-                }
-              }}
-            />
-          </Grid>
-
-          <Grid item xs={12} sm={6}>
-            <FormControl fullWidth>
-              <InputLabel sx={{ '&.Mui-focused': { color: azul.primary } }}>Tipo IVA</InputLabel>
-              <Select
-                value={formData.TipoIva}
-                label="Tipo IVA"
-                onChange={(e) => setFormData(prev => ({ ...prev, TipoIva: e.target.value }))}
+          <Box display="flex" gap={2} flexWrap="wrap" mb={3}>
+            <Box flex="1 1 250px" minWidth={250}>
+              <TextField
+                fullWidth
+                label="CUIT"
+                value={formData.CUIT}
+                onChange={handleInputChange('CUIT')}
+                placeholder="XX-XXXXXXXX-X"
+                helperText="Formato: XX-XXXXXXXX-X"
                 sx={{
-                  '&:hover .MuiOutlinedInput-notchedOutline': {
-                    borderColor: azul.primary,
+                  '& .MuiOutlinedInput-root': {
+                    '&:hover fieldset': {
+                      borderColor: azul.primary,
+                    },
+                    '&.Mui-focused fieldset': {
+                      borderColor: azul.primary,
+                    },
                   },
-                  '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                    borderColor: azul.primary,
-                  },
+                  '& .MuiInputLabel-root.Mui-focused': {
+                    color: azul.primary,
+                  }
                 }}
-              >
-                {tiposIva.map((tipo) => (
-                  <MenuItem key={tipo.value} value={tipo.value.toString()}>
-                    {tipo.label}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-          </Grid>
+              />
+            </Box>
+          </Box>
 
-          <Grid item xs={12} sm={6}>
-            <TextField
-              fullWidth
-              label="Saldo"
-              value={formData.Saldo}
-              onChange={handleInputChange('Saldo')}
-              type="number"
-              sx={{
-                '& .MuiOutlinedInput-root': {
-                  '&:hover fieldset': {
-                    borderColor: azul.primary,
+          <Box display="flex" gap={2} flexWrap="wrap" mb={3}>
+            <Box flex="1 1 250px" minWidth={250}>
+              <FormControl fullWidth>
+                <InputLabel sx={{ '&.Mui-focused': { color: azul.primary } }}>Tipo IVA</InputLabel>
+                <Select
+                  value={formData.TipoIva}
+                  label="Tipo IVA"
+                  onChange={(e) => setFormData(prev => ({ ...prev, TipoIva: e.target.value }))}
+                  sx={{
+                    '&:hover .MuiOutlinedInput-notchedOutline': {
+                      borderColor: azul.primary,
+                    },
+                    '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                      borderColor: azul.primary,
+                    }
+                  }}
+                >
+                  {tiposIva.map((tipo) => (
+                    <MenuItem key={tipo.value} value={tipo.value.toString()}>
+                      {tipo.label}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            </Box>
+
+            <Box flex="1 1 250px" minWidth={250}>
+              <TextField
+                fullWidth
+                label="Saldo"
+                value={formData.Saldo}
+                onChange={handleInputChange('Saldo')}
+                type="number"
+                sx={{
+                  '& .MuiOutlinedInput-root': {
+                    '&:hover fieldset': {
+                      borderColor: azul.primary,
+                    },
+                    '&.Mui-focused fieldset': {
+                      borderColor: azul.primary,
+                    },
                   },
-                  '&.Mui-focused fieldset': {
-                    borderColor: azul.primary,
+                  '& .MuiInputLabel-root.Mui-focused': {
+                    color: azul.primary,
+                  }
+                }}
+              />
+            </Box>
+          </Box>
+
+          {/* Información adicional */}
+          <Typography variant="h6" fontWeight={600} color={azul.primary} mb={2} mt={2}>
+            Información Adicional
+          </Typography>
+
+          <Box display="flex" gap={2} flexWrap="wrap" mb={3}>
+            <Box flex="1 1 100%" minWidth={300}>
+              <TextField
+                fullWidth
+                label="Observaciones"
+                value={formData.Observaciones}
+                onChange={handleInputChange('Observaciones')}
+                multiline
+                rows={3}
+                sx={{
+                  '& .MuiOutlinedInput-root': {
+                    '&:hover fieldset': {
+                      borderColor: azul.primary,
+                    },
+                    '&.Mui-focused fieldset': {
+                      borderColor: azul.primary,
+                    },
                   },
-                },
-                '& .MuiInputLabel-root.Mui-focused': {
-                  color: azul.primary,
-                }
-              }}
-            />
-          </Grid>
+                  '& .MuiInputLabel-root.Mui-focused': {
+                    color: azul.primary,
+                  }
+                }}
+              />
+            </Box>
+          </Box>
 
           {/* Ubicación */}
-          <Grid item xs={12}>
-            <Typography variant="h6" fontWeight={600} color={azul.primary} mb={2} mt={2}>
-              Ubicación
-            </Typography>
-          </Grid>
+          <Typography variant="h6" fontWeight={600} color={azul.primary} mb={2} mt={2}>
+            Ubicación
+          </Typography>
 
-          <Grid item xs={12}>
-            <TextField
-              fullWidth
-              label="Dirección"
-              value={formData.Direccion}
-              onChange={handleInputChange('Direccion')}
+          <Box display="flex" gap={2} flexWrap="wrap" mb={3}>
+            <Box flex="1 1 100%" minWidth={300}>
+              <TextField
+                fullWidth
+                label="Dirección"
+                value={formData.Direccion}
+                onChange={handleInputChange('Direccion')}
+                sx={{
+                  '& .MuiOutlinedInput-root': {
+                    '&:hover fieldset': {
+                      borderColor: azul.primary,
+                    },
+                    '&.Mui-focused fieldset': {
+                      borderColor: azul.primary,
+                    },
+                  },
+                  '& .MuiInputLabel-root.Mui-focused': {
+                    color: azul.primary,
+                  }
+                }}
+              />
+            </Box>
+          </Box>
+
+          <Box display="flex" gap={2} flexWrap="wrap" mb={3}>
+            <Box flex="1 1 200px" minWidth={200}>
+              <TextField
+                fullWidth
+                label="Localidad"
+                value={formData.Localidad}
+                onChange={handleInputChange('Localidad')}
+                sx={{
+                  '& .MuiOutlinedInput-root': {
+                    '&:hover fieldset': {
+                      borderColor: azul.primary,
+                    },
+                    '&.Mui-focused fieldset': {
+                      borderColor: azul.primary,
+                    },
+                  },
+                  '& .MuiInputLabel-root.Mui-focused': {
+                    color: azul.primary,
+                  }
+                }}
+              />
+            </Box>
+
+            <Box flex="1 1 200px" minWidth={200}>
+              <TextField
+                fullWidth
+                label="Provincia"
+                value={formData.Provincia}
+                onChange={handleInputChange('Provincia')}
               sx={{
                 '& .MuiOutlinedInput-root': {
                   '&:hover fieldset': {
@@ -645,127 +729,61 @@ const ModalEditarProveedor = ({ open, onClose, proveedor, onProveedorGuardado }:
                     borderColor: azul.primary,
                   },
                 },
-                '& .MuiInputLabel-root.Mui-focused': {
-                  color: azul.primary,
-                }
-              }}
-            />
-          </Grid>
+                  '& .MuiInputLabel-root.Mui-focused': {
+                    color: azul.primary,
+                  }
+                }}
+              />
+            </Box>
 
-          <Grid item xs={12} sm={4}>
-            <TextField
-              fullWidth
-              label="Localidad"
-              value={formData.Localidad}
-              onChange={handleInputChange('Localidad')}
-              sx={{
-                '& .MuiOutlinedInput-root': {
-                  '&:hover fieldset': {
-                    borderColor: azul.primary,
+            <Box flex="1 1 200px" minWidth={200}>
+              <TextField
+                fullWidth
+                label="Código Postal"
+                value={formData.CP}
+                onChange={handleInputChange('CP')}
+                helperText="4 dígitos"
+                sx={{
+                  '& .MuiOutlinedInput-root': {
+                    '&:hover fieldset': {
+                      borderColor: azul.primary,
+                    },
+                    '&.Mui-focused fieldset': {
+                      borderColor: azul.primary,
+                    },
                   },
-                  '&.Mui-focused fieldset': {
-                    borderColor: azul.primary,
-                  },
-                },
-                '& .MuiInputLabel-root.Mui-focused': {
-                  color: azul.primary,
-                }
-              }}
-            />
-          </Grid>
+                  '& .MuiInputLabel-root.Mui-focused': {
+                    color: azul.primary,
+                  }
+                }}
+              />
+            </Box>
+          </Box>
 
-          <Grid item xs={12} sm={4}>
-            <TextField
-              fullWidth
-              label="Provincia"
-              value={formData.Provincia}
-              onChange={handleInputChange('Provincia')}
-              sx={{
-                '& .MuiOutlinedInput-root': {
-                  '&:hover fieldset': {
-                    borderColor: azul.primary,
+          <Box display="flex" gap={2} flexWrap="wrap" mb={3}>
+            <Box flex="1 1 250px" minWidth={250}>
+              <TextField
+                fullWidth
+                label="País"
+                value={formData.Pais}
+                onChange={handleInputChange('Pais')}
+                sx={{
+                  '& .MuiOutlinedInput-root': {
+                    '&:hover fieldset': {
+                      borderColor: azul.primary,
+                    },
+                    '&.Mui-focused fieldset': {
+                      borderColor: azul.primary,
+                    },
                   },
-                  '&.Mui-focused fieldset': {
-                    borderColor: azul.primary,
-                  },
-                },
-                '& .MuiInputLabel-root.Mui-focused': {
-                  color: azul.primary,
-                }
-              }}
-            />
-          </Grid>
-
-          <Grid item xs={12} sm={4}>
-            <TextField
-              fullWidth
-              label="Código Postal"
-              value={formData.CP}
-              onChange={handleInputChange('CP')}
-              helperText="4 dígitos"
-              sx={{
-                '& .MuiOutlinedInput-root': {
-                  '&:hover fieldset': {
-                    borderColor: azul.primary,
-                  },
-                  '&.Mui-focused fieldset': {
-                    borderColor: azul.primary,
-                  },
-                },
-                '& .MuiInputLabel-root.Mui-focused': {
-                  color: azul.primary,
-                }
-              }}
-            />
-          </Grid>
-
-          <Grid item xs={12} sm={6}>
-            <TextField
-              fullWidth
-              label="País"
-              value={formData.Pais}
-              onChange={handleInputChange('Pais')}
-              sx={{
-                '& .MuiOutlinedInput-root': {
-                  '&:hover fieldset': {
-                    borderColor: azul.primary,
-                  },
-                  '&.Mui-focused fieldset': {
-                    borderColor: azul.primary,
-                  },
-                },
-                '& .MuiInputLabel-root.Mui-focused': {
-                  color: azul.primary,
-                }
-              }}
-            />
-          </Grid>
-
-          {/* Observaciones */}
-          <Grid item xs={12}>
-            <TextField
-              fullWidth
-              label="Observaciones"
-              value={formData.Observaciones}
-              onChange={handleInputChange('Observaciones')}
-              multiline
-              rows={3}
-              sx={{
-                '& .MuiOutlinedInput-root': {
-                  '&:hover fieldset': {
-                    borderColor: azul.primary,
-                  },
-                  '&.Mui-focused fieldset': {
-                    borderColor: azul.primary,
-                  },
-                },
-                '& .MuiInputLabel-root.Mui-focused': {
-                  color: azul.primary,
-                }
-              }}
-            />
-          </Grid>
-        </Grid>
+                  '& .MuiInputLabel-root.Mui-focused': {
+                    color: azul.primary,
+                  }
+                }}
+              />
+            </Box>
+          </Box>
+        </Box>
       </DialogContent>
 
       <DialogActions sx={{ 

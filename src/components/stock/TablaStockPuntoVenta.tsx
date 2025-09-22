@@ -101,7 +101,7 @@ export default function TablaStockPuntoVenta({ puntoVenta, onModificarStock, onN
     };
 
     cargarStock();
-  }, [puntoVenta.id, refetchTrigger]);
+  }, [puntoVenta.id, puntoVenta.nombre, refetchTrigger]);
 
   const handleModificarStock = (articulo: ArticuloStock) => {
     onModificarStock({
@@ -160,7 +160,7 @@ export default function TablaStockPuntoVenta({ puntoVenta, onModificarStock, onN
               Este punto de venta no tiene stock asignado
             </Typography>
             <Typography variant="caption" color="text.secondary">
-              Los registros de stock se inicializaron automáticamente. Usa "Nueva Asignación" para asignar cantidades.
+              Los registros de stock se inicializaron automáticamente. Usa &quot;Nueva Asignación&quot; para asignar cantidades.
             </Typography>
           </Box>
         </Paper>

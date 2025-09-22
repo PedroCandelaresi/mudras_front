@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react';
-import { useMutation, useQuery, useLazyQuery } from '@apollo/client';
+import { useQuery, useLazyQuery, useMutation } from '@apollo/client/react';
 import { 
   BUSCAR_RUBROS, 
   CREAR_RUBRO, 
@@ -65,11 +65,10 @@ export function useRubros(options: UseRubrosOptions = {}): UseRubrosReturn {
   const [error, setError] = useState('');
 
   // Query principal
-  const { data, loading, refetch } = useQuery(BUSCAR_RUBROS, {
+  const { data, loading, error: queryError, refetch } = useQuery(BUSCAR_RUBROS, {
     variables: { pagina, limite, busqueda },
     skip: !autoFetch,
-    errorPolicy: 'all',
-    onError: (error) => setError(error.message)
+    errorPolicy: 'all'
   });
 
   // Mutaciones
@@ -140,10 +139,10 @@ export function useRubros(options: UseRubrosOptions = {}): UseRubrosReturn {
   }, [refetch, limite, busqueda]);
 
   return {
-    rubros: data?.buscarRubros?.rubros || [],
+    rubros: (data as any)?.buscarRubros?.rubros || [],
     loading,
     error,
-    total: data?.buscarRubros?.total || 0,
+    total: (data as any)?.buscarRubros?.total || 0,
     crearRubro,
     actualizarRubro,
     eliminarRubro,

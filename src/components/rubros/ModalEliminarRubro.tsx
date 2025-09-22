@@ -26,7 +26,7 @@ interface Props {
   setTextoConfirmacion: (v: string) => void;
 }
 
-export function ModalEliminarRubro({ open, onClose, onConfirm, rubro, textoConfirmacion, setTextoConfirmacion }: Props): JSX.Element {
+export function ModalEliminarRubro({ open, onClose, onConfirm, rubro, textoConfirmacion, setTextoConfirmacion }: Props) {
   return (
     <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth
       PaperProps={{ sx: { borderRadius: 3, border: '3px solid #d32f2f', boxShadow: '0 0 30px rgba(211, 47, 47, 0.3), 0 8px 32px rgba(0,0,0,0.12)', background: 'linear-gradient(135deg, #ffebee 0%, #fff 100%)' } }}>

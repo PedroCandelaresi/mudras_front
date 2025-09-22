@@ -350,9 +350,9 @@ export default function ModalNuevaAsignacionStockOptimizado({ open, onClose, pun
             Filtros de Búsqueda
           </Typography>
           
-          <Grid container spacing={2}>
+          <Box display="flex" gap={2} flexWrap="wrap" mb={3}>
             {/* Proveedor */}
-            <Grid item xs={12} md={4}>
+            <Box flex="1 1 250px" minWidth={250}>
               <Autocomplete
                 options={proveedores}
                 getOptionLabel={(option) => option.nombre}
@@ -376,10 +376,10 @@ export default function ModalNuevaAsignacionStockOptimizado({ open, onClose, pun
                   />
                 )}
               />
-            </Grid>
+            </Box>
 
             {/* Rubro */}
-            <Grid item xs={12} md={4}>
+            <Box flex="1 1 250px" minWidth={250}>
               <FormControl fullWidth disabled={!proveedorSeleccionado || loadingRubros}>
                 <InputLabel>Rubro</InputLabel>
                 <Select
@@ -402,10 +402,10 @@ export default function ModalNuevaAsignacionStockOptimizado({ open, onClose, pun
                   ))}
                 </Select>
               </FormControl>
-            </Grid>
+            </Box>
 
             {/* Búsqueda */}
-            <Grid item xs={12} md={4}>
+            <Box flex="1 1 250px" minWidth={250}>
               <TextField
                 fullWidth
                 label="Buscar Artículo"
@@ -423,8 +423,8 @@ export default function ModalNuevaAsignacionStockOptimizado({ open, onClose, pun
                 }}
                 helperText="Presione Enter para buscar"
               />
-            </Grid>
-          </Grid>
+            </Box>
+          </Box>
         </Paper>
 
         {/* Resultados */}
@@ -528,7 +528,7 @@ export default function ModalNuevaAsignacionStockOptimizado({ open, onClose, pun
           onClick={handleConfirmarAsignaciones}
           disabled={loading || asignaciones.length === 0}
           startIcon={<Icon icon="mdi:check" />}
-          sx={{ bgcolor: verde.main }}
+          sx={{ bgcolor: verde.primary }}
         >
           {loading ? 'Asignando...' : `Asignar Stock (${asignaciones.length})`}
         </Button>

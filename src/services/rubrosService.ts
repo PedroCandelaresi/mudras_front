@@ -12,12 +12,12 @@ import {
 } from '@/queries/rubros';
 
 export interface RubrosServiceConfig {
-  client: ApolloClient<NormalizedCacheObject>;
+  client: any;
   cacheTtl?: number; // TTL en milisegundos
 }
 
 export class RubrosService {
-  private client: ApolloClient<NormalizedCacheObject>;
+  private client: any;
   private cache: Map<string, { data: any; timestamp: number }> = new Map();
   private cacheTtl: number;
 
@@ -307,7 +307,7 @@ export class RubrosService {
 // Singleton para uso global
 let rubrosServiceInstance: RubrosService | null = null;
 
-export function getRubrosService(client?: ApolloClient<NormalizedCacheObject>): RubrosService {
+export function getRubrosService(client?: any): RubrosService {
   if (!rubrosServiceInstance && client) {
     rubrosServiceInstance = new RubrosService({ client });
   }
