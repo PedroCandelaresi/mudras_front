@@ -606,11 +606,32 @@ const TablaRubros: React.FC<Props> = ({ onNuevoRubro, puedeCrear = true }) => {
       <ModalEditarRubro
         open={modalEditarOpen}
         onClose={cerrarModales}
-        rubro={rubroSeleccionado}
-        onSuccess={() => {
+        onGuardar={() => {
           cerrarModales();
           refetch();
         }}
+        rubroEditando={rubroSeleccionado}
+        formData={{
+          nombre: rubroSeleccionado?.nombre || '',
+          codigo: rubroSeleccionado?.codigo || ''
+        }}
+        setFormData={() => {}}
+        error=""
+        validacionError=""
+        proveedoresRubro={[]}
+        setProveedorAEliminar={() => {}}
+        setModalEliminarProveedorAbierto={() => {}}
+        articulosRubro={[]}
+        filtroArticulos=""
+        setFiltroArticulos={() => {}}
+        articulosSeleccionados={[]}
+        setArticulosSeleccionados={() => {}}
+        pageArticulos={0}
+        setPageArticulos={() => {}}
+        rowsPerPageArticulos={50}
+        setRowsPerPageArticulos={() => {}}
+        setArticuloAEliminar={() => {}}
+        setModalEliminarArticuloAbierto={() => {}}
       />
 
       <ModalDetallesRubro
