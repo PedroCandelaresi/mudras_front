@@ -28,6 +28,8 @@ export interface RubroConEstadisticas {
   id: number;
   nombre: string;
   codigo?: string;
+  porcentajeRecargo?: number;
+  porcentajeDescuento?: number;
   cantidadArticulos: number;
   cantidadProveedores: number;
 }

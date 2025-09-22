@@ -96,3 +96,5 @@ export function ModalEliminarRubro({ open, onClose, onConfirm, rubro, textoConfi
     </Dialog>
   );
 }
+
+export default ModalEliminarRubro;

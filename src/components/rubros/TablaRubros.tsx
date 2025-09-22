@@ -26,10 +26,23 @@ import { BuscarRubrosResponse, RubroConEstadisticas } from '@/app/interfaces/gra
 import { IconSearch, IconCategory, IconRefresh, IconEdit, IconTrash, IconEye, IconPlus, IconDotsVertical } from '@tabler/icons-react';
 import { useState } from 'react';
 import { verde } from '@/ui/colores';
+import ModalEditarRubroSimple from './ModalEditarRubroSimple';
+import ModalDetallesRubro from './ModalDetallesRubro';
+import ModalEliminarRubro from './ModalEliminarRubro';
 
 interface Props {
   onNuevoRubro?: () => void;
   puedeCrear?: boolean;
+}
+
+interface RubroParaModal {
+  id: number;
+  nombre: string;
+  codigo?: string;
+  porcentajeRecargo?: number;
+  porcentajeDescuento?: number;
+  cantidadArticulos?: number;
+  cantidadProveedores?: number;
 }
 
 const TablaRubros: React.FC<Props> = ({ onNuevoRubro, puedeCrear = true }) => {
@@ -44,6 +57,13 @@ const TablaRubros: React.FC<Props> = ({ onNuevoRubro, puedeCrear = true }) => {
     nombre: '',
     codigo: ''
   });
+  
+  // Estados para modales
+  const [modalEditarOpen, setModalEditarOpen] = useState(false);
+  const [modalDetallesOpen, setModalDetallesOpen] = useState(false);
+  const [modalEliminarOpen, setModalEliminarOpen] = useState(false);
+  const [rubroSeleccionado, setRubroSeleccionado] = useState<RubroParaModal | null>(null);
+  const [textoConfirmacion, setTextoConfirmacion] = useState('');
 
   const { data, loading, error, refetch } = useQuery<BuscarRubrosResponse>(BUSCAR_RUBROS, {
     variables: {
@@ -67,18 +87,72 @@ const TablaRubros: React.FC<Props> = ({ onNuevoRubro, puedeCrear = true }) => {
 
   // Funciones para manejar acciones
   const handleViewRubro = (rubro: RubroConEstadisticas) => {
-    console.log('Ver rubro:', rubro);
-    // TODO: Implementar modal de vista detallada
+    const rubroParaModal: RubroParaModal = {
+      id: rubro.id,
+      nombre: rubro.nombre,
+      codigo: rubro.codigo,
+      porcentajeRecargo: rubro.porcentajeRecargo,
+      porcentajeDescuento: rubro.porcentajeDescuento,
+      cantidadArticulos: rubro.cantidadArticulos,
+      cantidadProveedores: rubro.cantidadProveedores
+    };
+    setRubroSeleccionado(rubroParaModal);
+    setModalDetallesOpen(true);
   };
 
   const handleEditRubro = (rubro: RubroConEstadisticas) => {
-    console.log('Editar rubro:', rubro);
-    // TODO: Implementar modal de edición
+    const rubroParaModal: RubroParaModal = {
+      id: rubro.id,
+      nombre: rubro.nombre,
+      codigo: rubro.codigo,
+      porcentajeRecargo: rubro.porcentajeRecargo,
+      porcentajeDescuento: rubro.porcentajeDescuento,
+      cantidadArticulos: rubro.cantidadArticulos,
+      cantidadProveedores: rubro.cantidadProveedores
+    };
+    setRubroSeleccionado(rubroParaModal);
+    setModalEditarOpen(true);
   };
 
   const handleDeleteRubro = (rubro: RubroConEstadisticas) => {
-    console.log('Eliminar rubro:', rubro);
-    // TODO: Implementar confirmación y eliminación
+    const rubroParaModal: RubroParaModal = {
+      id: rubro.id,
+      nombre: rubro.nombre,
+      codigo: rubro.codigo,
+      porcentajeRecargo: rubro.porcentajeRecargo,
+      porcentajeDescuento: rubro.porcentajeDescuento,
+      cantidadArticulos: rubro.cantidadArticulos,
+      cantidadProveedores: rubro.cantidadProveedores
+    };
+    setRubroSeleccionado(rubroParaModal);
+    setTextoConfirmacion('');
+    setModalEliminarOpen(true);
+  };
+
+  const handleNuevoRubro = () => {
+    setRubroSeleccionado(null);
+    setModalEditarOpen(true);
+  };
+
+  const cerrarModales = () => {
+    setModalEditarOpen(false);
+    setModalDetallesOpen(false);
+    setModalEliminarOpen(false);
+    setRubroSeleccionado(null);
+    setTextoConfirmacion('');
+  };
+
+  const confirmarEliminacion = async () => {
+    if (rubroSeleccionado && textoConfirmacion === 'ELIMINAR') {
+      try {
+        // TODO: Implementar eliminación real
+        console.log('Eliminando rubro:', rubroSeleccionado);
+        cerrarModales();
+        refetch();
+      } catch (error) {
+        console.error('Error al eliminar rubro:', error);
+      }
+    }
   };
 
   const handleChangePage = (event: unknown, newPage: number) => {
@@ -210,7 +284,7 @@ const TablaRubros: React.FC<Props> = ({ onNuevoRubro, puedeCrear = true }) => {
               variant="contained"
               sx={{ textTransform: 'none', bgcolor: verde.primary, '&:hover': { bgcolor: verde.primaryHover } }}
               startIcon={<IconPlus size={18} />}
-              onClick={onNuevoRubro}
+              onClick={onNuevoRubro || handleNuevoRubro}
             >
               Nuevo Rubro
             </Button>
@@ -527,6 +601,32 @@ const TablaRubros: React.FC<Props> = ({ onNuevoRubro, puedeCrear = true }) => {
           </Box>
         </Box>
       </Box>
+
+      {/* Modales */}
+      <ModalEditarRubroSimple
+        open={modalEditarOpen}
+        onClose={cerrarModales}
+        rubro={rubroSeleccionado}
+        onSuccess={() => {
+          cerrarModales();
+          refetch();
+        }}
+      />
+
+      <ModalDetallesRubro
+        open={modalDetallesOpen}
+        onClose={cerrarModales}
+        rubro={rubroSeleccionado}
+      />
+
+      <ModalEliminarRubro
+        open={modalEliminarOpen}
+        onClose={cerrarModales}
+        onConfirm={confirmarEliminacion}
+        rubro={rubroSeleccionado}
+        textoConfirmacion={textoConfirmacion}
+        setTextoConfirmacion={setTextoConfirmacion}
+      />
     </Paper>
   );
 };
