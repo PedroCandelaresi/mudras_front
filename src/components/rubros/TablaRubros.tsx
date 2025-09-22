@@ -26,7 +26,7 @@ import { BuscarRubrosResponse, RubroConEstadisticas } from '@/app/interfaces/gra
 import { IconSearch, IconCategory, IconRefresh, IconEdit, IconTrash, IconEye, IconPlus, IconDotsVertical } from '@tabler/icons-react';
 import { useState } from 'react';
 import { verde } from '@/ui/colores';
-import ModalEditarRubroSimple from './ModalEditarRubroSimple';
+import ModalEditarRubro from './ModalEditarRubro';
 import ModalDetallesRubro from './ModalDetallesRubro';
 import ModalEliminarRubro from './ModalEliminarRubro';
 
@@ -603,7 +603,7 @@ const TablaRubros: React.FC<Props> = ({ onNuevoRubro, puedeCrear = true }) => {
       </Box>
 
       {/* Modales */}
-      <ModalEditarRubroSimple
+      <ModalEditarRubro
         open={modalEditarOpen}
         onClose={cerrarModales}
         rubro={rubroSeleccionado}
