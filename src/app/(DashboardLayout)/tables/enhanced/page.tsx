@@ -1,6 +1,6 @@
 import React from "react";
 import Breadcrumb from "@/app/(DashboardLayout)/layout/shared/breadcrumb/Breadcrumb";
-import PageContainer from "@/app/components/container/PageContainer";
+import PageContainer from "@/components/container/PageContainer";
 
 import TableEnhance from "@/app/components/tables/TableEnhance";
 

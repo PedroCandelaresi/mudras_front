@@ -41,7 +41,7 @@ import {
   IconCrown
 } from '@tabler/icons-react';
 import { UNIDADES, UNIDADES_POR_DEFECTO_POR_RUBRO, abrevUnidad, type UnidadMedida } from '../../app/utils/unidades';
-import { TexturedPanel } from '../../app/components/ui-components/TexturedFrame/TexturedPanel';
+import { TexturedPanel } from '../ui/TexturedFrame/TexturedPanel';
 import { verde } from '../../ui/colores';
 
 interface ModalNuevoArticuloProps {

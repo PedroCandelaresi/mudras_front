@@ -1,7 +1,6 @@
 import { gql } from '@apollo/client';
-import { ARTICULO_FRAGMENT } from '../queries/articulos';
+import { ARTICULO_FRAGMENT } from './queries';
 
-// Mutations
 export const CREAR_ARTICULO = gql`
   ${ARTICULO_FRAGMENT}
   mutation CrearArticulo($crearArticuloDto: CrearArticuloDto!) {

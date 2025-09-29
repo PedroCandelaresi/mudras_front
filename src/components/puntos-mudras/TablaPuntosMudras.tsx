@@ -24,7 +24,11 @@ import {
 import { Search, Store, Warehouse, MoreVert } from '@mui/icons-material';
 import { IconSearch, IconPlus, IconTrash, IconEdit, IconEye, IconRefresh } from '@tabler/icons-react';
 import { useQuery, useMutation } from '@apollo/client/react';
-import { OBTENER_PUNTOS_MUDRAS, ELIMINAR_PUNTO_MUDRAS, ObtenerPuntosMudrasResponse } from '@/queries/puntos-mudras';
+import {
+  OBTENER_PUNTOS_MUDRAS,
+  type ObtenerPuntosMudrasResponse,
+} from '@/components/puntos-mudras/graphql/queries';
+import { ELIMINAR_PUNTO_MUDRAS } from '@/components/puntos-mudras/graphql/mutations';
 import { PuntoMudras, FiltrosPuntosMudras } from '@/interfaces/puntos-mudras';
 import ModalConfirmarEliminacion from '@/components/ui/ModalConfirmarEliminacion';
 import { grisVerdoso, grisRojizo } from '@/ui/colores';
@@ -72,18 +76,7 @@ export default function TablaPuntosMudras({ tipo, onEditarPunto, onVerInventario
       setEliminando(false);
       setModalEliminarAbierto(false);
     },
-    refetchQueries: [
-      {
-        query: OBTENER_PUNTOS_MUDRAS,
-        variables: {
-          filtros: {
-            tipo: tipo === 'venta' ? 'venta' : 'deposito',
-            busqueda: busqueda.trim() || undefined,
-            limite: 50
-          }
-        }
-      }
-    ]
+    refetchQueries: [{ query: OBTENER_PUNTOS_MUDRAS }]
   });
 
   const puntos = data?.obtenerPuntosMudras || [];

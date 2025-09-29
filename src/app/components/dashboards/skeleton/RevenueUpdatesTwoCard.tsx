@@ -1,6 +1,6 @@
 import React from 'react';
 import { Grid, Stack, Typography, Button, Box, Skeleton } from '@mui/material';
-import DashboardCard from '../../shared/DashboardCard';
+import DashboardCard from '../../../../components/shared/DashboardCard';
 
 const SkeletonRevenueUpdatesTwoCard = () => {
 

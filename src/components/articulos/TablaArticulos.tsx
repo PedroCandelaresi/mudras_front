@@ -1,805 +1,689 @@
 'use client';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
-  Box,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  Typography,
-  Paper,
-  Chip,
-  Skeleton,
-  TablePagination,
-  TextField,
-  InputAdornment,
-  Button,
-  Stack,
-  Menu,
-  Divider,
-  Autocomplete,
-} from "@mui/material";
+  Box, Paper, Typography, Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
+  TextField, InputAdornment, Button, Tooltip, IconButton, Chip, Menu, Divider, Stack
+} from '@mui/material';
 import { useQuery } from '@apollo/client/react';
-import { BUSCAR_ARTICULOS, GET_PROVEEDORES } from '@/app/queries/mudras.queries';
-import { Articulo } from '@/app/interfaces/mudras.types';
-import { BuscarArticulosResponse } from '@/app/interfaces/graphql.types';
-import { IconSearch, IconPackage, IconTrash, IconEdit, IconEye, IconPlus, IconDotsVertical, IconRefresh } from '@tabler/icons-react';
+import { BUSCAR_ARTICULOS } from '@/components/articulos/graphql/queries';
+import { GET_PROVEEDORES } from '@/components/proveedores/graphql/queries';
+import { IconSearch } from '@tabler/icons-react';
+import { IconDotsVertical, IconEye, IconEdit, IconTrash, IconPlus, IconRefresh } from '@tabler/icons-react';
 import { verde } from '@/ui/colores';
-import { useState, useEffect } from 'react';
-import { IconButton, Tooltip } from '@mui/material';
+import type { Articulo } from '@/app/interfaces/mudras.types';
 import { abrevUnidad, type UnidadMedida } from '@/app/utils/unidades';
 
-// Interfaz local para proveedores (para tipar la query GET_PROVEEDORES)
-interface ProveedorLista {
-  IdProveedor: number;
-  Nombre: string;
-  Codigo?: string;
-}
+/* ======================== Tipos de columnas ======================== */
+type ArticuloColumnKey =
+  | 'descripcion'
+  | 'codigo'
+  | 'marca'
+  | 'rubro'
+  | 'stock'
+  | 'precio'
+  | 'proveedor'
+  | 'estado'
+  | 'acciones';
 
-interface Props {
+type ColumnDef = {
+  key: ArticuloColumnKey;
+  header?: string;
+  width?: string | number;
+  render?: (art: Articulo) => React.ReactNode;
+  filterable?: boolean;
+};
+
+/* ======================== Filtros servidor ======================== */
+type FiltrosServidor = {
+  busqueda?: string;
+  codigo?: string;
+  descripcion?: string;
+  pagina?: number;
+  limite?: number;
+  ordenarPor?: 'Descripcion' | 'Codigo' | 'PrecioVenta' | 'Rubro';
+  direccionOrden?: 'ASC' | 'DESC';
+  soloConStock?: boolean;
+  soloStockBajo?: boolean;
   soloSinStock?: boolean;
-  filtroSinStock?: boolean;
-  onNuevoArticulo?: () => void;
-  onNuevoClick?: () => void;
-  onModificarStock?: (articulo: any) => void;
-  puedeCrear?: boolean;
-}
+  soloEnPromocion?: boolean;
 
-const TablaArticulos: React.FC<Props> = ({ 
-  soloSinStock = false, 
-  filtroSinStock = false, 
-  onNuevoArticulo, 
-  onNuevoClick, 
-  onModificarStock,
-  puedeCrear = true 
+  // 👇 nuevos campos explícitos
+  rubro?: string;          // filtro por texto de rubro
+  proveedor?: string;      // filtro por texto de proveedor
+  rubroId?: number;        // filtro por id de rubro
+  proveedorId?: number;    // filtro por id de proveedor
+};
+
+/* ======================== Props reutilizable ======================== */
+type ArticulosTableProps = {
+  columns: ColumnDef[];
+  title?: string;
+  rowsPerPageOptions?: number[];
+  defaultPageSize?: number;
+
+  initialServerFilters?: Partial<FiltrosServidor> & {
+    estado?: 'Sin stock' | 'Bajo stock' | 'Con stock';
+  };
+
+  controlledFilters?: Partial<FiltrosServidor> & {
+    estado?: 'Sin stock' | 'Bajo stock' | 'Con stock';
+  };
+  onFiltersChange?: (filtros: FiltrosServidor & { estado?: string }) => void;
+
+  showToolbar?: boolean;
+  showGlobalSearch?: boolean;
+  allowCreate?: boolean;
+  onCreateClick?: () => void;
+
+  onView?: (articulo: Articulo) => void;
+  onEdit?: (articulo: Articulo) => void;
+  onDelete?: (articulo: Articulo) => void;
+
+  dense?: boolean;
+
+  onDataLoaded?: (payload: {
+    total: number;
+    articulos: Articulo[];
+    filtros: (FiltrosServidor & { estado?: string; busqueda?: string | undefined });
+    loading: boolean;
+    error?: Error;
+  }) => void;
+};
+
+/* ======================== Utils ======================== */
+const getStockColor = (stock: number, stockMinimo: number) => {
+  if (stock <= 0) return 'error';
+  if (stock <= stockMinimo) return 'warning';
+  return 'success';
+};
+const getStockLabel = (stock: number, stockMinimo: number) => {
+  if (stock <= 0) return 'Sin stock';
+  if (stock <= stockMinimo) return 'Stock Bajo';
+  return 'Disponible';
+};
+
+/* ======================== Componente ======================== */
+const ArticulosTable: React.FC<ArticulosTableProps> = ({
+  columns,
+  title = 'Artículos',
+  rowsPerPageOptions = [50, 100, 150],
+  defaultPageSize = 50,
+  initialServerFilters,
+  controlledFilters,
+  onFiltersChange,
+  showToolbar = true,
+  showGlobalSearch = true,
+  allowCreate = true,
+  onCreateClick,
+  onView,
+  onEdit,
+  onDelete,
+  dense = true,
+  onDataLoaded,
 }) => {
-  const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(50);
-  const [filtro, setFiltro] = useState(''); // filtro aplicado
-  const [filtroInput, setFiltroInput] = useState(''); // valor tipeado en la searchbar, se aplica con Enter
+  // estado interno (si no vienen controlados)
+  const [page, setPage] = useState(initialServerFilters?.pagina ?? 0);
+  const [rowsPerPage, setRowsPerPage] = useState(initialServerFilters?.limite ?? defaultPageSize);
+  const [globalInput, setGlobalInput] = useState(initialServerFilters?.busqueda ?? '');
+
+  const [localFilters, setLocalFilters] = useState({
+    codigo: initialServerFilters?.codigo ?? '',
+    descripcion: initialServerFilters?.descripcion ?? '',
+    rubro: initialServerFilters?.rubro ?? '',
+    proveedor: initialServerFilters?.proveedor ?? '',
+    estado: initialServerFilters?.estado ?? '',
+    rubroId: initialServerFilters?.rubroId ?? undefined as number | undefined,
+    proveedorId: initialServerFilters?.proveedorId ?? undefined as number | undefined,
+  });
+
+  // menú de filtros por columna
   const [menuAnchor, setMenuAnchor] = useState<null | HTMLElement>(null);
-  const [columnaActiva, setColumnaActiva] = useState<null | 'codigo' | 'descripcion' | 'rubro' | 'proveedor' | 'estado'>(null);
-  const [filtroColInput, setFiltroColInput] = useState<string>(''); // valor temporal del input de columna
-  const [filtrosColumna, setFiltrosColumna] = useState({
-    codigo: '',
-    descripcion: '',
-    rubro: '',
-    proveedor: '',
-    estado: ''
-  });
-  const [proveedorSeleccionadoId, setProveedorSeleccionadoId] = useState<number | null>(null);
+  const [activeCol, setActiveCol] = useState<ColumnDef['key'] | null>(null);
+  const [colInput, setColInput] = useState('');
 
-  // Cargamos proveedores una sola vez (cache-first) para usar en Autocomplete sin refetch por tecla
-  const { data: dataProveedores } = useQuery<{ proveedores: ProveedorLista[] }>(GET_PROVEEDORES, {
-    fetchPolicy: 'cache-first',
-  });
-  const proveedores: ProveedorLista[] = dataProveedores?.proveedores ?? [];
+  // Proveedores (opcional para autocompletar)
+  const { data: dataProveedores } = useQuery<{ proveedores: { IdProveedor: number; Nombre: string }[] }>(
+    GET_PROVEEDORES,
+    { fetchPolicy: 'cache-first' }
+  );
+  const proveedores = dataProveedores?.proveedores ?? [];
 
-  // Variables para filtros globales (servidor)
-  const estadoSeleccionado = (filtrosColumna.estado || '').toLowerCase();
-  const filtrosServidor = {
-    busqueda: filtro || undefined,
-    // Campos específicos si están presentes
-    codigo: filtrosColumna.codigo || undefined,
-    descripcion: filtrosColumna.descripcion || undefined,
-    // rubro (nombre) y proveedor (nombre) no tienen filtro directo por nombre en DTO,
-    // se incluyen dentro de busqueda global si están definidos
-    pagina: page,
-    limite: rowsPerPage,
-    ordenarPor: 'Descripcion',
-    direccionOrden: 'ASC' as const,
-    // Flags derivadas según selección de estado y prop soloSinStock
+  // seleccion de estado
+  const controlledEstado = controlledFilters?.estado;
+  const estadoSeleccionado = useMemo(
+    () => ((controlledEstado ?? localFilters.estado) || '').toLowerCase(),
+    [controlledEstado, localFilters.estado]
+  );
+
+  // 🔎 búsqueda global (solo el input global/prop busqueda)
+  const globalSearch = useMemo(() => {
+    const g = (controlledFilters?.busqueda ?? globalInput)?.trim();
+    return g || undefined;
+  }, [controlledFilters?.busqueda, globalInput]);
+
+  // 🎯 filtros que viajarán al servidor (explícitos)
+  const filtrosServidor = useMemo<FiltrosServidor>(() => ({
+    busqueda: undefined, // se setea en variablesQuery
+    codigo: (controlledFilters?.codigo ?? localFilters.codigo) || undefined,
+    descripcion: (controlledFilters?.descripcion ?? localFilters.descripcion) || undefined,
+    rubro: (controlledFilters?.rubro ?? localFilters.rubro) || undefined,
+    pagina: controlledFilters?.pagina ?? page,
+    limite: controlledFilters?.limite ?? rowsPerPage,
+    ordenarPor: controlledFilters?.ordenarPor ?? 'Descripcion',
+    direccionOrden: controlledFilters?.direccionOrden ?? 'ASC',
     soloConStock: estadoSeleccionado === 'con stock' ? true : undefined,
     soloStockBajo: estadoSeleccionado === 'bajo stock' ? true : undefined,
-    soloSinStock: soloSinStock ? true : (estadoSeleccionado === 'sin stock' ? true : undefined),
-    soloEnPromocion: undefined,
-    proveedorId: proveedorSeleccionadoId ?? undefined,
-  };
+    soloSinStock: estadoSeleccionado === 'sin stock' ? true : undefined,
+    soloEnPromocion: controlledFilters?.soloEnPromocion,
+    rubroId: controlledFilters?.rubroId ?? localFilters.rubroId ?? undefined,
+    proveedorId: controlledFilters?.proveedorId ?? localFilters.proveedorId ?? undefined,
+  }), [
+    controlledFilters,
+    localFilters,
+    page,
+    rowsPerPage,
+    estadoSeleccionado,
+  ]);
 
-  // Logs de depuración: variables de filtros y cookies visibles en cliente (no httpOnly)
-  if (typeof window !== 'undefined') {
-    try {
-      // Aviso: document.cookie no muestra cookies httpOnly
-      // Esto es solo para verificar si existe alguna cookie accesible en cliente.
-      console.debug('[TablaArticulos] document.cookie (cliente, no incluye httpOnly):', document.cookie);
-    } catch {}
-  }
-
-  console.log('📊 [TABLA_ARTICULOS] Filtros aplicados:', filtrosServidor);
-  console.log('📊 [TABLA_ARTICULOS] Usuario autenticado, cargando artículos...');
-
-  const variablesQuery = {
+  const variablesQuery = useMemo(() => ({
     filtros: {
       ...filtrosServidor,
-      // Si vienen rubro/proveedor por texto, los añadimos a la búsqueda global
-      busqueda: [
-        filtro,
-        filtrosColumna.rubro,
-        filtrosColumna.proveedor,
-        // No incluir estado textual en la búsqueda global; se mapea a flags específicos
-      ]
-        .filter(Boolean)
-        .join(' ') || undefined,
+      busqueda: globalSearch,
     },
-  } as const;
+  }), [filtrosServidor, globalSearch]);
 
-  console.debug('[TablaArticulos] Variables GraphQL ->', variablesQuery);
-
-  const { data, loading, error, refetch } = useQuery<BuscarArticulosResponse>(BUSCAR_ARTICULOS, {
+  const { data, loading, error, refetch } = useQuery<{
+    buscarArticulos: { total: number; articulos: (Articulo | null)[] }
+  }>(BUSCAR_ARTICULOS, {
     variables: variablesQuery,
-    fetchPolicy: 'cache-and-network',
+    fetchPolicy: 'cache-and-network'
   });
 
-  // Logs separados para evitar problemas de tipos
-  if (data) {
-    console.log('📊 [TABLA_ARTICULOS] Query completada exitosamente:', data);
-    console.log('📊 [TABLA_ARTICULOS] Total artículos encontrados:', data?.buscarArticulos?.total || 0);
-  }
-  
-  if (error) {
-    console.error('📊 [TABLA_ARTICULOS] Error en query:', error);
-  }
+  const articulos: Articulo[] = (data?.buscarArticulos?.articulos ?? []).filter((a): a is Articulo => !!a);
+  const total: number = data?.buscarArticulos?.total ?? 0;
 
-  // Si hay error, desglosamos ApolloError
-  if (error) {
-    const maybeGqlErrors = (error as unknown as { graphQLErrors?: Array<{ message?: string; path?: ReadonlyArray<string | number>; extensions?: unknown }> }).graphQLErrors ?? [];
-    if (maybeGqlErrors.length) {
-      console.error('[TablaArticulos] graphQLErrors:', maybeGqlErrors.map(e => ({
-        message: e?.message,
-        path: e?.path,
-        extensions: e?.extensions,
-      })));
+  const estadoActual = controlledFilters?.estado ?? localFilters.estado;
+
+  useEffect(() => {
+    if (!onDataLoaded) return;
+    onDataLoaded({
+      total,
+      articulos,
+      filtros: {
+        ...filtrosServidor,
+        busqueda: globalSearch,
+        estado: estadoActual,
+      },
+      loading,
+      error: error ?? undefined,
+    });
+  }, [onDataLoaded, total, articulos, filtrosServidor, globalSearch, estadoActual, loading, error]);
+
+  // Propagar filtros efectivos al padre
+  useEffect(() => {
+    onFiltersChange?.({
+      ...filtrosServidor,
+      busqueda: globalSearch,
+      estado: estadoActual,
+    });
+  }, [onFiltersChange, filtrosServidor, globalSearch, estadoActual]);
+
+  // handlers básicos
+  const handleChangeRowsPerPage = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = parseInt(e.target.value, 10);
+    if (!controlledFilters) {
+      setRowsPerPage(value);
+      setPage(0);
     }
-    const maybeNetErr = (error as unknown as { networkError?: unknown }).networkError as unknown as {
-      name?: string; message?: string; statusCode?: number; status?: number; result?: unknown; response?: unknown;
-    } | undefined;
-    if (maybeNetErr) {
-      console.error('[TablaArticulos] networkError:', {
-        name: maybeNetErr?.name,
-        message: maybeNetErr?.message,
-        statusCode: (maybeNetErr as any)?.statusCode ?? (maybeNetErr as any)?.status,
-        result: (maybeNetErr as any)?.result,
-        response: (maybeNetErr as any)?.response,
-      });
-    }
-  }
-
-  const abrirMenuColumna = (col: typeof columnaActiva) => (e: React.MouseEvent<HTMLElement>) => {
-    setColumnaActiva(col);
-    // Sincronizar input temporal con el valor aplicado actual de esa columna
-    if (col) setFiltroColInput(filtrosColumna[col]);
-    setMenuAnchor(e.currentTarget);
+    onFiltersChange?.({
+      ...filtrosServidor,
+      busqueda: globalSearch,
+      estado: estadoActual,
+      limite: value,
+      pagina: 0,
+    });
   };
-  const cerrarMenuColumna = () => {
-    setMenuAnchor(null);
-    setColumnaActiva(null);
-  };
-
-  // Funciones para manejar acciones
-  const handleViewArticulo = (articulo: Articulo) => {
-    console.log('Ver artículo:', articulo);
-    // TODO: Implementar modal de vista detallada
-  };
-
-  const handleEditArticulo = (articulo: Articulo) => {
-    console.log('Editar artículo:', articulo);
-    // TODO: Implementar modal de edición
-  };
-
-  const handleDeleteArticulo = (articulo: Articulo) => {
-    console.log('Eliminar artículo:', articulo);
-    // TODO: Implementar confirmación y eliminación
-  };
-
-  const handleChangePage = (event: unknown, newPage: number) => {
-    setPage(newPage);
-  };
-
-  const handleChangeRowsPerPage = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setRowsPerPage(parseInt(event.target.value, 10));
-    setPage(0);
+  const handleChangePage = (_: any, newPage: number) => {
+    if (!controlledFilters) setPage(newPage);
+    onFiltersChange?.({
+      ...filtrosServidor,
+      busqueda: globalSearch,
+      estado: estadoActual,
+      pagina: newPage,
+    });
   };
 
   const limpiarFiltros = () => {
-    setFiltro('');
-    setFiltroInput('');
-    setFiltrosColumna({ codigo: '', descripcion: '', rubro: '', proveedor: '', estado: '' });
-    setProveedorSeleccionadoId(null);
-    setPage(0);
+    if (!controlledFilters) {
+      setGlobalInput('');
+      setLocalFilters({
+        codigo: '',
+        descripcion: '',
+        rubro: '',
+        proveedor: '',
+        estado: '',
+        rubroId: undefined,
+        proveedorId: undefined
+      });
+      setPage(0);
+    }
     refetch();
   };
 
-  const articulos: Articulo[] = (data?.buscarArticulos?.articulos || []).filter((articulo): articulo is Articulo => articulo != null);
-  const total: number = data?.buscarArticulos?.total ?? 0;
-  console.debug('[TablaArticulos] Articulos recibidos:', articulos.length, '| total:', total, '| rowsPerPage:', rowsPerPage);
+  // render por defecto
+  const defaultRenderers: Record<ArticuloColumnKey, (a: Articulo) => React.ReactNode> = {
+    descripcion: (a) => (
+      <Typography variant="body2" fontWeight={600} sx={{ whiteSpace: 'normal' }}>
+        {a.Descripcion || '-'}
+      </Typography>
+    ),
+    codigo: (a) => <Typography variant="body2">{a.Codigo ?? '-'}</Typography>,
+    marca: (a) => <Typography variant="body2" color="text.secondary">{a.Marca ?? '-'}</Typography>,
+    rubro: (a) => (
+      <Chip
+        label={a.Rubro || 'Sin rubro'}
+        size="small"
+        sx={{
+          bgcolor: 'success.light',
+          color: 'success.dark',
+          fontWeight: 500,
+          height: 18,
+          borderRadius: 1,
+          '& .MuiChip-label': { px: 0.6, py: 0, fontSize: '0.675rem', lineHeight: 1.1 },
+        }}
+      />
+    ),
+    stock: (a) => {
+      const dep = parseFloat(String(a.Deposito ?? 0)) || 0;
+      const min = a.StockMinimo || 0;
+      return (
+        <Typography variant="body2" fontWeight={600} color={dep <= 0 ? 'error.main' : 'text.primary'}>
+          {dep} {abrevUnidad(a.Unidad as UnidadMedida)}
+        </Typography>
+      );
+    },
+    precio: (a) => (
+      <Typography variant="body2" fontWeight={600} color="success.dark">
+        ${(a.PrecioVenta || 0).toLocaleString('es-AR')}
+      </Typography>
+    ),
+    proveedor: (a) => (
+      <Typography variant="body2" color="text.secondary">
+        {a.proveedor?.Nombre || 'Sin proveedor'}
+      </Typography>
+    ),
+    estado: (a) => {
+      const dep = parseFloat(String(a.Deposito ?? 0)) || 0;
+      const min = a.StockMinimo || 0;
+      return (
+        <>
+          <Chip
+            label={getStockLabel(dep, min)}
+            color={getStockColor(dep, min)}
+            size="small"
+            variant="filled"
+            sx={{
+              height: 18,
+              borderRadius: 1,
+              '& .MuiChip-label': { px: 0.6, py: 0, fontSize: '0.675rem', lineHeight: 1.1 },
+            }}
+          />
+          {a.EnPromocion && (
+            <Chip
+              label="Promoción"
+              color="warning"
+              size="small"
+              variant="outlined"
+              sx={{
+                ml: 0.75,
+                height: 18,
+                borderRadius: 1,
+                '& .MuiChip-label': { px: 0.6, py: 0, fontSize: '0.675rem', lineHeight: 1.1 },
+              }}
+            />
+          )}
+        </>
+      );
+    },
+    acciones: (a) => (
+      <Box display="flex" justifyContent="center" gap={0.75}>
+        {onView && (
+          <Tooltip title="Ver detalles">
+            <IconButton
+              size="small"
+              onClick={() => onView(a)}
+              sx={{ bgcolor: '#1976d2', color: 'white', borderRadius: 1, width: 28, height: 28, '&:hover': { bgcolor: '#1565c0' } }}
+            >
+              <IconEye size={16} />
+            </IconButton>
+          </Tooltip>
+        )}
+        {onEdit && (
+          <Tooltip title="Editar">
+            <IconButton
+              size="small"
+              onClick={() => onEdit(a)}
+              sx={{ bgcolor: '#2e7d32', color: 'white', borderRadius: 1, width: 28, height: 28, '&:hover': { bgcolor: '#1b5e20' } }}
+            >
+              <IconEdit size={16} />
+            </IconButton>
+          </Tooltip>
+        )}
+        {onDelete && (
+          <Tooltip title="Eliminar">
+            <IconButton
+              size="small"
+              onClick={() => onDelete(a)}
+              sx={{ bgcolor: '#d32f2f', color: 'white', borderRadius: 1, width: 28, height: 28, '&:hover': { bgcolor: '#c62828' } }}
+            >
+              <IconTrash size={16} />
+            </IconButton>
+          </Tooltip>
+        )}
+      </Box>
+    ),
+  };
 
-  const totalPaginas = Math.ceil(total / rowsPerPage);
-  const paginaActual = page + 1;
+  // menú de filtros por columna (simple)
+  const abrirMenu = (colKey: ColumnDef['key']) => (e: React.MouseEvent<HTMLElement>) => {
+    setActiveCol(colKey);
+    if (colKey === 'descripcion') setColInput(controlledFilters?.descripcion ?? localFilters.descripcion);
+    if (colKey === 'codigo') setColInput(controlledFilters?.codigo ?? localFilters.codigo);
+    if (colKey === 'rubro') setColInput(controlledFilters?.rubro ?? localFilters.rubro);
+    if (colKey === 'proveedor') setColInput(controlledFilters?.proveedor ?? localFilters.proveedor);
+    setMenuAnchor(e.currentTarget);
+  };
+  const cerrarMenu = () => { setMenuAnchor(null); setActiveCol(null); setColInput(''); };
 
-  const generarNumerosPaginas = () => {
-    const paginas = [];
-    const maxVisible = 7; // Máximo de páginas visibles
-    
+  const totalPaginas = Math.ceil(total / (controlledFilters?.limite ?? rowsPerPage));
+  const paginaActual = (controlledFilters?.pagina ?? page) + 1;
+  const genPaginas = () => {
+    const paginas: (number | '...')[] = [];
+    const maxVisible = 7;
     if (totalPaginas <= maxVisible) {
-      // Si hay pocas páginas, mostrar todas
-      for (let i = 1; i <= totalPaginas; i++) {
-        paginas.push(i);
-      }
+      for (let i = 1; i <= totalPaginas; i++) paginas.push(i);
+    } else if (paginaActual <= 4) {
+      for (let i = 1; i <= 5; i++) paginas.push(i);
+      paginas.push('...', totalPaginas);
+    } else if (paginaActual >= totalPaginas - 3) {
+      paginas.push(1, '...');
+      for (let i = totalPaginas - 4; i <= totalPaginas; i++) paginas.push(i);
     } else {
-      // Lógica para truncar páginas
-      if (paginaActual <= 4) {
-        // Inicio: 1, 2, 3, 4, 5, ..., última
-        for (let i = 1; i <= 5; i++) {
-          paginas.push(i);
-        }
-        paginas.push('...');
-        paginas.push(totalPaginas);
-      } else if (paginaActual >= totalPaginas - 3) {
-        // Final: 1, ..., n-4, n-3, n-2, n-1, n
-        paginas.push(1);
-        paginas.push('...');
-        for (let i = totalPaginas - 4; i <= totalPaginas; i++) {
-          paginas.push(i);
-        }
-      } else {
-        // Medio: 1, ..., actual-1, actual, actual+1, ..., última
-        paginas.push(1);
-        paginas.push('...');
-        for (let i = paginaActual - 1; i <= paginaActual + 1; i++) {
-          paginas.push(i);
-        }
-        paginas.push('...');
-        paginas.push(totalPaginas);
-      }
+      paginas.push(1, '...', paginaActual - 1, paginaActual, paginaActual + 1, '...', totalPaginas);
     }
-    
     return paginas;
   };
 
-  // Sin scroll interno: la tabla crece y el scroll es el general de la página
-  const usarScrollInterno = false;
-
-  const getStockColor = (stock: number, stockMinimo: number) => {
-    if (stock <= 0) return 'error';
-    if (stock <= stockMinimo) return 'warning';
-    return 'success';
-  };
-
-  const getStockLabel = (stock: number, stockMinimo: number) => {
-    if (stock <= 0) return 'Sin Stock';
-    if (stock <= stockMinimo) return 'Stock Bajo';
-    return 'Disponible';
-  };
-
-  if (loading) {
-    return (
-      <Paper elevation={0} sx={{ p: 3, border: 'none', boxShadow: 'none', borderRadius: 2, bgcolor: 'background.paper' }}>
-        <Typography variant="h5" mb={3} color="success.dark">{soloSinStock ? 'Artículos sin stock' : 'Artículos'}</Typography>
-        <TableContainer>
-          <Table>
-            <TableHead>
-              <TableRow>
-                {['Código', 'Descripción', 'Rubro', 'Stock', 'Precio', 'Proveedor'].map((header) => (
-                  <TableCell key={header}>
-                    <Skeleton variant="text" width="100%" />
-                  </TableCell>
-                ))}
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {[1, 2, 3, 4, 5].map((row) => (
-                <TableRow key={row}>
-                  {[1, 2, 3, 4, 5, 6].map((cell) => (
-                    <TableCell key={cell}>
-                      <Skeleton variant="text" width="100%" />
-                    </TableCell>
-                  ))}
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </TableContainer>
-      </Paper>
-    );
-  }
-
-  if (error) {
-    return (
-      <Paper elevation={0} sx={{ p: 3, textAlign: 'center', border: 'none', boxShadow: 'none', borderRadius: 2, bgcolor: 'background.paper' }}>
-        <Typography color="error" variant="h6" mb={2}>
-          Error al cargar artículos
-        </Typography>
-        <Typography color="text.secondary" mb={2}>
-          {error.message}
-        </Typography>
-        <Button 
-          variant="contained" 
-          color="warning"
-          startIcon={<IconRefresh />}
-          onClick={() => {
-            console.debug('[TablaArticulos] Reintentar con variables ->', variablesQuery);
-            refetch();
-          }}
-        >
-          Reintentar
-        </Button>
-      </Paper>
-    );
-  }
-
   return (
     <Paper elevation={0} sx={{ p: 3, border: 'none', boxShadow: 'none', borderRadius: 2, bgcolor: 'background.paper' }}>
-      <Box display="flex" justifyContent="space-between" alignItems="center" sx={{ px: 1, py: 1, bgcolor: verde.toolbarBg, border: '1px solid', borderColor: verde.toolbarBorder, borderRadius: 1, mb: 2 }}>
-        <Typography variant="h6" fontWeight={700} color={verde.textStrong}>
-          <IconPackage style={{ marginRight: 8, verticalAlign: 'middle' }} />
-          {soloSinStock ? 'Artículos sin stock' : 'Artículos'}
-        </Typography>
-        <Box display="flex" alignItems="center" gap={1.5}>
-          {puedeCrear && (
-            <Button
-              variant="contained"
-              sx={{ textTransform: 'none', bgcolor: verde.primary, '&:hover': { bgcolor: verde.primaryHover } }}
-              startIcon={<IconPlus size={18} />}
-              onClick={onNuevoArticulo}
-            >
-              Nuevo Artículo
-            </Button>
-          )}
-          <TextField
-            size="small"
-            placeholder="Buscar artículos..."
-            value={filtroInput}
-            onChange={(e: React.ChangeEvent<HTMLInputElement>) => { setFiltroInput(e.target.value); }}
-            onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) => {
-              if (e.key === 'Enter') {
-                setFiltro(filtroInput);
-                setPage(0);
-              }
-            }}
-            InputProps={{ startAdornment: (<InputAdornment position="start"><IconSearch size={20} /></InputAdornment>) }}
-            sx={{ minWidth: 250 }}
-          />
-          <Tooltip title="Buscar (Enter)">
-            <span>
+      {showToolbar && (
+        <Box display="flex" justifyContent="space-between" alignItems="center"
+          sx={{ px: 1, py: 1, bgcolor: verde.toolbarBg, border: '1px solid', borderColor: verde.toolbarBorder, borderRadius: 1, mb: 2 }}>
+          <Typography variant="h6" fontWeight={700} color={verde.textStrong}>{title}</Typography>
+          <Box display="flex" alignItems="center" gap={1.5}>
+            {allowCreate && (
               <Button
                 variant="contained"
                 sx={{ textTransform: 'none', bgcolor: verde.primary, '&:hover': { bgcolor: verde.primaryHover } }}
-                startIcon={<IconSearch size={18} />}
-                onClick={() => { setFiltro(filtroInput); setPage(0); }}
-                disabled={loading}
+                startIcon={<IconPlus size={18} />}
+                onClick={onCreateClick}
               >
-                Buscar
+                Nuevo
               </Button>
-            </span>
-          </Tooltip>
-          <Button
-            variant="outlined"
-            color="inherit"
-            startIcon={<IconTrash />}
-            onClick={limpiarFiltros}
-            sx={{ textTransform: 'none', borderColor: verde.headerBorder, color: verde.textStrong, '&:hover': { borderColor: verde.textStrong, bgcolor: verde.toolbarBg } }}
-          >
-            Limpiar filtros
-          </Button>
+            )}
+            {showGlobalSearch && (
+              <>
+                <TextField
+                  size="small"
+                  placeholder="Buscar..."
+                  value={controlledFilters?.busqueda ?? globalInput}
+                  onChange={(e) => setGlobalInput(e.target.value)}
+                  onKeyDown={(e) => { if (e.key === 'Enter') refetch(); }}
+                  InputProps={{ startAdornment: (<InputAdornment position="start"><IconSearch size={20} /></InputAdornment>) }}
+                  sx={{ minWidth: 250 }}
+                />
+                <Tooltip title="Buscar (Enter)">
+                  <span>
+                    <Button
+                      variant="contained"
+                      sx={{ textTransform: 'none', bgcolor: verde.primary, '&:hover': { bgcolor: verde.primaryHover } }}
+                      startIcon={<IconSearch size={18} />}
+                      onClick={() => refetch()}
+                      disabled={loading}
+                    >
+                      Buscar
+                    </Button>
+                  </span>
+                </Tooltip>
+              </>
+            )}
+            <Button
+              variant="outlined"
+              color="inherit"
+              startIcon={<IconRefresh />}
+              onClick={limpiarFiltros}
+              sx={{ textTransform: 'none', borderColor: verde.headerBorder, color: verde.textStrong, '&:hover': { borderColor: verde.textStrong, bgcolor: verde.toolbarBg } }}
+            >
+              Limpiar
+            </Button>
+          </Box>
         </Box>
-      </Box>
+      )}
 
+      {/* tabla */}
       <TableContainer sx={{ borderRadius: 2, border: '1px solid', borderColor: verde.borderInner, bgcolor: 'background.paper' }}>
-        <Table stickyHeader size={'small'} sx={{ '& .MuiTableCell-head': { bgcolor: verde.headerBg, color: verde.headerText } }}>
-          <TableHead sx={{ position: 'sticky', top: 0, zIndex: 5 }}>
-            <TableRow sx={{ bgcolor: verde.headerBg, '& th': { top: 0, position: 'sticky', zIndex: 5 }, '& th:first-of-type': { borderTopLeftRadius: 8 }, '& th:last-of-type': { borderTopRightRadius: 8 } }}>
-              <TableCell sx={{
-                fontWeight: 700,
-                color: verde.headerText,
-                borderBottom: '3px solid',
-                borderColor: verde.headerBorder,
-                width: { xs: '50%', sm: '40%', md: '40%' }
-              }}>
-                <Box display="flex" alignItems="center" justifyContent="space-between">
-                  Descripción
-                  <Tooltip title="Filtrar columna">
-                    <IconButton size="small" color="inherit" onClick={abrirMenuColumna('descripcion')}>
-                      <IconDotsVertical size={16} />
-                    </IconButton>
-                  </Tooltip>
-                </Box>
-              </TableCell>
-              <TableCell sx={{
-                fontWeight: 700,
-                color: verde.headerText,
-                borderBottom: '3px solid',
-                borderColor: verde.headerBorder,
-                width: { xs: '20%', sm: '15%', md: '10%' }
-              }}>
-                <Box display="flex" alignItems="center" justifyContent="space-between">
-                  Rubro
-                  <Tooltip title="Filtrar columna">
-                    <IconButton size="small" color="inherit" onClick={abrirMenuColumna('rubro')}>
-                      <IconDotsVertical size={16} />
-                    </IconButton>
-                  </Tooltip>
-                </Box>
-              </TableCell>
-              <TableCell sx={{ fontWeight: 700, color: verde.headerText, borderBottom: '3px solid', borderColor: verde.headerBorder }}>
-                Stock
-              </TableCell>
-              <TableCell sx={{ fontWeight: 700, color: verde.headerText, borderBottom: '3px solid', borderColor: verde.headerBorder }}>
-                Precio
-              </TableCell>
-              <TableCell sx={{
-                fontWeight: 700,
-                color: verde.headerText,
-                borderBottom: '3px solid',
-                borderColor: verde.headerBorder,
-                width: { xs: '30%', sm: '35%', md: '30%' }
-              }}>
-                <Box display="flex" alignItems="center" justifyContent="space-between">
-                  Proveedor
-                  <Tooltip title="Filtrar columna">
-                    <IconButton size="small" color="inherit" onClick={abrirMenuColumna('proveedor')}>
-                      <IconDotsVertical size={16} />
-                    </IconButton>
-                  </Tooltip>
-                </Box>
-              </TableCell>
-              <TableCell sx={{ fontWeight: 700, color: verde.headerText, borderBottom: '3px solid', borderColor: verde.headerBorder }}>
-                <Box display="flex" alignItems="center" justifyContent="space-between">
-                  Estado
-                  <Tooltip title="Filtrar columna">
-                    <IconButton size="small" color="inherit" onClick={abrirMenuColumna('estado')}>
-                      <IconDotsVertical size={16} />
-                    </IconButton>
-                  </Tooltip>
-                </Box>
-              </TableCell>
-              <TableCell sx={{ fontWeight: 700, color: verde.headerText, borderBottom: '3px solid', borderColor: verde.headerBorder, textAlign: 'center' }}>Acciones</TableCell>
-              {usarScrollInterno && (
-                <TableCell sx={{ p: 0, width: '12px', bgcolor: '#2f3e2e', borderBottom: '3px solid', borderColor: '#6b8f6b' }} />
-              )}
-            </TableRow>
-          </TableHead>
-          <TableBody sx={{ '& .MuiTableCell-root': { py: 1 } }}>
-            {articulos.map((articulo, idx) => (
-              <TableRow 
-                key={articulo.id}
-                sx={{ 
-                  bgcolor: idx % 2 === 1 ? 'grey.50' : 'inherit',
-                  '&:hover': { bgcolor: verde.toolbarBg }
-                }}
-              >
-                {/* Descripción (expandida) */}
-                <TableCell sx={{ width: { xs: '50%', sm: '40%', md: '40%' } }}>
-                  <Typography variant="body2" fontWeight={600} sx={{ whiteSpace: 'normal' }}>
-                    {articulo.Descripcion || '-'}
-                  </Typography>
-                </TableCell>
-                {/* Rubro */}
-                <TableCell sx={{ width: { xs: '20%', sm: '15%', md: '10%' } }}>
-                  <Chip 
-                    label={articulo.Rubro || 'Sin rubro'} 
-                    size="small"
-                    sx={{ 
-                      bgcolor: 'success.light',
-                      color: 'success.dark',
-                      fontWeight: 500
-                    }}
-                  />
-                </TableCell>
-                {/* Stock */}
-                <TableCell>
-                  <Typography 
-                    variant="body2" 
-                    fontWeight={600}
-                    color={(parseFloat(String(articulo.Deposito ?? 0)) <= 0) ? 'error.main' : 'text.primary'}
-                  >
-                    {(parseFloat(String(articulo.Deposito ?? 0)) || 0)} {abrevUnidad(articulo.Unidad as UnidadMedida)}
-                  </Typography>
-                </TableCell>
-                {/* Precio */}
-                <TableCell>
-                  <Typography variant="body2" fontWeight={600} color="success.dark">
-                    ${(articulo.PrecioVenta || 0).toLocaleString('es-AR')}
-                  </Typography>
-                </TableCell>
-                {/* Proveedor */}
-                <TableCell sx={{ width: { xs: '30%', sm: '35%', md: '30%' } }}>
-                  <Typography variant="body2" color="text.secondary">
-                    {articulo.proveedor?.Nombre || 'Sin proveedor'}
-                  </Typography>
-                </TableCell>
-                {/* 7) Estado */}
-                <TableCell>
-                  <Chip
-                    label={getStockLabel(parseFloat(String(articulo.Deposito ?? 0)) || 0, articulo.StockMinimo || 0)}
-                    color={getStockColor(parseFloat(String(articulo.Deposito ?? 0)) || 0, articulo.StockMinimo || 0)}
-                    size="small"
-                    variant="filled"
-                  />
-                  {articulo.EnPromocion && (
-                    <Chip
-                      label="Promoción"
-                      color="warning"
-                      size="small"
-                      variant="outlined"
-                      sx={{ ml: 1 }}
-                    />
-                  )}
-                </TableCell>
-                {/* 8) Acciones */}
-                <TableCell>
-                  <Box display="flex" justifyContent="center" gap={1}>
-                    <Tooltip title="Ver detalles">
-                      <IconButton 
-                        size="small" 
-                        onClick={() => handleViewArticulo(articulo)}
-                        sx={{
-                          bgcolor: '#1976d2',
-                          color: 'white',
-                          borderRadius: 1.5,
-                          width: 32,
-                          height: 32,
-                          '&:hover': {
-                            bgcolor: '#1565c0'
-                          }
-                        }}
-                      >
-                        <IconEye size={18} />
-                      </IconButton>
-                    </Tooltip>
-                    <Tooltip title="Editar artículo">
-                      <IconButton 
-                        size="small" 
-                        onClick={() => handleEditArticulo(articulo)}
-                        sx={{
-                          bgcolor: '#2e7d32',
-                          color: 'white',
-                          borderRadius: 1.5,
-                          width: 32,
-                          height: 32,
-                          '&:hover': {
-                            bgcolor: '#1b5e20'
-                          }
-                        }}
-                      >
-                        <IconEdit size={18} />
-                      </IconButton>
-                    </Tooltip>
-                    <Tooltip title="Eliminar artículo">
-                      <IconButton 
-                        size="small" 
-                        onClick={() => handleDeleteArticulo(articulo)}
-                        sx={{
-                          bgcolor: '#d32f2f',
-                          color: 'white',
-                          borderRadius: 1.5,
-                          width: 32,
-                          height: 32,
-                          '&:hover': {
-                            bgcolor: '#c62828'
-                          }
-                        }}
-                      >
-                        <IconTrash size={18} />
-                      </IconButton>
-                    </Tooltip>
+        <Table stickyHeader size="small"
+          sx={{
+            '& .MuiTableCell-root': { fontSize: '0.75rem', px: 1, py: 0.5 },
+            '& .MuiTableCell-head': { fontSize: '0.75rem', fontWeight: 600, bgcolor: verde.headerBg, color: verde.headerText },
+          }}
+        >
+          <TableHead>
+            <TableRow sx={{ '& th:first-of-type': { borderTopLeftRadius: 8 }, '& th:last-of-type': { borderTopRightRadius: 8 } }}>
+              {columns.map((col) => (
+                <TableCell
+                  key={col.key}
+                  sx={{
+                    fontWeight: 700,
+                    color: verde.headerText,
+                    borderBottom: '3px solid',
+                    borderColor: verde.headerBorder,
+                    width: col.key === 'acciones' ? 140 : col.width,
+                    textAlign: col.key === 'acciones' ? 'center' : undefined,
+                  }}
+                >
+                  <Box display="flex" alignItems="center" justifyContent="space-between">
+                    {col.header ?? col.key.toUpperCase()}
+                    {col.filterable && (
+                      <Tooltip title="Filtrar">
+                        <IconButton size="small" color="inherit" onClick={abrirMenu(col.key)}>
+                          <IconDotsVertical size={16} />
+                        </IconButton>
+                      </Tooltip>
+                    )}
                   </Box>
                 </TableCell>
-                {/* Celda espaciadora para alinear con header y reservar scroll */}
-                {usarScrollInterno && (
-                  <TableCell sx={{ p: 0, width: '12px' }} />
-                )}
+              ))}
+            </TableRow>
+          </TableHead>
+
+          <TableBody sx={{ '& .MuiTableCell-root': { py: dense ? 1 : 1.5 } }}>
+            {loading ? (
+              <TableRow><TableCell colSpan={columns.length}><Typography> Cargando… </Typography></TableCell></TableRow>
+            ) : error ? (
+              <TableRow>
+                <TableCell colSpan={columns.length}>
+                  <Box textAlign="center" py={3}>
+                    <Typography color="error" variant="h6" mb={1}>Error al cargar</Typography>
+                    <Typography color="text.secondary" mb={2}>{error.message}</Typography>
+                    <Button variant="contained" color="warning" startIcon={<IconRefresh />} onClick={() => refetch()}>
+                      Reintentar
+                    </Button>
+                  </Box>
+                </TableCell>
               </TableRow>
-            ))}
+            ) : articulos.length === 0 ? (
+              <TableRow><TableCell colSpan={columns.length}><Typography>No hay resultados</Typography></TableCell></TableRow>
+            ) : (
+              articulos.map((a, idx) => (
+                <TableRow key={a.id} sx={{ bgcolor: idx % 2 === 1 ? 'grey.50' : 'inherit', '&:hover': { bgcolor: verde.toolbarBg } }}>
+                  {columns.map((col) => (
+                    <TableCell key={col.key} sx={{ textAlign: col.key === 'acciones' ? 'center' : undefined }}>
+                      {col.render ? col.render(a) : defaultRenderers[col.key](a)}
+                    </TableCell>
+                  ))}
+                </TableRow>
+              ))
+            )}
           </TableBody>
         </Table>
       </TableContainer>
 
+      {/* footer paginación */}
       <Box mt={1} mb={1} display="flex" justifyContent="space-between" alignItems="center">
-        <Typography variant="caption" color="text.secondary">
-          Mostrando {articulos.length} de {rowsPerPage} filas de esta página. {usarScrollInterno ? 'Desplázate dentro de la tabla para ver todas las filas.' : ''}
-        </Typography>
+        <Typography variant="caption" color="text.secondary">Mostrando {articulos.length} filas en esta página.</Typography>
       </Box>
-
-      {/* Menú de filtros por columna */}
-      <Menu
-        anchorEl={menuAnchor}
-        open={Boolean(menuAnchor)}
-        onClose={cerrarMenuColumna}
-        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
-        transformOrigin={{ vertical: 'top', horizontal: 'right' }}
-        slotProps={{ paper: { sx: { p: 1.5, minWidth: 260 } } } as any}
-      >
-        <Typography variant="subtitle2" sx={{ px: 1, pb: 1 }}>
-          {columnaActiva === 'codigo' && 'Filtrar por Código'}
-          {columnaActiva === 'descripcion' && 'Filtrar por Descripción'}
-          {columnaActiva === 'rubro' && 'Filtrar por Rubro'}
-          {columnaActiva === 'proveedor' && 'Filtrar por Proveedor'}
-          {columnaActiva === 'estado' && 'Filtrar por Estado'}
-        </Typography>
-        <Divider sx={{ mb: 1 }} />
-        {columnaActiva && (
-          <Box px={1} pb={1}>
-            {columnaActiva === 'estado' ? (
-              <Stack spacing={1}>
-                <Stack direction="row" spacing={1} flexWrap="wrap">
-                  {['Sin stock', 'Bajo stock', 'Con stock'].map((op) => (
-                    <Button
-                      key={op}
-                      size="small"
-                      variant={filtrosColumna.estado === op ? 'contained' : 'outlined'}
-                      color="success"
-                      onClick={() => {
-                        setFiltrosColumna((p) => ({ ...p, estado: op }));
-                        setPage(0);
-                        cerrarMenuColumna();
-                      }}
-                      sx={{ textTransform: 'none' }}
-                    >
-                      {op}
-                    </Button>
-                  ))}
-                </Stack>
-                <Stack direction="row" justifyContent="space-between">
-                  <Button size="small" onClick={() => { setFiltrosColumna((p) => ({ ...p, estado: '' })); setPage(0); cerrarMenuColumna(); }}>Limpiar</Button>
-                </Stack>
-              </Stack>
-            ) : columnaActiva === 'proveedor' ? (
-              <>
-                <Autocomplete
-                  size="small"
-                  options={proveedores}
-                  getOptionLabel={(op) => op?.Nombre ?? ''}
-                  value={proveedores.find(p => p.IdProveedor === proveedorSeleccionadoId) ?? null}
-                  onChange={(_e, value) => {
-                    setProveedorSeleccionadoId(value?.IdProveedor ?? null);
-                    setFiltrosColumna((p) => ({ ...p, proveedor: value?.Nombre ?? '' }));
-                    setPage(0);
-                    cerrarMenuColumna();
-                  }}
-                  isOptionEqualToValue={(op, val) => op.IdProveedor === val.IdProveedor}
-                  renderInput={(params) => (
-                    <TextField {...params} placeholder="Buscar proveedor..." fullWidth />
-                  )}
-                />
-                <Stack direction="row" justifyContent="space-between" mt={1}>
-                  <Button size="small" onClick={() => { setProveedorSeleccionadoId(null); setFiltrosColumna((p) => ({ ...p, proveedor: '' })); setPage(0); cerrarMenuColumna(); }}>Limpiar</Button>
-                </Stack>
-              </>
-            ) : (
-              <>
-                <TextField
-                  size="small"
-                  fullWidth
-                  autoFocus
-                  placeholder="Escribe para filtrar..."
-                  value={filtroColInput}
-                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFiltroColInput(e.target.value)}
-                  onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) => {
-                    if (e.key === 'Enter' && columnaActiva) {
-                      setFiltrosColumna((prev) => ({ ...prev, [columnaActiva]: filtroColInput }));
-                      setPage(0);
-                      cerrarMenuColumna();
-                    }
-                  }}
-                />
-                <Stack direction="row" justifyContent="flex-end" spacing={1} mt={1}>
-                  <Button size="small" onClick={() => { setFiltroColInput(''); }}>Limpiar</Button>
-                  <Button size="small" variant="contained" color="success" onClick={() => {
-                    if (!columnaActiva) return;
-                    setFiltrosColumna((p) => ({ ...p, [columnaActiva!]: filtroColInput }));
-                    setPage(0);
-                    cerrarMenuColumna();
-                  }}>Aplicar</Button>
-                </Stack>
-              </>
-            )}
-          </Box>
-        )}
-      </Menu>
-
-      {/* Paginación personalizada */}
       <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', p: 2, borderTop: '1px solid', borderColor: 'divider' }}>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-          <Typography variant="body2" color="text.secondary">
-            Filas por página:
-          </Typography>
-          <TextField
-            select
-            size="small"
-            value={rowsPerPage}
-            onChange={handleChangeRowsPerPage}
-            sx={{ minWidth: 80 }}
-          >
-            {[50, 100, 150].map((option) => (
-              <option key={option} value={option}>
-                {option}
-              </option>
-            ))}
+          <Typography variant="body2" color="text.secondary">Filas por página:</Typography>
+          <TextField select size="small" value={controlledFilters?.limite ?? rowsPerPage} onChange={handleChangeRowsPerPage} sx={{ minWidth: 80 }}>
+            {rowsPerPageOptions.map((o) => (<option key={o} value={o}>{o}</option>))}
           </TextField>
         </Box>
-        
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
           <Typography variant="body2" color="text.secondary">
-            {`${page * rowsPerPage + 1}-${Math.min((page + 1) * rowsPerPage, total)} de ${total}`}
+            {`${(controlledFilters?.pagina ?? page) * (controlledFilters?.limite ?? rowsPerPage) + 1}-${Math.min(((controlledFilters?.pagina ?? page) + 1) * (controlledFilters?.limite ?? rowsPerPage), total)} de ${total}`}
           </Typography>
-          
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-            {generarNumerosPaginas().map((numeroPagina, index) => (
-              <Box key={index}>
-                {numeroPagina === '...' ? (
-                  <Typography variant="body2" color="text.secondary" sx={{ px: 1 }}>
-                    ...
-                  </Typography>
+            {genPaginas().map((n, i) => (
+              <Box key={i}>
+                {n === '...' ? (
+                  <Typography variant="body2" color="text.secondary" sx={{ px: 1 }}>…</Typography>
                 ) : (
                   <Button
                     size="small"
-                    variant={paginaActual === numeroPagina ? 'contained' : 'text'}
-                    onClick={() => handleChangePage(null, (numeroPagina as number) - 1)}
+                    variant={((controlledFilters ? (controlledFilters.pagina ?? 0) + 1 : paginaActual) === n) ? 'contained' : 'text'}
+                    onClick={() => handleChangePage(null, (n as number) - 1)}
                     sx={{
-                      minWidth: 32,
-                      height: 32,
-                      textTransform: 'none',
-                      fontSize: '0.875rem',
-                      ...(paginaActual === numeroPagina ? {
-                        bgcolor: verde.primary,
-                        color: 'white',
-                        '&:hover': { bgcolor: verde.primaryHover }
-                      } : {
-                        color: 'text.secondary',
-                        '&:hover': { bgcolor: verde.rowHover }
-                      })
+                      minWidth: 32, height: 32, textTransform: 'none', fontSize: '0.875rem',
+                      ...(((controlledFilters ? (controlledFilters.pagina ?? 0) + 1 : paginaActual) === n)
+                        ? { bgcolor: verde.primary, color: 'white', '&:hover': { bgcolor: verde.primaryHover } }
+                        : { color: 'text.secondary', '&:hover': { bgcolor: verde.rowHover } })
                     }}
                   >
-                    {numeroPagina}
+                    {n}
                   </Button>
                 )}
               </Box>
             ))}
           </Box>
-          
           <Box sx={{ display: 'flex', alignItems: 'center' }}>
-            <IconButton
-              size="small"
-              onClick={() => handleChangePage(null, 0)}
-              disabled={page === 0}
-              sx={{ color: 'text.secondary' }}
-              title="Primera página"
-            >
-              ⏮
-            </IconButton>
-            <IconButton
-              size="small"
-              onClick={() => handleChangePage(null, page - 1)}
-              disabled={page === 0}
-              sx={{ color: 'text.secondary' }}
-              title="Página anterior"
-            >
-              ◀
-            </IconButton>
-            <IconButton
-              size="small"
-              onClick={() => handleChangePage(null, page + 1)}
-              disabled={page >= totalPaginas - 1}
-              sx={{ color: 'text.secondary' }}
-              title="Página siguiente"
-            >
-              ▶
-            </IconButton>
-            <IconButton
-              size="small"
-              onClick={() => handleChangePage(null, totalPaginas - 1)}
-              disabled={page >= totalPaginas - 1}
-              sx={{ color: 'text.secondary' }}
-              title="Última página"
-            >
-              ⏭
-            </IconButton>
+            <IconButton size="small" onClick={() => handleChangePage(null, 0)} disabled={(controlledFilters?.pagina ?? page) === 0} sx={{ color: 'text.secondary' }} title="Primera">⏮</IconButton>
+            <IconButton size="small" onClick={() => handleChangePage(null, (controlledFilters?.pagina ?? page) - 1)} disabled={(controlledFilters?.pagina ?? page) === 0} sx={{ color: 'text.secondary' }} title="Anterior">◀</IconButton>
+            <IconButton size="small" onClick={() => handleChangePage(null, (controlledFilters?.pagina ?? page) + 1)} disabled={(controlledFilters?.pagina ?? page) >= totalPaginas - 1} sx={{ color: 'text.secondary' }} title="Siguiente">▶</IconButton>
+            <IconButton size="small" onClick={() => handleChangePage(null, totalPaginas - 1)} disabled={(controlledFilters?.pagina ?? page) >= totalPaginas - 1} sx={{ color: 'text.secondary' }} title="Última">⏭</IconButton>
           </Box>
         </Box>
       </Box>
+
+      {/* Menú filtros por columna */}
+      <Menu
+        anchorEl={menuAnchor}
+        open={Boolean(menuAnchor)}
+        onClose={cerrarMenu}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+        transformOrigin={{ vertical: 'top', horizontal: 'right' }}
+        slotProps={{ paper: { sx: { p: 1.5, minWidth: 260 } } } as any}
+      >
+        <Typography variant="subtitle2" sx={{ px: 1, pb: 1 }}>
+          {activeCol === 'codigo' && 'Filtrar por Código'}
+          {activeCol === 'descripcion' && 'Filtrar por Descripción'}
+          {activeCol === 'rubro' && 'Filtrar por Rubro'}
+          {activeCol === 'proveedor' && 'Filtrar por Proveedor (texto)'}
+          {activeCol === 'estado' && 'Filtrar por Estado'}
+        </Typography>
+        <Divider sx={{ mb: 1 }} />
+
+        {activeCol === 'estado' ? (
+          <Box px={1} pb={1}>
+            <Stack spacing={1}>
+              <Stack direction="row" spacing={1} flexWrap="wrap">
+                {['Sin stock', 'Bajo stock', 'Con stock'].map((op) => (
+                  <Button
+                    key={op}
+                    size="small"
+                    variant={(controlledFilters?.estado ?? localFilters.estado) === op ? 'contained' : 'outlined'}
+                    color="success"
+                    onClick={() => {
+                      if (!controlledFilters) { setLocalFilters((p) => ({ ...p, estado: op as any })); setPage(0); }
+                      cerrarMenu(); refetch();
+                    }}
+                    sx={{ textTransform: 'none' }}
+                  >
+                    {op}
+                  </Button>
+                ))}
+              </Stack>
+              <Stack direction="row" justifyContent="space-between">
+                <Button size="small" onClick={() => { if (!controlledFilters) setLocalFilters((p) => ({ ...p, estado: '' as any })); cerrarMenu(); refetch(); }}>Limpiar</Button>
+              </Stack>
+            </Stack>
+          </Box>
+        ) : (
+          <Box px={1} pb={1}>
+            <TextField
+              size="small"
+              fullWidth
+              autoFocus
+              placeholder="Escribe para filtrar…"
+              value={colInput}
+              onChange={(e) => setColInput(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && activeCol) {
+                  if (!controlledFilters) {
+                    setLocalFilters((prev) => {
+                      const next = { ...prev };
+                      if (activeCol === 'codigo') next.codigo = colInput;
+                      if (activeCol === 'descripcion') next.descripcion = colInput;
+                      if (activeCol === 'rubro') next.rubro = colInput;
+                      if (activeCol === 'proveedor') next.proveedor = colInput;
+                      return next;
+                    });
+                    setPage(0);
+                  }
+                  cerrarMenu(); refetch();
+                }
+              }}
+            />
+            <Stack direction="row" justifyContent="flex-end" spacing={1} mt={1}>
+              <Button size="small" onClick={() => setColInput('')}>Limpiar</Button>
+              <Button
+                size="small"
+                variant="contained"
+                color="success"
+                onClick={() => {
+                  if (!controlledFilters && activeCol) {
+                    setLocalFilters((prev) => {
+                      const next = { ...prev };
+                      if (activeCol === 'codigo') next.codigo = colInput;
+                      if (activeCol === 'descripcion') next.descripcion = colInput;
+                      if (activeCol === 'rubro') next.rubro = colInput;
+                      if (activeCol === 'proveedor') next.proveedor = colInput;
+                      return next;
+                    });
+                    setPage(0);
+                  }
+                  cerrarMenu(); refetch();
+                }}
+              >
+                Aplicar
+              </Button>
+            </Stack>
+          </Box>
+        )}
+      </Menu>
     </Paper>
   );
 };
 
-export default TablaArticulos;
+export default ArticulosTable;

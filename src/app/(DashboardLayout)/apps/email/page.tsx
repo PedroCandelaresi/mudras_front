@@ -1,6 +1,6 @@
 import Breadcrumb from "@/app/(DashboardLayout)/layout/shared/breadcrumb/Breadcrumb";
 
-import PageContainer from "@/app/components/container/PageContainer";
+import PageContainer from "@/components/container/PageContainer";
 import AppCard from "@/app/components/shared/AppCard";
 import Image from "next/image";
 import EmailsApp from "@/app/components/apps/email";

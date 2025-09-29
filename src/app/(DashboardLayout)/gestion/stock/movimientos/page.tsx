@@ -1,9 +1,9 @@
 'use client';
 import { Grid, Box, Typography, Button, Stack } from '@mui/material';
 import { IconPlus, IconDownload, IconFilter } from '@tabler/icons-react';
-import PageContainer from '@/app/components/container/PageContainer';
-import DashboardCard from '@/app/components/shared/DashboardCard';
-import TablaMovimientosStock from '@/app/components/dashboards/mudras/TablaMovimientosStock';
+import PageContainer from '@/components/container/PageContainer';
+import DashboardCard from '@/components/shared/DashboardCard';
+import TablaMovimientosStock from '@/components/articulos/TablaMovimientosStock';
 
 const MovimientosStock = () => {
   return (

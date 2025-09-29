@@ -51,12 +51,14 @@ export const GET_PROVEEDOR = gql`
       Fax
       FechaModif
       articulos {
-        Id
+        id
         Codigo
         Descripcion
         Deposito
         PrecioVenta
         Rubro
+        StockMinimo
+        EnPromocion
       }
     }
   }
@@ -74,68 +76,11 @@ export const GET_ARTICULOS_POR_PROVEEDOR = gql`
         Rubro
         StockMinimo
         EnPromocion
+        stock
+        precio
+        rubro
       }
       total
     }
-  }
-`;
-
-export const CREAR_PROVEEDOR = gql`
-  mutation CrearProveedor($createProveedorInput: CreateProveedorInput!) {
-    crearProveedor(createProveedorInput: $createProveedorInput) {
-      IdProveedor
-      Codigo
-      Nombre
-      Contacto
-      Direccion
-      Localidad
-      Provincia
-      CP
-      Telefono
-      Celular
-      TipoIva
-      CUIT
-      Observaciones
-      Web
-      Mail
-      Rubro
-      Saldo
-      Pais
-      Fax
-      FechaModif
-    }
-  }
-`;
-
-export const ACTUALIZAR_PROVEEDOR = gql`
-  mutation ActualizarProveedor($updateProveedorInput: UpdateProveedorInput!) {
-    actualizarProveedor(updateProveedorInput: $updateProveedorInput) {
-      IdProveedor
-      Codigo
-      Nombre
-      Contacto
-      Direccion
-      Localidad
-      Provincia
-      CP
-      Telefono
-      Celular
-      TipoIva
-      CUIT
-      Observaciones
-      Web
-      Mail
-      Rubro
-      Saldo
-      Pais
-      Fax
-      FechaModif
-    }
-  }
-`;
-
-export const ELIMINAR_PROVEEDOR = gql`
-  mutation EliminarProveedor($id: Int!) {
-    eliminarProveedor(id: $id)
   }
 `;

@@ -1,7 +1,7 @@
 
 import { Button, Grid, Stack } from "@mui/material";
 import Breadcrumb from "@/app/(DashboardLayout)/layout/shared/breadcrumb/Breadcrumb";
-import PageContainer from "@/app/components/container/PageContainer";
+import PageContainer from "@/components/container/PageContainer";
 
 import GeneralCard from "@/app/components/apps/ecommerce/productAdd/GeneralCard";
 import MediaCard from "@/app/components/apps/ecommerce/productAdd/Media";

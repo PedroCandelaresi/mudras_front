@@ -8,7 +8,7 @@ import Typography from "@mui/material/Typography";
 import ParentCard from "@/app/components/shared/ParentCard";
 import ChildCard from "@/app/components/shared/ChildCard";
 import Breadcrumb from "@/app/(DashboardLayout)/layout/shared/breadcrumb/Breadcrumb";
-import PageContainer from "@/app/components/container/PageContainer";
+import PageContainer from "@/components/container/PageContainer";
 import CustomSlider from "@/app/components/forms/theme-elements/CustomSlider";
 import { IconVolume, IconVolume2 } from "@tabler/icons-react";
 

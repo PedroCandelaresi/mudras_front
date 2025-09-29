@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import {
   Dialog,
   DialogTitle,
@@ -97,6 +97,60 @@ export default function ModalNuevaAsignacionStock({ open, onClose, puntoVenta, o
     }
   }, [proveedorSeleccionado]);
 
+  const buscarArticulos = useCallback(async () => {
+    if (!proveedorSeleccionado || busqueda.length < 3) {
+      return;
+    }
+
+    setLoading(true);
+    setError('');
+
+    try {
+      const response = await fetch('/api/graphql', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          query: `
+            query BuscarArticulosParaAsignacion($proveedorId: Int, $rubro: String, $busqueda: String) {
+              buscarArticulosParaAsignacion(proveedorId: $proveedorId, rubro: $rubro, busqueda: $busqueda) {
+                id
+                nombre
+                codigo
+                precio
+                stockTotal
+                stockAsignado
+                stockDisponible
+                rubro
+                proveedor
+              }
+            }
+          `,
+          variables: {
+            proveedorId: proveedorSeleccionado.id,
+            rubro: rubroSeleccionado || null,
+            busqueda,
+          },
+        }),
+      });
+
+      const result = await response.json();
+
+      if (result.errors) {
+        throw new Error(result.errors[0].message);
+      }
+
+      setArticulos(result.data.buscarArticulosParaAsignacion || []);
+      console.log(`🔍 Encontrados ${result.data.buscarArticulosParaAsignacion?.length || 0} artículos`);
+    } catch (error) {
+      console.error('Error al buscar artículos:', error);
+      setError('Error al buscar artículos');
+    } finally {
+      setLoading(false);
+    }
+  }, [proveedorSeleccionado, rubroSeleccionado, busqueda]);
+
   // Buscar artículos cuando se aplican filtros
   useEffect(() => {
     if (proveedorSeleccionado && busqueda.length >= 3) {
@@ -104,7 +158,7 @@ export default function ModalNuevaAsignacionStock({ open, onClose, puntoVenta, o
     } else {
       setArticulos([]);
     }
-  }, [proveedorSeleccionado, rubroSeleccionado, busqueda]);
+  }, [proveedorSeleccionado, busqueda, buscarArticulos]);
 
   const cargarProveedores = async () => {
     setLoadingProveedores(true);
@@ -189,60 +243,6 @@ export default function ModalNuevaAsignacionStock({ open, onClose, puntoVenta, o
       setError('Error al cargar los rubros del proveedor');
     } finally {
       setLoadingRubros(false);
-    }
-  };
-
-  const buscarArticulos = async () => {
-    if (!proveedorSeleccionado || busqueda.length < 3) {
-      return;
-    }
-
-    setLoading(true);
-    setError('');
-    
-    try {
-      const response = await fetch('/api/graphql', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          query: `
-            query BuscarArticulosParaAsignacion($proveedorId: Int, $rubro: String, $busqueda: String) {
-              buscarArticulosParaAsignacion(proveedorId: $proveedorId, rubro: $rubro, busqueda: $busqueda) {
-                id
-                nombre
-                codigo
-                precio
-                stockTotal
-                stockAsignado
-                stockDisponible
-                rubro
-                proveedor
-              }
-            }
-          `,
-          variables: {
-            proveedorId: proveedorSeleccionado.id,
-            rubro: rubroSeleccionado || null,
-            busqueda: busqueda
-          }
-        })
-      });
-
-      const result = await response.json();
-      
-      if (result.errors) {
-        throw new Error(result.errors[0].message);
-      }
-
-      setArticulos(result.data.buscarArticulosParaAsignacion || []);
-      console.log(`🔍 Encontrados ${result.data.buscarArticulosParaAsignacion?.length || 0} artículos`);
-    } catch (error) {
-      console.error('Error al buscar artículos:', error);
-      setError('Error al buscar artículos');
-    } finally {
-      setLoading(false);
     }
   };
 

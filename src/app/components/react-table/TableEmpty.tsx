@@ -14,6 +14,7 @@ import {
 } from "@mui/material";
 import CustomTextField from "@/app/components/forms/theme-elements/CustomTextField";
 import DownloadCard from "@/app/components/shared/DownloadCard";
+import Image from "next/image";
 
 import {
   createColumnHelper,
@@ -22,7 +23,6 @@ import {
   useReactTable,
 } from "@tanstack/react-table";
 import { TableType } from "@/app/components/tables/tableData";
-import Image from "next/image";
 
 const columnHelper = createColumnHelper<TableType>();
 
@@ -154,14 +154,15 @@ const TableEmpty = () => {
                           height: "200px",
                         }}
                       >
-                        <img
+                        <Image
                           src="/images/svgs/no-data.webp"
                           alt="No data"
+                          width={180}
+                          height={180}
                           style={{
                             maxWidth: "100%",
-                            maxHeight: "100%",
+                            height: "auto",
                           }}
-
                         />
                       </Box>
                     </TableCell>

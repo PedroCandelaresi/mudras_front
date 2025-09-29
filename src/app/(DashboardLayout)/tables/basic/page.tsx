@@ -1,7 +1,7 @@
 import { Box, Grid } from '@mui/material';
 
 import Breadcrumb from '@/app/(DashboardLayout)/layout/shared/breadcrumb/Breadcrumb';
-import PageContainer from '@/app/components/container/PageContainer';
+import PageContainer from '@/components/container/PageContainer';
 import ParentCard from '@/app/components/shared/ParentCard';
 import Table2 from '@/app/components/tables/Table2';
 import Table3 from '@/app/components/tables/Table3';

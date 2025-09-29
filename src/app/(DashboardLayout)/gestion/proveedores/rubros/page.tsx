@@ -20,8 +20,8 @@ import {
   Grid
 } from '@mui/material';
 import { Icon } from '@iconify/react';
-import PageContainer from '@/app/components/container/PageContainer';
-import DashboardCard from '@/app/components/shared/DashboardCard';
+import PageContainer from '@/components/container/PageContainer';
+import DashboardCard from '@/components/shared/DashboardCard';
 
 interface ProveedorRubro {
   id: number;

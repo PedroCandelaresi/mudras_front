@@ -1,7 +1,7 @@
 import NextLink from 'next/link';
 import { Stack, Typography, Avatar, Box, AvatarGroup } from '@mui/material';
 import { IconMessage2 } from '@tabler/icons-react';
-import DashboardCard from '../../shared/DashboardCard';
+import DashboardCard from '../../../../components/shared/DashboardCard';
 
 
 const Social = () => {

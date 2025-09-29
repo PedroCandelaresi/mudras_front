@@ -17,7 +17,7 @@ import {
   Stack
 } from "@mui/material";
 import { useQuery } from '@apollo/client/react';
-import { GET_MOVIMIENTOS_STOCK, GET_ARTICULOS } from '@/app/queries/mudras.queries';
+import { GET_MOVIMIENTOS_STOCK, GET_ARTICULOS } from '@/components/articulos/graphql/queries';
 import { Stock } from '@/app/interfaces/mudras.types';
 import { MovimientosStockResponse } from '@/app/interfaces/graphql.types';
 import { IconSearch, IconTrendingUp, IconTrendingDown, IconRefresh, IconEdit, IconTrash, IconEye, IconArrowUp, IconArrowDown, IconDotsVertical } from '@tabler/icons-react';
@@ -81,7 +81,11 @@ const TablaMovimientosStock = () => {
   };
 
   const movimientos: Stock[] = Array.isArray(data?.movimientosStock) ? (data!.movimientosStock as Stock[]) : [];
-  const articulos = Array.isArray(dataArticulos?.articulos) ? dataArticulos!.articulos as any[] : [];
+  const articulosDataList = dataArticulos?.articulos;
+  const articulos = useMemo(
+    () => (Array.isArray(articulosDataList) ? (articulosDataList as any[]) : []),
+    [articulosDataList]
+  );
   const mapaDescripcionPorCodigo = useMemo(() => {
     const m = new Map<string, string>();
     for (const a of articulos) {

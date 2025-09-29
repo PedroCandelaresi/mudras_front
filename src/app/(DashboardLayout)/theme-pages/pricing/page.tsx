@@ -17,7 +17,7 @@ import {
 import { useTheme } from '@mui/material/styles';
 import { styled } from '@mui/material/styles';
 import Breadcrumb from '@/app/(DashboardLayout)/layout/shared/breadcrumb/Breadcrumb';
-import PageContainer from '@/app/components/container/PageContainer';
+import PageContainer from '@/components/container/PageContainer';
 
 import { IconCheck, IconX } from '@tabler/icons-react';
 import BlankCard from '@/app/components/shared/BlankCard';

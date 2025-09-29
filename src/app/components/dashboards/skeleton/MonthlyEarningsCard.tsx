@@ -2,7 +2,7 @@ import React from "react";
 import { Stack, Typography, Avatar, Skeleton } from "@mui/material";
 import { IconArrowUpLeft } from "@tabler/icons-react";
 
-import DashboardCard from "../../shared/DashboardCard";
+import DashboardCard from "../../../../components/shared/DashboardCard";
 
 
 const SkeletonMonthlyEarningsCard = () => {

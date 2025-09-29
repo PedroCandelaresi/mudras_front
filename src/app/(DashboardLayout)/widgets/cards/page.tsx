@@ -1,6 +1,6 @@
 import { Grid } from "@mui/material";
 import Breadcrumb from "@/app/(DashboardLayout)/layout/shared/breadcrumb/Breadcrumb";
-import PageContainer from "@/app/components/container/PageContainer";
+import PageContainer from "@/components/container/PageContainer";
 
 import PaymentGateways from "@/app/components/dashboards/ecommerce/PaymentGateways";
 import RecentTransactions from "@/app/components/dashboards/ecommerce/RecentTransactions";

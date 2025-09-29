@@ -1,3 +1,4 @@
+// /home/candelaresi/proyectos/mudras/frontend/src/components/ui/TexturedFrame
 'use client';
 import { PropsWithChildren, memo, useMemo } from 'react';
 import { Box } from '@mui/material';
@@ -254,23 +255,7 @@ function TexturedPanelBase({
       <div className="tp-glossTop" />
       <div className="tp-innerBevel" />
     </>
-  ), [
-    accent,
-    bgTintPercent,
-    bgAlpha,
-    textureUrl,
-    textureScale,
-    textureBaseOpacity,
-    textureBoostOpacity,
-    textureContrast,
-    textureBrightness,
-    tintOpacity,
-    tintMode,
-    radius,
-    bevelWidth,
-    bevelIntensity,
-    glossStrength,
-  ]);
+  ), []);
 
   return (
     <Shell

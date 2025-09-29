@@ -27,7 +27,7 @@ import {
 import { DataGrid, GridColDef, GridActionsCellItem } from '@mui/x-data-grid';
 import { Edit, Delete, QrCode, Visibility } from '@mui/icons-material';
 
-import { BUSCAR_ARTICULOS, GET_ESTADISTICAS_ARTICULOS } from '@/queries/articulos';
+import { BUSCAR_ARTICULOS, GET_ESTADISTICAS_ARTICULOS } from '@/components/articulos/graphql/queries';
 import { 
   Articulo, 
   FiltrosArticulo, 

@@ -1,3 +1,4 @@
+// /home/candelaresi/proyectos/mudras/frontend/src/components/proveedores/ModalEliminarProveedor.tsx
 'use client';
 import {
   Dialog,
@@ -15,7 +16,7 @@ import {
 import { useState, useEffect } from 'react';
 import { IconX, IconAlertTriangle } from '@tabler/icons-react';
 import { useMutation } from '@apollo/client/react';
-import { ELIMINAR_PROVEEDOR } from '@/queries/proveedores';
+import { ELIMINAR_PROVEEDOR } from '@/components/proveedores/graphql/mutations';
 import { Proveedor } from '@/interfaces/proveedores';
 
 interface ModalEliminarProveedorProps {

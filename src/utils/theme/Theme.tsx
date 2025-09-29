@@ -1,3 +1,4 @@
+// /home/candelaresi/proyectos/mudras/frontend/src/utils/theme/Theme.tsx
 import _ from 'lodash';
 import { createTheme } from '@mui/material/styles';
 import { CustomizerContext } from "@/app/context/customizerContext";

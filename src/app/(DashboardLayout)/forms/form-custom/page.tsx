@@ -15,7 +15,7 @@ import {
 import { SliderThumb } from '@mui/material/Slider';
 
 import Breadcrumb from '@/app/(DashboardLayout)/layout/shared/breadcrumb/Breadcrumb';
-import PageContainer from '@/app/components/container/PageContainer';
+import PageContainer from '@/components/container/PageContainer';
 
 import { LocalizationProvider } from '@mui/x-date-pickers';
 import { Dayjs } from 'dayjs';

@@ -5,7 +5,7 @@ import { useTheme } from "@mui/material/styles";
 import { Box, Typography } from "@mui/material";
 
 
-import DashboardCard from "../../shared/DashboardCard";
+import DashboardCard from "../../../../components/shared/DashboardCard";
 import SkeletonExpenceCard from "../skeleton/ExpanceCard";
 import { ApexOptions } from "apexcharts";
 

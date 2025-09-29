@@ -1,5 +1,5 @@
 'use client';
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   Grid,
   Box,
@@ -41,10 +41,17 @@ import {
 } from '@tabler/icons-react';
 import { Store } from '@mui/icons-material';
 import { Icon } from '@iconify/react';
-import PageContainer from '@/app/components/container/PageContainer';
-import DashboardCard from '@/app/components/shared/DashboardCard';
+import PageContainer from '@/components/container/PageContainer';
+import DashboardCard from '@/components/shared/DashboardCard';
 import { useQuery, useMutation } from '@apollo/client/react';
-import { GET_ARTICULOS, GET_PUNTOS_VENTA, CREAR_VENTA, ACTUALIZAR_STOCK_VENTA, CrearVentaInput, ItemVentaStockInput } from '@/app/queries/mudras.queries';
+import { GET_ARTICULOS } from '@/components/articulos/graphql/queries';
+import { OBTENER_PUNTOS_MUDRAS } from '@/components/puntos-mudras/graphql/queries';
+import {
+  CREAR_VENTA,
+  ACTUALIZAR_STOCK_VENTA,
+  type CrearVentaInput,
+  type ItemVentaStockInput,
+} from '@/components/ventas/graphql/mutations';
 import { ArticulosResponse } from '@/app/interfaces/graphql.types';
 import { verde } from '@/ui/colores';
 
@@ -73,12 +80,15 @@ export default function Caja() {
   const [procesandoVenta, setProcesandoVenta] = useState(false);
   
   const { data: articulosData, loading } = useQuery<ArticulosResponse>(GET_ARTICULOS);
-  const { data: puntosVentaData } = useQuery(GET_PUNTOS_VENTA);
+  const { data: puntosVentaData } = useQuery(OBTENER_PUNTOS_MUDRAS);
   const [crearVenta] = useMutation(CREAR_VENTA);
   const [actualizarStockVenta] = useMutation(ACTUALIZAR_STOCK_VENTA);
   
   const articulos = articulosData?.articulos || [];
-  const puntosVenta = (puntosVentaData as any)?.obtenerPuntosMudras || [];
+  const puntosVenta = useMemo(
+    () => ((puntosVentaData as any)?.obtenerPuntosMudras ?? []) as Array<{ id: number }>,
+    [puntosVentaData]
+  );
   
   // Seleccionar primer punto de venta por defecto
   useEffect(() => {

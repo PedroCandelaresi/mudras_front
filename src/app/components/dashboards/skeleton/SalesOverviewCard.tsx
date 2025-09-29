@@ -1,7 +1,7 @@
 import React from 'react';
 import { Stack, Typography, Box, Skeleton } from '@mui/material';
 import { IconGridDots } from '@tabler/icons-react';
-import DashboardCard from '../../shared/DashboardCard';
+import DashboardCard from '../../../../components/shared/DashboardCard';
 
 const SkeletonSalesOverviewCard = () => {
 

@@ -1,5 +1,5 @@
 import Grid from '@mui/material/Grid'
-import PageContainer from '@/app/components/container/PageContainer';
+import PageContainer from '@/components/container/PageContainer';
 import ProfileBanner from '@/app/components/apps/userprofile/profile/ProfileBanner';
 import FriendsCard from '@/app/components/apps/userprofile/friends/FriendsCard';
 import Breadcrumb from '@/app/(DashboardLayout)/layout/shared/breadcrumb/Breadcrumb';

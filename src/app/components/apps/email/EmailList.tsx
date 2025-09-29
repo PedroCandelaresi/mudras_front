@@ -23,7 +23,7 @@ const EmailList = ({ showrightSidebar }: Props) => {
       setSelectedEmail(emails[0]);
       setSelectedEmailId(emails[0].id);
     }
-  }, [emails]);
+  }, [emails, selectedEmailId, setSelectedEmail, setSelectedEmailId]);
 
 
   const handleCheckboxChange = (emailId: number) => {

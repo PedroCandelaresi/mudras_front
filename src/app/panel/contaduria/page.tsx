@@ -1,9 +1,9 @@
 'use client';
 import { Grid, Box, Typography } from '@mui/material';
-import PageContainer from '@/app/components/container/PageContainer';
+import PageContainer from '@/components/container/PageContainer';
 import TablaAsientos from '@/components/contaduria/TablaAsientos';
 import TablaCuentasContables from '@/components/contaduria/TablaCuentasContables';
-import { TexturedPanel } from '@/app/components/ui-components/TexturedFrame/TexturedPanel';
+import { TexturedPanel } from '@/components/ui/TexturedFrame/TexturedPanel';
 
 export default function Contaduria() {
   return (

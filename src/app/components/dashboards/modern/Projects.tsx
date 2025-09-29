@@ -5,7 +5,7 @@ import { useTheme } from '@mui/material/styles';
 import { Stack, Typography, Avatar, Box } from '@mui/material';
 import { IconArrowUpLeft } from '@tabler/icons-react';
 
-import DashboardCard from '../../shared/DashboardCard';
+import DashboardCard from '../../../../components/shared/DashboardCard';
 import SkeletonProjectCard from "../skeleton/ProjectCard";
 import { ApexOptions } from "apexcharts";
 

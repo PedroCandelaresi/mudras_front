@@ -27,18 +27,18 @@ import {
   Tab
 } from '@mui/material';
 import { Icon } from '@iconify/react';
-import { 
-  OBTENER_ARTICULOS_DISPONIBLES, 
+import {
+  OBTENER_ARTICULOS_DISPONIBLES,
+  type ObtenerArticulosDisponiblesResponse,
+  type ArticuloDisponible,
+} from '@/components/stock/graphql/queries';
+import {
   CREAR_ASIGNACION_STOCK,
-  ObtenerArticulosDisponiblesResponse,
-  CrearAsignacionStockInput,
-  CrearAsignacionResponse,
-  FiltrosArticulosDisponiblesInput
-} from '@/queries/stock-puntos-venta';
+  type CrearAsignacionStockInput,
+  type CrearAsignacionResponse,
+} from '@/components/stock/graphql/mutations';
 import { PuntoMudras } from '@/interfaces/puntos-mudras';
 import { verde } from '@/ui/colores';
-
-import { ArticuloDisponible } from '@/queries/stock-puntos-venta';
 
 interface Props {
   open: boolean;

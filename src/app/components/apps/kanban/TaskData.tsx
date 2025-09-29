@@ -183,11 +183,13 @@ const TaskData: React.FC<TaskDataProps> = ({ task, onDeleteTask, index, category
             </Box>
             <Box>
               {editedTask?.taskImage && (
-                <img
-                  src={editedTask?.taskImage}
+                <Image
+                  src={editedTask.taskImage}
                   alt="Task Image"
                   className="img-fluid"
-
+                  width={640}
+                  height={360}
+                  unoptimized
                   style={{ maxWidth: '100%', height: 'auto' }}
                 />
               )}

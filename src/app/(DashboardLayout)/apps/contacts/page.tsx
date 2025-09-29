@@ -1,4 +1,4 @@
-import PageContainer from "@/app/components/container/PageContainer";
+import PageContainer from "@/components/container/PageContainer";
 import Breadcrumb from "@/app/(DashboardLayout)/layout/shared/breadcrumb/Breadcrumb";
 import AppCard from "@/app/components/shared/AppCard";
 import ContactApp from "@/app/components/apps/contacts/index";

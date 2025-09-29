@@ -1,5 +1,5 @@
 import Breadcrumb from '@/app/(DashboardLayout)/layout/shared/breadcrumb/Breadcrumb';
-import PageContainer from '@/app/components/container/PageContainer';
+import PageContainer from '@/components/container/PageContainer';
 import TicketListing from '@/app/components/apps/tickets/TicketListing';
 import TicketFilter from '@/app/components/apps/tickets/TicketFilter';
 import ChildCard from '@/app/components/shared/ChildCard';

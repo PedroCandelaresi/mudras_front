@@ -47,19 +47,18 @@ export const EmailContextProvider: React.FC<{ children: React.ReactNode }> = ({ 
   const { data: emailData, isLoading: isEmailLoading, error: emailError, mutate } = useSWR("/api/email", getFetcher);
 
   useEffect(() => {
+    setLoading(isEmailLoading);
+
     if (emailData) {
       setEmails(emailData.data);
-      if (emails?.length == 0) {
+      if (!selectedEmail && emailData.data.length > 0) {
         setSelectedEmail(emailData.data[0]);
       }
-      setLoading(isEmailLoading);
+      setError(null);
     } else if (emailError) {
       setError(emailError);
-      setLoading(isEmailLoading);
-    } else {
-      setLoading(isEmailLoading);
     }
-  }, [emailData, emailError]);
+  }, [emailData, emailError, isEmailLoading, selectedEmail, setSelectedEmail]);
 
 
 

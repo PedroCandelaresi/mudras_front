@@ -37,18 +37,14 @@ import {
   IconCash,
   IconBuildingBank,
 } from '@tabler/icons-react';
+import { OBTENER_PUESTOS_VENTA, type ArticuloCaja, type PuestoVenta, type PuestosVentaResponse } from '@/components/caja-registradora/graphql/queries';
 import {
   CREAR_VENTA_CAJA,
-  OBTENER_PUESTOS_VENTA,
-  ArticuloCaja,
-  PuestoVenta,
-  VentaCaja,
-  MetodoPago,
-  PagoVenta,
-  CrearVentaCajaResponse,
-  PuestosVentaResponse,
-  CrearVentaCajaInput,
-} from '../../queries/caja-registradora';
+  type MetodoPago,
+  type PagoVenta,
+  type CrearVentaCajaResponse,
+  type CrearVentaCajaInput,
+} from '@/components/caja-registradora/graphql/mutations';
 
 interface ArticuloVenta {
   id: number;

@@ -124,11 +124,13 @@ function EditTaskModal({ show, onHide, editedTask, onSave }: any) {
                 {imagePreview && (
                   <Grid sx={{ mt: 2 }} size={12}>
                     <CustomFormLabel htmlFor="taskImage">Image Preview:</CustomFormLabel>
-                    <img
+                    <Image
                       src={imagePreview}
                       alt="Selected"
-                      style={{ maxWidth: '100%', height: 'auto', marginTop: '8px', borderRadius: "4px" }}
-
+                      width={600}
+                      height={360}
+                      unoptimized
+                      style={{ maxWidth: '100%', height: 'auto', marginTop: '8px', borderRadius: '4px' }}
                     />
                   </Grid>
                 )}

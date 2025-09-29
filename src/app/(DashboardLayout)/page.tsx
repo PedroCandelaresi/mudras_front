@@ -1,6 +1,6 @@
 'use client'
 import { useState, useEffect, PropsWithChildren } from 'react';
-import PageContainer from '@/app/components/container/PageContainer';
+import PageContainer from '@/components/container/PageContainer';
 import { Grid, Box, Typography, Card } from '@mui/material';
 import EstadisticasCards from '@/app/components/dashboards/mudras/EstadisticasCards';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';

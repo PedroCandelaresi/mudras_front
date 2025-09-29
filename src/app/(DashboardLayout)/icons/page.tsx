@@ -1,8 +1,8 @@
 
 
 
-import PageContainer from '@/app/components/container/PageContainer';
-import DashboardCard from '@/app/components/shared/DashboardCard';
+import PageContainer from '@/components/container/PageContainer';
+import DashboardCard from '@/components/shared/DashboardCard';
 import Breadcrumb from '@/app/(DashboardLayout)/layout/shared/breadcrumb/Breadcrumb';
 import { Typography, Link, Box, Divider } from '@mui/material';
 import SyntaxHighlighter from "react-syntax-highlighter";

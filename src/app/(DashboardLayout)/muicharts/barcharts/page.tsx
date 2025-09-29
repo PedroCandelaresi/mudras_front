@@ -1,4 +1,4 @@
-import PageContainer from "@/app/components/container/PageContainer";
+import PageContainer from "@/components/container/PageContainer";
 import Breadcrumb from "@/app/(DashboardLayout)/layout/shared/breadcrumb/Breadcrumb";
 import React from "react";
 import TinyBarChart from '@/app/components/muicharts/barcharts/TinyBarChart'

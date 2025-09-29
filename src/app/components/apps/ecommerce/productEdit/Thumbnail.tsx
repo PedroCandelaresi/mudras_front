@@ -52,16 +52,20 @@ const Thumbnail = () => {
 
         {imageUrl ? (
           <Box>
-            <img
+            <Image
               src={imageUrl}
               alt="Preview"
+              width={300}
+              height={200}
+              unoptimized
               onClick={handleImageClick}
               style={{
                 maxWidth: "300px",
                 borderRadius: "10px",
                 margin: "0 auto",
+                cursor: "pointer",
+                height: "auto",
               }}
-
             />
           </Box>
         ) : null}

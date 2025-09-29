@@ -1,6 +1,6 @@
 import { Typography } from "@mui/material";
-import PageContainer from "@/app/components/container/PageContainer";
-import DashboardCard from "@/app/components/shared/DashboardCard";
+import PageContainer from "@/components/container/PageContainer";
+import DashboardCard from "@/components/shared/DashboardCard";
 
 const SamplePage = () => {
   return (

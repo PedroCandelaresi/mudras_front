@@ -6,7 +6,7 @@ import { useTheme } from "@mui/material/styles";
 import { Stack, Typography, Avatar, Box } from "@mui/material";
 import { IconArrowUpLeft } from "@tabler/icons-react";
 
-import DashboardCard from "../../shared/DashboardCard";
+import DashboardCard from "../../../../components/shared/DashboardCard";
 import SkeletonMonthlyEarningsCard from "../skeleton/MonthlyEarningsCard";
 import { ApexOptions } from "apexcharts";
 

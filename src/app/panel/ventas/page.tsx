@@ -1,12 +1,12 @@
 'use client';
 import { Box, Typography, Tabs, Tab } from '@mui/material';
-import PageContainer from '@/app/components/container/PageContainer';
+import PageContainer from '@/components/container/PageContainer';
 import TablaVentas from '@/app/components/dashboards/mudras/TablaVentas';
 import { verde } from '@/ui/colores';
 import { useState } from 'react';
 import { Icon } from '@iconify/react';
 import { GraficoBarras } from '@/components/estadisticas/GraficoBarras';
-import { TexturedPanel } from '@/app/components/ui-components/TexturedFrame/TexturedPanel';
+import { TexturedPanel } from '@/components/ui/TexturedFrame/TexturedPanel';
 
 export default function Ventas() {
   const [tabValue, setTabValue] = useState(0);

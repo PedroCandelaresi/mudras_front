@@ -1,8 +1,8 @@
 'use client';
 import { Grid, Box, Typography, Button, Stack } from '@mui/material';
 import { IconPlus, IconDownload, IconPalette } from '@tabler/icons-react';
-import PageContainer from '@/app/components/container/PageContainer';
-import DashboardCard from '@/app/components/shared/DashboardCard';
+import PageContainer from '@/components/container/PageContainer';
+import DashboardCard from '@/components/shared/DashboardCard';
 import TablaRubros from '@/components/rubros/TablaRubros';
 
 const GestionRubros = () => {

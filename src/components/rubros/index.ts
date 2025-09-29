@@ -1,3 +1,5 @@
+// /home/candelaresi/proyectos/mudras/frontend/src/components/rubros/index.ts
+
 export { default as TablaRubros } from './TablaRubros';
 export { default as ModalEditarRubro } from './ModalEditarRubro';
 export { default as ModalDetallesRubro } from './ModalDetallesRubro';

@@ -12,7 +12,7 @@ import Tooltip from '@mui/material/Tooltip';
 import Avatar from '@mui/material/Avatar';
 import Box from '@mui/material/Box';
 import { IconEye, IconMessage2, IconPoint } from '@tabler/icons-react';
-import PageContainer from '@/app/components/container/PageContainer';
+import PageContainer from '@/components/container/PageContainer';
 import C2a from '@/app/components/frontend-pages/shared/c2a';
 import Footer from '@/app/components/frontend-pages/shared/footer';
 import ScrollToTop from '@/app/components/frontend-pages/shared/scroll-to-top';

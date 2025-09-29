@@ -1,15 +1,13 @@
 import { ApolloClient, NormalizedCacheObject } from '@apollo/client';
-import { 
-  BUSCAR_RUBROS, 
-  CREAR_RUBRO, 
-  ACTUALIZAR_RUBRO, 
+import { BUSCAR_RUBROS, GET_PROVEEDORES_POR_RUBRO, GET_ARTICULOS_POR_RUBRO } from '@/components/rubros/graphql/queries';
+import {
+  CREAR_RUBRO,
+  ACTUALIZAR_RUBRO,
   ELIMINAR_RUBRO,
-  GET_PROVEEDORES_POR_RUBRO,
-  GET_ARTICULOS_POR_RUBRO,
   ELIMINAR_PROVEEDOR_DE_RUBRO,
   ELIMINAR_ARTICULO_DE_RUBRO,
-  ELIMINAR_ARTICULOS_DE_RUBRO
-} from '@/queries/rubros';
+  ELIMINAR_ARTICULOS_DE_RUBRO,
+} from '@/components/rubros/graphql/mutations';
 
 export interface RubrosServiceConfig {
   client: any;

@@ -51,15 +51,13 @@ import {
   OBTENER_HISTORIAL_VENTAS,
   OBTENER_DETALLE_VENTA,
   OBTENER_PUESTOS_VENTA,
-  CANCELAR_VENTA_CAJA,
-  PROCESAR_DEVOLUCION,
-  REINTENTAR_EMISION_AFIP,
-  HistorialVentasResponse,
-  DetalleVentaResponse,
-  PuestosVentaResponse,
-  FiltrosHistorialInput,
-  VentaCaja,
-} from '../../queries/caja-registradora';
+  type HistorialVentasResponse,
+  type DetalleVentaResponse,
+  type PuestosVentaResponse,
+  type FiltrosHistorialInput,
+  type VentaCaja,
+} from '@/components/caja-registradora/graphql/queries';
+import { CANCELAR_VENTA_CAJA } from '@/components/caja-registradora/graphql/mutations';
 
 const ESTADOS_VENTA = [
   { value: 'PENDIENTE', label: 'Pendiente', color: 'warning' as const },

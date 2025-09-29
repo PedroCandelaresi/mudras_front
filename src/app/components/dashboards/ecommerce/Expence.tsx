@@ -5,7 +5,7 @@ import { useTheme } from "@mui/material/styles";
 import { Typography, Box } from "@mui/material";
 import { Props } from "react-apexcharts";
 
-import DashboardCard from "../../shared/DashboardCard";
+import DashboardCard from "../../../../components/shared/DashboardCard";
 import SkeletonExpenceCard from "../skeleton/ExpanceCard";
 import { ApexOptions } from "apexcharts";
 

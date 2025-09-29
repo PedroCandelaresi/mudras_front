@@ -48,8 +48,7 @@ const Language = () => {
   };
   useEffect(() => {
     i18n.changeLanguage(isLanguage);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [i18n, isLanguage]);
 
   return (
     <>

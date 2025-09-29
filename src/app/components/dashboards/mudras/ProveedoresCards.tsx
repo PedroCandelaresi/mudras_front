@@ -1,7 +1,7 @@
 'use client';
 import { Box, Grid, Typography, Card } from "@mui/material";
 import { useQuery } from '@apollo/client/react';
-import { GET_DASHBOARD_STATS } from '@/app/queries/mudras.queries';
+import { GET_DASHBOARD_STATS } from '@/components/dashboards/mudras/graphql/queries';
 import { DashboardStatsResponse } from '@/app/interfaces/graphql.types';
 import { 
   IconUsers, 

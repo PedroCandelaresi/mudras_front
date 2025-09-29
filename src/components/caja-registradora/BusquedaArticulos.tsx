@@ -24,7 +24,11 @@ import {
   IconPlus,
   IconAlertTriangle,
 } from '@tabler/icons-react';
-import { BUSCAR_ARTICULOS_CAJA, BuscarArticulosCajaResponse, ArticuloCaja, FiltrosArticuloDto } from '../../queries/caja-registradora';
+import {
+  BUSCAR_ARTICULOS_CAJA,
+  type BuscarArticulosCajaResponse,
+  type ArticuloCaja,
+} from '@/components/caja-registradora/graphql/queries';
 
 interface BusquedaArticulosProps {
   puestoVentaId: number;
@@ -41,23 +45,25 @@ export const BusquedaArticulos: React.FC<BusquedaArticulosProps> = ({
   const [resultados, setResultados] = useState<ArticuloCaja[]>([]);
   const [cantidades, setCantidades] = useState<{ [key: number]: number }>({});
 
-  const { data, loading, error, refetch } = useQuery<BuscarArticulosCajaResponse>(BUSCAR_ARTICULOS_CAJA, {
-    variables: {
-      filtros: {
-        busqueda: termino.trim(),
-        soloConStock: true,
-        limite: 20,
-        ordenarPor: 'Descripcion',
-        direccionOrden: 'ASC' as const
-      } as FiltrosArticuloDto
+  const variables = {
+    input: {
+      nombre: termino.trim() || undefined,
+      sku: termino.trim() || undefined,
+      codigoBarras: termino.trim() || undefined,
+      puestoVentaId,
+      limite: 20,
     },
+  } as const;
+
+  const { data, loading, error, refetch } = useQuery<BuscarArticulosCajaResponse>(BUSCAR_ARTICULOS_CAJA, {
+    variables,
     skip: termino.trim().length < 2,
   });
 
   // Actualizar resultados cuando cambian los datos
   useEffect(() => {
-    if (data?.buscarArticulos?.articulos) {
-      setResultados(data.buscarArticulos.articulos);
+    if (data?.buscarArticulosCaja) {
+      setResultados(data.buscarArticulosCaja);
     } else if (termino.trim().length < 2) {
       setResultados([]);
     }
@@ -73,13 +79,12 @@ export const BusquedaArticulos: React.FC<BusquedaArticulosProps> = ({
   const handleBuscarPorCodigo = () => {
     if (termino.trim()) {
       refetch({
-        filtros: {
-          busqueda: termino.trim(),
-          soloConStock: true,
-          limite: 20,
-          ordenarPor: 'Descripcion',
-          direccionOrden: 'ASC' as const
-        } as FiltrosArticuloDto
+        input: {
+          ...variables.input,
+          nombre: termino.trim() || undefined,
+          codigoBarras: termino.trim() || undefined,
+          sku: termino.trim() || undefined,
+        },
       });
     }
   };

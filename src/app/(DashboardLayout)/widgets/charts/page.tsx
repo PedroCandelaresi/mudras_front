@@ -1,7 +1,7 @@
 
 import { Grid } from "@mui/material";
 import Breadcrumb from "@/app/(DashboardLayout)/layout/shared/breadcrumb/Breadcrumb";
-import PageContainer from "@/app/components/container/PageContainer";
+import PageContainer from "@/components/container/PageContainer";
 import YearlyBreakup from "@/app/components/dashboards/modern/YearlyBreakup";
 import Projects from "@/app/components/dashboards/modern/Projects";
 import Customers from "@/app/components/dashboards/modern/Customers";

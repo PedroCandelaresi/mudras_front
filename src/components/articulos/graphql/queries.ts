@@ -1,6 +1,5 @@
 import { gql } from '@apollo/client';
 
-// Fragments
 export const ARTICULO_FRAGMENT = gql`
   fragment ArticuloFragment on Articulo {
     id
@@ -39,13 +38,16 @@ export const ARTICULO_FRAGMENT = gql`
     Combustible
     ImpuestoPorcentual
     proveedor {
-      id
-      RazonSocial
+      IdProveedor
+      Nombre
+    }
+    rubro {
+      Id
+      Rubro
     }
   }
 `;
 
-// Queries
 export const GET_ARTICULOS = gql`
   ${ARTICULO_FRAGMENT}
   query GetArticulos {
@@ -94,7 +96,7 @@ export const GET_ESTADISTICAS_ARTICULOS = gql`
 export const GET_ARTICULO_POR_CODIGO_BARRAS = gql`
   ${ARTICULO_FRAGMENT}
   query GetArticuloPorCodigoBarras($codigoBarras: String!) {
-    buscarPorCodigoBarras(codigoBarras: $codigoBarras) {
+    articuloPorCodigoBarras(codigoBarras: $codigoBarras) {
       ...ArticuloFragment
     }
   }
@@ -114,6 +116,19 @@ export const GET_ARTICULOS_EN_PROMOCION = gql`
   query GetArticulosEnPromocion {
     articulosEnPromocion {
       ...ArticuloFragment
+    }
+  }
+`;
+
+export const GET_MOVIMIENTOS_STOCK = gql`
+  query GetMovimientosStock {
+    movimientosStock {
+      Id
+      Fecha
+      Codigo
+      Stock
+      StockAnterior
+      Usuario
     }
   }
 `;

@@ -1,5 +1,5 @@
 import React from 'react';
-import PageContainer from '@/app/components/container/PageContainer';
+import PageContainer from '@/components/container/PageContainer';
 
 // components
 import Banner from '@/app/components/landingpage/banner/Banner';

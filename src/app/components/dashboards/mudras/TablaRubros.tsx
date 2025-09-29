@@ -21,7 +21,7 @@ import {
   Tooltip,
 } from "@mui/material";
 import { useQuery } from '@apollo/client/react';
-import { BUSCAR_RUBROS } from '@/app/queries/mudras.queries';
+import { BUSCAR_RUBROS } from '@/components/rubros/graphql/queries';
 import { BuscarRubrosResponse, RubroConEstadisticas } from '@/app/interfaces/graphql.types';
 import { IconSearch, IconCategory, IconRefresh, IconEdit, IconTrash, IconEye, IconPlus, IconDotsVertical } from '@tabler/icons-react';
 import { useState } from 'react';

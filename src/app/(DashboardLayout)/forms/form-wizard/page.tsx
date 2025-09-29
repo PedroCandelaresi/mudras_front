@@ -1,5 +1,5 @@
 import React from "react";
-import PageContainer from "@/app/components/container/PageContainer";
+import PageContainer from "@/components/container/PageContainer";
 import Breadcrumb from "@/app/(DashboardLayout)/layout/shared/breadcrumb/Breadcrumb";
 
 import FormWizardSteps from "@/app/components/forms/form-wizard/FormWizardSteps";

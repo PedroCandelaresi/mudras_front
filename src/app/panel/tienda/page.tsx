@@ -1,7 +1,7 @@
 'use client';
 import { Box, Typography } from '@mui/material';
-import PageContainer from '@/app/components/container/PageContainer';
-import { TexturedPanel } from '@/app/components/ui-components/TexturedFrame/TexturedPanel';
+import PageContainer from '@/components/container/PageContainer';
+import { TexturedPanel } from '@/components/ui/TexturedFrame/TexturedPanel';
 
 export default function Tienda() {
   return (

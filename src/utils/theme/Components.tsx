@@ -1,6 +1,6 @@
 // project imports
 import "./DefaultColors";
-import { Theme } from "@mui/material/styles";
+import { Theme, alpha } from "@mui/material/styles";
 
 const components: any = (theme: Theme) => {
   return {
@@ -152,6 +152,7 @@ const components: any = (theme: Theme) => {
         },
       },
     },
+    
     MuiFab: {
       styleOverrides: {
         root: {
@@ -211,6 +212,7 @@ const components: any = (theme: Theme) => {
       },
     },
     MuiButton: {
+      // ⬇️ deja TODOS tus overrides tal cual
       styleOverrides: {
         root: {
           textTransform: "none",
@@ -302,7 +304,35 @@ const components: any = (theme: Theme) => {
           },
         },
       },
+    
+      // ⬇️ y acá SUMAMOS el variant "glass"
+      variants: [
+        {
+          // habilita <Button variant="glass" />
+          props: { variant: 'glass' as any },
+          style: {
+            color: '#fff',
+            background: 'linear-gradient(180deg, rgba(255,255,255,0.22), rgba(255,255,255,0.08))',
+            backdropFilter: 'blur(8px)',
+            WebkitBackdropFilter: 'blur(8px)',
+            border: `1px solid ${alpha('#fff', 0.35)}`,
+            borderRadius: 12,
+            boxShadow: '0 8px 22px rgba(0,0,0,0.15), inset 0 1px 0 rgba(255,255,255,0.25)',
+            textTransform: 'none',
+            transition: 'transform .12s ease, box-shadow .2s ease, background .2s ease',
+            '&:hover': {
+              background: 'linear-gradient(180deg, rgba(255,255,255,0.30), rgba(255,255,255,0.14))',
+              boxShadow: '0 10px 28px rgba(0,0,0,0.22), inset 0 1px 0 rgba(255,255,255,0.28)',
+            },
+            '&:active': {
+              transform: 'translateY(1px)',
+              boxShadow: '0 6px 18px rgba(0,0,0,0.18), inset 0 1px 0 rgba(255,255,255,0.25)',
+            },
+          },
+        },
+      ],
     },
+    
     MuiCardHeader: {
       styleOverrides: {
         root: {

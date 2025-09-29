@@ -117,15 +117,20 @@ function AddNewList({
                 setNewTaskData({ ...newTaskData, taskImage: e.target.value })
               }
             />
-            {taskImage !== undefined && (
-              <img
-
+            {taskImage !== undefined && taskImage !== '' && (
+              <Image
                 src={taskImage}
                 alt="Selected"
+                width={200}
+                height={100}
+                unoptimized
                 style={{
-                  marginTop: "8px", width: "200px", height: "100px"
+                  marginTop: '8px',
+                  width: '200px',
+                  height: '100px',
+                  objectFit: 'cover',
+                  borderRadius: '6px',
                 }}
-
               />
             )}
           </Grid>

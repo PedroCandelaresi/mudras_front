@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { Grid, Box, Stack, Typography, useTheme, alpha } from "@mui/material";
-import PageContainer from "@/app/components/container/PageContainer";
+import PageContainer from "@/components/container/PageContainer";
 import AuthLogin from "../auth/authForms/AuthLogin";
 
 export default function Login() {

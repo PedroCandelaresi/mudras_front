@@ -1,5 +1,5 @@
 "use client";
-import { TexturedPanel } from '@/app/components/ui-components/TexturedFrame/TexturedPanel';
+import { TexturedPanel } from '@/components/ui/TexturedFrame/TexturedPanel';
 
 import React, { useState } from 'react';
 import { 
@@ -11,15 +11,15 @@ import {
 } from '@mui/material';
 import { Icon } from '@iconify/react';
 import { useQuery } from '@apollo/client/react';
-import PageContainer from '@/app/components/container/PageContainer';
+import PageContainer from '@/components/container/PageContainer';
 import TablaPuntosMudras from '@/components/puntos-mudras/TablaPuntosMudras';
 import ModalPuntoMudras from '@/components/puntos-mudras/ModalPuntoMudras';
 import { grisVerdoso, grisRojizo } from '@/ui/colores';
 import {
   OBTENER_ESTADISTICAS_PUNTOS_MUDRAS,
   type ObtenerEstadisticasPuntosMudrasResponse,
-  type PuntoMudras,
-} from '@/queries/puntos-mudras';
+} from '@/components/puntos-mudras/graphql/queries';
+import { type PuntoMudras } from '@/interfaces/puntos-mudras';
 
 interface TabPanelProps {
   children?: React.ReactNode;

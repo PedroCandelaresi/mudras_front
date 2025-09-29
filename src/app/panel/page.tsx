@@ -1,6 +1,6 @@
 'use client'
 import { useState, useEffect, PropsWithChildren, useMemo } from 'react';
-import PageContainer from '@/app/components/container/PageContainer';
+import PageContainer from '@/components/container/PageContainer';
 import { Grid, Box, Typography, Card } from '@mui/material';
 import EstadisticasCards from '@/app/components/dashboards/mudras/EstadisticasCards';
 import VentasCards from '@/app/components/dashboards/mudras/VentasCards';
@@ -8,7 +8,7 @@ import ProveedoresCards from '@/app/components/dashboards/mudras/ProveedoresCard
 import AlertasCards from '@/app/components/dashboards/mudras/AlertasCards';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from 'recharts';
 import { useQuery } from '@apollo/client/react';
-import { GET_DASHBOARD_STATS } from '@/app/queries/mudras.queries';
+import { GET_DASHBOARD_STATS } from '@/components/dashboards/mudras/graphql/queries';
 import { DashboardStatsResponse } from '@/app/interfaces/graphql.types';
 
 
@@ -257,4 +257,3 @@ export default function Dashboard() {
     </PageContainer>
   );
 }
-

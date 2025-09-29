@@ -3,24 +3,15 @@
 import React, { useState, useCallback } from 'react';
 import { Box, Grid, Typography, Alert, Snackbar } from '@mui/material';
 import { motion } from 'framer-motion';
-import { BusquedaArticulos } from '../../../../components/caja-registradora/BusquedaArticulos';
-import { TablaArticulosCapturados } from '../../../../components/caja-registradora/TablaArticulosCapturados';
-import { ModalConfirmacionVenta } from '../../../../components/caja-registradora/ModalConfirmacionVenta';
-import { HistorialVentas } from '../../../../components/caja-registradora/HistorialVentas';
-import { ArticuloConStock } from '../../../../queries/caja-registradora';
-import { TexturedPanel } from '@/app/components/ui-components/TexturedFrame/TexturedPanel';
-
-interface ArticuloCapturado extends ArticuloConStock {
-  Unidad: string;
-  Rubro: string;
-  proveedor: {
-    IdProveedor: number;
-    Nombre: string;
-  };
-  cantidad: number;
-  subtotal: number;
-  seleccionado: boolean;
-}
+import { BusquedaArticulos } from '@/components/caja-registradora/BusquedaArticulos';
+import {
+  TablaArticulosCapturados,
+  type ArticuloCapturado,
+} from '@/components/caja-registradora/TablaArticulosCapturados';
+import { ModalConfirmacionVenta } from '@/components/caja-registradora/ModalConfirmacionVenta';
+import { HistorialVentas } from '@/components/caja-registradora/HistorialVentas';
+import { type ArticuloCaja } from '@/components/caja-registradora/graphql/queries';
+import { TexturedPanel } from '@/components/ui/TexturedFrame/TexturedPanel';
 
 export default function CajaRegistradoraPage() {
   const [puestoVentaId] = useState(1); // Por defecto mostrador principal
@@ -39,7 +30,7 @@ export default function CajaRegistradoraPage() {
   }, {} as { [key: number]: number });
 
   // Agregar artículo al carrito
-  const handleAgregarArticulo = useCallback((articulo: ArticuloConStock, cantidad: number) => {
+  const handleAgregarArticulo = useCallback((articulo: ArticuloCaja, cantidad: number) => {
     setArticulos(prev => {
       const existente = prev.find(a => a.id === articulo.id);
       
@@ -59,7 +50,11 @@ export default function CajaRegistradoraPage() {
         return [...prev, {
           ...articulo,
           Unidad: 'UN', // Valor por defecto
-          Rubro: articulo.rubro?.Descripcion || 'Sin rubro',
+          Rubro: articulo.rubro?.Rubro || articulo.Rubro || 'Sin rubro',
+          rubro: {
+            id: articulo.rubro?.Id ?? 0,
+            Descripcion: articulo.rubro?.Rubro || articulo.Rubro || 'Sin rubro',
+          },
           proveedor: {
             IdProveedor: 0,
             Nombre: 'Sin proveedor'

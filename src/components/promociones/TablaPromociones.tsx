@@ -4,7 +4,12 @@ import { Box, Paper, Table, TableBody, TableCell, TableContainer, TableHead, Tab
 import { IconSearch, IconDiscount2, IconCalendar, IconEdit, IconTrash, IconPlus } from "@tabler/icons-react";
 import { ModalBase } from "@/ui/ModalBase";
 import { useMutation, useQuery } from "@apollo/client/react";
-import { ACTUALIZAR_PROMOCION, CREAR_PROMOCION, ELIMINAR_PROMOCION, GET_PROMOCIONES } from "@/app/queries/mudras.queries";
+import { GET_PROMOCIONES } from '@/components/promociones/graphql/queries';
+import {
+  ACTUALIZAR_PROMOCION,
+  CREAR_PROMOCION,
+  ELIMINAR_PROMOCION,
+} from '@/components/promociones/graphql/mutations';
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";

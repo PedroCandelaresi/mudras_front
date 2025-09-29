@@ -3,7 +3,7 @@
 import { Grid } from '@mui/material';
 import ProductCarousel from '@/app/components/apps/ecommerce/productDetail/ProductCarousel';
 import Breadcrumb from '@/app/(DashboardLayout)/layout/shared/breadcrumb/Breadcrumb';
-import PageContainer from '@/app/components/container/PageContainer';
+import PageContainer from '@/components/container/PageContainer';
 import ProductDetail from '@/app/components/apps/ecommerce/productDetail';
 import ProductDesc from '@/app/components/apps/ecommerce/productDetail/ProductDesc';
 import ProductRelated from '@/app/components/apps/ecommerce/productDetail/ProductRelated';

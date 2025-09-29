@@ -1,6 +1,6 @@
 import React from "react";
 import Breadcrumb from "@/app/(DashboardLayout)/layout/shared/breadcrumb/Breadcrumb";
-import PageContainer from "@/app/components/container/PageContainer";
+import PageContainer from "@/components/container/PageContainer";
 import AppCard from "@/app/components/shared/AppCard";
 import ChatsApp from "@/app/components/apps/chats";
 import { ChatProvider } from '@/app/context/ChatContext/index'

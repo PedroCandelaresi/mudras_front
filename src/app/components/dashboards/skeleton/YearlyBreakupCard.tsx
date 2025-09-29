@@ -1,5 +1,5 @@
 import { Grid, Stack, Typography, Skeleton, Box } from '@mui/material';
-import DashboardCard from '../../shared/DashboardCard';
+import DashboardCard from '../../../../components/shared/DashboardCard';
 
 const SkeletonYearlyBreakupCard = () => {
     return (

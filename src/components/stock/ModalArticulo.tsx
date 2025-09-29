@@ -35,7 +35,7 @@ import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { es } from 'date-fns/locale';
 
-import { CREAR_ARTICULO, ACTUALIZAR_ARTICULO } from '@/mutations/articulos';
+import { CREAR_ARTICULO, ACTUALIZAR_ARTICULO } from '@/components/articulos/graphql/mutations';
 import { Articulo, CrearArticuloDto, ActualizarArticuloDto, EstadoArticulo, UNIDADES_MEDIDA, TIPOS_EMPAQUE } from '@/interfaces/articulo';
 
 interface ModalArticuloProps {

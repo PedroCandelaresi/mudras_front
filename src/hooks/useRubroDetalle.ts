@@ -1,12 +1,12 @@
 import { useState, useCallback, useEffect } from 'react';
 import { useMutation, useLazyQuery } from '@apollo/client/react';
-import { 
-  GET_PROVEEDORES_POR_RUBRO,
-  GET_ARTICULOS_POR_RUBRO,
+import { GET_PROVEEDORES_POR_RUBRO } from '@/components/rubros/graphql/queries';
+import {
   ELIMINAR_PROVEEDOR_DE_RUBRO,
   ELIMINAR_ARTICULO_DE_RUBRO,
-  ELIMINAR_ARTICULOS_DE_RUBRO
-} from '@/queries/rubros';
+  ELIMINAR_ARTICULOS_DE_RUBRO,
+} from '@/components/rubros/graphql/mutations';
+import { BUSCAR_ARTICULOS } from '@/components/articulos/graphql/queries';
 
 export interface Proveedor {
   id: number;
@@ -71,7 +71,7 @@ export function useRubroDetalle(options: UseRubroDetalleOptions = {}): UseRubroD
     errorPolicy: 'all'
   });
 
-  const [getArticulos, { loading: loadingArticulos, data: dataArticulos, error: errorArticulosQuery }] = useLazyQuery(GET_ARTICULOS_POR_RUBRO, {
+  const [getArticulos, { loading: loadingArticulos, data: dataArticulos, error: errorArticulosQuery }] = useLazyQuery(BUSCAR_ARTICULOS, {
     errorPolicy: 'all'
   });
 
@@ -85,8 +85,21 @@ export function useRubroDetalle(options: UseRubroDetalleOptions = {}): UseRubroD
 
   useEffect(() => {
     if (dataArticulos) {
-      setArticulos((dataArticulos as any)?.articulosPorRubro?.articulos || []);
-      setTotalArticulos((dataArticulos as any)?.articulosPorRubro?.total || 0);
+      const articulosResponse = (dataArticulos as any)?.buscarArticulos ?? {};
+      const articulosList = Array.isArray(articulosResponse?.articulos) ? articulosResponse.articulos : [];
+
+      setArticulos(articulosList.map((articulo: any) => ({
+        id: articulo?.id ?? 0,
+        codigo: articulo?.Codigo ?? '',
+        descripcion: articulo?.Descripcion ?? '',
+        precio: articulo?.PrecioVenta ?? 0,
+        stock: articulo?.Deposito ?? 0,
+        proveedor: articulo?.proveedor ? {
+          id: articulo.proveedor.IdProveedor ?? 0,
+          nombre: articulo.proveedor.Nombre ?? ''
+        } : undefined,
+      })));
+      setTotalArticulos(articulosResponse?.total ?? 0);
       setErrorArticulos('');
     }
   }, [dataArticulos]);
@@ -134,8 +147,18 @@ export function useRubroDetalle(options: UseRubroDetalleOptions = {}): UseRubroD
   ) => {
     try {
       setErrorArticulos('');
+      const pagina = Math.floor((offset ?? 0) / (limit || 1));
       await getArticulos({ 
-        variables: { rubroId, filtro, offset, limit } 
+        variables: { 
+          filtros: {
+            rubroId,
+            busqueda: filtro || undefined,
+            pagina,
+            limite: limit,
+            ordenarPor: 'Descripcion',
+            direccionOrden: 'ASC'
+          }
+        }
       });
     } catch (error) {
       console.error('Error al cargar artículos:', error);

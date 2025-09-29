@@ -1,3 +1,4 @@
+// /home/candelaresi/proyectos/mudras/frontend/src/components/proveedores/ModalEditarProveedor.tsx
 'use client';
 import {
   Dialog,
@@ -20,7 +21,7 @@ import { useState, useEffect } from 'react';
 import { IconX } from '@tabler/icons-react';
 import { azul } from '@/ui/colores';
 import { useMutation } from '@apollo/client/react';
-import { CREAR_PROVEEDOR, ACTUALIZAR_PROVEEDOR } from '@/queries/proveedores';
+import { CREAR_PROVEEDOR, ACTUALIZAR_PROVEEDOR } from '@/components/proveedores/graphql/mutations';
 import { Proveedor, CreateProveedorInput, UpdateProveedorInput } from '@/interfaces/proveedores';
 
 interface ModalEditarProveedorProps {

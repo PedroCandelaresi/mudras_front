@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { apiFetch } from '@/lib/api';
 import { Box, Button, Chip, CircularProgress, IconButton, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TablePagination, TableRow, Tooltip, Typography, TextField, InputAdornment, Menu, Divider, Stack } from '@mui/material';
 import { IconEdit, IconTrash, IconUserShield } from '@tabler/icons-react';
@@ -47,7 +47,7 @@ export function UserTable({ onCrear, onEditar, onRoles, onEliminar, refetchToken
     estado: '',
   });
 
-  async function cargar() {
+  const cargar = useCallback(async () => {
     try {
       setCargando(true);
       const qp = new URLSearchParams({ pagina: String(pagina), limite: String(limite) });
@@ -69,12 +69,11 @@ export function UserTable({ onCrear, onEditar, onRoles, onEliminar, refetchToken
     } finally {
       setCargando(false);
     }
-  }
+  }, [pagina, limite, filtro, filtrosColumna]);
 
   useEffect(() => {
     cargar();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [pagina, limite, refetchToken, filtro, filtrosColumna]);
+  }, [cargar, refetchToken]);
 
   const limpiarFiltros = () => {
     setFiltro('');

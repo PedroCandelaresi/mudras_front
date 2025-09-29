@@ -1,6 +1,6 @@
 'use client';
 import { Alert, Box, Snackbar, Typography, Tabs, Tab, Paper, Button } from '@mui/material';
-import PageContainer from '@/app/components/container/PageContainer';
+import PageContainer from '@/components/container/PageContainer';
 import React from 'react';
 import { UserTable, type UsuarioListado } from '@/components/usuarios/UserTable';
 import { CreateUserModal, type CrearUsuarioForm } from '@/components/usuarios/CreateUserModal';
@@ -17,7 +17,7 @@ import { CreatePermisoModal, type CrearPermisoForm } from '@/components/permisos
 import { EditPermisoModal, type EditarPermisoForm } from '@/components/permisos/EditPermisoModal';
 import { Icon } from '@iconify/react';
 import { useSearchParams } from 'next/navigation';
-import { TexturedPanel } from '@/app/components/ui-components/TexturedFrame/TexturedPanel';
+import { TexturedPanel } from '@/components/ui/TexturedFrame/TexturedPanel';
 
 export default function Usuarios() {
   const { tienePermiso } = usePermisos();

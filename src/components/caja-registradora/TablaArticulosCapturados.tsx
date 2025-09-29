@@ -26,9 +26,8 @@ import {
   IconX,
   IconShoppingCart,
 } from '@tabler/icons-react';
-import { ArticuloCaja } from '../../queries/caja-registradora';
 
-interface ArticuloCapturado {
+export interface ArticuloCapturado {
   id: number;
   Codigo: string;
   Descripcion: string;
@@ -42,8 +41,10 @@ interface ArticuloCapturado {
   Unidad: string;
   Rubro: string;
   rubro: {
-    id: number;
-    Descripcion: string;
+    id?: number;
+    Descripcion?: string;
+    Id?: number;
+    Rubro?: string;
   };
   proveedor: {
     IdProveedor: number;

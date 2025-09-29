@@ -8,7 +8,7 @@ import MultipleValuesAutocomplete from "@/app/components/forms/form-elements/aut
 import CheckboxesAutocomplete from "@/app/components/forms/form-elements/autoComplete/CheckboxesAutocomplete";
 import SizesAutocomplete from "@/app/components/forms/form-elements/autoComplete/SizesAutocomplete";
 
-import PageContainer from "@/app/components/container/PageContainer";
+import PageContainer from "@/components/container/PageContainer";
 import Breadcrumb from "@/app/(DashboardLayout)/layout/shared/breadcrumb/Breadcrumb";
 import ParentCard from "@/app/components/shared/ParentCard";
 import ChildCard from "@/app/components/shared/ChildCard";

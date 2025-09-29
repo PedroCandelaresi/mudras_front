@@ -4,7 +4,7 @@ import dynamic from "next/dynamic";
 const Chart = dynamic(() => import("react-apexcharts"), { ssr: false });
 import { useTheme } from "@mui/material/styles";
 import { Stack, Typography, Avatar, Box } from "@mui/material";
-import DashboardCard from "../../shared/DashboardCard";
+import DashboardCard from "../../../../components/shared/DashboardCard";
 import SkeletonRevenueUpdatesCards from "../skeleton/RevenueUpdatesCard";
 import { ApexOptions } from "apexcharts";
 

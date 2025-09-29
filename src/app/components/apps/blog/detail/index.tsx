@@ -87,7 +87,7 @@ const BlogDetail = () => {
     }, 700);
 
     return () => clearTimeout(timer);
-  }, []);
+  }, [setLoading]);
 
   return (
     <Box>

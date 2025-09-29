@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { Grid, Box, Typography, Stack, useTheme, alpha } from "@mui/material";
-import PageContainer from "@/app/components/container/PageContainer";
+import PageContainer from "@/components/container/PageContainer";
 import AuthRegister from "../auth/authForms/AuthRegister";
 
 export default function Registro() {

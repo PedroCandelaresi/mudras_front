@@ -30,10 +30,10 @@ import {
 import {
   CREAR_PUNTO_MUDRAS,
   ACTUALIZAR_PUNTO_MUDRAS,
-  PuntoMudras,
-  CrearPuntoMudrasInput,
-  ActualizarPuntoMudrasInput,
-} from '../../queries/puntos-mudras';
+  type CrearPuntoMudrasInput,
+  type ActualizarPuntoMudrasInput,
+} from '@/components/puntos-mudras/graphql/mutations';
+import { type PuntoMudras } from '@/components/puntos-mudras/graphql/queries';
 
 export enum TipoPuntoMudras {
   VENTA = 'venta',
@@ -186,32 +186,37 @@ export const ModalPuntoMudras = ({
     setErrores({});
 
     try {
-      const input = {
+      const inputBase = {
         nombre: formulario.nombre.trim(),
-        tipo: tipo === 'venta' ? 'VENTA' : 'DEPOSITO',
-        direccion: formulario.direccion.trim(),
-        descripcion: formulario.descripcion.trim() || null,
-        telefono: formulario.telefono.trim() || null,
-        email: formulario.email.trim() || null,
+        direccion: formulario.direccion.trim() || undefined,
+        descripcion: formulario.descripcion.trim() || undefined,
+        telefono: formulario.telefono.trim() || undefined,
+        email: formulario.email.trim() || undefined,
         activo: formulario.activo,
         permiteVentasOnline: formulario.configuracionEspecial.ventasOnline,
         requiereAutorizacion: formulario.configuracionEspecial.requiereAutorizacion,
       };
 
       if (esEdicion && punto) {
+        const inputActualizacion: ActualizarPuntoMudrasInput = {
+          id: punto.id,
+          ...inputBase,
+        };
+
         await actualizarPunto({
           variables: {
-            id: punto.id,
-            input: {
-              id: punto.id,
-              ...input,
-            } as ActualizarPuntoMudrasInput,
+            input: inputActualizacion,
           },
         });
       } else {
+        const inputCreacion: CrearPuntoMudrasInput = {
+          ...inputBase,
+          tipo,
+        };
+
         await crearPunto({
           variables: {
-            input: input as CrearPuntoMudrasInput,
+            input: inputCreacion,
           },
         });
       }

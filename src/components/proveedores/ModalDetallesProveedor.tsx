@@ -1,3 +1,4 @@
+// /home/candelaresi/proyectos/mudras/frontend/src/components/proveedores/ModalDetallesProveedor.tsx
 'use client';
 import {
   Dialog,
@@ -31,7 +32,7 @@ import { Icon } from '@iconify/react';
 import { IconSearch, IconX, IconMail, IconPhone, IconMapPin, IconWorld } from '@tabler/icons-react';
 import { azul } from '@/ui/colores';
 import { useQuery } from '@apollo/client/react';
-import { GET_PROVEEDOR, GET_ARTICULOS_POR_PROVEEDOR } from '@/queries/proveedores';
+import { GET_PROVEEDOR, GET_ARTICULOS_POR_PROVEEDOR } from '@/components/proveedores/graphql/queries';
 import { 
   Proveedor, 
   Articulo, 

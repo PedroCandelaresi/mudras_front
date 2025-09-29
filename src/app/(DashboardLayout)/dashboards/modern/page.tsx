@@ -3,7 +3,7 @@ import React from "react";
 import { useEffect, useState } from "react";
 
 import { Grid, Box } from "@mui/material";
-import PageContainer from "@/app/components/container/PageContainer";
+import PageContainer from "@/components/container/PageContainer";
 // components
 import YearlyBreakup from "@/app/components/dashboards/modern/YearlyBreakup";
 import MonthlyEarnings from "@/app/components/dashboards/modern/MonthlyEarnings";

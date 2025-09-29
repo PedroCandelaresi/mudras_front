@@ -21,7 +21,8 @@ import {
   Autocomplete,
 } from "@mui/material";
 import { useQuery } from '@apollo/client/react';
-import { BUSCAR_ARTICULOS, GET_PROVEEDORES } from '@/app/queries/mudras.queries';
+import { BUSCAR_ARTICULOS } from '@/components/articulos/graphql/queries';
+import { GET_PROVEEDORES } from '@/components/proveedores/graphql/queries';
 import { Articulo } from '@/app/interfaces/mudras.types';
 import { BuscarArticulosResponse } from '@/app/interfaces/graphql.types';
 import { IconSearch, IconPackage, IconTrash, IconEdit, IconEye, IconPlus, IconDotsVertical, IconRefresh } from '@tabler/icons-react';

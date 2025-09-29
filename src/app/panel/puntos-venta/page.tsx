@@ -1,16 +1,19 @@
 'use client';
 import { Box, Typography, Paper, Tabs, Tab } from '@mui/material';
-import PageContainer from '@/app/components/container/PageContainer';
+import PageContainer from '@/components/container/PageContainer';
 import { useState, useEffect } from 'react';
 import { useQuery } from '@apollo/client/react';
 import { grisVerdoso } from '@/ui/colores';
 import { Icon } from '@iconify/react';
-import { OBTENER_PUNTOS_MUDRAS, ObtenerPuntosMudrasResponse } from '@/queries/puntos-mudras';
+import {
+  OBTENER_PUNTOS_MUDRAS,
+  type ObtenerPuntosMudrasResponse,
+} from '@/components/puntos-mudras/graphql/queries';
 import { PuntoMudras } from '@/interfaces/puntos-mudras';
 import TablaStockPuntoVenta from '@/components/stock/TablaStockPuntoVenta';
 import ModalModificarStockPunto from '@/components/stock/ModalModificarStockPunto';
 import ModalNuevaAsignacionStock from '@/components/stock/ModalNuevaAsignacionStock';
-import { TexturedPanel } from '@/app/components/ui-components/TexturedFrame/TexturedPanel';
+import { TexturedPanel } from '@/components/ui/TexturedFrame/TexturedPanel';
 
 export default function PuntosVenta() {
   const [tabValue, setTabValue] = useState(0);

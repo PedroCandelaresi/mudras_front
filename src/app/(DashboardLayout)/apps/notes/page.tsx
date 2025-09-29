@@ -1,5 +1,5 @@
 import Breadcrumb from "@/app/(DashboardLayout)/layout/shared/breadcrumb/Breadcrumb";
-import PageContainer from "@/app/components/container/PageContainer";
+import PageContainer from "@/components/container/PageContainer";
 import AppCard from "@/app/components/shared/AppCard";
 import NotesApp from "@/app/components/apps/notes";
 import { NotesProvider } from '@/app/context/NotesContext/index'

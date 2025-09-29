@@ -1,6 +1,6 @@
 import React from "react";
 import Breadcrumb from "@/app/(DashboardLayout)/layout/shared/breadcrumb/Breadcrumb";
-import PageContainer from "@/app/components/container/PageContainer";
+import PageContainer from "@/components/container/PageContainer";
 import { InvoiceProvider } from "@/app/context/InvoiceContext/index";
 import InvoiceDetail from "@/app/components/apps/invoice/Invoice-detail/index";
 import BlankCard from "@/app/components/shared/BlankCard";

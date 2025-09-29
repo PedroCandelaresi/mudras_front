@@ -2,7 +2,7 @@ import { Grid } from "@mui/material";
 import ParentCard from "@/app/components/shared/ParentCard";
 import ChildCard from "@/app/components/shared/ChildCard";
 import Breadcrumb from "@/app/(DashboardLayout)/layout/shared/breadcrumb/Breadcrumb";
-import PageContainer from "@/app/components/container/PageContainer";
+import PageContainer from "@/components/container/PageContainer";
 import ColorLabelRadio from "@/app/components/forms/form-elements/radio/ColorLabel";
 import DefaultRadio from "@/app/components/forms/form-elements/radio/Default";
 import ColorsRadio from "@/app/components/forms/form-elements/radio/Colors";

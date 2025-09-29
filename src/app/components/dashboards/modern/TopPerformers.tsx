@@ -1,5 +1,5 @@
 import React from 'react';
-import DashboardCard from '../../shared/DashboardCard';
+import DashboardCard from '../../../../components/shared/DashboardCard';
 import CustomSelect from '../../forms/theme-elements/CustomSelect';
 import {
   MenuItem,

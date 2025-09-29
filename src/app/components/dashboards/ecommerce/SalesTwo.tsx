@@ -5,7 +5,7 @@ const Chart = dynamic(() => import("react-apexcharts"), { ssr: false });
 import { useTheme } from "@mui/material/styles";
 import { Box, Typography } from "@mui/material";
 
-import DashboardCard from "../../shared/DashboardCard";
+import DashboardCard from "../../../../components/shared/DashboardCard";
 
 import { IconArrowUpRight, IconShoppingCart } from "@tabler/icons-react";
 import SkeletonSalesTwoCard from "../skeleton/SalesTwoCard";
