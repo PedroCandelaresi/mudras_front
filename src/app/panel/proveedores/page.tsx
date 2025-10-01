@@ -1,5 +1,6 @@
 'use client';
 import { Box } from '@mui/material';
+import { alpha, lighten, darken } from '@mui/material/styles';
 import CrystalButton, { CrystalSoftButton, forceWhiteIconsSX } from '@/components/ui/CrystalButton';
 import PageContainer from '@/components/container/PageContainer';
 import ProveedoresTable from '@/components/proveedores/TablaProveedores';
@@ -9,6 +10,56 @@ import { Icon } from '@iconify/react';
 import TablaRubros from '@/components/rubros/TablaRubros';
 import { TexturedPanel } from '@/components/ui/TexturedFrame/TexturedPanel';
 import { azul } from '@/ui/colores';
+
+const createBevelWrapper = (color: string) => {
+  const edgeWidth = 2;
+  const topHighlightColor = alpha(lighten(color, 0.7), 0.86);
+  const bottomShadowColor = alpha(darken(color, 0.7), 0.82);
+  const leftHighlightColor = alpha(lighten(color, 0.6), 0.8);
+  const rightShadowColor = alpha(darken(color, 0.6), 0.76);
+  const borderTint = alpha(lighten(color, 0.2), 0.6);
+  const innerLight = alpha(lighten(color, 0.58), 0.22);
+  const innerShadow = alpha(darken(color, 0.62), 0.26);
+
+  return {
+    position: 'relative' as const,
+    borderRadius: 2,
+    overflow: 'hidden' as const,
+    background: 'transparent',
+    '&::before': {
+      content: '""',
+      position: 'absolute',
+      inset: 0,
+      borderRadius: 'inherit',
+      pointerEvents: 'none' as const,
+      boxShadow: `
+        inset 0 ${edgeWidth}px 0 ${topHighlightColor},
+        inset 0 -${edgeWidth + 0.4}px 0 ${bottomShadowColor},
+        inset ${edgeWidth}px 0 0 ${leftHighlightColor},
+        inset -${edgeWidth + 0.4}px 0 0 ${rightShadowColor}
+      `,
+      zIndex: 3,
+    },
+    '&::after': {
+      content: '""',
+      position: 'absolute',
+      inset: edgeWidth,
+      borderRadius: 'inherit',
+      pointerEvents: 'none' as const,
+      border: `1px solid ${borderTint}`,
+      boxShadow: `
+        inset 0 ${edgeWidth * 5.2}px ${edgeWidth * 6.4}px ${innerLight},
+        inset 0 -${edgeWidth * 5.2}px ${edgeWidth * 6.4}px ${innerShadow}
+      `,
+      mixBlendMode: 'soft-light' as const,
+      zIndex: 2,
+    },
+    '& > *': {
+      position: 'relative',
+      zIndex: 1,
+    },
+  };
+};
 
 export default function Proveedores() {
   const [userRole] = useState<'admin' | 'diseñadora' | 'vendedor'>('admin');
@@ -22,7 +73,7 @@ export default function Proveedores() {
 
   return (
     <PageContainer title="Proveedores - Mudras" description="Gestión de proveedores">
-      <Box>
+      <Box sx={createBevelWrapper(activeColor)}>
         <TexturedPanel
           accent={activeColor}
           radius={14}
@@ -42,8 +93,7 @@ export default function Proveedores() {
           vignetteStrength={0.9}
         >
           {/* Tabs */}
-          {/* Tabs */}
-          <Box sx={{ bgcolor: 'transparent', px: 2, py: 1.5 }}>
+          <Box sx={{ bgcolor: 'transparent', px: 1, py: 1.5 }}>
             <Box sx={{ display: 'flex', gap: 1 }}>
               {/* Proveedores (azul) */}
               {tabValue === 0 ? (
@@ -51,7 +101,7 @@ export default function Proveedores() {
                   baseColor={azul.primary}
                   startIcon={<Icon icon="mdi:account-group" />}
                   onClick={() => setTabValue(0)}
-                  sx={{ ...forceWhiteIconsSX, minHeight: 40, borderRadius: 12, px: 2 }}
+                  sx={{ ...forceWhiteIconsSX, minHeight: 40, borderRadius: 1, px: 2 }}
                 >
                   Proveedores
                 </CrystalButton>
@@ -60,7 +110,7 @@ export default function Proveedores() {
                   baseColor={azul.primary}
                   startIcon={<Icon icon="mdi:account-group" />}
                   onClick={() => setTabValue(0)}
-                  sx={{ ...forceWhiteIconsSX, minHeight: 40, borderRadius: 12, px: 2 }}
+                  sx={{ ...forceWhiteIconsSX, minHeight: 40, borderRadius: 1, px: 2 }}
                 >
                   Proveedores
                 </CrystalSoftButton>
@@ -72,7 +122,7 @@ export default function Proveedores() {
                   baseColor={marron.primary}
                   startIcon={<Icon icon="mdi:tag" />}
                   onClick={() => setTabValue(1)}
-                  sx={{ ...forceWhiteIconsSX, minHeight: 40, borderRadius: 12, px: 2 }}
+                  sx={{ ...forceWhiteIconsSX, minHeight: 40, borderRadius: 1, px: 2 }}
                 >
                   Rubros
                 </CrystalButton>
@@ -81,7 +131,7 @@ export default function Proveedores() {
                   baseColor={marron.primary}
                   startIcon={<Icon icon="mdi:tag" />}
                   onClick={() => setTabValue(1)}
-                  sx={{ ...forceWhiteIconsSX, minHeight: 40, borderRadius: 12, px: 2 }}
+                  sx={{ ...forceWhiteIconsSX, minHeight: 40, borderRadius: 1, px: 2 }}
                 >
                   Rubros
                 </CrystalSoftButton>
@@ -96,7 +146,6 @@ export default function Proveedores() {
                 <Box
                   // wrapper tenue azul para acompañar la tabla
                   sx={{
-                    p: 1,
                     borderRadius: 2,
                     bgcolor: baseBg,
                     transition: 'background-color .2s ease',
@@ -118,7 +167,6 @@ export default function Proveedores() {
                 <Box
                   // wrapper tenue frambuesa
                   sx={{
-                    p: 1,
                     borderRadius: 2,
                     bgcolor: baseBg,
                     transition: 'background-color .2s ease',

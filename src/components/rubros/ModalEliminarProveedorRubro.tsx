@@ -10,13 +10,13 @@ import {
   Typography,
   TextField,
   IconButton,
-  Button,
   InputAdornment,
 } from '@mui/material';
 import { alpha } from '@mui/material/styles';
 import { IconAlertTriangle, IconX } from '@tabler/icons-react';
 
 import { marron } from './colores-marron';
+import CrystalButton, { CrystalSoftButton } from '@/components/ui/CrystalButton';
 
 interface Proveedor { id: number; nombre: string }
 interface Rubro { id: number; nombre: string }
@@ -76,15 +76,35 @@ export function ModalEliminarProveedorRubro({ open, onClose, onConfirm, proveedo
           </Box>
         </Box>
       </DialogContent>
-      <DialogActions sx={{ p: 4, pt: 2, bgcolor: alpha(ACCENT, 0.08), borderTop: '1px solid #eee' }}>
-        <Button onClick={onClose} sx={{ textTransform: 'none', borderRadius: 2, px: 3, color: 'text.secondary', border: '1px solid #ddd', '&:hover': { bgcolor: '#f5f5f5' } }}>Cancelar</Button>
-        <Button
+      <DialogActions sx={{ p: 4, pt: 2, bgcolor: alpha(ACCENT, 0.08), borderTop: '1px solid #eee', gap: 1.5 }}>
+        <CrystalSoftButton
+          baseColor={ACCENT}
+          onClick={onClose}
+          sx={{
+            minHeight: 42,
+            px: 3,
+            fontWeight: 600,
+            color: marron.textStrong,
+          }}
+        >
+          Cancelar
+        </CrystalSoftButton>
+        <CrystalButton
+          baseColor={ACCENT}
           onClick={onConfirm}
           disabled={textoConfirmacion !== 'ELIMINAR'}
-          sx={{ textTransform: 'none', borderRadius: 2, px: 4, bgcolor: ACCENT, color: 'white', fontWeight: 600, '&:hover': { bgcolor: ACCENT_DARK }, '&:disabled': { bgcolor: '#ccc', color: '#999' } }}
+          sx={{
+            minHeight: 42,
+            px: 4,
+            fontWeight: 700,
+            '&:disabled': {
+              opacity: 0.55,
+              boxShadow: 'none',
+            },
+          }}
         >
           ⚠️ ELIMINAR PROVEEDOR
-        </Button>
+        </CrystalButton>
       </DialogActions>
     </Dialog>
   );

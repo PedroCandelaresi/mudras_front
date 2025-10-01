@@ -1,48 +1,95 @@
+// /src/components/proveedores/TablaProveedores.tsx
 'use client';
+
+import React, { useMemo, useState } from 'react';
 import {
-  Box, Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
-  Typography, Paper, Avatar, Skeleton, TextField, InputAdornment, Button,
+  Box,
+  Paper,
+  Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
+  Typography, Avatar, Skeleton, TextField, InputAdornment, Button,
   IconButton, Tooltip, Menu, Divider, Stack
-} from "@mui/material";
+} from '@mui/material';
+import { alpha } from '@mui/material/styles';
 import { useQuery } from '@apollo/client/react';
+
 import { GET_PROVEEDORES } from '@/components/proveedores/graphql/queries';
 import { Proveedor, ProveedoresResponse } from '@/interfaces/proveedores';
+
 import {
   IconSearch, IconUsers, IconRefresh, IconPhone, IconMail,
   IconEdit, IconTrash, IconEye, IconPlus, IconDotsVertical
 } from '@tabler/icons-react';
-import { useMemo, useState } from 'react';
-import { azul } from '@/ui/colores';
+
+import { marron, azul, verde } from '@/ui/colores';
+import { crearConfiguracionBisel, crearEstilosBisel } from '@/components/ui/bevel';
+import { WoodBackdrop } from '@/components/ui/TexturedFrame/WoodBackdrop';
+import CrystalButton, { CrystalIconButton, CrystalSoftButton } from '@/components/ui/CrystalButton';
+
 import {
   ModalDetallesProveedor,
   ModalEditarProveedor,
   ModalEliminarProveedor
 } from '@/components/proveedores';
 
+/* ======================== Tipos ======================== */
 type ColKey = 'nombre' | 'codigo' | 'cuit';
 type ColFilters = Partial<Record<ColKey, string>>;
 
 interface Props {
-  // toolbar / crear
   onNuevoProveedor?: () => void;
   puedeCrear?: boolean;
 
-  // flags para usar MODALES internos (on by default)
   showViewModal?: boolean;
   showEditModal?: boolean;
   showDeleteModal?: boolean;
 
-  // callbacks externos (si los pasás, NO se abre el modal interno)
   onView?: (p: Proveedor) => void;
   onEdit?: (p: Proveedor) => void;
   onDelete?: (p: Proveedor) => void;
 
-  // opcional: ocultar botones de acción específicos (independiente de modales/callbacks)
   hideViewAction?: boolean;
   hideEditAction?: boolean;
   hideDeleteAction?: boolean;
 }
 
+/* ======================== Estética (match Rubros) ======================== */
+// Usamos el mismo marco con madera, pero “tint” más frío para respetar la temática azul.
+const accentExterior = azul.primary;
+const accentInterior = azul.borderInner ?? '#2f475f';
+const woodTintExterior = '#b7c9dc';   // leve tinte frío sobre madera
+const woodTintInterior = '#a9bfd7';
+
+const tableBodyBg = 'rgba(236, 245, 255, 0.55)';
+const tableBodyAlt = 'rgba(173, 208, 255, 0.20)';
+
+const biselExteriorConfig = crearConfiguracionBisel(accentExterior, 1.5);
+const estilosBiselExterior = crearEstilosBisel(biselExteriorConfig, { zContenido: 2 });
+
+const WoodSection: React.FC<React.PropsWithChildren> = ({ children }) => (
+  <Box
+    sx={{
+      position: 'relative',
+      borderRadius: 2,
+      overflow: 'hidden',
+      boxShadow: '0 18px 40px rgba(0,0,0,0.12)',
+      background: 'transparent',
+      ...estilosBiselExterior,
+    }}
+  >
+    <WoodBackdrop accent={woodTintExterior} radius={3} inset={0} strength={0.18} texture="tabla" />
+    <Box
+      sx={{
+        position: 'absolute',
+        inset: 0,
+        backgroundColor: alpha('#f5fbff', 0.78),
+        zIndex: 0,
+      }}
+    />
+    <Box sx={{ position: 'relative', zIndex: 2, p: 3 }}>{children}</Box>
+  </Box>
+);
+
+/* ======================== Componente ======================== */
 const TablaProveedores: React.FC<Props> = ({
   onNuevoProveedor,
   puedeCrear = true,
@@ -113,7 +160,6 @@ const TablaProveedores: React.FC<Props> = ({
     [proveedoresFiltrados, page, rowsPerPage]
   );
 
-  // helpers
   const generarNumerosPaginas = () => {
     const paginas: (number | '...')[] = [];
     const maxVisible = 7;
@@ -189,13 +235,28 @@ const TablaProveedores: React.FC<Props> = ({
     setPage(0);
   };
 
-  // loading / error
+  /* ======================== Loading / Error ======================== */
   if (loading) {
     return (
-      <Paper elevation={0} sx={{ p: 3, border: 'none', boxShadow: 'none', borderRadius: 2, bgcolor: 'background.paper' }}>
-        <Typography variant="h5" mb={3}>Proveedores</Typography>
-        <TableContainer>
-          <Table>
+      <WoodSection>
+        <Box sx={{ px: 1, py: 1, mb: 2 }}>
+          <Typography variant="h6" fontWeight={700} color={azul.textStrong}>
+            <IconUsers style={{ marginRight: 8, verticalAlign: 'middle' }} />
+            Proveedores
+          </Typography>
+        </Box>
+        <TableContainer
+          sx={{
+            border: '1px solid',
+            borderColor: alpha(accentInterior, 0.38),
+            borderRadius: 0,
+            overflow: 'hidden',
+            bgcolor: 'rgba(245, 251, 255, 0.9)',
+          }}
+        >
+          <WoodBackdrop accent={woodTintInterior} radius={0} inset={0} strength={0.12} texture="tabla" />
+          <Box sx={{ position: 'absolute', inset: 0, backgroundColor: alpha('#f5fbff', 0.82), zIndex: 0 }} />
+          <Table size="small" sx={{ position: 'relative', zIndex: 2 }}>
             <TableHead>
               <TableRow>
                 {['Proveedor', 'Código', 'Teléfono', 'Email', 'CUIT'].map((h) => (
@@ -214,239 +275,358 @@ const TablaProveedores: React.FC<Props> = ({
             </TableBody>
           </Table>
         </TableContainer>
-      </Paper>
+      </WoodSection>
     );
   }
 
   if (error) {
     return (
-      <Paper elevation={0} sx={{ p: 3, textAlign: 'center', border: 'none', boxShadow: 'none', borderRadius: 2, bgcolor: 'background.paper' }}>
-        <Typography color="error" variant="h6" mb={2}>Error al cargar proveedores</Typography>
-        <Typography color="text.secondary" mb={2}>{error.message}</Typography>
-        <Button variant="contained" color="warning" startIcon={<IconRefresh />} onClick={() => refetch()}>
+      <WoodSection>
+        <Typography color="error" variant="h6" mb={2}>
+          Error al cargar proveedores
+        </Typography>
+        <Typography color="text.secondary" mb={2}>
+          {error.message}
+        </Typography>
+        <CrystalButton
+          baseColor={azul.primary}
+          startIcon={<IconRefresh />}
+          onClick={() => refetch()}
+        >
           Reintentar
-        </Button>
-      </Paper>
+        </CrystalButton>
+      </WoodSection>
     );
   }
 
-  return (
-    <Paper elevation={0} sx={{ p: 3, border: 'none', boxShadow: 'none', borderRadius: 2, bgcolor: 'background.paper' }}>
-      {/* Toolbar */}
-      <Box display="flex" justifyContent="space-between" alignItems="center"
-        sx={{ px: 1, py: 1, bgcolor: azul.toolbarBg, border: '1px solid', borderColor: azul.toolbarBorder, borderRadius: 1, mb: 2 }}>
-        <Typography variant="h6" fontWeight={700} color={azul.textStrong}>
-          <IconUsers style={{ marginRight: 8, verticalAlign: 'middle' }} /> Proveedores
-        </Typography>
-        <Box display="flex" alignItems="center" gap={1.5}>
-          {puedeCrear && (
-            <Button variant="contained"
-              onClick={handleNuevoProveedor}
-              sx={{ textTransform: 'none', bgcolor: azul.primary, '&:hover': { bgcolor: azul.primaryHover } }}
-              startIcon={<IconPlus size={18} />}>
-              Nuevo Proveedor
-            </Button>
-          )}
-          <TextField
-            size="small"
-            placeholder="Buscar proveedores..."
-            value={filtro}
-            onChange={(e) => setFiltro(e.target.value)}
-            onKeyDown={(e) => { if (e.key === 'Enter') setPage(0); }}
-            InputProps={{ startAdornment: (<InputAdornment position="start"><IconSearch size={20} /></InputAdornment>) }}
-            sx={{ minWidth: 250 }}
-          />
-          <Button variant="contained"
-            sx={{ textTransform: 'none', bgcolor: azul.primary, '&:hover': { bgcolor: azul.primaryHover } }}
-            onClick={() => setPage(0)}>
-            Buscar
-          </Button>
-          <Button variant="outlined" color="inherit"
-            onClick={() => { setFiltro(''); setFiltrosColumna({}); setPage(0); }}
-            sx={{ textTransform: 'none', borderColor: azul.headerBorder, color: azul.textStrong, '&:hover': { borderColor: azul.textStrong, bgcolor: azul.toolbarBg } }}>
-            Limpiar filtros
-          </Button>
-        </Box>
+  /* ======================== Toolbar ======================== */
+  const toolbar = (
+    <Box
+      display="flex"
+      justifyContent="space-between"
+      alignItems="center"
+      sx={{ px: 1, py: 1, mb: 2, borderRadius: 0, border: '0px' }}
+    >
+      <Typography variant="h6" fontWeight={700} color={azul.textStrong}>
+        <IconUsers style={{ marginRight: 8, verticalAlign: 'middle' }} />
+        Proveedores
+      </Typography>
+      <Box display="flex" alignItems="center" gap={1.5}>
+        {puedeCrear && (
+          <CrystalButton
+            baseColor={azul.primary}
+            startIcon={<IconPlus size={18} />}
+            onClick={handleNuevoProveedor}
+          >
+            Nuevo Proveedor
+          </CrystalButton>
+        )}
+        <TextField
+          size="small"
+          placeholder="Buscar proveedores..."
+          value={filtro}
+          onChange={(e) => setFiltro(e.target.value)}
+          onKeyDown={(e) => { if (e.key === 'Enter') setPage(0); }}
+          InputProps={{
+            startAdornment: (
+              <InputAdornment position="start">
+                <IconSearch size={20} />
+              </InputAdornment>
+            ),
+          }}
+          sx={{
+            minWidth: 250,
+            '& .MuiOutlinedInput-root': {
+              backgroundColor: 'rgba(241, 248, 255, 0.6)',
+              backdropFilter: 'saturate(125%) blur(0.5px)',
+              borderRadius: 2,
+            },
+            '& .MuiOutlinedInput-root fieldset': { borderColor: alpha(accentExterior, 0.35) },
+            '& .MuiOutlinedInput-root:hover fieldset': { borderColor: alpha(accentExterior, 0.5) },
+            '& .MuiOutlinedInput-root.Mui-focused fieldset': { borderColor: azul.primary },
+          }}
+        />
+        <Tooltip title="Buscar (Enter)">
+          <span>
+            <CrystalButton
+              baseColor={azul.primary}
+              startIcon={<IconSearch size={18} />}
+              onClick={() => setPage(0)}
+            >
+              Buscar
+            </CrystalButton>
+          </span>
+        </Tooltip>
+        <CrystalSoftButton
+          baseColor={azul.primary}
+          startIcon={<IconRefresh />}
+          onClick={() => { setFiltro(''); setFiltrosColumna({}); setPage(0); }}
+        >
+          Limpiar filtros
+        </CrystalSoftButton>
       </Box>
+    </Box>
+  );
 
-      {/* Tabla */}
-      <TableContainer sx={{ borderRadius: 2, border: '1px solid', borderColor: azul.borderInner, bgcolor: 'background.paper' }}>
-        <Table stickyHeader size="small" sx={{ '& .MuiTableCell-head': { bgcolor: azul.headerBg, color: azul.headerText } }}>
-          <TableHead>
-            <TableRow sx={{ '& th': { borderBottom: '3px solid', borderColor: azul.headerBorder } }}>
-              {/* Proveedor */}
-              <TableCell sx={{ fontWeight: 700, color: azul.headerText }}>
-                <Box display="flex" alignItems="center" justifyContent="space-between">
-                  Proveedor
-                  <Tooltip title="Filtrar columna">
-                    <IconButton size="small" color="inherit"
-                      onClick={(e) => { setColumnaActiva('nombre'); setFiltroColInput(filtrosColumna.nombre || ''); setMenuAnchor(e.currentTarget); }}>
-                      <IconDotsVertical size={16} />
-                    </IconButton>
-                  </Tooltip>
-                </Box>
-              </TableCell>
-
-              {/* Código */}
-              <TableCell sx={{ fontWeight: 700, color: azul.headerText }}>
-                <Box display="flex" alignItems="center" justifyContent="space-between">
-                  Código
-                  <Tooltip title="Filtrar columna">
-                    <IconButton size="small" color="inherit"
-                      onClick={(e) => { setColumnaActiva('codigo'); setFiltroColInput(filtrosColumna.codigo || ''); setMenuAnchor(e.currentTarget); }}>
-                      <IconDotsVertical size={16} />
-                    </IconButton>
-                  </Tooltip>
-                </Box>
-              </TableCell>
-
-              <TableCell sx={{ fontWeight: 700, color: azul.headerText }}>Teléfono</TableCell>
-              <TableCell sx={{ fontWeight: 700, color: azul.headerText }}>Email</TableCell>
-
-              {/* CUIT */}
-              <TableCell sx={{ fontWeight: 700, color: azul.headerText }}>
-                <Box display="flex" alignItems="center" justifyContent="space-between">
-                  CUIT
-                  <Tooltip title="Filtrar columna">
-                    <IconButton size="small" color="inherit"
-                      onClick={(e) => { setColumnaActiva('cuit'); setFiltroColInput(filtrosColumna.cuit || ''); setMenuAnchor(e.currentTarget); }}>
-                      <IconDotsVertical size={16} />
-                    </IconButton>
-                  </Tooltip>
-                </Box>
-              </TableCell>
-
-              <TableCell sx={{ fontWeight: 700, color: azul.headerText, textAlign: 'center' }}>Acciones</TableCell>
-            </TableRow>
-          </TableHead>
-
-          <TableBody>
-            {proveedoresPaginados.map((proveedor, idx) => (
-              <TableRow key={proveedor.IdProveedor}
-                sx={{ bgcolor: idx % 2 === 1 ? 'grey.50' : 'inherit', '&:hover': { bgcolor: azul.rowHover } }}>
-                <TableCell>
-                  <Box display="flex" alignItems="center">
-                    <Avatar sx={{ bgcolor: azul.primary, width: 40, height: 40, mr: 2, fontSize: '1rem' }}>
-                      {proveedor.Nombre?.charAt(0) || 'P'}
-                    </Avatar>
-                    <Typography variant="body2" fontWeight={600}>{proveedor.Nombre || 'Sin nombre'}</Typography>
-                  </Box>
-                </TableCell>
-
-                <TableCell>
-                  <Typography variant="body2" fontWeight={600} fontFamily="monospace">
-                    {proveedor.Codigo || 'N/A'}
-                  </Typography>
-                </TableCell>
-
-                <TableCell>
-                  {!!proveedor.Telefono && (
-                    <Box display="flex" alignItems="center">
-                      <IconPhone size={16} style={{ marginRight: 4, color: '#666' }} />
-                      <Typography variant="body2">{proveedor.Telefono}</Typography>
-                    </Box>
-                  )}
-                </TableCell>
-
-                <TableCell>
-                  {!!proveedor.Mail && (
-                    <Box display="flex" alignItems="center">
-                      <IconMail size={16} style={{ marginRight: 4, color: '#666' }} />
-                      <Typography variant="body2">{proveedor.Mail}</Typography>
-                    </Box>
-                  )}
-                </TableCell>
-
-                <TableCell>
-                  <Typography variant="body2" fontFamily="monospace">
-                    {proveedor.CUIT || 'Sin CUIT'}
-                  </Typography>
-                </TableCell>
-
-                <TableCell>
-                  <Box display="flex" justifyContent="center" gap={1}>
-                    {!hideViewAction && (onView || showViewModal) && (
-                      <Tooltip title="Ver detalles">
-                        <IconButton size="small" onClick={() => handleViewProveedor(proveedor)}
-                          sx={{ bgcolor: '#1976d2', color: 'white', borderRadius: 1.5, width: 32, height: 32, '&:hover': { bgcolor: '#1565c0' } }}>
-                          <IconEye size={18} />
-                        </IconButton>
-                      </Tooltip>
-                    )}
-
-                    {!hideEditAction && (onEdit || showEditModal) && (
-                      <Tooltip title="Editar proveedor">
-                        <IconButton size="small" onClick={() => handleEditProveedor(proveedor)}
-                          sx={{ bgcolor: '#2e7d32', color: 'white', borderRadius: 1.5, width: 32, height: 32, '&:hover': { bgcolor: '#1b5e20' } }}>
-                          <IconEdit size={18} />
-                        </IconButton>
-                      </Tooltip>
-                    )}
-
-                    {!hideDeleteAction && (onDelete || showDeleteModal) && (
-                      <Tooltip title="Eliminar proveedor">
-                        <IconButton size="small" onClick={() => handleDeleteProveedor(proveedor)}
-                          sx={{ bgcolor: '#d32f2f', color: 'white', borderRadius: 1.5, width: 32, height: 32, '&:hover': { bgcolor: '#c62828' } }}>
-                          <IconTrash size={18} />
-                        </IconButton>
-                      </Tooltip>
-                    )}
-                  </Box>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </TableContainer>
-
-      {/* Paginación */}
-      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', p: 2, borderTop: '1px solid', borderColor: 'divider' }}>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-          <Typography variant="body2" color="text.secondary">Filas por página:</Typography>
-          <TextField select size="small" value={rowsPerPage} onChange={handleChangeRowsPerPage} sx={{ minWidth: 80 }}>
-            {[50, 100, 150].map((o) => (<option key={o} value={o}>{o}</option>))}
-          </TextField>
-        </Box>
-
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-          <Typography variant="body2" color="text.secondary">
-            {`${page * rowsPerPage + 1}-${Math.min((page + 1) * rowsPerPage, proveedoresFiltrados.length)} de ${proveedoresFiltrados.length}`}
-          </Typography>
-
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-            {generarNumerosPaginas().map((n, i) => (
-              <Box key={i}>
-                {n === '...' ? (
-                  <Typography variant="body2" color="text.secondary" sx={{ px: 1 }}>…</Typography>
-                ) : (
-                  <Button
-                    size="small"
-                    variant={paginaActual === n ? 'contained' : 'text'}
-                    onClick={() => handleChangePage(null, (n as number) - 1)}
-                    sx={{
-                      minWidth: 32, height: 32, textTransform: 'none', fontSize: '0.875rem',
-                      ...(paginaActual === n
-                        ? { bgcolor: azul.primary, color: 'white', '&:hover': { bgcolor: azul.primaryHover } }
-                        : { color: 'text.secondary', '&:hover': { bgcolor: azul.rowHover } }),
-                    }}
+  /* ======================== Tabla ======================== */
+  const tabla = (
+    <TableContainer
+      sx={{
+        position: 'relative',
+        borderRadius: 0,
+        border: '1px solid',
+        borderColor: alpha(accentInterior, 0.38),
+        bgcolor: 'rgba(245, 251, 255, 0.94)',
+        backdropFilter: 'saturate(110%) blur(0.85px)',
+        overflow: 'hidden',
+        boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.55)',
+      }}
+    >
+      <WoodBackdrop accent={woodTintInterior} radius={0} inset={0} strength={0.12} texture="tabla" />
+      <Box
+        sx={{
+          position: 'absolute',
+          inset: 0,
+          backgroundColor: alpha('#f5fbff', 0.82),
+          zIndex: 0,
+        }}
+      />
+      <Table
+        stickyHeader
+        size="small"
+        sx={{
+          borderRadius: 0,
+          position: 'relative',
+          zIndex: 2,
+          bgcolor: tableBodyBg,
+          '& .MuiTableRow-root': { minHeight: 62 },
+          '& .MuiTableCell-root': {
+            fontSize: '0.75rem',
+            px: 1,
+            py: 1.1,
+            borderBottomColor: alpha(accentInterior, 0.35),
+            bgcolor: 'transparent',
+          },
+          '& .MuiTableBody-root .MuiTableRow-root:nth-of-type(odd) .MuiTableCell-root': {
+            bgcolor: tableBodyBg,
+          },
+          '& .MuiTableBody-root .MuiTableRow-root:nth-of-type(even) .MuiTableCell-root': {
+            bgcolor: tableBodyAlt,
+          },
+          '& .MuiTableBody-root .MuiTableRow-root.MuiTableRow-hover:hover .MuiTableCell-root': {
+            bgcolor: alpha('#a9c7e6', 0.50),
+          },
+          '& .MuiTableCell-head': {
+            fontSize: '0.75rem',
+            fontWeight: 600,
+            bgcolor: '#0D47A1',
+            color: alpha('#FFFFFF', 0.94),
+            boxShadow: 'inset 0 -1px 0 rgba(255, 255, 255, 0.12)',
+            textTransform: 'uppercase',
+            letterSpacing: 0.4,
+          },
+        }}
+      >
+        <TableHead>
+          <TableRow>
+            {/* Proveedor */}
+            <TableCell align="center">
+              <Box display="flex" alignItems="center" justifyContent="space-between">
+                Proveedor
+                <Tooltip title="Filtrar columna">
+                  <IconButton
+                    size="small" color="inherit"
+                    onClick={(e) => { setColumnaActiva('nombre'); setFiltroColInput(filtrosColumna.nombre || ''); setMenuAnchor(e.currentTarget); }}
                   >
-                    {n}
-                  </Button>
-                )}
+                    <IconDotsVertical size={16} />
+                  </IconButton>
+                </Tooltip>
               </Box>
-            ))}
-          </Box>
+            </TableCell>
 
-          <Box sx={{ display: 'flex', alignItems: 'center' }}>
-            <IconButton size="small" onClick={() => handleChangePage(null, 0)} disabled={page === 0} sx={{ color: 'text.secondary' }} title="Primera">⏮</IconButton>
-            <IconButton size="small" onClick={() => handleChangePage(null, page - 1)} disabled={page === 0} sx={{ color: 'text.secondary' }} title="Anterior">◀</IconButton>
-            <IconButton size="small" onClick={() => handleChangePage(null, page + 1)} disabled={page >= totalPaginas - 1} sx={{ color: 'text.secondary' }} title="Siguiente">▶</IconButton>
-            <IconButton size="small" onClick={() => handleChangePage(null, totalPaginas - 1)} disabled={page >= totalPaginas - 1} sx={{ color: 'text.secondary' }} title="Última">⏭</IconButton>
-          </Box>
-        </Box>
-      </Box>
+            {/* Código */}
+            <TableCell align="center">
+              <Box display="flex" alignItems="center" justifyContent="space-between">
+                Código
+                <Tooltip title="Filtrar columna">
+                  <IconButton
+                    size="small" color="inherit"
+                    onClick={(e) => { setColumnaActiva('codigo'); setFiltroColInput(filtrosColumna.codigo || ''); setMenuAnchor(e.currentTarget); }}
+                  >
+                    <IconDotsVertical size={16} />
+                  </IconButton>
+                </Tooltip>
+              </Box>
+            </TableCell>
 
-      {/* MENU de filtros por columna (visible siempre que lo necesites) */}
+            <TableCell align="center">Teléfono</TableCell>
+            <TableCell align="center">Email</TableCell>
+
+            {/* CUIT */}
+            <TableCell align="center">
+              <Box display="flex" alignItems="center" justifyContent="space-between">
+                CUIT
+                <Tooltip title="Filtrar columna">
+                  <IconButton
+                    size="small" color="inherit"
+                    onClick={(e) => { setColumnaActiva('cuit'); setFiltroColInput(filtrosColumna.cuit || ''); setMenuAnchor(e.currentTarget); }}
+                  >
+                    <IconDotsVertical size={16} />
+                  </IconButton>
+                </Tooltip>
+              </Box>
+            </TableCell>
+
+            <TableCell align="center">Acciones</TableCell>
+          </TableRow>
+        </TableHead>
+
+        <TableBody>
+          {proveedoresPaginados.map((proveedor, idx) => (
+            <TableRow key={proveedor.IdProveedor} hover>
+              <TableCell>
+                <Box display="flex" alignItems="center" gap={1}>
+                  <Avatar
+                    sx={{ bgcolor: azul.primary, width: 40, height: 40, fontSize: '1rem' }}
+                  >
+                    {proveedor.Nombre?.charAt(0) || 'P'}
+                  </Avatar>
+                  <Typography variant="body2" fontWeight={600}>
+                    {proveedor.Nombre || 'Sin nombre'}
+                  </Typography>
+                </Box>
+              </TableCell>
+
+              <TableCell>
+                <Typography variant="body2" fontWeight={600} fontFamily="monospace">
+                  {proveedor.Codigo || 'N/A'}
+                </Typography>
+              </TableCell>
+
+              <TableCell>
+                {!!proveedor.Telefono && (
+                  <Box display="flex" alignItems="center">
+                    <IconPhone size={16} style={{ marginRight: 4, color: '#666' }} />
+                    <Typography variant="body2">{proveedor.Telefono}</Typography>
+                  </Box>
+                )}
+              </TableCell>
+
+              <TableCell>
+                {!!proveedor.Mail && (
+                  <Box display="flex" alignItems="center">
+                    <IconMail size={16} style={{ marginRight: 4, color: '#666' }} />
+                    <Typography variant="body2">{proveedor.Mail}</Typography>
+                  </Box>
+                )}
+              </TableCell>
+
+              <TableCell>
+                <Typography variant="body2" fontFamily="monospace">
+                  {proveedor.CUIT || 'Sin CUIT'}
+                </Typography>
+              </TableCell>
+
+              <TableCell align="center">
+                <Box display="flex" justifyContent="center" gap={0.5}>
+                  {!hideViewAction && (onView || showViewModal) && (
+                    <Tooltip title="Ver detalles">
+                      <CrystalIconButton
+                        baseColor={azul.primary}
+                        onClick={() => handleViewProveedor(proveedor)}
+                      >
+                        <IconEye size={16} />
+                      </CrystalIconButton>
+                    </Tooltip>
+                  )}
+
+                  {!hideEditAction && (onEdit || showEditModal) && (
+                    <Tooltip title="Editar proveedor">
+                      <CrystalIconButton
+                        baseColor={verde.primary}
+                        onClick={() => handleEditProveedor(proveedor)}
+                      >
+                        <IconEdit size={16} />
+                      </CrystalIconButton>
+                    </Tooltip>
+                  )}
+
+                  {!hideDeleteAction && (onDelete || showDeleteModal) && (
+                    <Tooltip title="Eliminar proveedor">
+                      <CrystalIconButton
+                        baseColor="#c62828"
+                        onClick={() => handleDeleteProveedor(proveedor)}
+                      >
+                        <IconTrash size={16} />
+                      </CrystalIconButton>
+                    </Tooltip>
+                  )}
+                </Box>
+              </TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+    </TableContainer>
+  );
+
+  /* ======================== Paginador ======================== */
+  const paginador = (
+    <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mt: 3 }}>
+      <Typography variant="caption" color="text.secondary">
+        Mostrando {Math.min(rowsPerPage, proveedoresPaginados.length)} de {proveedoresFiltrados.length} proveedores
+      </Typography>
+      <Stack direction="row" spacing={1} alignItems="center">
+        <TextField select size="small" value={String(rowsPerPage)} onChange={handleChangeRowsPerPage} sx={{ minWidth: 80 }}>
+          {[50, 100, 150].map((option) => (<option key={option} value={option}>{option}</option>))}
+        </TextField>
+        <Typography variant="body2" color="text.secondary">
+          Página {paginaActual} de {Math.max(1, totalPaginas)}
+        </Typography>
+        {generarNumerosPaginas().map((num, idx) =>
+          num === '...' ? (
+            <CrystalSoftButton
+              key={idx}
+              baseColor={azul.primary}
+              disabled
+              sx={{ minWidth: 32, minHeight: 30, px: 1, py: 0.25, borderRadius: 2, color: azul.textStrong }}
+            >
+              ...
+            </CrystalSoftButton>
+          ) : (
+            <CrystalButton
+              key={num}
+              baseColor={azul.primary}
+              sx={{
+                minWidth: 32,
+                minHeight: 30,
+                px: 1,
+                py: 0.25,
+                borderRadius: 2,
+                fontWeight: Number(num) === paginaActual ? 800 : 600,
+                boxShadow: 'none',
+              }}
+              onClick={() => setPage(Number(num) - 1)}
+              disabled={num === paginaActual}
+            >
+              {num}
+            </CrystalButton>
+          )
+        )}
+      </Stack>
+    </Box>
+  );
+
+  /* ======================== Render ======================== */
+  return (
+    <>
+      <WoodSection>
+        {toolbar}
+        {tabla}
+        {paginador}
+      </WoodSection>
+
+      {/* Menú de filtros por columna */}
       <Menu
         anchorEl={menuAnchor}
         open={Boolean(menuAnchor)}
@@ -480,13 +660,18 @@ const TablaProveedores: React.FC<Props> = ({
               }}
             />
             <Stack direction="row" justifyContent="flex-end" spacing={1} mt={1}>
-              <Button size="small" onClick={() => { setFiltroColInput(''); setFiltrosColumna((prev) => ({ ...prev, [columnaActiva!]: '' })); }}>
-                Limpiar
-              </Button>
               <Button
                 size="small"
-                variant="contained"
-                sx={{ bgcolor: azul.primary, '&:hover': { bgcolor: azul.primaryHover } }}
+                onClick={() => {
+                  setFiltroColInput('');
+                  setFiltrosColumna((prev) => ({ ...prev, [columnaActiva!]: '' }));
+                }}
+              >
+                Limpiar
+              </Button>
+              <CrystalButton
+                size="small"
+                baseColor={azul.primary}
                 onClick={() => {
                   setFiltrosColumna((prev) => ({ ...prev, [columnaActiva!]: filtroColInput }));
                   setPage(0);
@@ -495,13 +680,13 @@ const TablaProveedores: React.FC<Props> = ({
                 }}
               >
                 Aplicar
-              </Button>
+              </CrystalButton>
             </Stack>
           </Box>
         )}
       </Menu>
 
-      {/* MODALES internos, montados según flags */}
+      {/* MODALES internos */}
       {showViewModal && (
         <ModalDetallesProveedor
           open={modalDetalles}
@@ -527,7 +712,7 @@ const TablaProveedores: React.FC<Props> = ({
           onProveedorEliminado={handleProveedorEliminado}
         />
       )}
-    </Paper>
+    </>
   );
 };
 

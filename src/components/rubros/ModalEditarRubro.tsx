@@ -10,7 +10,6 @@ import {
   TextField,
   Divider,
   Chip,
-  Button,
 } from '@mui/material';
 import { alpha, darken } from '@mui/material/styles';
 import { useState, useEffect, useMemo, useCallback } from 'react';
@@ -21,6 +20,7 @@ import { TexturedPanel } from '@/components/ui/TexturedFrame/TexturedPanel';
 import { WoodBackdrop } from '@/components/ui/TexturedFrame/WoodBackdrop';
 import { marron } from '@/components/rubros/colores-marron';
 import { ACTUALIZAR_RUBRO, CREAR_RUBRO } from '@/components/rubros/graphql/mutations';
+import CrystalButton, { CrystalIconButton, CrystalSoftButton } from '@/components/ui/CrystalButton';
 
 interface Rubro {
   id: number;
@@ -220,20 +220,20 @@ const ModalEditarRubro = ({ open, onClose, rubro, onSuccess, accentColor }: Moda
                     />
                   </>
                 )}
-                <Button
+                <CrystalIconButton
+                  baseColor={COLORS.primary}
                   onClick={handleClose}
                   sx={{
                     minWidth: 40,
                     height: 40,
                     borderRadius: '50%',
-                    p: 0,
                     background: 'rgba(0,0,0,0.28)',
                     color: '#fff',
                     '&:hover': { background: 'rgba(0,0,0,0.4)' },
                   }}
                 >
                   <Icon icon="mdi:close" width={20} height={20} />
-                </Button>
+                </CrystalIconButton>
               </Box>
             </Box>
           </DialogTitle>
@@ -395,43 +395,34 @@ const ModalEditarRubro = ({ open, onClose, rubro, onSuccess, accentColor }: Moda
 
           <DialogActions sx={{ p: 0, m: 0, minHeight: FOOTER_H }}>
             <Box sx={{ width: '100%', display: 'flex', justifyContent: 'flex-end', px: 3, py: 2.5, gap: 1.5 }}>
-              <Button
+              <CrystalSoftButton
+                baseColor={COLORS.primary}
                 onClick={handleClose}
                 disabled={saving}
-                variant="contained"
                 sx={{
-                  textTransform: 'none',
-                  borderRadius: 2,
+                  minHeight: 44,
                   px: 3,
-                  py: 1,
-                  bgcolor: 'grey.100',
-                  color: 'text.primary',
-                  boxShadow: 'none',
-                  '&:hover': { bgcolor: 'grey.200', boxShadow: 'none' },
+                  fontWeight: 600,
                 }}
               >
                 Cancelar
-              </Button>
-              <Button
+              </CrystalSoftButton>
+              <CrystalButton
+                baseColor={COLORS.primary}
                 onClick={handleSubmit}
                 disabled={!botonHabilitado}
-                variant="contained"
                 sx={{
-                  textTransform: 'none',
-                  borderRadius: 2,
+                  minHeight: 44,
                   px: 3,
-                  py: 1,
-                  bgcolor: botonHabilitado ? COLORS.primary : alpha(COLORS.primary, 0.4),
-                  color: '#fff',
-                  boxShadow: 'none',
-                  '&:hover': {
-                    bgcolor: botonHabilitado ? COLORS.primaryHover : alpha(COLORS.primary, 0.4),
+                  fontWeight: 700,
+                  '&:disabled': {
+                    opacity: 0.55,
                     boxShadow: 'none',
                   },
                 }}
               >
                 {saving ? 'Guardando…' : rubroEditando ? 'Actualizar Rubro' : 'Crear Rubro'}
-              </Button>
+              </CrystalButton>
             </Box>
           </DialogActions>
         </Box>
