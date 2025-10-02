@@ -1,908 +1,515 @@
-// /home/candelaresi/proyectos/mudras/frontend/src/components/proveedores/ModalDetallesProveedor.tsx
+// /src/components/proveedores/ModalDetallesProveedor.tsx
 'use client';
 import {
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  Typography,
-  Box,
-  Chip,
-  Grid,
-  Card,
-  CardContent,
-  Table,
-  TableHead,
-  TableBody,
-  TableCell,
-  TableRow,
-  TableContainer,
-  Paper,
-  TextField,
-  InputAdornment,
-  IconButton,
-  Button,
-  Divider,
-  Tooltip,
-  Skeleton,
-  CircularProgress
+  Dialog, DialogTitle, DialogContent, DialogActions,
+  Typography, Box, Chip, TextField, InputAdornment, Divider, Card, CardContent
 } from '@mui/material';
-import { useState, useEffect } from 'react';
+import { alpha, darken } from '@mui/material/styles';
+import { useState, useEffect, useMemo, useCallback, type ComponentProps } from 'react';
 import { Icon } from '@iconify/react';
-import { IconSearch, IconX, IconMail, IconPhone, IconMapPin, IconWorld } from '@tabler/icons-react';
-import { azul } from '@/ui/colores';
+import { azul, verde } from '@/ui/colores';
+import { WoodBackdrop } from '@/components/ui/TexturedFrame/WoodBackdrop';
+import { TexturedPanel } from '@/components/ui/TexturedFrame/TexturedPanel';
+import { CrystalSoftButton } from '@/components/ui/CrystalButton';
+import { TablaArticulos } from '@/components/articulos';
 import { useQuery } from '@apollo/client/react';
-import { GET_PROVEEDOR, GET_ARTICULOS_POR_PROVEEDOR } from '@/components/proveedores/graphql/queries';
-import { 
-  Proveedor, 
-  Articulo, 
-  ArticulosPorProveedorResponse, 
-  ProveedorResponse 
-} from '@/interfaces/proveedores';
+import { GET_PROVEEDOR } from '@/components/proveedores/graphql/queries';
+import type { ProveedorResponse, Proveedor } from '@/interfaces/proveedores';
 
 interface ModalDetallesProveedorProps {
   open: boolean;
   onClose: () => void;
   proveedor: Proveedor | null;
+  /** Podés pasar un color para acentuar (hex/rgb/hsl). */
+  accentColor?: string;
 }
 
-const ModalDetallesProveedor = ({ open, onClose, proveedor }: ModalDetallesProveedorProps) => {
-  const [filtro, setFiltro] = useState('');
+/* ======================== Utils ======================== */
+const PAGINAS_OPCIONES = [20, 50, 100];
+type ColumnasTablaArticulos = ComponentProps<typeof TablaArticulos>['columns'];
+type FiltrosTablaControlados = NonNullable<ComponentProps<typeof TablaArticulos>['controlledFilters']>;
+type TablaArticulosOnDataLoaded = NonNullable<ComponentProps<typeof TablaArticulos>['onDataLoaded']>;
+type TablaArticulosDataPayload = Parameters<TablaArticulosOnDataLoaded>[0];
+
+type EstadoTabla = {
+  total: number;
+  loading: boolean;
+  error?: Error;
+};
+
+const NBSP = '\u00A0';
+const formatCount = (n: number, singular: string, plural?: string) =>
+  `${n.toLocaleString('es-AR')}${NBSP}${n === 1 ? singular : (plural ?? `${singular}s`)}`;
+
+const currency = (v?: number) =>
+  (v ?? 0).toLocaleString('es-AR', { style: 'currency', currency: 'ARS', maximumFractionDigits: 0 });
+
+/* ======================== Layout ======================== */
+const VH_MAX = 85;
+const HEADER_H = 88;
+const FOOTER_H = 88;
+const DIV_H = 3;
+const CONTENT_MAX = `calc(${VH_MAX}vh - ${HEADER_H + FOOTER_H + DIV_H * 2}px)`;
+
+/* ======================== Paleta ======================== */
+const makeColors = (base?: string) => {
+  const primary = base || azul.primary;
+  return {
+    primary,
+    primaryHover: darken(primary, 0.12),
+    textStrong: darken(primary, 0.5),
+    chipBorder: 'rgba(255,255,255,0.35)',
+  };
+};
+
+const ModalDetallesProveedor = ({ open, onClose, proveedor, accentColor }: ModalDetallesProveedorProps) => {
+  const COLORS = useMemo(() => makeColors(accentColor), [accentColor]);
+
+  // Estado de filtros/paginación (igual al patrón de ModalDetallesRubro)
   const [filtroInput, setFiltroInput] = useState('');
-  const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(50);
+  const [busquedaPersonalizada, setBusquedaPersonalizada] = useState('');
+  const [paginacion, setPaginacion] = useState({ pagina: 0, limite: PAGINAS_OPCIONES[0] });
+  const { pagina, limite } = paginacion;
+  const [estadoTabla, setEstadoTabla] = useState<EstadoTabla>({ total: 0, loading: false, error: undefined });
+  const [reloadKey, setReloadKey] = useState(0);
 
-  // Query para obtener detalles completos del proveedor
-  const { 
-    data: proveedorData, 
-    loading: loadingProveedor 
-  } = useQuery<ProveedorResponse>(GET_PROVEEDOR, {
-    variables: { id: proveedor?.IdProveedor },
-    skip: !proveedor?.IdProveedor || !open
+  const proveedorId = proveedor?.IdProveedor ?? null;
+
+  // Datos del proveedor (detalle completo)
+  const { data: proveedorData } = useQuery<ProveedorResponse>(GET_PROVEEDOR, {
+    variables: { id: proveedorId ?? undefined },
+    skip: !open || !proveedorId,
+    fetchPolicy: 'cache-and-network',
   });
 
-  const { 
-    data: articulosData, 
-    loading: loadingArticulos,
-    refetch: refetchArticulos
-  } = useQuery<ArticulosPorProveedorResponse>(GET_ARTICULOS_POR_PROVEEDOR, {
-    variables: { 
-      proveedorId: proveedor?.IdProveedor,
-      filtro: filtro || undefined,
-      offset: page * rowsPerPage,
-      limit: rowsPerPage
-    },
-    skip: !proveedor?.IdProveedor || !open
-  });
+  const proveedorCompleto: Proveedor | null = useMemo(
+    () => (proveedorData?.proveedor as any) || proveedor || null,
+    [proveedorData?.proveedor, proveedor]
+  );
 
-  // Datos derivados de las queries
-  const proveedorCompleto = proveedorData?.proveedor || proveedor;
-  const articulos = articulosData?.articulosPorProveedor.articulos || [];
-  const totalArticulos = articulosData?.articulosPorProveedor.total || 0;
-  
-  // Filtrar artículos localmente si es necesario
-  const articulosFiltrados = articulos;
+  const totalArticulos = estadoTabla.total;
+  const loadingArticulos = estadoTabla.loading;
+  const errorArticulos = estadoTabla.error;
 
-  // Helper functions para stock
-  const getStockLabel = (stock: number, minimo: number = 5) => {
-    if (stock <= 0) return 'Sin stock';
-    if (stock <= minimo) return 'Stock bajo';
-    return `${stock} u.`;
-  };
+  // columnas para la TablaArticulos (mismas claves que en rubro)
+  const columnasTabla = useMemo<ColumnasTablaArticulos>(() => ([
+    { key: 'codigo', header: 'Código', width: '18%' },
+    { key: 'descripcion', header: 'Descripción', width: '36%' },
+    { key: 'stock', header: 'Stock', width: '14%' },
+    { key: 'precio', header: 'Precio', width: '14%' },
+    { key: 'rubro', header: 'Rubro', width: '18%' },
+  ] as ColumnasTablaArticulos), []);
 
-  const getStockColor = (stock: number, minimo: number = 5): 'error' | 'warning' | 'success' => {
-    if (stock <= 0) return 'error';
-    if (stock <= minimo) return 'warning';
-    return 'success';
-  };
+  // Filtros controlados para la TablaArticulos
+  const filtrosControlados = useMemo<FiltrosTablaControlados>(() => {
+    const base: FiltrosTablaControlados = { pagina, limite };
+    if (typeof proveedorId === 'number') base.proveedorId = proveedorId;
+    if (busquedaPersonalizada) base.busqueda = busquedaPersonalizada;
+    return base;
+  }, [pagina, limite, proveedorId, busquedaPersonalizada]);
 
-  // Pagination functions
-  const totalPaginas = Math.ceil(totalArticulos / rowsPerPage);
-  const paginaActual = page + 1;
-
-  const handleChangePage = (newPage: number) => {
-    setPage(newPage);
-  };
-
-  const handleChangeRowsPerPage = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setRowsPerPage(parseInt(event.target.value, 10));
-    setPage(0);
-  };
-
-  const generarNumerosPaginas = () => {
-    const paginas: (number | string)[] = [];
-    const maxPaginas = 5;
-    
-    if (totalPaginas <= maxPaginas) {
-      for (let i = 1; i <= totalPaginas; i++) {
-        paginas.push(i);
-      }
-    } else {
-      if (paginaActual <= 3) {
-        for (let i = 1; i <= 4; i++) {
-          paginas.push(i);
-        }
-        paginas.push('...');
-        paginas.push(totalPaginas);
-      } else if (paginaActual >= totalPaginas - 2) {
-        paginas.push(1);
-        paginas.push('...');
-        for (let i = totalPaginas - 3; i <= totalPaginas; i++) {
-          paginas.push(i);
-        }
-      } else {
-        paginas.push(1);
-        paginas.push('...');
-        for (let i = paginaActual - 1; i <= paginaActual + 1; i++) {
-          paginas.push(i);
-        }
-        paginas.push('...');
-        paginas.push(totalPaginas);
-      }
-    }
-    
-    return paginas;
-  };
-
-  // Refetch cuando cambian los filtros o la paginación
+  // Hooks para sincronizar resets al abrir/cambiar proveedor
   useEffect(() => {
-    if (proveedor?.IdProveedor && open) {
-      refetchArticulos();
-    }
-  }, [filtro, page, rowsPerPage, proveedor?.IdProveedor, open, refetchArticulos]);
-
-  const handleClose = () => {
-    setFiltro('');
+    if (!open) return;
+    setPaginacion({ pagina: 0, limite: PAGINAS_OPCIONES[0] });
+    setBusquedaPersonalizada('');
     setFiltroInput('');
-    setPage(0);
+    setEstadoTabla({ total: 0, loading: false, error: undefined });
+  }, [open, proveedorId]);
+
+  // Si cambia el proveedor, recargar tabla
+  useEffect(() => {
+    if (!open || proveedorId == null) return;
+    setPaginacion((prev) => ({ pagina: 0, limite: prev.limite }));
+    setReloadKey((prev) => prev + 1);
+  }, [open, proveedorId]);
+
+  const handleTablaFiltersChange = useCallback((filtros: FiltrosTablaControlados) => {
+    setPaginacion((prev) => {
+      const next = {
+        pagina: filtros.pagina ?? prev.pagina,
+        limite: filtros.limite ?? prev.limite,
+      };
+      return (next.pagina === prev.pagina && next.limite === prev.limite) ? prev : next;
+    });
+    if ('busqueda' in filtros) {
+      const nextSearch = (filtros.busqueda ?? '').trim();
+      setBusquedaPersonalizada((prev) => (prev === nextSearch ? prev : nextSearch));
+      setFiltroInput((prev) => (prev === nextSearch ? prev : nextSearch));
+    }
+  }, []);
+
+  const handleTablaDataLoaded = useCallback((payload: TablaArticulosDataPayload) => {
+    setEstadoTabla((prev) => {
+      const next: EstadoTabla = {
+        total: payload?.total ?? 0,
+        loading: payload?.loading ?? false,
+        error: payload?.error,
+      };
+      const sameError = (prev.error?.message ?? '') === (next.error?.message ?? '');
+      if (prev.total === next.total && prev.loading === next.loading && sameError) return prev;
+      return next;
+    });
+  }, []);
+
+  const onCerrar = () => {
+    setFiltroInput('');
+    setBusquedaPersonalizada('');
+    setPaginacion({ pagina: 0, limite: PAGINAS_OPCIONES[0] });
     onClose();
   };
 
-  if (!proveedor) return null;
+  if (!proveedorCompleto) return null;
+
+  const headerTitle = `${proveedorCompleto?.Codigo ? `${proveedorCompleto.Codigo} - ` : ''}${proveedorCompleto?.Nombre ?? 'Detalle del Proveedor'}`;
 
   return (
-    <Dialog 
-      open={open} 
+    <Dialog
+      open={open}
       onClose={onClose}
-      maxWidth="lg"
+      maxWidth="md"
       fullWidth
       PaperProps={{
-        sx: { 
-          borderRadius: 2,
-          maxHeight: '90vh'
+        sx: {
+          borderRadius: 3,
+          boxShadow: '0 8px 32px rgba(0,0,0,0.12)',
+          bgcolor: 'transparent',
+          overflow: 'hidden',
+          maxHeight: `${VH_MAX}vh`,
         }
       }}
     >
-      <DialogTitle sx={{ 
-        pb: 2, 
-        backgroundColor: azul.headerBg,
-        color: azul.headerText,
-        borderBottom: '3px solid',
-        borderColor: azul.headerBorder
-      }}>
-        <Box display="flex" alignItems="center" justifyContent="space-between">
-          <Typography variant="h5" fontWeight={600} color={azul.headerText}>
-            Detalle del Proveedor: {proveedorCompleto?.Codigo ? `${proveedorCompleto.Codigo} - ` : ''}{proveedorCompleto?.Nombre}
-          </Typography>
-          <IconButton onClick={onClose} size="small" sx={{ color: azul.headerText }}>
-            <IconX size={20} />
-          </IconButton>
-        </Box>
-      </DialogTitle>
-
-      <DialogContent sx={{ mt: 3, px: 3, pt: 4, pb: 3 }}>
-        {/* Información básica del proveedor */}
-        <Box mb={3}>
-          {/* Cards de estadísticas mejoradas */}
-          <Box display="flex" gap={3} sx={{ mb: 4 }}>
-            <Box flex={1}>
-              <Card sx={{ 
-                background: 'linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%)',
-                border: '2px solid',
-                borderColor: azul.primary,
-                borderRadius: 3,
-                boxShadow: '0 8px 32px rgba(25, 118, 210, 0.12)',
-                transition: 'all 0.3s ease',
-                '&:hover': {
-                  transform: 'translateY(-4px)',
-                  boxShadow: '0 12px 40px rgba(25, 118, 210, 0.2)'
-                }
+      <TexturedPanel
+        accent={COLORS.primary}
+        radius={12}
+        contentPadding={0}
+        bgTintPercent={12}
+        bgAlpha={1}
+        textureBaseOpacity={0.22}
+        textureBoostOpacity={0.19}
+        textureBrightness={1.12}
+        textureContrast={1.03}
+        tintOpacity={0.38}
+      >
+        <Box sx={{ display: 'flex', flexDirection: 'column', maxHeight: `${VH_MAX}vh` }}>
+          {/* ===== HEADER ===== */}
+          <DialogTitle sx={{ p: 0, m: 0, minHeight: HEADER_H, display: 'flex', alignItems: 'center' }}>
+            <Box sx={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'flex-start', px: 3, py: 2.25, gap: 2 }}>
+              <Box sx={{
+                width: 40, height: 40, borderRadius: '50%',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                background: `linear-gradient(135deg, ${COLORS.primary} 0%, ${COLORS.primaryHover} 100%)`,
+                boxShadow: 'inset 0 2px 4px rgba(255,255,255,0.3), 0 4px 12px rgba(0,0,0,0.25)',
+                color: '#fff'
               }}>
-                <CardContent sx={{ textAlign: 'center', py: 3 }}>
-                  <Box sx={{ 
-                    display: 'flex', 
-                    alignItems: 'center', 
-                    justifyContent: 'center', 
-                    mb: 2 
-                  }}>
-                    <Icon 
-                      icon="mdi:package-variant" 
-                      width={32} 
-                      height={32} 
-                      color={azul.primary}
-                      style={{ marginRight: 8 }}
-                    />
-                    <Typography variant="h3" fontWeight={800} color={azul.primary}>
-                      {totalArticulos}
-                    </Typography>
-                  </Box>
-                  <Typography variant="body1" color={azul.primary} fontWeight={600}>
-                    Artículos Asociados
-                  </Typography>
-                </CardContent>
-              </Card>
-            </Box>
-            <Box flex={1}>
-              <Card sx={{ 
-                background: 'linear-gradient(135deg, #e8f5e8 0%, #c8e6c9 100%)',
-                border: '2px solid',
-                borderColor: 'success.main',
-                borderRadius: 3,
-                boxShadow: '0 8px 32px rgba(76, 175, 80, 0.12)',
-                transition: 'all 0.3s ease',
-                '&:hover': {
-                  transform: 'translateY(-4px)',
-                  boxShadow: '0 12px 40px rgba(76, 175, 80, 0.2)'
-                }
-              }}>
-                <CardContent sx={{ textAlign: 'center', py: 3 }}>
-                  <Box sx={{ 
-                    display: 'flex', 
-                    alignItems: 'center', 
-                    justifyContent: 'center', 
-                    mb: 2 
-                  }}>
-                    <Icon 
-                      icon="mdi:cash" 
-                      width={32} 
-                      height={32} 
-                      color="success.main"
-                      style={{ marginRight: 8 }}
-                    />
-                    <Typography variant="h3" fontWeight={800} color="success.main">
-                      ${(proveedorCompleto?.Saldo || 0).toLocaleString('es-AR')}
-                    </Typography>
-                  </Box>
-                  <Typography variant="body1" color="success.main" fontWeight={600}>
-                    Saldo Actual
-                  </Typography>
-                </CardContent>
-              </Card>
-            </Box>
-          </Box>
+                <Icon icon="mdi:account-outline" width={22} height={22} />
+              </Box>
 
-          {/* Información de contacto mejorada */}
-          <Box display="flex" gap={3} mb={4} flexWrap="wrap">
-            <Card sx={{ 
-              flex: '1 1 300px',
-              minWidth: 300,
-              borderRadius: 3,
-              border: '1px solid',
-              borderColor: azul.borderInner,
-              boxShadow: '0 4px 20px rgba(0,0,0,0.08)',
-              transition: 'all 0.3s ease',
-              '&:hover': {
-                transform: 'translateY(-2px)',
-                  boxShadow: '0 8px 30px rgba(0,0,0,0.12)'
-                }
-              }}>
-                <CardContent sx={{ p: 3 }}>
-                  <Box display="flex" alignItems="center" gap={2} mb={3}>
-                    <Box sx={{
-                      bgcolor: azul.chipBg,
-                      borderRadius: '50%',
-                      p: 1.5,
-                      display: 'flex'
-                    }}>
-                      <Icon icon="mdi:account-multiple" width={24} color={azul.primary} />
-                    </Box>
-                    <Typography variant="h6" fontWeight={700} color={azul.primary}>
-                      Información de Contacto
-                    </Typography>
-                  </Box>
-                  <Box display="flex" flexDirection="column" gap={2}>
-                    {proveedorCompleto?.Contacto && (
-                      <Box display="flex" alignItems="center" gap={2} sx={{ 
-                        p: 1.5, 
-                        bgcolor: 'grey.50', 
-                        borderRadius: 2,
-                        border: '1px solid',
-                        borderColor: 'grey.200'
-                      }}>
-                        <Icon icon="mdi:account" width={20} color={azul.primary} />
-                        <Box>
-                          <Typography variant="caption" color="text.secondary" fontWeight={600}>
-                            CONTACTO
-                          </Typography>
-                          <Typography variant="body2" fontWeight={500}>
-                            {proveedorCompleto.Contacto}
-                          </Typography>
-                        </Box>
-                      </Box>
-                    )}
-                    {proveedorCompleto?.Telefono && (
-                      <Box display="flex" alignItems="center" gap={2} sx={{ 
-                        p: 1.5, 
-                        bgcolor: 'grey.50', 
-                        borderRadius: 2,
-                        border: '1px solid',
-                        borderColor: 'grey.200'
-                      }}>
-                        <IconPhone size={20} color={azul.primary} />
-                        <Box>
-                          <Typography variant="caption" color="text.secondary" fontWeight={600}>
-                            TELÉFONO
-                          </Typography>
-                          <Typography variant="body2" fontWeight={500}>
-                            {proveedorCompleto.Telefono}
-                          </Typography>
-                        </Box>
-                      </Box>
-                    )}
-                    {proveedorCompleto?.Celular && (
-                      <Box display="flex" alignItems="center" gap={2} sx={{ 
-                        p: 1.5, 
-                        bgcolor: 'grey.50', 
-                        borderRadius: 2,
-                        border: '1px solid',
-                        borderColor: 'grey.200'
-                      }}>
-                        <Icon icon="mdi:cellphone" width={20} color={azul.primary} />
-                        <Box>
-                          <Typography variant="caption" color="text.secondary" fontWeight={600}>
-                            CELULAR
-                          </Typography>
-                          <Typography variant="body2" fontWeight={500}>
-                            {proveedorCompleto.Celular}
-                          </Typography>
-                        </Box>
-                      </Box>
-                    )}
-                    {proveedorCompleto?.Mail && (
-                      <Box display="flex" alignItems="center" gap={2} sx={{ 
-                        p: 1.5, 
-                        bgcolor: 'grey.50', 
-                        borderRadius: 2,
-                        border: '1px solid',
-                        borderColor: 'grey.200'
-                      }}>
-                        <IconMail size={20} color={azul.primary} />
-                        <Box>
-                          <Typography variant="caption" color="text.secondary" fontWeight={600}>
-                            EMAIL
-                          </Typography>
-                          <Typography variant="body2" fontWeight={500}>
-                            {proveedorCompleto.Mail}
-                          </Typography>
-                        </Box>
-                      </Box>
-                    )}
-                    {proveedorCompleto?.Web && (
-                      <Box display="flex" alignItems="center" gap={2} sx={{ 
-                        p: 1.5, 
-                        bgcolor: 'grey.50', 
-                        borderRadius: 2,
-                        border: '1px solid',
-                        borderColor: 'grey.200'
-                      }}>
-                        <IconWorld size={20} color={azul.primary} />
-                        <Box>
-                          <Typography variant="caption" color="text.secondary" fontWeight={600}>
-                            SITIO WEB
-                          </Typography>
-                          <Typography variant="body2" fontWeight={500}>
-                            {proveedorCompleto.Web}
-                          </Typography>
-                        </Box>
-                      </Box>
-                    )}
-                  </Box>
-                </CardContent>
-              </Card>
-            
-            <Card sx={{ 
-              flex: '1 1 300px',
-              minWidth: 300,
-              borderRadius: 3,
-              border: '1px solid',
-              borderColor: azul.borderInner,
-              boxShadow: '0 4px 20px rgba(0,0,0,0.08)',
-              transition: 'all 0.3s ease',
-              '&:hover': {
-                transform: 'translateY(-2px)',
-                boxShadow: '0 8px 30px rgba(0,0,0,0.12)'
-              }
-            }}>
-                <CardContent sx={{ p: 3 }}>
-                  <Box display="flex" alignItems="center" gap={2} mb={3}>
-                    <Box sx={{
-                      bgcolor: 'success.light',
-                      borderRadius: '50%',
-                      p: 1.5,
-                      display: 'flex'
-                    }}>
-                      <Icon icon="mdi:map-marker" width={24} color="success.main" />
-                    </Box>
-                    <Typography variant="h6" fontWeight={700} color="success.main">
-                      Información Fiscal y Ubicación
-                    </Typography>
-                  </Box>
-                  <Box display="flex" flexDirection="column" gap={2}>
-                    {proveedorCompleto?.CUIT && (
-                      <Box display="flex" alignItems="center" gap={2} sx={{ 
-                        p: 1.5, 
-                        bgcolor: 'grey.50', 
-                        borderRadius: 2,
-                        border: '1px solid',
-                        borderColor: 'grey.200'
-                      }}>
-                        <Icon icon="mdi:card-account-details" width={20} color="success.main" />
-                        <Box>
-                          <Typography variant="caption" color="text.secondary" fontWeight={600}>
-                            CUIT
-                          </Typography>
-                          <Typography variant="body2" fontWeight={500} fontFamily="monospace">
-                            {proveedorCompleto.CUIT}
-                          </Typography>
-                        </Box>
-                      </Box>
-                    )}
-                    {proveedorCompleto?.Direccion && (
-                      <Box display="flex" alignItems="center" gap={2} sx={{ 
-                        p: 1.5, 
-                        bgcolor: 'grey.50', 
-                        borderRadius: 2,
-                        border: '1px solid',
-                        borderColor: 'grey.200'
-                      }}>
-                        <IconMapPin size={20} color="success.main" />
-                        <Box>
-                          <Typography variant="caption" color="text.secondary" fontWeight={600}>
-                            DIRECCIÓN
-                          </Typography>
-                          <Typography variant="body2" fontWeight={500}>
-                            {proveedorCompleto.Direccion}
-                          </Typography>
-                        </Box>
-                      </Box>
-                    )}
-                    {(proveedorCompleto?.Localidad || proveedorCompleto?.Provincia) && (
-                      <Box display="flex" alignItems="center" gap={2} sx={{ 
-                        p: 1.5, 
-                        bgcolor: 'grey.50', 
-                        borderRadius: 2,
-                        border: '1px solid',
-                        borderColor: 'grey.200'
-                      }}>
-                        <Icon icon="mdi:city" width={20} color="success.main" />
-                        <Box>
-                          <Typography variant="caption" color="text.secondary" fontWeight={600}>
-                            UBICACIÓN
-                          </Typography>
-                          <Typography variant="body2" fontWeight={500}>
-                            {[proveedorCompleto.Localidad, proveedorCompleto.Provincia].filter(Boolean).join(', ')}
-                          </Typography>
-                        </Box>
-                      </Box>
-                    )}
-                    {proveedorCompleto?.CP && (
-                      <Box display="flex" alignItems="center" gap={2} sx={{ 
-                        p: 1.5, 
-                        bgcolor: 'grey.50', 
-                        borderRadius: 2,
-                        border: '1px solid',
-                        borderColor: 'grey.200'
-                      }}>
-                        <Icon icon="mdi:mailbox" width={20} color="success.main" />
-                        <Box>
-                          <Typography variant="caption" color="text.secondary" fontWeight={600}>
-                            CÓDIGO POSTAL
-                          </Typography>
-                          <Typography variant="body2" fontWeight={500}>
-                            {proveedorCompleto.CP}
-                          </Typography>
-                        </Box>
-                      </Box>
-                    )}
-                    {proveedorCompleto?.Rubro && (
-                      <Box display="flex" alignItems="center" gap={2} sx={{ 
-                        p: 1.5, 
-                        bgcolor: 'grey.50', 
-                        borderRadius: 2,
-                        border: '1px solid',
-                        borderColor: 'grey.200'
-                      }}>
-                        <Icon icon="mdi:tag" width={20} color="success.main" />
-                        <Box>
-                          <Typography variant="caption" color="text.secondary" fontWeight={600}>
-                            RUBRO
-                          </Typography>
-                          <Typography variant="body2" fontWeight={500}>
-                            {proveedorCompleto.Rubro}
-                          </Typography>
-                        </Box>
-                      </Box>
-                    )}
-                  </Box>
-                </CardContent>
-              </Card>
-          </Box>
+              <Typography variant="h6" fontWeight={700} color="white" sx={{ textShadow: '0 2px 4px rgba(0,0,0,0.8)' }}>
+                {headerTitle}
+              </Typography>
 
-          {/* Observaciones */}
-          {proveedorCompleto?.Observaciones && (
-            <Card sx={{ mb: 3 }}>
-              <CardContent>
-                <Typography variant="h6" fontWeight={600} color={azul.primary} mb={2}>
-                  Observaciones
-                </Typography>
-                <Typography variant="body2" color="text.secondary">
-                  {proveedorCompleto.Observaciones}
-                </Typography>
-              </CardContent>
-            </Card>
-          )}
-        </Box>
-
-        <Divider sx={{ my: 3 }} />
-
-        {/* Tabla de artículos */}
-        <Box>
-          {/* Toolbar con título y búsqueda */}
-          <Box 
-            display="flex" 
-            justifyContent="space-between" 
-            alignItems="center" 
-            sx={{ 
-              px: 2, 
-              py: 1.5, 
-              bgcolor: azul.toolbarBg, 
-              border: '1px solid', 
-              borderColor: azul.toolbarBorder, 
-              borderRadius: 1, 
-              mb: 2 
-            }}
-          >
-            <Typography variant="h6" fontWeight={700} color={azul.textStrong}>
-              Artículos del Proveedor ({articulosFiltrados.length})
-            </Typography>
-            <TextField
-              placeholder="Buscar artículos..."
-              value={filtroInput}
-              onChange={(e) => setFiltroInput(e.target.value)}
-              onKeyPress={(e) => {
-                if (e.key === 'Enter') {
-                  setFiltro(filtroInput);
-                  setPage(0);
-                }
-              }}
-              size="small"
-              sx={{ 
-                minWidth: 280,
-                '& .MuiOutlinedInput-root': {
-                  borderRadius: 1.5,
-                  bgcolor: 'background.paper',
-                  '&:hover .MuiOutlinedInput-notchedOutline': {
-                    borderColor: azul.primary
-                  },
-                  '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                    borderColor: azul.primary
-                  }
-                }
-              }}
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <IconSearch size={18} color={azul.primary} />
-                  </InputAdornment>
-                )
-              }}
-            />
-          </Box>
-
-          {/* Tabla de artículos mejorada */}
-          <Paper 
-            elevation={0} 
-            variant="outlined" 
-            sx={{ 
-              borderColor: azul.headerBorder, 
-              borderRadius: 2, 
-              bgcolor: 'background.paper',
-              overflow: 'hidden'
-            }}
-          >
-            <TableContainer 
-              sx={{ 
-                maxHeight: 400,
-                '&::-webkit-scrollbar': {
-                  width: '12px',
-                  height: '12px'
-                },
-                '&::-webkit-scrollbar-track': {
-                  backgroundColor: '#f8f9fa',
-                  borderRadius: '6px'
-                },
-                '&::-webkit-scrollbar-thumb': {
-                  backgroundColor: azul.primary,
-                  borderRadius: '6px',
-                  border: '2px solid #f8f9fa',
-                  '&:hover': {
-                    backgroundColor: azul.primaryHover
-                  }
-                },
-                '&::-webkit-scrollbar-corner': {
-                  backgroundColor: '#f8f9fa'
-                }
-              }}
-            >
-              <Table stickyHeader>
-                <TableHead>
-                  <TableRow>
-                    <TableCell sx={{ 
-                      fontWeight: 700, 
-                      color: azul.headerText,
-                      backgroundColor: azul.headerBg,
-                      borderBottom: '3px solid',
-                      borderColor: azul.headerBorder,
-                      width: '15%'
-                    }}>
-                      Código
-                    </TableCell>
-                    <TableCell sx={{ 
-                      fontWeight: 700, 
-                      color: azul.headerText,
-                      backgroundColor: azul.headerBg,
-                      borderBottom: '3px solid',
-                      borderColor: azul.headerBorder,
-                      width: '40%'
-                    }}>
-                      Descripción
-                    </TableCell>
-                    <TableCell sx={{ 
-                      fontWeight: 700, 
-                      color: azul.headerText,
-                      backgroundColor: azul.headerBg,
-                      borderBottom: '3px solid',
-                      borderColor: azul.headerBorder,
-                      width: '15%'
-                    }}>
-                      Stock
-                    </TableCell>
-                    <TableCell sx={{ 
-                      fontWeight: 700, 
-                      color: azul.headerText,
-                      backgroundColor: azul.headerBg,
-                      borderBottom: '3px solid',
-                      borderColor: azul.headerBorder,
-                      width: '15%'
-                    }}>
-                      Precio
-                    </TableCell>
-                    <TableCell sx={{ 
-                      fontWeight: 700, 
-                      color: azul.headerText,
-                      backgroundColor: azul.headerBg,
-                      borderBottom: '3px solid',
-                      borderColor: azul.headerBorder,
-                      width: '15%'
-                    }}>
-                      Rubro
-                    </TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody sx={{ '& .MuiTableCell-root': { py: 1.5 } }}>
-                  {loadingArticulos ? (
-                    // Skeleton loading
-                    Array.from({ length: 5 }).map((_, index) => (
-                      <TableRow key={index}>
-                        <TableCell><Skeleton variant="text" height={24} /></TableCell>
-                        <TableCell><Skeleton variant="text" height={24} /></TableCell>
-                        <TableCell><Skeleton variant="rectangular" width={80} height={24} /></TableCell>
-                        <TableCell><Skeleton variant="text" height={24} /></TableCell>
-                        <TableCell><Skeleton variant="text" height={24} /></TableCell>
-                      </TableRow>
-                    ))
-                  ) : articulosFiltrados.length === 0 ? (
-                    <TableRow>
-                      <TableCell colSpan={5} sx={{ textAlign: 'center', py: 4 }}>
-                        <Typography variant="body2" color="text.secondary">
-                          {filtro ? 'No se encontraron artículos con ese criterio' : 'No hay artículos de este proveedor'}
-                        </Typography>
-                      </TableCell>
-                    </TableRow>
-                  ) : (
-                    articulosFiltrados.map((articulo, idx) => (
-                      <TableRow 
-                        key={articulo.id}
-                        sx={{ 
-                          bgcolor: idx % 2 === 1 ? 'grey.50' : 'inherit',
-                          '&:hover': { bgcolor: azul.toolbarBg },
-                          transition: 'background-color 0.2s ease'
-                        }}
-                      >
-                        <TableCell>
-                          <Typography variant="body2" fontWeight={500} color="text.secondary">
-                            {articulo.codigo || '-'}
-                          </Typography>
-                        </TableCell>
-                        <TableCell>
-                          <Typography 
-                            variant="body2" 
-                            fontWeight={600}
-                            sx={{ 
-                              whiteSpace: 'normal',
-                              lineHeight: 1.4
-                            }}
-                          >
-                            {articulo.descripcion}
-                          </Typography>
-                        </TableCell>
-                        <TableCell>
-                          <Chip
-                            label={getStockLabel(articulo.stock, 5)}
-                            color={getStockColor(articulo.stock, 5)}
-                            size="small"
-                            variant="filled"
-                            sx={{ 
-                              fontWeight: 600,
-                              minWidth: 80
-                            }}
-                          />
-                        </TableCell>
-                        <TableCell>
-                          <Typography variant="body2" fontWeight={600} color={azul.primary}>
-                            ${articulo.precio?.toLocaleString('es-AR') || 0}
-                          </Typography>
-                        </TableCell>
-                        <TableCell>
-                          <Chip 
-                            label={(articulo as any).rubroNombre || 'Sin rubro'} 
-                            size="small"
-                            sx={{ 
-                              bgcolor: 'success.light',
-                              color: 'success.dark',
-                              fontWeight: 500
-                            }}
-                          />
-                        </TableCell>
-                      </TableRow>
-                    ))
-                  )}
-                </TableBody>
-              </Table>
-            </TableContainer>
-          </Paper>
-
-          {/* Paginación personalizada */}
-          {totalArticulos > 0 && (
-            <Box sx={{ 
-              display: 'flex', 
-              alignItems: 'center', 
-              justifyContent: 'space-between', 
-              p: 2, 
-              borderColor: azul.headerBorder,
-              bgcolor: 'white'
-            }}>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                <Typography variant="body2" color="text.secondary">
-                  Filas por página:
-                </Typography>
-                <TextField
-                  select
+              <Box sx={{ ml: 'auto', display: 'flex', alignItems: 'center', gap: 1, pr: 1.5 }}>
+                {Boolean(proveedorCompleto?.CUIT) && (
+                  <Chip
+                    label={`CUIT${NBSP}${proveedorCompleto?.CUIT}`}
+                    size="small"
+                    sx={{ bgcolor: 'rgba(0,0,0,0.35)', color: '#fff', border: `1px solid ${COLORS.chipBorder}`, fontWeight: 600, px: 1.5, py: 0.5, height: 28 }}
+                  />
+                )}
+                <Chip
+                  label={formatCount(totalArticulos, 'artículo', 'artículos')}
                   size="small"
-                  value={rowsPerPage}
-                  onChange={handleChangeRowsPerPage}
-                  sx={{ minWidth: 80 }}
-                >
-                  {[50, 100, 150].map((option) => (
-                    <option key={option} value={option}>
-                      {option}
-                    </option>
-                  ))}
-                </TextField>
+                  sx={{ bgcolor: 'rgba(0,0,0,0.35)', color: '#fff', border: `1px solid ${COLORS.chipBorder}`, fontWeight: 600, px: 1.5, py: 0.5, height: 28 }}
+                />
+                <Chip
+                  label={`Saldo${NBSP}${currency(proveedorCompleto?.Saldo)}`}
+                  size="small"
+                  sx={{ bgcolor: 'rgba(0,0,0,0.35)', color: '#fff', border: `1px solid ${COLORS.chipBorder}`, fontWeight: 700, px: 1.5, py: 0.5, height: 28 }}
+                />
               </Box>
-              
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                <Typography variant="body2" color="text.secondary">
-                  Mostrando {Math.min((page) * rowsPerPage + 1, totalArticulos)} - {Math.min((page + 1) * rowsPerPage, totalArticulos)} de {totalArticulos} artículos
-                </Typography>
-                
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                  {generarNumerosPaginas().map((numeroPagina, index) => (
-                    <Box key={index}>
-                      {numeroPagina === '...' ? (
-                        <Typography variant="body2" color="text.secondary" sx={{ px: 1 }}>
-                          ...
+
+              <CrystalSoftButton
+                baseColor={COLORS.primary}
+                onClick={onCerrar}
+                title="Cerrar"
+                sx={{
+                  width: 40, height: 40, minWidth: 40,
+                  p: 0, borderRadius: '50%',
+                  display: 'grid', placeItems: 'center',
+                  transform: 'none !important', transition: 'none',
+                  '&:hover': { transform: 'none !important' },
+                }}
+              >
+                <Icon icon="mdi:close" color="#fff" width={22} height={22} />
+              </CrystalSoftButton>
+            </Box>
+          </DialogTitle>
+
+          {/* Divisor header */}
+          <Divider
+            sx={{
+              height: DIV_H,
+              border: 0,
+              backgroundImage: `
+                linear-gradient(to bottom, rgba(255,255,255,0.70), rgba(255,255,255,0.70)),
+                linear-gradient(to bottom, rgba(0,0,0,0.22), rgba(0,0,0,0.22)),
+                linear-gradient(90deg, rgba(255,255,255,0.05), ${COLORS.primary}, rgba(255,255,255,0.05))
+              `,
+              backgroundRepeat: 'no-repeat, no-repeat, repeat',
+              backgroundSize: '100% 1px, 100% 1px, 100% 100%',
+              backgroundPosition: 'top left, bottom left, center',
+              flex: '0 0 auto'
+            }}
+          />
+
+          {/* ===== CONTENIDO ===== */}
+          <DialogContent
+            sx={{
+              p: 0,
+              borderRadius: 0,
+              overflow: 'auto',
+              maxHeight: CONTENT_MAX,
+              flex: '0 1 auto'
+            }}
+          >
+            <Box sx={{ position: 'relative', borderRadius: 0, overflow: 'hidden' }}>
+              <WoodBackdrop accent={COLORS.primary} radius={0} inset={0} strength={0.75} texture="wide" />
+              <Box
+                sx={{
+                  position: 'relative',
+                  zIndex: 1,
+                  p: 5,
+                  borderRadius: 0,
+                  backdropFilter: 'saturate(118%) blur(0.4px)',
+                  background: 'rgba(255,255,255,0.84)',
+                }}
+              >
+                {/* Tarjetas de info rápida */}
+                <Box display="flex" gap={2} flexWrap="wrap" mb={3}>
+                  <Card sx={{
+                    flex: '1 1 260px',
+                    minWidth: 260,
+                    borderRadius: 2,
+                    border: `1px solid ${alpha(COLORS.primary, 0.18)}`,
+                    background: alpha(COLORS.primary, 0.06),
+                    boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.24)',
+                  }}>
+                    <CardContent sx={{ p: 2.25 }}>
+                      <Box display="flex" alignItems="center" gap={1.25} mb={1}>
+                        <Box sx={{
+                          width: 28, height: 28, borderRadius: '50%',
+                          display: 'grid', placeItems: 'center',
+                          bgcolor: alpha(COLORS.primary, 0.18)
+                        }}>
+                          <Icon icon="mdi:account" width={16} height={16} color={COLORS.primary} />
+                        </Box>
+                        <Typography variant="subtitle2" fontWeight={700} color={COLORS.textStrong}>
+                          Contacto
                         </Typography>
-                      ) : (
-                        <Button
-                          size="small"
-                          variant={paginaActual === numeroPagina ? 'contained' : 'text'}
-                          onClick={() => handleChangePage((numeroPagina as number) - 1)}
-                          sx={{
-                            minWidth: 32,
-                            height: 32,
-                            textTransform: 'none',
-                            fontSize: '0.875rem',
-                            ...(paginaActual === numeroPagina ? {
-                              bgcolor: azul.primary,
-                              color: 'white',
-                              '&:hover': { bgcolor: azul.primaryHover }
-                            } : {
-                              color: 'text.secondary',
-                              '&:hover': { bgcolor: azul.toolbarBg }
-                            })
-                          }}
-                        >
-                          {numeroPagina}
-                        </Button>
-                      )}
-                    </Box>
-                  ))}
+                      </Box>
+                      <Typography variant="body2" fontWeight={600}>
+                        {proveedorCompleto?.Contacto || '—'}
+                      </Typography>
+                      <Typography variant="caption" color="text.secondary">
+                        {proveedorCompleto?.Mail || 'Sin email'}{NBSP}•{NBSP}{proveedorCompleto?.Telefono || proveedorCompleto?.Celular || 'Sin teléfono'}
+                      </Typography>
+                    </CardContent>
+                  </Card>
+
+                  <Card sx={{
+                    flex: '1 1 260px',
+                    minWidth: 260,
+                    borderRadius: 2,
+                    border: `1px solid ${alpha(COLORS.primary, 0.18)}`,
+                    background: alpha(COLORS.primary, 0.06),
+                    boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.24)',
+                  }}>
+                    <CardContent sx={{ p: 2.25 }}>
+                      <Box display="flex" alignItems="center" gap={1.25} mb={1}>
+                        <Box sx={{
+                          width: 28, height: 28, borderRadius: '50%',
+                          display: 'grid', placeItems: 'center',
+                          bgcolor: alpha(COLORS.primary, 0.18)
+                        }}>
+                          <Icon icon="mdi:map-marker" width={16} height={16} color={COLORS.primary} />
+                        </Box>
+                        <Typography variant="subtitle2" fontWeight={700} color={COLORS.textStrong}>
+                          Ubicación
+                        </Typography>
+                      </Box>
+                      <Typography variant="body2" fontWeight={600}>
+                        {proveedorCompleto?.Direccion || '—'}
+                      </Typography>
+                      <Typography variant="caption" color="text.secondary">
+                        {[proveedorCompleto?.Localidad, proveedorCompleto?.Provincia].filter(Boolean).join(', ') || '—'}{NBSP}{proveedorCompleto?.CP ? `(CP ${proveedorCompleto.CP})` : ''}
+                      </Typography>
+                    </CardContent>
+                  </Card>
+
+                  <Card sx={{
+                    flex: '1 1 260px',
+                    minWidth: 260,
+                    borderRadius: 2,
+                    border: `1px solid ${alpha(COLORS.primary, 0.18)}`,
+                    background: alpha(COLORS.primary, 0.06),
+                    boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.24)',
+                  }}>
+                    <CardContent sx={{ p: 2.25 }}>
+                      <Box display="flex" alignItems="center" gap={1.25} mb={1}>
+                        <Box sx={{
+                          width: 28, height: 28, borderRadius: '50%',
+                          display: 'grid', placeItems: 'center',
+                          bgcolor: alpha(COLORS.primary, 0.18)
+                        }}>
+                          <Icon icon="mdi:cash" width={16} height={16} color={COLORS.primary} />
+                        </Box>
+                        <Typography variant="subtitle2" fontWeight={700} color={COLORS.textStrong}>
+                          Saldo
+                        </Typography>
+                      </Box>
+                      <Typography variant="h6" fontWeight={800} color={COLORS.primary}>
+                        {currency(proveedorCompleto?.Saldo)}
+                      </Typography>
+                      <Typography variant="caption" color="text.secondary">
+                        Condición: {proveedorCompleto?.TipoIva || '—'}{proveedorCompleto?.Rubro ? ` • Rubro: ${proveedorCompleto.Rubro}` : ''}
+                      </Typography>
+                    </CardContent>
+                  </Card>
                 </Box>
-                
-                <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                  <IconButton
-                    size="small"
-                    onClick={() => handleChangePage(0)}
-                    disabled={page === 0}
-                    sx={{ color: 'text.secondary' }}
-                    title="Primera página"
+
+                {/* Observaciones */}
+                {Boolean(proveedorCompleto?.Observaciones) && (
+                  <Box
+                    sx={{
+                      p: 2.25,
+                      mb: 2.5,
+                      borderRadius: 2,
+                      border: `1px solid ${alpha(COLORS.primary, 0.18)}`,
+                      background: alpha(COLORS.primary, 0.05),
+                      boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.22)',
+                    }}
                   >
-                    ⏮
-                  </IconButton>
-                  <IconButton
-                    size="small"
-                    onClick={() => handleChangePage(page - 1)}
-                    disabled={page === 0}
-                    sx={{ color: 'text.secondary' }}
-                    title="Página anterior"
+                    <Typography variant="subtitle2" fontWeight={700} color={COLORS.textStrong} gutterBottom>
+                      Observaciones
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      {proveedorCompleto?.Observaciones}
+                    </Typography>
+                  </Box>
+                )}
+
+                {/* Toolbar tabla */}
+                <Box
+                  sx={{
+                    border: `1px solid ${alpha(COLORS.primary, 0.18)}`,
+                    borderRadius: 2,
+                    background: alpha(COLORS.primary, 0.05),
+                    boxShadow: '0 8px 24px rgba(0,0,0,0.06)',
+                    px: 3,
+                    py: 2.25,
+                    mb: 2.5,
+                  }}
+                >
+                  <Box
+                    display="flex"
+                    justifyContent="space-between"
+                    alignItems="center"
+                    sx={{ gap: 2, flexWrap: 'wrap' }}
                   >
-                    ⏪
-                  </IconButton>
-                  <IconButton
-                    size="small"
-                    onClick={() => handleChangePage(page + 1)}
-                    disabled={totalArticulos === 0 || (page + 1) * rowsPerPage >= totalArticulos}
-                    sx={{ color: 'text.secondary' }}
-                    title="Página siguiente"
-                  >
-                    ⏩
-                  </IconButton>
-                  <IconButton
-                    size="small"
-                    onClick={() => handleChangePage(totalPaginas - 1)}
-                    disabled={page >= totalPaginas - 1}
-                    sx={{ color: 'text.secondary' }}
-                    title="Última página"
-                  >
-                    ⏭
-                  </IconButton>
+                    <Typography variant="h6" fontWeight={700} color={COLORS.textStrong}>
+                      Artículos del proveedor
+                    </Typography>
+                    <TextField
+                      placeholder="Buscar artículos…"
+                      value={filtroInput}
+                      onChange={(e) => setFiltroInput(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          const termino = filtroInput.trim();
+                          setBusquedaPersonalizada(termino);
+                          setPaginacion((prev) => (prev.pagina === 0 ? prev : { ...prev, pagina: 0 }));
+                        }
+                      }}
+                      size="small"
+                      sx={{ minWidth: { xs: '100%', sm: 240, md: 280 } }}
+                      InputProps={{
+                        startAdornment: (
+                          <InputAdornment position="start">
+                            <Icon icon="mdi:magnify" color={COLORS.primary} />
+                          </InputAdornment>
+                        ),
+                        sx: {
+                          '& .MuiOutlinedInput-root': {
+                            color: COLORS.textStrong,
+                            borderRadius: 2,
+                            background: '#fff',
+                            '& fieldset': { borderColor: alpha(COLORS.primary, 0.28) },
+                            '&:hover fieldset': { borderColor: alpha(COLORS.primary, 0.42) },
+                            '&.Mui-focused fieldset': { borderColor: COLORS.primary },
+                          },
+                        },
+                      }}
+                    />
+                  </Box>
+                </Box>
+
+                {/* Tabla de artículos — usando el mismo componente genérico */}
+                <Box mt={2}>
+                  <TablaArticulos
+                    key={`${proveedorId ?? 'prov'}-${reloadKey}`}
+                    columns={columnasTabla}
+                    showToolbar={false}
+                    allowCreate={false}
+                    rowsPerPageOptions={PAGINAS_OPCIONES}
+                    defaultPageSize={limite}
+                    controlledFilters={filtrosControlados}
+                    onFiltersChange={handleTablaFiltersChange}
+                    onDataLoaded={handleTablaDataLoaded}
+                    dense
+                  />
+                  {errorArticulos && (
+                    <Typography variant="body2" color="error" mt={1}>
+                      Error al cargar artículos: {errorArticulos.message}
+                    </Typography>
+                  )}
+                  {loadingArticulos && (
+                    <Typography variant="body2" color="text.secondary" mt={1}>
+                      Cargando artículos…
+                    </Typography>
+                  )}
                 </Box>
               </Box>
             </Box>
-          )}
-        </Box>
-      </DialogContent>
+          </DialogContent>
 
-      <DialogActions sx={{ 
-        p: 3, 
-        pt: 2
-      }}>
-        <Button 
-          onClick={onClose} 
-          variant="outlined"
-          sx={{
-            borderColor: azul.primary,
-            color: azul.primary,
-            '&:hover': {
-              borderColor: azul.primaryHover,
-              backgroundColor: azul.chipBg
-            }
-          }}
-        >
-          Cerrar
-        </Button>
-      </DialogActions>
+          {/* Divisor footer */}
+          <Divider
+            sx={{
+              height: DIV_H,
+              border: 0,
+              backgroundImage: `
+                linear-gradient(to bottom, rgba(0,0,0,0.22), rgba(0,0,0,0.22)),
+                linear-gradient(to bottom, rgba(255,255,255,0.70), rgba(255,255,255,0.70)),
+                linear-gradient(90deg, rgba(255,255,255,0.05), ${COLORS.primary}, rgba(255,255,255,0.05))
+              `,
+              backgroundRepeat: 'no-repeat, no-repeat, repeat',
+              backgroundSize: '100% 1px, 100% 1px, 100% 100%',
+              backgroundPosition: 'top left, bottom left, center',
+              flex: '0 0 auto'
+            }}
+          />
+
+          {/* ===== FOOTER ===== */}
+          <DialogActions sx={{ p: 0, m: 0, minHeight: FOOTER_H }}>
+            <Box sx={{ width: '100%', display: 'flex', justifyContent: 'flex-end', px: 3, py: 2.25, gap: 1.5 }}>
+              <CrystalSoftButton baseColor={COLORS.primary} onClick={onCerrar}>
+                Cerrar
+              </CrystalSoftButton>
+            </Box>
+          </DialogActions>
+        </Box>
+      </TexturedPanel>
     </Dialog>
   );
 };
