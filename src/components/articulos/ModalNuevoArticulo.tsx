@@ -43,6 +43,7 @@ import {
 import { UNIDADES, UNIDADES_POR_DEFECTO_POR_RUBRO, abrevUnidad, type UnidadMedida } from '../../app/utils/unidades';
 import { TexturedPanel } from '../ui/TexturedFrame/TexturedPanel';
 import { verde } from '../../ui/colores';
+import CrystalButton, { CrystalSoftButton, CrystalIconButton } from '@/components/ui/CrystalButton';
 
 interface ModalNuevoArticuloProps {
   open: boolean;
@@ -203,14 +204,51 @@ const ModalNuevoArticulo: React.FC<ModalNuevoArticuloProps> = ({
         tintOpacity={0.35}
       >
         <Box sx={{ display: 'flex', flexDirection: 'column', height: '85vh' }}>
-          <DialogTitle sx={{ pb: 1 }}>
-            <Box display="flex" alignItems="center" justifyContent="space-between">
-              <Typography variant="h5" fontWeight={600}>
-                Nuevo Artículo
-              </Typography>
-              <IconButton onClick={onClose} size="small">
-                <IconX />
-              </IconButton>
+          <DialogTitle sx={{ p: 0, m: 0 }}>
+            <Box sx={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between', px: 3, py: 2.25, gap: 2 }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                <Box
+                  sx={{
+                    width: 44,
+                    height: 44,
+                    borderRadius: '50%',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    background: `linear-gradient(135deg, ${verde.primary} 0%, ${verde.primaryHover} 100%)`,
+                    boxShadow: 'inset 0 2px 4px rgba(255,255,255,0.35), 0 6px 18px rgba(0,0,0,0.2)',
+                    color: '#fff',
+                  }}
+                >
+                  <IconShoppingCart size={18} />
+                </Box>
+                <Box>
+                  <Typography variant="h6" fontWeight={700} color="#fff" sx={{ textShadow: '0 2px 6px rgba(0,0,0,0.45)' }}>
+                    Nuevo artículo
+                  </Typography>
+                  <Typography variant="body2" color="rgba(255,255,255,0.85)">
+                    Completa la información para añadirlo al catálogo de Mudras
+                  </Typography>
+                </Box>
+              </Box>
+              <Stack direction="row" spacing={1.5} alignItems="center">
+                <Chip
+                  icon={getRoleIcon()}
+                  label={getRoleLabel()}
+                  size="small"
+                  sx={{
+                    bgcolor: 'rgba(0,0,0,0.28)',
+                    color: '#fff',
+                    border: '1px solid rgba(255,255,255,0.35)',
+                    fontWeight: 600,
+                    height: 28,
+                    '& .MuiChip-icon': { color: '#ffe082' },
+                  }}
+                />
+                <CrystalIconButton baseColor={verde.primary} onClick={onClose} sx={{ width: 40, height: 40 }}>
+                  <IconX size={18} />
+                </CrystalIconButton>
+              </Stack>
             </Box>
           </DialogTitle>
 
@@ -718,21 +756,14 @@ const ModalNuevoArticulo: React.FC<ModalNuevoArticuloProps> = ({
         </TabPanel>
       </DialogContent>
 
-      <DialogActions sx={{ p: 3 }}>
-        <Button onClick={onClose} variant="outlined">
+      <DialogActions sx={{ p: 3, pt: 2, display: 'flex', justifyContent: 'flex-end', gap: 1.5 }}>
+        <CrystalSoftButton baseColor={verde.primary} onClick={onClose} sx={{ minWidth: 110 }}>
           Cancelar
-        </Button>
-        <Button 
-          onClick={handleSubmit} 
-          variant="contained"
-          sx={{ 
-            backgroundColor: 'success.main',
-            '&:hover': { backgroundColor: 'success.dark' }
-          }}
-        >
-          Crear Artículo
-        </Button>
-          </DialogActions>
+        </CrystalSoftButton>
+        <CrystalButton baseColor={verde.primary} onClick={handleSubmit} sx={{ minWidth: 140 }}>
+          Crear artículo
+        </CrystalButton>
+      </DialogActions>
         </Box>
       </TexturedPanel>
     </Dialog>

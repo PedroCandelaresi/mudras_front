@@ -1,17 +1,39 @@
 'use client';
+
 import React, { useEffect, useMemo, useState } from 'react';
 import {
-  Box, Paper, Typography, Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
-  TextField, InputAdornment, Button, Tooltip, IconButton, Chip, Menu, Divider, Stack
+  Box,
+  Typography,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  TextField,
+  InputAdornment,
+  Button,
+  Tooltip,
+  IconButton,
+  Chip,
+  Menu,
+  Divider,
+  Stack,
+  Skeleton,
 } from '@mui/material';
+import { alpha } from '@mui/material/styles';
 import { useQuery } from '@apollo/client/react';
+import { IconSearch, IconShoppingCart } from '@tabler/icons-react';
+import { IconDotsVertical, IconEye, IconEdit, IconTrash, IconPlus, IconRefresh } from '@tabler/icons-react';
+
 import { BUSCAR_ARTICULOS } from '@/components/articulos/graphql/queries';
 import { GET_PROVEEDORES } from '@/components/proveedores/graphql/queries';
-import { IconSearch } from '@tabler/icons-react';
-import { IconDotsVertical, IconEye, IconEdit, IconTrash, IconPlus, IconRefresh } from '@tabler/icons-react';
-import { verde } from '@/ui/colores';
+import { verde, azul, marron } from '@/ui/colores';
 import type { Articulo } from '@/app/interfaces/mudras.types';
 import { abrevUnidad, type UnidadMedida } from '@/app/utils/unidades';
+import { crearConfiguracionBisel, crearEstilosBisel } from '@/components/ui/bevel';
+import { WoodBackdrop } from '@/components/ui/TexturedFrame/WoodBackdrop';
+import CrystalButton, { CrystalIconButton, CrystalSoftButton } from '@/components/ui/CrystalButton';
 
 /* ======================== Tipos de columnas ======================== */
 type ArticuloColumnKey =
@@ -33,6 +55,42 @@ type ColumnDef = {
   filterable?: boolean;
 };
 
+/* ======================== Estética ======================== */
+const accentExterior = verde.primary;
+const accentInterior = verde.borderInner ?? '#2f3e2e';
+const panelBg = 'rgba(236, 249, 236, 0.82)';
+const tableBodyBg = 'rgba(243, 255, 242, 0.68)';
+const tableBodyAlt = 'rgba(178, 228, 178, 0.28)';
+const woodTintExterior = '#cde7c9';
+const colorAccionEliminar = '#c62828';
+
+const biselExteriorConfig = crearConfiguracionBisel(accentExterior, 1.4);
+const estilosBiselExterior = crearEstilosBisel(biselExteriorConfig, { zContenido: 2 });
+
+const WoodSection: React.FC<React.PropsWithChildren> = ({ children }) => (
+  <Box
+    sx={{
+      position: 'relative',
+      borderRadius: 2,
+      overflow: 'hidden',
+      boxShadow: '0 18px 40px rgba(0,0,0,0.12)',
+      background: 'transparent',
+      ...estilosBiselExterior,
+    }}
+  >
+    <WoodBackdrop accent={woodTintExterior} radius={3} inset={0} strength={0.16} texture="tabla" />
+    <Box
+      sx={{
+        position: 'absolute',
+        inset: 0,
+        backgroundColor: alpha('#f5fff0', 0.85),
+        zIndex: 0,
+      }}
+    />
+    <Box sx={{ position: 'relative', zIndex: 2, p: 3 }}>{children}</Box>
+  </Box>
+);
+
 /* ======================== Filtros servidor ======================== */
 type FiltrosServidor = {
   busqueda?: string;
@@ -46,12 +104,10 @@ type FiltrosServidor = {
   soloStockBajo?: boolean;
   soloSinStock?: boolean;
   soloEnPromocion?: boolean;
-
-  // 👇 nuevos campos explícitos
-  rubro?: string;          // filtro por texto de rubro
-  proveedor?: string;      // filtro por texto de proveedor
-  rubroId?: number;        // filtro por id de rubro
-  proveedorId?: number;    // filtro por id de proveedor
+  rubro?: string;
+  proveedor?: string;
+  rubroId?: number;
+  proveedorId?: number;
 };
 
 /* ======================== Props reutilizable ======================== */
@@ -60,27 +116,17 @@ type ArticulosTableProps = {
   title?: string;
   rowsPerPageOptions?: number[];
   defaultPageSize?: number;
-
-  initialServerFilters?: Partial<FiltrosServidor> & {
-    estado?: 'Sin stock' | 'Bajo stock' | 'Con stock';
-  };
-
-  controlledFilters?: Partial<FiltrosServidor> & {
-    estado?: 'Sin stock' | 'Bajo stock' | 'Con stock';
-  };
+  initialServerFilters?: Partial<FiltrosServidor> & { estado?: 'Sin stock' | 'Bajo stock' | 'Con stock' };
+  controlledFilters?: Partial<FiltrosServidor> & { estado?: 'Sin stock' | 'Bajo stock' | 'Con stock' };
   onFiltersChange?: (filtros: FiltrosServidor & { estado?: string }) => void;
-
   showToolbar?: boolean;
   showGlobalSearch?: boolean;
   allowCreate?: boolean;
   onCreateClick?: () => void;
-
   onView?: (articulo: Articulo) => void;
   onEdit?: (articulo: Articulo) => void;
   onDelete?: (articulo: Articulo) => void;
-
   dense?: boolean;
-
   onDataLoaded?: (payload: {
     total: number;
     articulos: Articulo[];
@@ -121,7 +167,6 @@ const ArticulosTable: React.FC<ArticulosTableProps> = ({
   dense = true,
   onDataLoaded,
 }) => {
-  // estado interno (si no vienen controlados)
   const [page, setPage] = useState(initialServerFilters?.pagina ?? 0);
   const [rowsPerPage, setRowsPerPage] = useState(initialServerFilters?.limite ?? defaultPageSize);
   const [globalInput, setGlobalInput] = useState(initialServerFilters?.busqueda ?? '');
@@ -136,34 +181,29 @@ const ArticulosTable: React.FC<ArticulosTableProps> = ({
     proveedorId: initialServerFilters?.proveedorId ?? undefined as number | undefined,
   });
 
-  // menú de filtros por columna
   const [menuAnchor, setMenuAnchor] = useState<null | HTMLElement>(null);
   const [activeCol, setActiveCol] = useState<ColumnDef['key'] | null>(null);
   const [colInput, setColInput] = useState('');
 
-  // Proveedores (opcional para autocompletar)
   const { data: dataProveedores } = useQuery<{ proveedores: { IdProveedor: number; Nombre: string }[] }>(
     GET_PROVEEDORES,
     { fetchPolicy: 'cache-first' }
   );
   const proveedores = dataProveedores?.proveedores ?? [];
 
-  // seleccion de estado
   const controlledEstado = controlledFilters?.estado;
   const estadoSeleccionado = useMemo(
     () => ((controlledEstado ?? localFilters.estado) || '').toLowerCase(),
     [controlledEstado, localFilters.estado]
   );
 
-  // 🔎 búsqueda global (solo el input global/prop busqueda)
   const globalSearch = useMemo(() => {
     const g = (controlledFilters?.busqueda ?? globalInput)?.trim();
     return g || undefined;
   }, [controlledFilters?.busqueda, globalInput]);
 
-  // 🎯 filtros que viajarán al servidor (explícitos)
   const filtrosServidor = useMemo<FiltrosServidor>(() => ({
-    busqueda: undefined, // se setea en variablesQuery
+    busqueda: undefined,
     codigo: (controlledFilters?.codigo ?? localFilters.codigo) || undefined,
     descripcion: (controlledFilters?.descripcion ?? localFilters.descripcion) || undefined,
     rubro: (controlledFilters?.rubro ?? localFilters.rubro) || undefined,
@@ -196,7 +236,7 @@ const ArticulosTable: React.FC<ArticulosTableProps> = ({
     buscarArticulos: { total: number; articulos: (Articulo | null)[] }
   }>(BUSCAR_ARTICULOS, {
     variables: variablesQuery,
-    fetchPolicy: 'cache-and-network'
+    fetchPolicy: 'cache-and-network',
   });
 
   const articulos: Articulo[] = (data?.buscarArticulos?.articulos ?? []).filter((a): a is Articulo => !!a);
@@ -219,7 +259,6 @@ const ArticulosTable: React.FC<ArticulosTableProps> = ({
     });
   }, [onDataLoaded, total, articulos, filtrosServidor, globalSearch, estadoActual, loading, error]);
 
-  // Propagar filtros efectivos al padre
   useEffect(() => {
     onFiltersChange?.({
       ...filtrosServidor,
@@ -228,7 +267,6 @@ const ArticulosTable: React.FC<ArticulosTableProps> = ({
     });
   }, [onFiltersChange, filtrosServidor, globalSearch, estadoActual]);
 
-  // handlers básicos
   const handleChangeRowsPerPage = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = parseInt(e.target.value, 10);
     if (!controlledFilters) {
@@ -243,6 +281,7 @@ const ArticulosTable: React.FC<ArticulosTableProps> = ({
       pagina: 0,
     });
   };
+
   const handleChangePage = (_: any, newPage: number) => {
     if (!controlledFilters) setPage(newPage);
     onFiltersChange?.({
@@ -263,14 +302,13 @@ const ArticulosTable: React.FC<ArticulosTableProps> = ({
         proveedor: '',
         estado: '',
         rubroId: undefined,
-        proveedorId: undefined
+        proveedorId: undefined,
       });
       setPage(0);
     }
     refetch();
   };
 
-  // render por defecto
   const defaultRenderers: Record<ArticuloColumnKey, (a: Articulo) => React.ReactNode> = {
     descripcion: (a) => (
       <Typography variant="body2" fontWeight={600} sx={{ whiteSpace: 'normal' }}>
@@ -284,8 +322,8 @@ const ArticulosTable: React.FC<ArticulosTableProps> = ({
         label={a.Rubro || 'Sin rubro'}
         size="small"
         sx={{
-          bgcolor: 'success.light',
-          color: 'success.dark',
+          bgcolor: alpha(accentExterior, 0.18),
+          color: verde.textStrong,
           fontWeight: 500,
           height: 18,
           borderRadius: 1,
@@ -303,7 +341,7 @@ const ArticulosTable: React.FC<ArticulosTableProps> = ({
       );
     },
     precio: (a) => (
-      <Typography variant="body2" fontWeight={600} color="success.dark">
+      <Typography variant="body2" fontWeight={700} color={verde.textStrong}>
         ${(a.PrecioVenta || 0).toLocaleString('es-AR')}
       </Typography>
     ),
@@ -316,7 +354,7 @@ const ArticulosTable: React.FC<ArticulosTableProps> = ({
       const dep = parseFloat(String(a.Deposito ?? 0)) || 0;
       const min = a.StockMinimo || 0;
       return (
-        <>
+        <Box display="flex" alignItems="center" gap={0.75}>
           <Chip
             label={getStockLabel(dep, min)}
             color={getStockColor(dep, min)}
@@ -335,56 +373,42 @@ const ArticulosTable: React.FC<ArticulosTableProps> = ({
               size="small"
               variant="outlined"
               sx={{
-                ml: 0.75,
                 height: 18,
                 borderRadius: 1,
                 '& .MuiChip-label': { px: 0.6, py: 0, fontSize: '0.675rem', lineHeight: 1.1 },
               }}
             />
           )}
-        </>
+        </Box>
       );
     },
     acciones: (a) => (
       <Box display="flex" justifyContent="center" gap={0.75}>
         {onView && (
           <Tooltip title="Ver detalles">
-            <IconButton
-              size="small"
-              onClick={() => onView(a)}
-              sx={{ bgcolor: '#1976d2', color: 'white', borderRadius: 1, width: 28, height: 28, '&:hover': { bgcolor: '#1565c0' } }}
-            >
+            <CrystalIconButton baseColor={azul.primary} onClick={() => onView(a)}>
               <IconEye size={16} />
-            </IconButton>
+            </CrystalIconButton>
           </Tooltip>
         )}
         {onEdit && (
           <Tooltip title="Editar">
-            <IconButton
-              size="small"
-              onClick={() => onEdit(a)}
-              sx={{ bgcolor: '#2e7d32', color: 'white', borderRadius: 1, width: 28, height: 28, '&:hover': { bgcolor: '#1b5e20' } }}
-            >
+            <CrystalIconButton baseColor={verde.primary} onClick={() => onEdit(a)}>
               <IconEdit size={16} />
-            </IconButton>
+            </CrystalIconButton>
           </Tooltip>
         )}
         {onDelete && (
           <Tooltip title="Eliminar">
-            <IconButton
-              size="small"
-              onClick={() => onDelete(a)}
-              sx={{ bgcolor: '#d32f2f', color: 'white', borderRadius: 1, width: 28, height: 28, '&:hover': { bgcolor: '#c62828' } }}
-            >
+            <CrystalIconButton baseColor={colorAccionEliminar} onClick={() => onDelete(a)}>
               <IconTrash size={16} />
-            </IconButton>
+            </CrystalIconButton>
           </Tooltip>
         )}
       </Box>
     ),
   };
 
-  // menú de filtros por columna (simple)
   const abrirMenu = (colKey: ColumnDef['key']) => (e: React.MouseEvent<HTMLElement>) => {
     setActiveCol(colKey);
     if (colKey === 'descripcion') setColInput(controlledFilters?.descripcion ?? localFilters.descripcion);
@@ -393,7 +417,11 @@ const ArticulosTable: React.FC<ArticulosTableProps> = ({
     if (colKey === 'proveedor') setColInput(controlledFilters?.proveedor ?? localFilters.proveedor);
     setMenuAnchor(e.currentTarget);
   };
-  const cerrarMenu = () => { setMenuAnchor(null); setActiveCol(null); setColInput(''); };
+  const cerrarMenu = () => {
+    setMenuAnchor(null);
+    setActiveCol(null);
+    setColInput('');
+  };
 
   const totalPaginas = Math.ceil(total / (controlledFilters?.limite ?? rowsPerPage));
   const paginaActual = (controlledFilters?.pagina ?? page) + 1;
@@ -414,192 +442,284 @@ const ArticulosTable: React.FC<ArticulosTableProps> = ({
     return paginas;
   };
 
-  return (
-    <Paper elevation={0} sx={{ p: 3, border: 'none', boxShadow: 'none', borderRadius: 2, bgcolor: 'background.paper' }}>
-      {showToolbar && (
-        <Box display="flex" justifyContent="space-between" alignItems="center"
-          sx={{ px: 1, py: 1, bgcolor: verde.toolbarBg, border: '1px solid', borderColor: verde.toolbarBorder, borderRadius: 1, mb: 2 }}>
-          <Typography variant="h6" fontWeight={700} color={verde.textStrong}>{title}</Typography>
-          <Box display="flex" alignItems="center" gap={1.5}>
-            {allowCreate && (
-              <Button
-                variant="contained"
-                sx={{ textTransform: 'none', bgcolor: verde.primary, '&:hover': { bgcolor: verde.primaryHover } }}
-                startIcon={<IconPlus size={18} />}
-                onClick={onCreateClick}
-              >
-                Nuevo
-              </Button>
-            )}
-            {showGlobalSearch && (
-              <>
-                <TextField
-                  size="small"
-                  placeholder="Buscar..."
-                  value={controlledFilters?.busqueda ?? globalInput}
-                  onChange={(e) => setGlobalInput(e.target.value)}
-                  onKeyDown={(e) => { if (e.key === 'Enter') refetch(); }}
-                  InputProps={{ startAdornment: (<InputAdornment position="start"><IconSearch size={20} /></InputAdornment>) }}
-                  sx={{ minWidth: 250 }}
-                />
-                <Tooltip title="Buscar (Enter)">
-                  <span>
-                    <Button
-                      variant="contained"
-                      sx={{ textTransform: 'none', bgcolor: verde.primary, '&:hover': { bgcolor: verde.primaryHover } }}
-                      startIcon={<IconSearch size={18} />}
-                      onClick={() => refetch()}
-                      disabled={loading}
-                    >
-                      Buscar
-                    </Button>
-                  </span>
-                </Tooltip>
-              </>
-            )}
-            <Button
-              variant="outlined"
-              color="inherit"
-              startIcon={<IconRefresh />}
-              onClick={limpiarFiltros}
-              sx={{ textTransform: 'none', borderColor: verde.headerBorder, color: verde.textStrong, '&:hover': { borderColor: verde.textStrong, bgcolor: verde.toolbarBg } }}
-            >
-              Limpiar
-            </Button>
-          </Box>
-        </Box>
-      )}
-
-      {/* tabla */}
-      <TableContainer sx={{ borderRadius: 2, border: '1px solid', borderColor: verde.borderInner, bgcolor: 'background.paper' }}>
-        <Table stickyHeader size="small"
+  const toolbar = (
+    <Box
+      display="flex"
+      justifyContent="space-between"
+      alignItems="center"
+      sx={{
+        px: 2,
+        py: 1.5,
+        mb: 3,
+        borderRadius: 2,
+        border: '1px solid',
+        borderColor: accentInterior,
+        bgcolor: panelBg,
+        boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.45)',
+      }}
+    >
+      <Stack direction="row" spacing={2} alignItems="center">
+        <Chip
+          icon={<IconShoppingCart size={16} />}
+          label={title}
           sx={{
-            '& .MuiTableCell-root': { fontSize: '0.75rem', px: 1, py: 0.5 },
-            '& .MuiTableCell-head': { fontSize: '0.75rem', fontWeight: 600, bgcolor: verde.headerBg, color: verde.headerText },
+            bgcolor: accentExterior,
+            color: '#fff',
+            fontWeight: 700,
+            height: 36,
+            '& .MuiChip-label': { px: 1.2 },
           }}
+        />
+        <Typography variant="body2" color={verde.textStrong}>
+          Gestión centralizada de inventario y stock disponible
+        </Typography>
+      </Stack>
+      <Stack direction="row" spacing={1.25} alignItems="center">
+        {showGlobalSearch && (
+          <TextField
+            size="small"
+            placeholder="Buscar descripción, código o proveedor…"
+            value={controlledFilters?.busqueda ?? globalInput}
+            onChange={(e) => setGlobalInput(e.target.value)}
+            onKeyDown={(e) => { if (e.key === 'Enter') refetch(); }}
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <IconSearch size={18} />
+                </InputAdornment>
+              ),
+            }}
+            sx={{
+              minWidth: 260,
+              '& .MuiOutlinedInput-root': {
+                borderRadius: 2,
+                backgroundColor: '#fff',
+                '& fieldset': { borderColor: alpha(accentExterior, 0.35) },
+                '&:hover fieldset': { borderColor: alpha(accentExterior, 0.5) },
+                '&.Mui-focused fieldset': { borderColor: accentExterior },
+              },
+            }}
+          />
+        )}
+        <CrystalSoftButton
+          baseColor={accentExterior}
+          startIcon={<IconRefresh size={18} />}
+          onClick={limpiarFiltros}
+          sx={{ minHeight: 36, px: 2 }}
         >
-          <TableHead>
-            <TableRow sx={{ '& th:first-of-type': { borderTopLeftRadius: 8 }, '& th:last-of-type': { borderTopRightRadius: 8 } }}>
-              {columns.map((col) => (
-                <TableCell
-                  key={col.key}
-                  sx={{
-                    fontWeight: 700,
-                    color: verde.headerText,
-                    borderBottom: '3px solid',
-                    borderColor: verde.headerBorder,
-                    width: col.key === 'acciones' ? 140 : col.width,
-                    textAlign: col.key === 'acciones' ? 'center' : undefined,
-                  }}
-                >
-                  <Box display="flex" alignItems="center" justifyContent="space-between">
-                    {col.header ?? col.key.toUpperCase()}
-                    {col.filterable && (
-                      <Tooltip title="Filtrar">
-                        <IconButton size="small" color="inherit" onClick={abrirMenu(col.key)}>
-                          <IconDotsVertical size={16} />
-                        </IconButton>
-                      </Tooltip>
-                    )}
-                  </Box>
-                </TableCell>
-              ))}
-            </TableRow>
-          </TableHead>
+          Limpiar
+        </CrystalSoftButton>
+        <CrystalButton
+          baseColor={accentExterior}
+          startIcon={<IconSearch size={18} />}
+          onClick={() => refetch()}
+          disabled={loading}
+          sx={{ minHeight: 36, px: 2.4 }}
+        >
+          Buscar
+        </CrystalButton>
+        {allowCreate && (
+          <CrystalButton
+            baseColor={verde.primary}
+            startIcon={<IconPlus size={18} />}
+            onClick={onCreateClick}
+            sx={{ minHeight: 36, px: 2.4 }}
+          >
+            Nuevo artículo
+          </CrystalButton>
+        )}
+      </Stack>
+    </Box>
+  );
 
-          <TableBody sx={{ '& .MuiTableCell-root': { py: dense ? 1 : 1.5 } }}>
-            {loading ? (
-              <TableRow><TableCell colSpan={columns.length}><Typography> Cargando… </Typography></TableCell></TableRow>
-            ) : error ? (
-              <TableRow>
-                <TableCell colSpan={columns.length}>
-                  <Box textAlign="center" py={3}>
-                    <Typography color="error" variant="h6" mb={1}>Error al cargar</Typography>
-                    <Typography color="text.secondary" mb={2}>{error.message}</Typography>
-                    <Button variant="contained" color="warning" startIcon={<IconRefresh />} onClick={() => refetch()}>
-                      Reintentar
-                    </Button>
-                  </Box>
-                </TableCell>
-              </TableRow>
-            ) : articulos.length === 0 ? (
-              <TableRow><TableCell colSpan={columns.length}><Typography>No hay resultados</Typography></TableCell></TableRow>
-            ) : (
-              articulos.map((a, idx) => (
-                <TableRow key={a.id} sx={{ bgcolor: idx % 2 === 1 ? 'grey.50' : 'inherit', '&:hover': { bgcolor: verde.toolbarBg } }}>
-                  {columns.map((col) => (
-                    <TableCell key={col.key} sx={{ textAlign: col.key === 'acciones' ? 'center' : undefined }}>
-                      {col.render ? col.render(a) : defaultRenderers[col.key](a)}
-                    </TableCell>
-                  ))}
-                </TableRow>
-              ))
-            )}
-          </TableBody>
-        </Table>
-      </TableContainer>
-
-      {/* footer paginación */}
-      <Box mt={1} mb={1} display="flex" justifyContent="space-between" alignItems="center">
-        <Typography variant="caption" color="text.secondary">Mostrando {articulos.length} filas en esta página.</Typography>
-      </Box>
-      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', p: 2, borderTop: '1px solid', borderColor: 'divider' }}>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-          <Typography variant="body2" color="text.secondary">Filas por página:</Typography>
-          <TextField select size="small" value={controlledFilters?.limite ?? rowsPerPage} onChange={handleChangeRowsPerPage} sx={{ minWidth: 80 }}>
-            {rowsPerPageOptions.map((o) => (<option key={o} value={o}>{o}</option>))}
-          </TextField>
-        </Box>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-          <Typography variant="body2" color="text.secondary">
-            {`${(controlledFilters?.pagina ?? page) * (controlledFilters?.limite ?? rowsPerPage) + 1}-${Math.min(((controlledFilters?.pagina ?? page) + 1) * (controlledFilters?.limite ?? rowsPerPage), total)} de ${total}`}
-          </Typography>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-            {genPaginas().map((n, i) => (
-              <Box key={i}>
-                {n === '...' ? (
-                  <Typography variant="body2" color="text.secondary" sx={{ px: 1 }}>…</Typography>
-                ) : (
-                  <Button
-                    size="small"
-                    variant={((controlledFilters ? (controlledFilters.pagina ?? 0) + 1 : paginaActual) === n) ? 'contained' : 'text'}
-                    onClick={() => handleChangePage(null, (n as number) - 1)}
-                    sx={{
-                      minWidth: 32, height: 32, textTransform: 'none', fontSize: '0.875rem',
-                      ...(((controlledFilters ? (controlledFilters.pagina ?? 0) + 1 : paginaActual) === n)
-                        ? { bgcolor: verde.primary, color: 'white', '&:hover': { bgcolor: verde.primaryHover } }
-                        : { color: 'text.secondary', '&:hover': { bgcolor: verde.rowHover } })
-                    }}
-                  >
-                    {n}
-                  </Button>
-                )}
-              </Box>
+  const tablaContenido = (
+    <TableContainer
+      sx={{
+        borderRadius: 2,
+        border: '1px solid',
+        borderColor: alpha(accentExterior, 0.6),
+        bgcolor: tableBodyBg,
+        boxShadow: '0 8px 24px rgba(0,0,0,0.08)',
+      }}
+    >
+      <Table
+        stickyHeader
+        size="small"
+        sx={{
+          '& .MuiTableCell-root': { fontSize: '0.78rem', px: 1.25, py: dense ? 0.75 : 1.1 },
+          '& .MuiTableCell-head': {
+            fontSize: '0.75rem',
+            fontWeight: 700,
+            bgcolor: accentExterior,
+            color: '#fff',
+            borderBottom: 'none',
+          },
+        }}
+      >
+        <TableHead>
+          <TableRow sx={{ '& th:first-of-type': { borderTopLeftRadius: 8 }, '& th:last-of-type': { borderTopRightRadius: 8 } }}>
+            {columns.map((col) => (
+              <TableCell
+                key={col.key}
+                sx={{
+                  fontWeight: 700,
+                  color: '#fff',
+                  width: col.key === 'acciones' ? 160 : col.width,
+                  textAlign: col.key === 'acciones' ? 'center' : undefined,
+                }}
+              >
+                <Box display="flex" alignItems="center" justifyContent="space-between">
+                  {col.header ?? col.key.toUpperCase()}
+                  {col.filterable && (
+                    <Tooltip title="Filtrar">
+                      <IconButton size="small" color="inherit" onClick={abrirMenu(col.key)}>
+                        <IconDotsVertical size={16} />
+                      </IconButton>
+                    </Tooltip>
+                  )}
+                </Box>
+              </TableCell>
             ))}
-          </Box>
-          <Box sx={{ display: 'flex', alignItems: 'center' }}>
-            <IconButton size="small" onClick={() => handleChangePage(null, 0)} disabled={(controlledFilters?.pagina ?? page) === 0} sx={{ color: 'text.secondary' }} title="Primera">⏮</IconButton>
-            <IconButton size="small" onClick={() => handleChangePage(null, (controlledFilters?.pagina ?? page) - 1)} disabled={(controlledFilters?.pagina ?? page) === 0} sx={{ color: 'text.secondary' }} title="Anterior">◀</IconButton>
-            <IconButton size="small" onClick={() => handleChangePage(null, (controlledFilters?.pagina ?? page) + 1)} disabled={(controlledFilters?.pagina ?? page) >= totalPaginas - 1} sx={{ color: 'text.secondary' }} title="Siguiente">▶</IconButton>
-            <IconButton size="small" onClick={() => handleChangePage(null, totalPaginas - 1)} disabled={(controlledFilters?.pagina ?? page) >= totalPaginas - 1} sx={{ color: 'text.secondary' }} title="Última">⏭</IconButton>
-          </Box>
-        </Box>
-      </Box>
+          </TableRow>
+        </TableHead>
+        <TableBody>
+          {articulos.length === 0 ? (
+            <TableRow>
+              <TableCell colSpan={columns.length}>
+                <Box textAlign="center" py={4}>
+                  <Typography variant="subtitle1" color={verde.textStrong} fontWeight={600}>
+                    No se encontraron artículos
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    Ajustá los filtros o cargá un nuevo artículo.
+                  </Typography>
+                </Box>
+              </TableCell>
+            </TableRow>
+          ) : (
+            articulos.map((a, idx) => (
+              <TableRow
+                key={a.id}
+                sx={{
+                  bgcolor: idx % 2 === 0 ? 'transparent' : tableBodyAlt,
+                  '&:hover': { bgcolor: alpha(accentExterior, 0.1) },
+                }}
+              >
+                {columns.map((col) => (
+                  <TableCell key={col.key} sx={{ textAlign: col.key === 'acciones' ? 'center' : undefined }}>
+                    {col.render ? col.render(a) : defaultRenderers[col.key](a)}
+                  </TableCell>
+                ))}
+              </TableRow>
+            ))
+          )}
+        </TableBody>
+      </Table>
+    </TableContainer>
+  );
 
-      {/* Menú filtros por columna */}
+  const paginador = (
+    <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mt: 3 }}>
+      <Typography variant="caption" color="text.secondary">
+        Mostrando {Math.min(articulos.length, rowsPerPage)} de {total} artículos
+      </Typography>
+      <Stack direction="row" spacing={1} alignItems="center">
+        <TextField
+          select
+          size="small"
+          value={String(controlledFilters?.limite ?? rowsPerPage)}
+          onChange={handleChangeRowsPerPage}
+          sx={{ minWidth: 90 }}
+        >
+          {rowsPerPageOptions.map((option) => (
+            <option key={option} value={option}>
+              {option}
+            </option>
+          ))}
+        </TextField>
+        <Typography variant="body2" color="text.secondary">
+          Página {paginaActual} de {Math.max(1, totalPaginas)}
+        </Typography>
+        {genPaginas().map((num, idx) =>
+          num === '...' ? (
+            <CrystalSoftButton
+              key={`ellipsis-${idx}`}
+              baseColor={accentExterior}
+              disabled
+              sx={{ minWidth: 32, minHeight: 30, px: 1, py: 0.25, borderRadius: 2, color: verde.textStrong }}
+            >
+              …
+            </CrystalSoftButton>
+          ) : (
+            <CrystalButton
+              key={`page-${num}`}
+              baseColor={accentExterior}
+              onClick={() => handleChangePage(null, (num as number) - 1)}
+              disabled={num === paginaActual}
+              sx={{
+                minWidth: 32,
+                minHeight: 30,
+                px: 1,
+                py: 0.25,
+                borderRadius: 2,
+                fontWeight: num === paginaActual ? 800 : 600,
+                boxShadow: 'none',
+              }}
+            >
+              {num}
+            </CrystalButton>
+          )
+        )}
+      </Stack>
+    </Box>
+  );
+
+  if (loading) {
+    return (
+      <WoodSection>
+        <Skeleton variant="rounded" height={48} sx={{ mb: 3, borderRadius: 2 }} />
+        <Skeleton variant="rounded" height={320} sx={{ borderRadius: 2 }} />
+      </WoodSection>
+    );
+  }
+
+  if (error) {
+    return (
+      <WoodSection>
+        <Typography color="error" variant="h6" mb={1}>
+          Error al cargar artículos
+        </Typography>
+        <Typography color="text.secondary" mb={2}>
+          {error.message}
+        </Typography>
+        <CrystalButton baseColor={accentExterior} startIcon={<IconRefresh />} onClick={() => refetch()}>
+          Reintentar
+        </CrystalButton>
+      </WoodSection>
+    );
+  }
+
+  return (
+    <>
+      <WoodSection>
+        {showToolbar && toolbar}
+        {tablaContenido}
+        {paginador}
+      </WoodSection>
+
       <Menu
         anchorEl={menuAnchor}
         open={Boolean(menuAnchor)}
         onClose={cerrarMenu}
         anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
         transformOrigin={{ vertical: 'top', horizontal: 'right' }}
-        slotProps={{ paper: { sx: { p: 1.5, minWidth: 260 } } } as any}
+        slotProps={{ paper: { sx: { p: 1.5, minWidth: 260, borderRadius: 2 } } } as any}
       >
         <Typography variant="subtitle2" sx={{ px: 1, pb: 1 }}>
           {activeCol === 'codigo' && 'Filtrar por Código'}
           {activeCol === 'descripcion' && 'Filtrar por Descripción'}
           {activeCol === 'rubro' && 'Filtrar por Rubro'}
-          {activeCol === 'proveedor' && 'Filtrar por Proveedor (texto)'}
+          {activeCol === 'proveedor' && 'Filtrar por Proveedor'}
           {activeCol === 'estado' && 'Filtrar por Estado'}
         </Typography>
         <Divider sx={{ mb: 1 }} />
@@ -615,8 +735,12 @@ const ArticulosTable: React.FC<ArticulosTableProps> = ({
                     variant={(controlledFilters?.estado ?? localFilters.estado) === op ? 'contained' : 'outlined'}
                     color="success"
                     onClick={() => {
-                      if (!controlledFilters) { setLocalFilters((p) => ({ ...p, estado: op as any })); setPage(0); }
-                      cerrarMenu(); refetch();
+                      if (!controlledFilters) {
+                        setLocalFilters((p) => ({ ...p, estado: op as any }));
+                        setPage(0);
+                      }
+                      cerrarMenu();
+                      refetch();
                     }}
                     sx={{ textTransform: 'none' }}
                   >
@@ -625,7 +749,19 @@ const ArticulosTable: React.FC<ArticulosTableProps> = ({
                 ))}
               </Stack>
               <Stack direction="row" justifyContent="space-between">
-                <Button size="small" onClick={() => { if (!controlledFilters) setLocalFilters((p) => ({ ...p, estado: '' as any })); cerrarMenu(); refetch(); }}>Limpiar</Button>
+                <Button
+                  size="small"
+                  onClick={() => {
+                    if (!controlledFilters) {
+                      setLocalFilters((p) => ({ ...p, estado: '' as any }));
+                      setPage(0);
+                    }
+                    cerrarMenu();
+                    refetch();
+                  }}
+                >
+                  Limpiar
+                </Button>
               </Stack>
             </Stack>
           </Box>
@@ -651,12 +787,15 @@ const ArticulosTable: React.FC<ArticulosTableProps> = ({
                     });
                     setPage(0);
                   }
-                  cerrarMenu(); refetch();
+                  cerrarMenu();
+                  refetch();
                 }
               }}
             />
             <Stack direction="row" justifyContent="flex-end" spacing={1} mt={1}>
-              <Button size="small" onClick={() => setColInput('')}>Limpiar</Button>
+              <Button size="small" onClick={() => setColInput('')}>
+                Limpiar
+              </Button>
               <Button
                 size="small"
                 variant="contained"
@@ -673,7 +812,8 @@ const ArticulosTable: React.FC<ArticulosTableProps> = ({
                     });
                     setPage(0);
                   }
-                  cerrarMenu(); refetch();
+                  cerrarMenu();
+                  refetch();
                 }}
               >
                 Aplicar
@@ -682,7 +822,7 @@ const ArticulosTable: React.FC<ArticulosTableProps> = ({
           </Box>
         )}
       </Menu>
-    </Paper>
+    </>
   );
 };
 

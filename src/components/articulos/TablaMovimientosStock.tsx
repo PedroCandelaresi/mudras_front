@@ -1,31 +1,85 @@
 'use client';
+
+import React, { useMemo, useRef, useState, useEffect } from 'react';
 import {
   Box,
+  Typography,
   Table,
   TableBody,
   TableCell,
   TableContainer,
   TableHead,
   TableRow,
-  Typography,
-  Paper,
-  Chip,
-  Skeleton,
   TextField,
   InputAdornment,
+  Chip,
+  Tooltip,
+  IconButton,
+  Menu,
   Button,
-  Stack
-} from "@mui/material";
+  Divider,
+  Stack,
+  Skeleton,
+} from '@mui/material';
+import { alpha } from '@mui/material/styles';
 import { useQuery } from '@apollo/client/react';
+import { format } from 'date-fns';
+import { es } from 'date-fns/locale';
+import {
+  IconSearch,
+  IconTrendingUp,
+  IconTrendingDown,
+  IconRefresh,
+  IconEye,
+  IconEdit,
+  IconTrash,
+  IconDotsVertical,
+  IconArrowUp,
+  IconArrowDown,
+} from '@tabler/icons-react';
+
 import { GET_MOVIMIENTOS_STOCK, GET_ARTICULOS } from '@/components/articulos/graphql/queries';
 import { Stock } from '@/app/interfaces/mudras.types';
 import { MovimientosStockResponse } from '@/app/interfaces/graphql.types';
-import { IconSearch, IconTrendingUp, IconTrendingDown, IconRefresh, IconEdit, IconTrash, IconEye, IconArrowUp, IconArrowDown, IconDotsVertical } from '@tabler/icons-react';
-import { useEffect, useMemo, useRef, useState } from 'react';
-import { IconButton, Tooltip, Menu, Divider } from '@mui/material';
-import { format } from 'date-fns';
-import { es } from 'date-fns/locale';
-import { verde } from '@/ui/colores';
+import { marron, verde, azul } from '@/ui/colores';
+import { crearConfiguracionBisel, crearEstilosBisel } from '@/components/ui/bevel';
+import { WoodBackdrop } from '@/components/ui/TexturedFrame/WoodBackdrop';
+import CrystalButton, { CrystalIconButton, CrystalSoftButton } from '@/components/ui/CrystalButton';
+
+const accentExterior = marron.primary;
+const accentInterior = marron.borderInner ?? '#4a3b35';
+const panelBg = 'rgba(250, 240, 232, 0.82)';
+const tableBodyBg = 'rgba(253, 246, 236, 0.68)';
+const tableBodyAlt = 'rgba(214, 177, 142, 0.22)';
+const woodTintExterior = '#dfc3a7';
+const colorAccionEliminar = '#b71c1c';
+
+const biselExteriorConfig = crearConfiguracionBisel(accentExterior, 1.4);
+const estilosBiselExterior = crearEstilosBisel(biselExteriorConfig, { zContenido: 2 });
+
+const WoodSection: React.FC<React.PropsWithChildren> = ({ children }) => (
+  <Box
+    sx={{
+      position: 'relative',
+      borderRadius: 2,
+      overflow: 'hidden',
+      boxShadow: '0 18px 40px rgba(0,0,0,0.12)',
+      background: 'transparent',
+      ...estilosBiselExterior,
+    }}
+  >
+    <WoodBackdrop accent={woodTintExterior} radius={3} inset={0} strength={0.16} texture="tabla" />
+    <Box
+      sx={{
+        position: 'absolute',
+        inset: 0,
+        backgroundColor: alpha('#fff5ec', 0.86),
+        zIndex: 0,
+      }}
+    />
+    <Box sx={{ position: 'relative', zIndex: 2, p: 3 }}>{children}</Box>
+  </Box>
+);
 
 const TablaMovimientosStock = () => {
   const { data, loading, error, refetch } = useQuery<MovimientosStockResponse>(GET_MOVIMIENTOS_STOCK, {
@@ -33,67 +87,40 @@ const TablaMovimientosStock = () => {
     errorPolicy: 'all',
   });
   const { data: dataArticulos } = useQuery<any>(GET_ARTICULOS, { fetchPolicy: 'cache-first' });
+
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(50);
   const [filtro, setFiltro] = useState('');
   const [menuAnchor, setMenuAnchor] = useState<null | HTMLElement>(null);
   const [columnaActiva, setColumnaActiva] = useState<null | 'descripcion' | 'usuario'>(null);
-  const [filtrosColumna, setFiltrosColumna] = useState<{ descripcion?: string; usuario?: string; }>({});
+  const [filtrosColumna, setFiltrosColumna] = useState<{ descripcion?: string; usuario?: string }>({});
   const [filtroColInput, setFiltroColInput] = useState('');
 
-  // Reintento controlado si aparece el error de toISOString en la primera ráfaga
   const reintentoHecho = useRef(false);
   useEffect(() => {
     if (error && !reintentoHecho.current) {
       const msg = String(error.message || '').toLowerCase();
       if (msg.includes('toisostring')) {
         reintentoHecho.current = true;
-        setTimeout(() => {
-          try { void refetch(); } catch {}
-        }, 200);
+        setTimeout(() => { try { void refetch(); } catch {} }, 200);
       }
     }
   }, [error, refetch]);
 
-  // Funciones para manejar acciones
-  const handleViewMovimiento = (movimiento: Stock) => {
-    console.log('Ver movimiento:', movimiento);
-    // TODO: Implementar modal de vista detallada
-  };
-
-  const handleEditMovimiento = (movimiento: Stock) => {
-    console.log('Editar movimiento:', movimiento);
-    // TODO: Implementar modal de edición
-  };
-
-  const handleDeleteMovimiento = (movimiento: Stock) => {
-    console.log('Eliminar movimiento:', movimiento);
-    // TODO: Implementar confirmación y eliminación
-  };
-
-  const handleChangePage = (event: unknown, newPage: number) => {
-    setPage(newPage);
-  };
-
-  const handleChangeRowsPerPage = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setRowsPerPage(parseInt(event.target.value, 10));
-    setPage(0);
-  };
-
   const movimientos: Stock[] = Array.isArray(data?.movimientosStock) ? (data!.movimientosStock as Stock[]) : [];
-  const articulosDataList = dataArticulos?.articulos;
-  const articulos = useMemo(
-    () => (Array.isArray(articulosDataList) ? (articulosDataList as any[]) : []),
-    [articulosDataList]
-  );
+  const articulos = useMemo(() => {
+    const list = dataArticulos?.articulos;
+    return Array.isArray(list) ? (list as any[]) : [];
+  }, [dataArticulos?.articulos]);
+
   const mapaDescripcionPorCodigo = useMemo(() => {
-    const m = new Map<string, string>();
-    for (const a of articulos) {
-      if (a?.Codigo) m.set(String(a.Codigo), a?.Descripcion ?? '');
+    const mapa = new Map<string, string>();
+    for (const articulo of articulos) {
+      if (articulo?.Codigo) mapa.set(String(articulo.Codigo), articulo?.Descripcion ?? '');
     }
-    return m;
+    return mapa;
   }, [articulos]);
-  
+
   const movimientosFiltrados = movimientos.filter((movimiento) => {
     const desc = mapaDescripcionPorCodigo.get(String(movimiento?.Codigo ?? ''))?.toLowerCase() ?? '';
     const usuarioTxt = String(movimiento?.Usuario ?? '').toLowerCase();
@@ -108,49 +135,23 @@ const TablaMovimientosStock = () => {
   const paginaActual = page + 1;
 
   const generarNumerosPaginas = () => {
-    const paginas = [];
-    const maxVisible = 7; // Máximo de páginas visibles
-    
+    const paginas: (number | '...')[] = [];
+    const maxVisible = 7;
     if (totalPaginas <= maxVisible) {
-      // Si hay pocas páginas, mostrar todas
-      for (let i = 1; i <= totalPaginas; i++) {
-        paginas.push(i);
-      }
+      for (let i = 1; i <= totalPaginas; i++) paginas.push(i);
+    } else if (paginaActual <= 4) {
+      for (let i = 1; i <= 5; i++) paginas.push(i);
+      paginas.push('...', totalPaginas);
+    } else if (paginaActual >= totalPaginas - 3) {
+      paginas.push(1, '...');
+      for (let i = totalPaginas - 4; i <= totalPaginas; i++) paginas.push(i);
     } else {
-      // Lógica para truncar páginas
-      if (paginaActual <= 4) {
-        // Inicio: 1, 2, 3, 4, 5, ..., última
-        for (let i = 1; i <= 5; i++) {
-          paginas.push(i);
-        }
-        paginas.push('...');
-        paginas.push(totalPaginas);
-      } else if (paginaActual >= totalPaginas - 3) {
-        // Final: 1, ..., n-4, n-3, n-2, n-1, n
-        paginas.push(1);
-        paginas.push('...');
-        for (let i = totalPaginas - 4; i <= totalPaginas; i++) {
-          paginas.push(i);
-        }
-      } else {
-        // Medio: 1, ..., actual-1, actual, actual+1, ..., última
-        paginas.push(1);
-        paginas.push('...');
-        for (let i = paginaActual - 1; i <= paginaActual + 1; i++) {
-          paginas.push(i);
-        }
-        paginas.push('...');
-        paginas.push(totalPaginas);
-      }
+      paginas.push(1, '...', paginaActual - 1, paginaActual, paginaActual + 1, '...', totalPaginas);
     }
-    
     return paginas;
   };
 
-  const movimientosPaginados = movimientosFiltrados.slice(
-    page * rowsPerPage,
-    page * rowsPerPage + rowsPerPage
-  );
+  const movimientosPaginados = movimientosFiltrados.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
 
   const getTipoMovimiento = (stockActual: number, stockAnterior: number) => {
     if (stockActual > stockAnterior) return 'entrada';
@@ -158,383 +159,389 @@ const TablaMovimientosStock = () => {
     return 'ajuste';
   };
 
-  const getDiferencia = (stockActual: number, stockAnterior: number) => {
-    return stockActual - stockAnterior;
+  const getDiferencia = (stockActual: number, stockAnterior: number) => stockActual - stockAnterior;
+
+  const handleViewMovimiento = (movimiento: Stock) => {
+    console.log('Ver movimiento:', movimiento);
   };
+
+  const handleEditMovimiento = (movimiento: Stock) => {
+    console.log('Editar movimiento:', movimiento);
+  };
+
+  const handleDeleteMovimiento = (movimiento: Stock) => {
+    console.log('Eliminar movimiento:', movimiento);
+  };
+
+  const handleChangePage = (_: unknown, newPage: number) => setPage(newPage);
+  const handleChangeRowsPerPage = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setRowsPerPage(parseInt(event.target.value, 10));
+    setPage(0);
+  };
+
+  const limpiarFiltros = () => {
+    setFiltro('');
+    setFiltrosColumna({});
+    setPage(0);
+    void refetch();
+  };
+
+  const toolbar = (
+    <Box
+      display="flex"
+      justifyContent="space-between"
+      alignItems="center"
+      sx={{
+        px: 2,
+        py: 1.5,
+        mb: 3,
+        borderRadius: 2,
+        border: '1px solid',
+        borderColor: accentInterior,
+        bgcolor: panelBg,
+        boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.45)',
+      }}
+    >
+      <Stack direction="row" spacing={2} alignItems="center">
+        <Chip
+          icon={<IconTrendingUp size={16} />}
+          label="Movimientos de Stock"
+          sx={{
+            bgcolor: accentExterior,
+            color: '#fff',
+            fontWeight: 700,
+            height: 36,
+            '& .MuiChip-label': { px: 1.2 },
+          }}
+        />
+        <Typography variant="body2" color={marron.textStrong}>
+          Seguimiento de ingresos, salidas y ajustes inventariales
+        </Typography>
+      </Stack>
+      <Stack direction="row" spacing={1.25} alignItems="center">
+        <TextField
+          size="small"
+          placeholder="Buscar por descripción o usuario…"
+          value={filtro}
+          onChange={(e) => setFiltro(e.target.value)}
+          InputProps={{
+            startAdornment: (
+              <InputAdornment position="start">
+                <IconSearch size={18} />
+              </InputAdornment>
+            ),
+          }}
+          sx={{
+            minWidth: 240,
+            '& .MuiOutlinedInput-root': {
+              borderRadius: 2,
+              backgroundColor: '#fff',
+              '& fieldset': { borderColor: alpha(accentExterior, 0.32) },
+              '&:hover fieldset': { borderColor: alpha(accentExterior, 0.48) },
+              '&.Mui-focused fieldset': { borderColor: accentExterior },
+            },
+          }}
+        />
+        <CrystalSoftButton
+          baseColor={accentExterior}
+          startIcon={<IconRefresh size={18} />}
+          onClick={limpiarFiltros}
+          sx={{ minHeight: 36, px: 2 }}
+        >
+          Limpiar
+        </CrystalSoftButton>
+        <CrystalButton
+          baseColor={accentExterior}
+          startIcon={<IconSearch size={18} />}
+          onClick={() => refetch()}
+          disabled={loading}
+          sx={{ minHeight: 36, px: 2.4 }}
+        >
+          Buscar
+        </CrystalButton>
+      </Stack>
+    </Box>
+  );
+
+  const tabla = (
+    <TableContainer
+      sx={{
+        borderRadius: 2,
+        border: '1px solid',
+        borderColor: alpha(accentExterior, 0.6),
+        bgcolor: tableBodyBg,
+        boxShadow: '0 8px 24px rgba(0,0,0,0.08)',
+      }}
+    >
+      <Table
+        stickyHeader
+        size="small"
+        sx={{
+          '& .MuiTableCell-root': { fontSize: '0.78rem', px: 1.25, py: 0.9 },
+          '& .MuiTableCell-head': {
+            fontSize: '0.75rem',
+            fontWeight: 700,
+            bgcolor: accentExterior,
+            color: '#fff',
+            borderBottom: 'none',
+          },
+        }}
+      >
+        <TableHead>
+          <TableRow>
+            <TableCell>Fecha</TableCell>
+            <TableCell>Código</TableCell>
+            <TableCell>Descripción</TableCell>
+            <TableCell align="right">Stock anterior</TableCell>
+            <TableCell align="right">Stock actual</TableCell>
+            <TableCell align="right">Diferencia</TableCell>
+            <TableCell align="center">Tipo</TableCell>
+            <TableCell align="center">Usuario</TableCell>
+            <TableCell align="center">Acciones</TableCell>
+          </TableRow>
+        </TableHead>
+        <TableBody>
+          {movimientosPaginados.length === 0 ? (
+            <TableRow>
+              <TableCell colSpan={9}>
+                <Box textAlign="center" py={4}>
+                  <Typography variant="subtitle1" color={marron.textStrong} fontWeight={600}>
+                    No se encontraron movimientos
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    Ajustá los filtros de búsqueda para ver otros registros.
+                  </Typography>
+                </Box>
+              </TableCell>
+            </TableRow>
+          ) : (
+            movimientosPaginados.map((mov) => {
+              const descripcion = mapaDescripcionPorCodigo.get(String(mov.Codigo ?? '')) || '—';
+              const tipo = getTipoMovimiento(mov.Stock ?? 0, mov.StockAnterior ?? 0);
+              const diferencia = getDiferencia(mov.Stock ?? 0, mov.StockAnterior ?? 0);
+              const esEntrada = tipo === 'entrada';
+              const esSalida = tipo === 'salida';
+
+              return (
+                <TableRow
+                  key={`${mov.Id}-${mov.Fecha}`}
+                  sx={{
+                    bgcolor: esEntrada ? alpha(verde.primary, 0.12) : esSalida ? alpha('#ff7043', 0.12) : tableBodyAlt,
+                    '&:hover': { bgcolor: alpha(accentExterior, 0.1) },
+                  }}
+                >
+                  <TableCell>
+                    <Typography variant="body2" fontWeight={600}>
+                      {mov.Fecha ? format(new Date(mov.Fecha), "dd 'de' MMMM yyyy", { locale: es }) : '—'}
+                    </Typography>
+                  </TableCell>
+                  <TableCell>
+                    <Chip
+                      label={mov.Codigo ?? '—'}
+                      size="small"
+                      sx={{
+                        bgcolor: alpha(accentExterior, 0.2),
+                        color: marron.textStrong,
+                        height: 20,
+                        '& .MuiChip-label': { px: 0.8, fontWeight: 600 },
+                      }}
+                    />
+                  </TableCell>
+                  <TableCell>
+                    <Typography variant="body2" color="text.secondary">{descripcion}</Typography>
+                  </TableCell>
+                  <TableCell align="right">
+                    <Typography variant="body2" color="text.secondary">{mov.StockAnterior ?? 0}</Typography>
+                  </TableCell>
+                  <TableCell align="right">
+                    <Typography variant="body2" fontWeight={600}>{mov.Stock ?? 0}</Typography>
+                  </TableCell>
+                  <TableCell align="right">
+                    <Stack direction="row" spacing={0.75} alignItems="center" justifyContent="flex-end">
+                      {diferencia >= 0 ? <IconArrowUp size={16} color={verde.primary} /> : <IconArrowDown size={16} color="#ff7043" />}
+                      <Typography variant="body2" fontWeight={600} color={diferencia >= 0 ? verde.textStrong : '#ff7043'}>
+                        {diferencia > 0 ? `+${diferencia}` : diferencia}
+                      </Typography>
+                    </Stack>
+                  </TableCell>
+                  <TableCell align="center">
+                    <Chip
+                      label={tipo.toUpperCase()}
+                      size="small"
+                      color={esEntrada ? 'success' : esSalida ? 'error' : 'warning'}
+                      sx={{ height: 20, '& .MuiChip-label': { px: 0.8, fontWeight: 600 } }}
+                    />
+                  </TableCell>
+                  <TableCell align="center">
+                    <Typography variant="body2" color="text.secondary">{mov.Usuario ?? '—'}</Typography>
+                  </TableCell>
+                  <TableCell align="center">
+                    <Stack direction="row" spacing={0.75} justifyContent="center">
+                      <Tooltip title="Ver detalle">
+                        <CrystalIconButton baseColor={azul.primary} onClick={() => handleViewMovimiento(mov)}>
+                          <IconEye size={16} />
+                        </CrystalIconButton>
+                      </Tooltip>
+                      <Tooltip title="Editar">
+                        <CrystalIconButton baseColor={verde.primary} onClick={() => handleEditMovimiento(mov)}>
+                          <IconEdit size={16} />
+                        </CrystalIconButton>
+                      </Tooltip>
+                      <Tooltip title="Eliminar">
+                        <CrystalIconButton baseColor={colorAccionEliminar} onClick={() => handleDeleteMovimiento(mov)}>
+                          <IconTrash size={16} />
+                        </CrystalIconButton>
+                      </Tooltip>
+                    </Stack>
+                  </TableCell>
+                </TableRow>
+              );
+            })
+          )}
+        </TableBody>
+      </Table>
+    </TableContainer>
+  );
+
+  const paginador = (
+    <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mt: 3 }}>
+      <Typography variant="caption" color="text.secondary">
+        Mostrando {Math.min(movimientosPaginados.length, rowsPerPage)} de {movimientosFiltrados.length} movimientos
+      </Typography>
+      <Stack direction="row" spacing={1} alignItems="center">
+        <TextField select size="small" value={String(rowsPerPage)} onChange={handleChangeRowsPerPage} sx={{ minWidth: 90 }}>
+          {[50, 100, 150].map((option) => (
+            <option key={option} value={option}>{option}</option>
+          ))}
+        </TextField>
+        <Typography variant="body2" color="text.secondary">
+          Página {paginaActual} de {Math.max(1, totalPaginas)}
+        </Typography>
+        {generarNumerosPaginas().map((num, idx) =>
+          num === '...' ? (
+            <CrystalSoftButton
+              key={`ellipsis-${idx}`}
+              baseColor={accentExterior}
+              disabled
+              sx={{ minWidth: 32, minHeight: 30, px: 1, py: 0.25, borderRadius: 2, color: marron.textStrong }}
+            >
+              …
+            </CrystalSoftButton>
+          ) : (
+            <CrystalButton
+              key={`page-${num}`}
+              baseColor={accentExterior}
+              onClick={() => handleChangePage(null, (num as number) - 1)}
+              disabled={num === paginaActual}
+              sx={{
+                minWidth: 32,
+                minHeight: 30,
+                px: 1,
+                py: 0.25,
+                borderRadius: 2,
+                fontWeight: num === paginaActual ? 800 : 600,
+                boxShadow: 'none',
+              }}
+            >
+              {num}
+            </CrystalButton>
+          )
+        )}
+      </Stack>
+    </Box>
+  );
 
   if (loading) {
     return (
-      <Paper elevation={0} sx={{ p: 3, border: 'none', boxShadow: 'none', borderRadius: 2, bgcolor: 'background.paper' }}>
-        <Typography variant="h5" mb={3}>Movimientos de Stock</Typography>
-        <TableContainer>
-          <Table>
-            <TableHead>
-              <TableRow>
-                {['Fecha', 'Código', 'Stock Anterior', 'Stock Actual', 'Diferencia', 'Tipo'].map((header) => (
-                  <TableCell key={header}>
-                    <Skeleton variant="text" width="100%" />
-                  </TableCell>
-                ))}
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {[1, 2, 3, 4, 5].map((row) => (
-                <TableRow key={row}>
-                  {[1, 2, 3, 4, 5, 6].map((cell) => (
-                    <TableCell key={cell}>
-                      <Skeleton variant="text" width="100%" />
-                    </TableCell>
-                  ))}
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </TableContainer>
+      <WoodSection>
+        <Skeleton variant="rounded" height={48} sx={{ mb: 3, borderRadius: 2 }} />
+        <Skeleton variant="rounded" height={320} sx={{ borderRadius: 2 }} />
+      </WoodSection>
+    );
+  }
 
-      {/* Menú de filtros por columna */}
+  if (error) {
+    return (
+      <WoodSection>
+        <Typography color="error" variant="h6" mb={1}>
+          Error al cargar movimientos de stock
+        </Typography>
+        <Typography color="text.secondary" mb={2}>
+          {error.message}
+        </Typography>
+        <CrystalButton baseColor={accentExterior} startIcon={<IconRefresh />} onClick={() => refetch()}>
+          Reintentar
+        </CrystalButton>
+      </WoodSection>
+    );
+  }
+
+  return (
+    <>
+      <WoodSection>
+        {toolbar}
+        {tabla}
+        {paginador}
+      </WoodSection>
+
       <Menu
         anchorEl={menuAnchor}
         open={Boolean(menuAnchor)}
-        onClose={() => { setMenuAnchor(null); setColumnaActiva(null); }}
+        onClose={() => { setMenuAnchor(null); setColumnaActiva(null); setFiltroColInput(''); }}
         anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
         transformOrigin={{ vertical: 'top', horizontal: 'right' }}
-        slotProps={{ paper: { sx: { p: 1.5, minWidth: 260 } } } as any}
+        slotProps={{ paper: { sx: { p: 1.5, minWidth: 260, borderRadius: 2 } } } as any}
       >
         <Typography variant="subtitle2" sx={{ px: 1, pb: 1 }}>
           {columnaActiva === 'descripcion' && 'Filtrar por Descripción'}
           {columnaActiva === 'usuario' && 'Filtrar por Usuario'}
         </Typography>
         <Divider sx={{ mb: 1 }} />
-        {columnaActiva && (
-          <Box px={1} pb={1}>
-            <TextField
-              size="small"
-              fullWidth
-              autoFocus
-              placeholder="Escribe para filtrar..."
-              value={filtroColInput}
-              onChange={(e) => setFiltroColInput(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') {
-                  setFiltrosColumna((prev) => ({ ...prev, [columnaActiva!]: filtroColInput }));
-                  setPage(0);
-                  setMenuAnchor(null);
-                  setColumnaActiva(null);
-                }
-              }}
-            />
-            <Stack direction="row" justifyContent="flex-end" spacing={1} mt={1}>
-              <Button size="small" onClick={() => { setFiltroColInput(''); setFiltrosColumna((prev) => ({ ...prev, [columnaActiva!]: '' })); }}>Limpiar</Button>
-              <Button size="small" variant="contained" sx={{ bgcolor: verde.primary, '&:hover': { bgcolor: verde.primaryHover } }} onClick={() => {
-                setFiltrosColumna((prev) => ({ ...prev, [columnaActiva!]: filtroColInput }));
+        <TextField
+          size="small"
+          fullWidth
+          autoFocus
+          placeholder="Escribe para filtrar…"
+          value={filtroColInput}
+          onChange={(e) => setFiltroColInput(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' && columnaActiva) {
+              setFiltrosColumna((prev) => ({ ...prev, [columnaActiva]: filtroColInput }));
+              setPage(0);
+              setMenuAnchor(null);
+            }
+          }}
+        />
+        <Stack direction="row" justifyContent="flex-end" spacing={1} mt={1}>
+          <Button
+            size="small"
+            onClick={() => {
+              setFiltroColInput('');
+              if (columnaActiva) {
+                setFiltrosColumna((prev) => ({ ...prev, [columnaActiva]: undefined }));
                 setPage(0);
-                setMenuAnchor(null);
-                setColumnaActiva(null);
-              }}>Aplicar</Button>
-            </Stack>
-          </Box>
-        )}
-      </Menu>
-      </Paper>
-    );
-  }
-
-  const noHayDatos = !Array.isArray(data?.movimientosStock) || (data?.movimientosStock?.length || 0) === 0;
-  if (error && noHayDatos) {
-    return (
-      <Paper elevation={0} sx={{ p: 3, textAlign: 'center', border: 'none', boxShadow: 'none', borderRadius: 2, bgcolor: 'background.paper' }}>
-        <Typography color="error" variant="h6" mb={2}>
-          Error al cargar movimientos de stock
-        </Typography>
-        <Typography color="text.secondary" mb={2}>
-          {error.message}
-        </Typography>
-        <Button 
-          variant="contained" 
-          color="warning"
-          startIcon={<IconRefresh />}
-          onClick={() => refetch()}
-        >
-          Reintentar
-        </Button>
-      </Paper>
-    );
-  }
-
-  return (
-    <Paper elevation={0} sx={{ p: 3, border: 'none', boxShadow: 'none', borderRadius: 2, bgcolor: 'background.paper' }}>
-      {/* Toolbar superior estilo Artículos */}
-      <Box display="flex" justifyContent="space-between" alignItems="center" sx={{ px: 1, py: 1, bgcolor: verde.toolbarBg, border: '1px solid', borderColor: verde.toolbarBorder, borderRadius: 1, mb: 2 }}>
-        <Typography variant="h6" fontWeight={700} color={verde.textStrong}>
-          <IconTrendingUp style={{ marginRight: 8, verticalAlign: 'middle' }} />
-          Movimientos de Stock
-        </Typography>
-        <Box display="flex" alignItems="center" gap={1.5}>
-          <TextField
-            size="small"
-            placeholder="Buscar por código..."
-            value={filtro}
-            onChange={(e) => setFiltro(e.target.value)}
-            InputProps={{ startAdornment: (<InputAdornment position="start"><IconSearch size={20} /></InputAdornment>) }}
-            sx={{ minWidth: 250 }}
-          />
-          <Button variant="contained" sx={{ textTransform: 'none', bgcolor: verde.primary, '&:hover': { bgcolor: verde.primaryHover } }} onClick={() => setPage(0)}>Buscar</Button>
-          <Button variant="outlined" color="inherit" onClick={() => { setFiltro(''); setPage(0); }} sx={{ textTransform: 'none', borderColor: verde.headerBorder, color: verde.textStrong, '&:hover': { borderColor: verde.textStrong, bgcolor: verde.toolbarBg } }}>Limpiar filtros</Button>
-        </Box>
-      </Box>
-
-      <TableContainer sx={{ borderRadius: 2, border: '1px solid', borderColor: verde.borderInner, bgcolor: 'background.paper' }}>
-        <Table stickyHeader size={'small'} sx={{ '& .MuiTableCell-head': { bgcolor: verde.headerBg, color: verde.headerText } }}>
-          <TableHead sx={{ position: 'sticky', top: 0, zIndex: 5 }}>
-            <TableRow sx={{ bgcolor: verde.headerBg, '& th': { top: 0, position: 'sticky', zIndex: 5 } }}>
-              <TableCell sx={{ fontWeight: 700, color: verde.headerText, borderBottom: '3px solid', borderColor: verde.headerBorder }}>Fecha</TableCell>
-              <TableCell sx={{ fontWeight: 700, color: verde.headerText, borderBottom: '3px solid', borderColor: verde.headerBorder }}>
-                <Box display="flex" alignItems="center" justifyContent="space-between">
-                  Descripción
-                  <Tooltip title="Filtrar columna">
-                    <IconButton size="small" color="inherit" onClick={(e) => { setColumnaActiva('descripcion'); setFiltroColInput(filtrosColumna.descripcion || ''); setMenuAnchor(e.currentTarget); }}>
-                      <IconDotsVertical size={16} />
-                    </IconButton>
-                  </Tooltip>
-                </Box>
-              </TableCell>
-              <TableCell sx={{ fontWeight: 700, color: verde.headerText, borderBottom: '3px solid', borderColor: verde.headerBorder }}>Stock Anterior</TableCell>
-              <TableCell sx={{ fontWeight: 700, color: verde.headerText, borderBottom: '3px solid', borderColor: verde.headerBorder }}>Stock Actual</TableCell>
-              <TableCell sx={{ fontWeight: 700, color: verde.headerText, borderBottom: '3px solid', borderColor: verde.headerBorder }}>Diferencia</TableCell>
-              <TableCell sx={{ fontWeight: 700, color: verde.headerText, borderBottom: '3px solid', borderColor: verde.headerBorder }}>Tipo Movimiento</TableCell>
-              <TableCell sx={{ fontWeight: 700, color: verde.headerText, borderBottom: '3px solid', borderColor: verde.headerBorder }}>
-                <Box display="flex" alignItems="center" justifyContent="space-between">
-                  Usuario
-                  <Tooltip title="Filtrar columna">
-                    <IconButton size="small" color="inherit" onClick={(e) => { setColumnaActiva('usuario'); setFiltroColInput(filtrosColumna.usuario || ''); setMenuAnchor(e.currentTarget); }}>
-                      <IconDotsVertical size={16} />
-                    </IconButton>
-                  </Tooltip>
-                </Box>
-              </TableCell>
-              <TableCell sx={{ fontWeight: 700, color: verde.headerText, borderBottom: '3px solid', borderColor: verde.headerBorder, textAlign: 'center' }}>Acciones</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {movimientosPaginados.map((movimiento) => {
-              const diferencia = getDiferencia(movimiento.Stock || 0, movimiento.StockAnterior || 0);
-              const tipoMovimiento = getTipoMovimiento(movimiento.Stock || 0, movimiento.StockAnterior || 0);
-              
-              return (
-                <TableRow 
-                  key={movimiento.Id}
-                  sx={{ 
-                    '&:hover': { bgcolor: verde.toolbarBg },
-                    cursor: 'pointer'
-                  }}
-                >
-                  <TableCell>
-                    <Typography variant="body2" fontWeight={500}>
-                      {movimiento?.Fecha 
-                        ? (() => {
-                            try {
-                              const raw = movimiento.Fecha as any;
-                              const fecha = typeof raw === 'string' || typeof raw === 'number'
-                                ? new Date(raw)
-                                : (raw instanceof Date ? raw : new Date());
-                              return format(fecha, 'dd/MM/yyyy', { locale: es });
-                            } catch (error) {
-                              return 'Fecha inválida';
-                            }
-                          })()
-                        : 'Sin fecha'
-                      }
-                    </Typography>
-                  </TableCell>
-                  <TableCell>
-                    <Typography variant="body2" fontWeight={600} sx={{ whiteSpace: 'normal' }}>
-                      {mapaDescripcionPorCodigo.get(String(movimiento?.Codigo ?? '')) || '-'}
-                    </Typography>
-                  </TableCell>
-                  <TableCell>
-                    <Typography variant="body2">
-                      {movimiento.StockAnterior || 0}
-                    </Typography>
-                  </TableCell>
-                  <TableCell>
-                    <Typography variant="body2" fontWeight={600}>
-                      {movimiento.Stock || 0}
-                    </Typography>
-                  </TableCell>
-                  <TableCell>
-                    <Box display="flex" alignItems="center">
-                      {diferencia > 0 ? (
-                        <IconArrowUp size={16} color="#4CAF50" style={{ marginRight: 4 }} />
-                      ) : diferencia < 0 ? (
-                        <IconArrowDown size={16} color="#F44336" style={{ marginRight: 4 }} />
-                      ) : null}
-                      <Typography 
-                        variant="body2" 
-                        fontWeight={600}
-                        color={diferencia > 0 ? 'success.main' : diferencia < 0 ? 'error.main' : 'text.primary'}
-                      >
-                        {diferencia > 0 ? '+' : ''}{diferencia}
-                      </Typography>
-                    </Box>
-                  </TableCell>
-                  <TableCell>
-                    <Chip
-                      label={
-                        tipoMovimiento === 'entrada' ? 'Entrada' :
-                        tipoMovimiento === 'salida' ? 'Salida' : 'Ajuste'
-                      }
-                      color={
-                        tipoMovimiento === 'entrada' ? 'success' :
-                        tipoMovimiento === 'salida' ? 'error' : 'default'
-                      }
-                      size="small"
-                      variant="filled"
-                    />
-                  </TableCell>
-                  <TableCell>
-                    <Typography variant="body2" color="text.secondary">
-                      Usuario {movimiento.Usuario || 'N/A'}
-                    </Typography>
-                  </TableCell>
-                  <TableCell>
-                    <Box display="flex" justifyContent="center" gap={1}>
-                      <Tooltip title="Ver detalles">
-                        <IconButton 
-                          size="small" 
-                          color="info"
-                          onClick={() => handleViewMovimiento(movimiento)}
-                        >
-                          <IconEye size={16} />
-                        </IconButton>
-                      </Tooltip>
-                      <Tooltip title="Editar movimiento">
-                        <IconButton 
-                          size="small" 
-                          color="warning"
-                          onClick={() => handleEditMovimiento(movimiento)}
-                        >
-                          <IconEdit size={16} />
-                        </IconButton>
-                      </Tooltip>
-                      <Tooltip title="Eliminar movimiento">
-                        <IconButton 
-                          size="small" 
-                          color="error"
-                          onClick={() => handleDeleteMovimiento(movimiento)}
-                        >
-                          <IconTrash size={16} />
-                        </IconButton>
-                      </Tooltip>
-                    </Box>
-                  </TableCell>
-                </TableRow>
-              );
-            })}
-          </TableBody>
-        </Table>
-      </TableContainer>
-
-      {/* Paginación personalizada */}
-      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', p: 2, borderTop: '1px solid', borderColor: 'divider' }}>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-          <Typography variant="body2" color="text.secondary">
-            Filas por página:
-          </Typography>
-          <TextField
-            select
-            size="small"
-            value={rowsPerPage}
-            onChange={handleChangeRowsPerPage}
-            sx={{ minWidth: 80 }}
+              }
+            }}
           >
-            {[50, 100, 150].map((option) => (
-              <option key={option} value={option}>
-                {option}
-              </option>
-            ))}
-          </TextField>
-        </Box>
-        
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-          <Typography variant="body2" color="text.secondary">
-            {`${page * rowsPerPage + 1}-${Math.min((page + 1) * rowsPerPage, movimientosFiltrados.length)} de ${movimientosFiltrados.length}`}
-          </Typography>
-          
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-            {generarNumerosPaginas().map((numeroPagina, index) => (
-              <Box key={index}>
-                {numeroPagina === '...' ? (
-                  <Typography variant="body2" color="text.secondary" sx={{ px: 1 }}>
-                    ...
-                  </Typography>
-                ) : (
-                  <Button
-                    size="small"
-                    variant={paginaActual === numeroPagina ? 'contained' : 'text'}
-                    onClick={() => handleChangePage(null, (numeroPagina as number) - 1)}
-                    sx={{
-                      minWidth: 32,
-                      height: 32,
-                      textTransform: 'none',
-                      fontSize: '0.875rem',
-                      ...(paginaActual === numeroPagina ? {
-                        bgcolor: verde.primary,
-                        color: 'white',
-                        '&:hover': { bgcolor: verde.primaryHover }
-                      } : {
-                        color: 'text.secondary',
-                        '&:hover': { bgcolor: verde.rowHover }
-                      })
-                    }}
-                  >
-                    {numeroPagina}
-                  </Button>
-                )}
-              </Box>
-            ))}
-          </Box>
-          
-          <Box sx={{ display: 'flex', alignItems: 'center' }}>
-            <IconButton
-              size="small"
-              onClick={() => handleChangePage(null, 0)}
-              disabled={page === 0}
-              sx={{ color: 'text.secondary' }}
-              title="Primera página"
-            >
-              ⏮
-            </IconButton>
-            <IconButton
-              size="small"
-              onClick={() => handleChangePage(null, page - 1)}
-              disabled={page === 0}
-              sx={{ color: 'text.secondary' }}
-              title="Página anterior"
-            >
-              ◀
-            </IconButton>
-            <IconButton
-              size="small"
-              onClick={() => handleChangePage(null, page + 1)}
-              disabled={page >= totalPaginas - 1}
-              sx={{ color: 'text.secondary' }}
-              title="Página siguiente"
-            >
-              ▶
-            </IconButton>
-            <IconButton
-              size="small"
-              onClick={() => handleChangePage(null, totalPaginas - 1)}
-              disabled={page >= totalPaginas - 1}
-              sx={{ color: 'text.secondary' }}
-              title="Última página"
-            >
-              ⏭
-            </IconButton>
-          </Box>
-        </Box>
-      </Box>
-    </Paper>
+            Limpiar
+          </Button>
+          <Button
+            size="small"
+            variant="contained"
+            color="warning"
+            onClick={() => {
+              if (columnaActiva) {
+                setFiltrosColumna((prev) => ({ ...prev, [columnaActiva]: filtroColInput }));
+                setPage(0);
+              }
+              setMenuAnchor(null);
+            }}
+          >
+            Aplicar
+          </Button>
+        </Stack>
+      </Menu>
+    </>
   );
 };
 
