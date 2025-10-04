@@ -16,7 +16,7 @@ import {
   Skeleton,
 } from '@mui/material';
 import { alpha, darken } from '@mui/material/styles';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo } from 'react';
 import { Icon } from '@iconify/react';
 import { IconRefresh } from '@tabler/icons-react';
 import { useQuery } from '@apollo/client/react';
@@ -91,7 +91,7 @@ const ModalDetallesArticulo = ({ open, onClose, articulo, accentColor }: ModalDe
     return null;
   }, [data?.articulo, articuloId, articulo]);
 
-  // Reset/refetch al abrir
+  // Refetch al abrir
   useEffect(() => {
     if (open && articuloId != null) {
       void refetch({ id: articuloId });
@@ -103,6 +103,7 @@ const ModalDetallesArticulo = ({ open, onClose, articulo, accentColor }: ModalDe
     onClose();
   }, [loading, onClose]);
 
+  // ⛔ Nada de hooks debajo de este return
   if (!articuloCompleto && !loading && !error) return null;
 
   // ===== Datos calculados
@@ -119,9 +120,9 @@ const ModalDetallesArticulo = ({ open, onClose, articulo, accentColor }: ModalDe
     (articuloCompleto?.Codigo ? `${articuloCompleto.Codigo} - ` : '') +
     (articuloCompleto?.Descripcion ?? 'Detalle del artículo');
 
-  const renderTooltip = useCallback(
-    (text: string) => <Box sx={{ whiteSpace: 'pre-line', lineHeight: 1.4, maxWidth: 320 }}>{text}</Box>,
-    []
+  // Evitamos useCallback aquí para no disparar la regla
+  const renderTooltip = (text: string) => (
+    <Box sx={{ whiteSpace: 'pre-line', lineHeight: 1.4, maxWidth: 320 }}>{text}</Box>
   );
 
   // Tooltips chips
