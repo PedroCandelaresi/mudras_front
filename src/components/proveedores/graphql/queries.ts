@@ -19,6 +19,8 @@ export const GET_PROVEEDORES = gql`
       Web
       Mail
       Rubro
+      PorcentajeRecargoProveedor
+      PorcentajeDescuentoProveedor
       Saldo
       Pais
       Fax
@@ -46,6 +48,15 @@ export const GET_PROVEEDOR = gql`
       Web
       Mail
       Rubro
+      PorcentajeRecargoProveedor
+      PorcentajeDescuentoProveedor
+      rubroId
+      rubro {
+        Id
+        Rubro
+        PorcentajeRecargo
+        PorcentajeDescuento
+      }
       Saldo
       Pais
       Fax
@@ -81,6 +92,26 @@ export const GET_ARTICULOS_POR_PROVEEDOR = gql`
         rubro
       }
       total
+    }
+  }
+`;
+
+export const GET_RUBROS_POR_PROVEEDOR = gql`
+  query GetRubrosPorProveedor($proveedorId: ID!) {
+    obtenerRubrosPorProveedor(proveedorId: $proveedorId) {
+      rubro
+    }
+  }
+`;
+
+
+export const RUBROS_POR_PROVEEDOR = gql`
+  query RubrosPorProveedor($proveedorId: ID!) {
+    rubrosPorProveedor(proveedorId: $proveedorId) {
+      id
+      rubroId
+      rubroNombre
+      cantidadArticulos
     }
   }
 `;

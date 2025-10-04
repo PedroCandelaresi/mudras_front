@@ -20,6 +20,8 @@ export const CREAR_PROVEEDOR = gql`
       Mail
       Rubro
       Saldo
+      PorcentajeRecargoProveedor
+      PorcentajeDescuentoProveedor
       Pais
       Fax
       FechaModif
@@ -47,6 +49,8 @@ export const ACTUALIZAR_PROVEEDOR = gql`
       Mail
       Rubro
       Saldo
+      PorcentajeRecargoProveedor
+      PorcentajeDescuentoProveedor
       Pais
       Fax
       FechaModif

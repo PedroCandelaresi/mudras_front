@@ -110,6 +110,12 @@ const ModalDetallesRubro = ({ open, onClose, rubro, accentColor }: ModalDetalles
   const proveedores = proveedoresData?.proveedoresPorRubro ?? [];
   const [estadoTabla, setEstadoTabla] = useState<EstadoTabla>({ total: 0, loading: false, error: undefined });
   const totalArticulos = estadoTabla.total;
+  const totalArticulosRubro = useMemo(() => {
+    if (typeof rubro?.cantidadArticulos === 'number' && rubro.cantidadArticulos >= 0) {
+      return rubro.cantidadArticulos;
+    }
+    return totalArticulos;
+  }, [rubro?.cantidadArticulos, totalArticulos]);
   const loadingArticulos = estadoTabla.loading;
   const errorArticulos = estadoTabla.error;
   const [reloadKey, setReloadKey] = useState(0);
@@ -279,7 +285,7 @@ const ModalDetallesRubro = ({ open, onClose, rubro, accentColor }: ModalDetalles
                   />
                 )}
                 <Chip
-                  label={formatCount(totalArticulos, 'artículo', 'artículos')}
+                  label={formatCount(totalArticulosRubro, 'artículo', 'artículos')}
                   size="small"
                   sx={{ bgcolor: 'rgba(0,0,0,0.35)', color: '#fff', border: `1px solid ${COLORS.chipBorder}`, fontWeight: 600, px: 1.5, py: 0.5, height: 28 }}
                 />
@@ -402,7 +408,7 @@ const ModalDetallesRubro = ({ open, onClose, rubro, accentColor }: ModalDetalles
                   <Typography variant="h6" fontWeight={700} mb={1} color={COLORS.textStrong}>
                     Proveedores Asociados
                   </Typography>
-                  <Box display="flex" flexWrap="wrap" gap={1}>
+                  <Box display="flex" flexWrap="wrap" gap={1} mb={2}>
                     {loadingProveedores ? (
                       <Typography variant="body2" color="text.secondary">Cargando proveedores…</Typography>
                     ) : proveedores.length ? (

@@ -15,6 +15,15 @@ export interface Proveedor {
   Web?: string;
   Mail?: string;
   Rubro?: string;
+  rubroId?: number;
+  rubro?: {
+    Id: number;
+    Rubro?: string;
+    PorcentajeRecargo?: number;
+    PorcentajeDescuento?: number;
+  } | null;
+  PorcentajeRecargoProveedor?: number;
+  PorcentajeDescuentoProveedor?: number;
   Saldo?: number;
   Pais?: string;
   Fax?: string;
@@ -60,6 +69,8 @@ export interface CreateProveedorInput {
   Web?: string;
   Mail?: string;
   Rubro?: string;
+  PorcentajeRecargoProveedor?: number;
+  PorcentajeDescuentoProveedor?: number;
   Saldo?: number;
   Pais?: string;
   Fax?: string;
@@ -75,6 +86,25 @@ export interface ProveedoresResponse {
 
 export interface ProveedorResponse {
   proveedor: Proveedor;
+}
+
+export interface RubrosPorProveedorResponse {
+  obtenerRubrosPorProveedor: RubroBasico[];
+}
+
+export interface RubroBasico {
+  rubro: string;
+}
+
+export interface RubroPorProveedor {
+  id: number;
+  rubroId?: number | null;
+  rubroNombre?: string | null;
+  cantidadArticulos?: number | null;
+}
+
+export interface RubrosPorProveedorListResponse {
+  rubrosPorProveedor: RubroPorProveedor[];
 }
 
 export interface ArticulosPorProveedorResponse {

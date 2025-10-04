@@ -211,13 +211,13 @@ export default function ModalNuevaAsignacionStock({ open, onClose, puntoVenta, o
         },
         body: JSON.stringify({
           query: `
-            query ObtenerRubrosPorProveedor($proveedorId: Int!) {
+            query ObtenerRubrosPorProveedor($proveedorId: ID!) {
               obtenerRubrosPorProveedor(proveedorId: $proveedorId) {
                 rubro
               }
             }
           `,
-          variables: { proveedorId }
+          variables: { proveedorId: String(proveedorId) }
         })
       });
 

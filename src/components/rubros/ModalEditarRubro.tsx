@@ -181,11 +181,21 @@ const ModalEditarRubro = ({ open, onClose, rubro, onSuccess, accentColor }: Moda
               </Box>
 
               <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.25 }}>
-                <Typography variant="h6" fontWeight={700} color="white" sx={{ textShadow: '0 2px 4px rgba(0,0,0,0.8)' }}>
+                <Typography
+                  variant="h6"
+                  fontWeight={700}
+                  color="white"
+                  sx={{ textShadow: '0 4px 12px rgba(0,0,0,0.88), 0 0 2px rgba(0,0,0,0.72)' }}
+                >
                   {titulo}
                 </Typography>
                 {rubroEditando && (
-                  <Typography variant="subtitle2" color="rgba(255,255,255,0.8)" sx={{ textShadow: '0 1px 2px rgba(0,0,0,0.65)' }}>
+                  <Typography
+                    variant="subtitle2"
+                    color="rgba(255,255,255,0.85)"
+                    fontWeight={700}
+                    sx={{ textShadow: '0 3px 9px rgba(0,0,0,0.82), 0 0 1px rgba(0,0,0,0.7)' }}
+                  >
                     {rubro?.nombre}
                   </Typography>
                 )}

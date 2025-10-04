@@ -1,5 +1,5 @@
-// /home/candelaresi/proyectos/mudras/frontend/src/components/proveedores/ModalEditarProveedor.tsx
 'use client';
+
 import {
   Dialog,
   DialogTitle,
@@ -8,20 +8,25 @@ import {
   Typography,
   Box,
   TextField,
-  Button,
-  IconButton,
-  Alert,
-  Grid,
+  Divider,
+  Chip,
   FormControl,
   InputLabel,
   Select,
-  MenuItem
+  MenuItem,
 } from '@mui/material';
-import { useState, useEffect } from 'react';
-import { IconX } from '@tabler/icons-react';
-import { azul } from '@/ui/colores';
+import type { SelectChangeEvent } from '@mui/material/Select';
+import { alpha, darken } from '@mui/material/styles';
+import { useState, useEffect, useMemo, useCallback, ChangeEvent } from 'react';
+import { Icon } from '@iconify/react';
 import { useMutation } from '@apollo/client/react';
+
+import { TexturedPanel } from '@/components/ui/TexturedFrame/TexturedPanel';
+import { WoodBackdrop } from '@/components/ui/TexturedFrame/WoodBackdrop';
+import CrystalButton, { CrystalIconButton, CrystalSoftButton } from '@/components/ui/CrystalButton';
+import { azul } from '@/ui/colores';
 import { CREAR_PROVEEDOR, ACTUALIZAR_PROVEEDOR } from '@/components/proveedores/graphql/mutations';
+import { GET_PROVEEDORES } from '@/components/proveedores/graphql/queries';
 import { Proveedor, CreateProveedorInput, UpdateProveedorInput } from '@/interfaces/proveedores';
 
 interface ModalEditarProveedorProps {
@@ -50,154 +55,249 @@ interface FormData {
   Saldo: string;
   Pais: string;
   Fax: string;
+  PorcentajeRecargoProveedor: string;
+  PorcentajeDescuentoProveedor: string;
 }
 
-const ModalEditarProveedor = ({ open, onClose, proveedor, onProveedorGuardado }: ModalEditarProveedorProps) => {
-  const [formData, setFormData] = useState<FormData>({
-    Codigo: '',
-    Nombre: '',
-    Contacto: '',
-    Direccion: '',
-    Localidad: '',
-    Provincia: '',
-    CP: '',
-    Telefono: '',
-    Celular: '',
-    TipoIva: '',
-    CUIT: '',
-    Observaciones: '',
-    Web: '',
-    Mail: '',
-    Rubro: '',
-    Saldo: '',
-    Pais: '',
-    Fax: ''
-  });
+const VH_MAX = 78;
+const HEADER_H = 88;
+const FOOTER_H = 96;
+const DIV_H = 3;
+const CONTENT_MAX = `calc(${VH_MAX}vh - ${HEADER_H + FOOTER_H + DIV_H * 2}px)`;
 
+const TIPO_IVA_OPTIONS = [
+  { value: '1', label: 'Responsable Inscripto' },
+  { value: '2', label: 'Monotributo' },
+  { value: '3', label: 'Exento' },
+  { value: '4', label: 'Consumidor Final' },
+  { value: '5', label: 'Responsable No Inscripto' },
+] as const;
+
+const makeColors = (base?: string) => {
+  const primary = base || azul.primary || '#1565c0';
+  return {
+    primary,
+    primaryHover: darken(primary, 0.12),
+    textStrong: darken(primary, 0.35),
+    inputBorder: alpha(primary, 0.28),
+    inputBorderHover: alpha(primary, 0.42),
+  };
+};
+
+const createEmptyFormData = (): FormData => ({
+  Codigo: '',
+  Nombre: '',
+  Contacto: '',
+  Direccion: '',
+  Localidad: '',
+  Provincia: '',
+  CP: '',
+  Telefono: '',
+  Celular: '',
+  TipoIva: '',
+  CUIT: '',
+  Observaciones: '',
+  Web: '',
+  Mail: '',
+  Rubro: '',
+  Saldo: '',
+  Pais: '',
+  Fax: '',
+  PorcentajeRecargoProveedor: '',
+  PorcentajeDescuentoProveedor: '',
+});
+
+const UPPERCASE_FIELDS = new Set<keyof FormData>(['Nombre', 'Contacto', 'Direccion', 'Localidad', 'Provincia', 'Pais']);
+
+const ModalEditarProveedor = ({ open, onClose, proveedor, onProveedorGuardado }: ModalEditarProveedorProps) => {
+  const COLORS = useMemo(() => makeColors(azul.primary), []);
+  const [formData, setFormData] = useState<FormData>(() => createEmptyFormData());
   const [error, setError] = useState('');
   const [validationErrors, setValidationErrors] = useState<string[]>([]);
+  const [saving, setSaving] = useState(false);
 
   const [crearProveedor] = useMutation(CREAR_PROVEEDOR);
   const [actualizarProveedor] = useMutation(ACTUALIZAR_PROVEEDOR);
 
-  const esEdicion = !!proveedor;
+  const esEdicion = Boolean(proveedor?.IdProveedor);
+  const titulo = esEdicion ? 'Editar proveedor' : 'Nuevo proveedor';
 
-  // Cargar datos del proveedor si es edición
+  const headerTipoIvaLabel = useMemo(() => {
+    if (!proveedor?.TipoIva) return '';
+    const match = TIPO_IVA_OPTIONS.find((tipo) => Number(tipo.value) === proveedor.TipoIva);
+    return match?.label ?? '';
+  }, [proveedor?.TipoIva]);
+
   useEffect(() => {
+    if (!open) {
+      setSaving(false);
+      return;
+    }
+
     if (proveedor) {
       setFormData({
-        Codigo: proveedor.Codigo?.toString() || '',
-        Nombre: proveedor.Nombre || '',
-        Contacto: proveedor.Contacto || '',
-        Direccion: proveedor.Direccion || '',
-        Localidad: proveedor.Localidad || '',
-        Provincia: proveedor.Provincia || '',
-        CP: proveedor.CP || '',
-        Telefono: proveedor.Telefono || '',
-        Celular: proveedor.Celular || '',
-        TipoIva: proveedor.TipoIva?.toString() || '',
-        CUIT: proveedor.CUIT || '',
-        Observaciones: proveedor.Observaciones || '',
-        Web: proveedor.Web || '',
-        Mail: proveedor.Mail || '',
-        Rubro: proveedor.Rubro || '',
-        Saldo: proveedor.Saldo?.toString() || '',
-        Pais: proveedor.Pais || '',
-        Fax: proveedor.Fax || ''
+        Codigo: proveedor.Codigo?.toString() ?? '',
+        Nombre: proveedor.Nombre ?? '',
+        Contacto: proveedor.Contacto ?? '',
+        Direccion: proveedor.Direccion ?? '',
+        Localidad: proveedor.Localidad ?? '',
+        Provincia: proveedor.Provincia ?? '',
+        CP: proveedor.CP ?? '',
+        Telefono: proveedor.Telefono ?? '',
+        Celular: proveedor.Celular ?? '',
+        TipoIva: proveedor.TipoIva != null ? proveedor.TipoIva.toString() : '',
+        CUIT: proveedor.CUIT ?? '',
+        Observaciones: proveedor.Observaciones ?? '',
+        Web: proveedor.Web ?? '',
+        Mail: proveedor.Mail ?? '',
+        Rubro: proveedor.Rubro ?? '',
+        Saldo: proveedor.Saldo != null ? proveedor.Saldo.toString() : '',
+        Pais: proveedor.Pais ?? '',
+        Fax: proveedor.Fax ?? '',
+        PorcentajeRecargoProveedor:
+          proveedor.PorcentajeRecargoProveedor != null ? proveedor.PorcentajeRecargoProveedor.toString() : '',
+        PorcentajeDescuentoProveedor:
+          proveedor.PorcentajeDescuentoProveedor != null
+            ? proveedor.PorcentajeDescuentoProveedor.toString()
+            : '',
       });
     } else {
-      // Limpiar formulario para nuevo proveedor
-      setFormData({
-        Codigo: '',
-        Nombre: '',
-        Contacto: '',
-        Direccion: '',
-        Localidad: '',
-        Provincia: '',
-        CP: '',
-        Telefono: '',
-        Celular: '',
-        TipoIva: '',
-        CUIT: '',
-        Observaciones: '',
-        Web: '',
-        Mail: '',
-        Rubro: '',
-        Saldo: '',
-        Pais: '',
-        Fax: ''
-      });
+      setFormData(createEmptyFormData());
     }
+
     setError('');
     setValidationErrors([]);
-  }, [proveedor, open]);
+    setSaving(false);
+  }, [open, proveedor]);
 
-  const handleInputChange = (field: keyof FormData) => (event: React.ChangeEvent<HTMLInputElement>) => {
-    let value = event.target.value;
-    
-    // Convertir a mayúsculas para campos específicos
-    if (field === 'Nombre' || field === 'Contacto' || field === 'Direccion' || field === 'Localidad' || field === 'Provincia') {
-      value = value.toUpperCase();
-    }
+  const resetFormData = useCallback(() => {
+    setFormData(createEmptyFormData());
+    setError('');
+    setValidationErrors([]);
+  }, []);
 
-    setFormData(prev => ({
-      ...prev,
-      [field]: value
-    }));
+  const handleClose = useCallback(() => {
+    if (saving) return;
+    resetFormData();
+    onClose();
+  }, [saving, resetFormData, onClose]);
 
-    // Limpiar errores cuando el usuario empiece a escribir
-    if (error) setError('');
-    if (validationErrors.length > 0) setValidationErrors([]);
-  };
+  const fieldSx = useMemo(
+    () => ({
+      '& .MuiOutlinedInput-root': {
+        borderRadius: 2,
+        background: '#ffffff',
+        '& fieldset': { borderColor: COLORS.inputBorder },
+        '&:hover fieldset': { borderColor: COLORS.inputBorderHover },
+        '&.Mui-focused fieldset': { borderColor: COLORS.primary },
+      },
+      '& .MuiInputLabel-root.Mui-focused': {
+        color: COLORS.primary,
+      },
+    }),
+    [COLORS.inputBorder, COLORS.inputBorderHover, COLORS.primary],
+  );
 
-  const validarFormulario = (): boolean => {
+  const selectSx = useMemo(
+    () => ({
+      borderRadius: 2,
+      background: '#ffffff',
+      '& .MuiOutlinedInput-notchedOutline': { borderColor: COLORS.inputBorder },
+      '&:hover .MuiOutlinedInput-notchedOutline': { borderColor: COLORS.inputBorderHover },
+      '&.Mui-focused .MuiOutlinedInput-notchedOutline': { borderColor: COLORS.primary },
+      '& .MuiSelect-select': {
+        borderRadius: 2,
+        background: '#ffffff',
+      },
+    }),
+    [COLORS.inputBorder, COLORS.inputBorderHover, COLORS.primary],
+  );
+
+  const handleInputChange = useCallback(
+    (field: keyof FormData) => (event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+      let { value } = event.target;
+      if (UPPERCASE_FIELDS.has(field)) {
+        value = value.toUpperCase();
+      }
+
+      setFormData((prev) => ({
+        ...prev,
+        [field]: value,
+      }));
+
+      if (error) setError('');
+      if (validationErrors.length > 0) setValidationErrors([]);
+    },
+    [error, validationErrors],
+  );
+
+  const handleTipoIvaChange = useCallback(
+    (event: SelectChangeEvent) => {
+      setFormData((prev) => ({
+        ...prev,
+        TipoIva: event.target.value,
+      }));
+
+      if (error) setError('');
+      if (validationErrors.length > 0) setValidationErrors([]);
+    },
+    [error, validationErrors],
+  );
+
+  const validarFormulario = useCallback(() => {
     const errores: string[] = [];
 
-    // Validaciones obligatorias
     if (!formData.Nombre.trim()) {
-      errores.push('El nombre del proveedor es obligatorio');
+      errores.push('El nombre del proveedor es obligatorio.');
     }
 
-    // Validación de email
     if (formData.Mail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.Mail)) {
-      errores.push('El formato del email no es válido');
+      errores.push('El formato del email no es válido.');
     }
 
-    // Validación de CUIT
     if (formData.CUIT && !/^\d{2}-\d{8}-\d{1}$/.test(formData.CUIT)) {
-      errores.push('El formato del CUIT debe ser XX-XXXXXXXX-X');
+      errores.push('El formato del CUIT debe ser XX-XXXXXXXX-X.');
     }
 
-    // Validación de código postal
     if (formData.CP && !/^\d{4}$/.test(formData.CP)) {
-      errores.push('El código postal debe tener 4 dígitos');
+      errores.push('El código postal debe tener 4 dígitos.');
     }
 
-    // Validación de números
-    if (formData.Codigo && isNaN(Number(formData.Codigo))) {
-      errores.push('El código debe ser un número válido');
+    if (formData.Codigo && Number.isNaN(Number(formData.Codigo))) {
+      errores.push('El código debe ser un número válido.');
     }
 
-    if (formData.TipoIva && isNaN(Number(formData.TipoIva))) {
-      errores.push('El tipo de IVA debe ser un número válido');
+    if (formData.TipoIva && Number.isNaN(Number(formData.TipoIva))) {
+      errores.push('El tipo de IVA debe ser un número válido.');
     }
 
-    if (formData.Saldo && isNaN(Number(formData.Saldo))) {
-      errores.push('El saldo debe ser un número válido');
+    if (formData.Saldo && Number.isNaN(Number(formData.Saldo))) {
+      errores.push('El saldo debe ser un número válido.');
+    }
+
+    if (formData.PorcentajeRecargoProveedor && Number.isNaN(Number(formData.PorcentajeRecargoProveedor))) {
+      errores.push('El recargo debe ser un número válido.');
+    }
+
+    if (formData.PorcentajeDescuentoProveedor && Number.isNaN(Number(formData.PorcentajeDescuentoProveedor))) {
+      errores.push('El descuento debe ser un número válido.');
     }
 
     setValidationErrors(errores);
     return errores.length === 0;
-  };
+  }, [formData]);
 
-  const guardarProveedor = async () => {
+  const handleSubmit = useCallback(async () => {
     if (!validarFormulario()) {
       return;
     }
 
     try {
+      setSaving(true);
+      setError('');
+
       const proveedorData: CreateProveedorInput | UpdateProveedorInput = {
-        Codigo: formData.Codigo ? parseInt(formData.Codigo) : undefined,
+        Codigo: formData.Codigo ? parseInt(formData.Codigo, 10) : undefined,
         Nombre: formData.Nombre.trim() || undefined,
         Contacto: formData.Contacto.trim() || undefined,
         Direccion: formData.Direccion.trim() || undefined,
@@ -206,7 +306,7 @@ const ModalEditarProveedor = ({ open, onClose, proveedor, onProveedorGuardado }:
         CP: formData.CP.trim() || undefined,
         Telefono: formData.Telefono.trim() || undefined,
         Celular: formData.Celular.trim() || undefined,
-        TipoIva: formData.TipoIva ? parseInt(formData.TipoIva) : undefined,
+        TipoIva: formData.TipoIva ? parseInt(formData.TipoIva, 10) : undefined,
         CUIT: formData.CUIT.trim() || undefined,
         Observaciones: formData.Observaciones.trim() || undefined,
         Web: formData.Web.trim() || undefined,
@@ -214,7 +314,11 @@ const ModalEditarProveedor = ({ open, onClose, proveedor, onProveedorGuardado }:
         Rubro: formData.Rubro.trim() || undefined,
         Saldo: formData.Saldo ? parseFloat(formData.Saldo) : undefined,
         Pais: formData.Pais.trim() || undefined,
-        Fax: formData.Fax.trim() || undefined
+        Fax: formData.Fax.trim() || undefined,
+        PorcentajeRecargoProveedor:
+          formData.PorcentajeRecargoProveedor !== '' ? parseFloat(formData.PorcentajeRecargoProveedor) : undefined,
+        PorcentajeDescuentoProveedor:
+          formData.PorcentajeDescuentoProveedor !== '' ? parseFloat(formData.PorcentajeDescuentoProveedor) : undefined,
       };
 
       if (esEdicion && proveedor) {
@@ -222,603 +326,567 @@ const ModalEditarProveedor = ({ open, onClose, proveedor, onProveedorGuardado }:
           variables: {
             updateProveedorInput: {
               IdProveedor: proveedor.IdProveedor,
-              ...proveedorData
-            }
+              ...proveedorData,
+            },
           },
-          refetchQueries: ['GetProveedores']
+          refetchQueries: [{ query: GET_PROVEEDORES }],
         });
       } else {
         await crearProveedor({
           variables: {
-            createProveedorInput: proveedorData
+            createProveedorInput: proveedorData,
           },
-          refetchQueries: ['GetProveedores']
+          refetchQueries: [{ query: GET_PROVEEDORES }],
         });
       }
 
       onProveedorGuardado();
-      cerrarModal();
-    } catch (error: any) {
-      console.error('Error al guardar proveedor:', error);
-      setError(error.message || 'Error al guardar el proveedor');
+      resetFormData();
+      onClose();
+    } catch (e: any) {
+      setError(e?.message || 'Ocurrió un error al guardar el proveedor.');
+    } finally {
+      setSaving(false);
     }
-  };
+  }, [
+    validarFormulario,
+    formData,
+    esEdicion,
+    proveedor,
+    actualizarProveedor,
+    crearProveedor,
+    onProveedorGuardado,
+    resetFormData,
+    onClose,
+  ]);
 
-  const cerrarModal = () => {
-    setFormData({
-      Codigo: '',
-      Nombre: '',
-      Contacto: '',
-      Direccion: '',
-      Localidad: '',
-      Provincia: '',
-      CP: '',
-      Telefono: '',
-      Celular: '',
-      TipoIva: '',
-      CUIT: '',
-      Observaciones: '',
-      Web: '',
-      Mail: '',
-      Rubro: '',
-      Saldo: '',
-      Pais: '',
-      Fax: ''
-    });
-    setError('');
-    setValidationErrors([]);
-    onClose();
-  };
-
-  const tiposIva = [
-    { value: 1, label: 'Responsable Inscripto' },
-    { value: 2, label: 'Monotributo' },
-    { value: 3, label: 'Exento' },
-    { value: 4, label: 'Consumidor Final' },
-    { value: 5, label: 'Responsable No Inscripto' }
-  ];
+  const botonHabilitado = formData.Nombre.trim().length > 0 && !saving;
+  const tipoIvaHelperLabel = useMemo(
+    () => {
+      if (!formData.TipoIva) return '';
+      const option = TIPO_IVA_OPTIONS.find((tipo) => tipo.value === formData.TipoIva);
+      return option?.label ?? '';
+    },
+    [formData.TipoIva],
+  );
 
   return (
-    <Dialog 
-      open={open} 
-      onClose={cerrarModal}
+    <Dialog
+      open={open}
+      onClose={handleClose}
       maxWidth="md"
       fullWidth
       PaperProps={{
-        sx: { 
-          borderRadius: 2,
-          maxHeight: '90vh'
-        }
+        sx: {
+          borderRadius: 3,
+          boxShadow: '0 8px 32px rgba(0,0,0,0.16)',
+          bgcolor: 'transparent',
+          overflow: 'hidden',
+          maxHeight: `${VH_MAX}vh`,
+        },
       }}
     >
-      <DialogTitle sx={{ 
-        pb: 2, 
-        backgroundColor: azul.headerBg,
-        color: azul.headerText,
-        borderBottom: '3px solid',
-        borderColor: azul.headerBorder
-      }}>
-        <Box display="flex" alignItems="center" justifyContent="space-between">
-          <Typography variant="h5" fontWeight={600} color={azul.headerText}>
-            {esEdicion ? 'Editar Proveedor' : 'Nuevo Proveedor'}
-          </Typography>
-          <IconButton onClick={cerrarModal} size="small" sx={{ color: azul.headerText }}>
-            <IconX size={20} />
-          </IconButton>
-        </Box>
-      </DialogTitle>
+      <TexturedPanel
+        accent={COLORS.primary}
+        radius={12}
+        contentPadding={0}
+        bgTintPercent={12}
+        bgAlpha={1}
+        textureBaseOpacity={0.22}
+        textureBoostOpacity={0.19}
+        textureBrightness={1.12}
+        textureContrast={1.03}
+        tintOpacity={0.4}
+      >
+        <Box sx={{ display: 'flex', flexDirection: 'column', maxHeight: `${VH_MAX}vh` }}>
+          <DialogTitle sx={{ p: 0, m: 0, minHeight: HEADER_H, display: 'flex', alignItems: 'center' }}>
+            <Box sx={{ width: '100%', display: 'flex', alignItems: 'center', px: 3, py: 2.25, gap: 2 }}>
+              <Box
+                sx={{
+                  width: 40,
+                  height: 40,
+                  borderRadius: '50%',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  background: `linear-gradient(135deg, ${COLORS.primary} 0%, ${COLORS.primaryHover} 100%)`,
+                  boxShadow: 'inset 0 2px 4px rgba(255,255,255,0.3), 0 4px 12px rgba(0,0,0,0.25)',
+                  color: '#fff',
+                }}
+              >
+                <Icon icon={esEdicion ? 'mdi:account-tie' : 'mdi:account-plus-outline'} width={22} height={22} />
+              </Box>
 
-      <DialogContent sx={{ mt: 3, px: 3, pt: 2, pb: 3 }}>
-        {/* Alertas de error */}
-        {error && (
-          <Alert severity="error" sx={{ mb: 3 }}>
-            {error}
-          </Alert>
-        )}
-
-        {validationErrors.length > 0 && (
-          <Alert severity="error" sx={{ mb: 3 }}>
-            <Box>
-              {validationErrors.map((err, index) => (
-                <Typography key={index} variant="body2">
-                  • {err}
+              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.25 }}>
+                <Typography
+                  variant="h6"
+                  fontWeight={700}
+                  color="white"
+                  sx={{ textShadow: '0 4px 12px rgba(0,0,0,0.88), 0 0 2px rgba(0,0,0,0.72)' }}
+                >
+                  {titulo}
                 </Typography>
-              ))}
-            </Box>
-          </Alert>
-        )}
+                {esEdicion && (
+                  <Typography
+                    variant="subtitle2"
+                    color="rgba(255,255,255,0.85)"
+                    fontWeight={700}
+                    sx={{ textShadow: '0 3px 9px rgba(0,0,0,0.82), 0 0 1px rgba(0,0,0,0.7)' }}
+                  >
+                    {proveedor?.Nombre ?? 'Proveedor sin nombre'}
+                  </Typography>
+                )}
+              </Box>
 
-        <Box>
-          {/* Información básica */}
-          <Typography variant="h6" fontWeight={600} color={azul.primary} mb={2}>
-            Información Básica
-          </Typography>
-
-          <Box display="flex" gap={2} flexWrap="wrap" mb={3}>
-            <Box flex="1 1 250px" minWidth={250}>
-              <TextField
-                fullWidth
-                label="Código"
-                value={formData.Codigo}
-                onChange={handleInputChange('Codigo')}
-                type="number"
-                helperText="Código único para códigos de barras"
-                sx={{
-                  '& .MuiOutlinedInput-root': {
-                    '&:hover fieldset': {
-                      borderColor: azul.primary,
-                    },
-                    '&.Mui-focused fieldset': {
-                      borderColor: azul.primary,
-                    },
-                  },
-                  '& .MuiInputLabel-root.Mui-focused': {
-                    color: azul.primary,
-                  }
-                }}
-              />
-            </Box>
-
-            <Box flex="2 1 400px" minWidth={300}>
-              <TextField
-                fullWidth
-                label="Nombre *"
-                value={formData.Nombre}
-                onChange={handleInputChange('Nombre')}
-                required
-                sx={{
-                  '& .MuiOutlinedInput-root': {
-                    '&:hover fieldset': {
-                      borderColor: azul.primary,
-                    },
-                    '&.Mui-focused fieldset': {
-                      borderColor: azul.primary,
-                    },
-                  },
-                  '& .MuiInputLabel-root.Mui-focused': {
-                    color: azul.primary,
-                  }
-                }}
-              />
-            </Box>
-          </Box>
-
-          <Box display="flex" gap={2} flexWrap="wrap" mb={3}>
-            <Box flex="1 1 250px" minWidth={250}>
-              <TextField
-                fullWidth
-                label="Contacto"
-                value={formData.Contacto}
-                onChange={handleInputChange('Contacto')}
-                sx={{
-                  '& .MuiOutlinedInput-root': {
-                    '&:hover fieldset': {
-                      borderColor: azul.primary,
-                    },
-                    '&.Mui-focused fieldset': {
-                      borderColor: azul.primary,
-                    },
-                  },
-                  '& .MuiInputLabel-root.Mui-focused': {
-                    color: azul.primary,
-                  }
-                }}
-              />
-            </Box>
-
-            <Box flex="1 1 250px" minWidth={250}>
-              <TextField
-                fullWidth
-                label="Rubro"
-                value={formData.Rubro}
-                onChange={handleInputChange('Rubro')}
-                sx={{
-                  '& .MuiOutlinedInput-root': {
-                    '&:hover fieldset': {
-                      borderColor: azul.primary,
-                    },
-                    '&.Mui-focused fieldset': {
-                      borderColor: azul.primary,
-                    },
-                  },
-                  '& .MuiInputLabel-root.Mui-focused': {
-                    color: azul.primary,
-                  }
-                }}
-              />
-            </Box>
-          </Box>
-
-          {/* Información de contacto */}
-          <Typography variant="h6" fontWeight={600} color={azul.primary} mb={2} mt={2}>
-            Información de Contacto
-          </Typography>
-
-          <Box display="flex" gap={2} flexWrap="wrap" mb={3}>
-            <Box flex="1 1 250px" minWidth={250}>
-              <TextField
-                fullWidth
-                label="Teléfono"
-                value={formData.Telefono}
-                onChange={handleInputChange('Telefono')}
-                sx={{
-                  '& .MuiOutlinedInput-root': {
-                    '&:hover fieldset': {
-                      borderColor: azul.primary,
-                    },
-                    '&.Mui-focused fieldset': {
-                      borderColor: azul.primary,
-                    },
-                  },
-                  '& .MuiInputLabel-root.Mui-focused': {
-                    color: azul.primary,
-                  }
-                }}
-              />
-            </Box>
-
-            <Box flex="1 1 250px" minWidth={250}>
-              <TextField
-                fullWidth
-                label="Celular"
-                value={formData.Celular}
-                onChange={handleInputChange('Celular')}
-                sx={{
-                  '& .MuiOutlinedInput-root': {
-                    '&:hover fieldset': {
-                      borderColor: azul.primary,
-                    },
-                    '&.Mui-focused fieldset': {
-                      borderColor: azul.primary,
-                    },
-                  },
-                  '& .MuiInputLabel-root.Mui-focused': {
-                    color: azul.primary,
-                  }
-                }}
-              />
-            </Box>
-          </Box>
-
-          <Box display="flex" gap={2} flexWrap="wrap" mb={3}>
-            <Box flex="1 1 250px" minWidth={250}>
-              <TextField
-                fullWidth
-                label="Email"
-                value={formData.Mail}
-                onChange={handleInputChange('Mail')}
-                type="email"
-                sx={{
-                  '& .MuiOutlinedInput-root': {
-                    '&:hover fieldset': {
-                      borderColor: azul.primary,
-                    },
-                    '&.Mui-focused fieldset': {
-                      borderColor: azul.primary,
-                    },
-                  },
-                  '& .MuiInputLabel-root.Mui-focused': {
-                    color: azul.primary,
-                  }
-                }}
-              />
-            </Box>
-
-            <Box flex="1 1 250px" minWidth={250}>
-              <TextField
-                fullWidth
-                label="Sitio Web"
-                value={formData.Web}
-                onChange={handleInputChange('Web')}
-                sx={{
-                  '& .MuiOutlinedInput-root': {
-                    '&:hover fieldset': {
-                      borderColor: azul.primary,
-                    },
-                    '&.Mui-focused fieldset': {
-                      borderColor: azul.primary,
-                    },
-                  },
-                  '& .MuiInputLabel-root.Mui-focused': {
-                    color: azul.primary,
-                  }
-                }}
-              />
-            </Box>
-          </Box>
-
-          <Box display="flex" gap={2} flexWrap="wrap" mb={3}>
-            <Box flex="1 1 250px" minWidth={250}>
-              <TextField
-                fullWidth
-                label="Fax"
-                value={formData.Fax}
-                onChange={handleInputChange('Fax')}
-                sx={{
-                  '& .MuiOutlinedInput-root': {
-                    '&:hover fieldset': {
-                      borderColor: azul.primary,
-                    },
-                    '&.Mui-focused fieldset': {
-                      borderColor: azul.primary,
-                    },
-                  },
-                  '& .MuiInputLabel-root.Mui-focused': {
-                    color: azul.primary,
-                  }
-                }}
-              />
-            </Box>
-          </Box>
-
-          {/* Información fiscal */}
-          <Typography variant="h6" fontWeight={600} color={azul.primary} mb={2} mt={2}>
-            Información Fiscal
-          </Typography>
-
-          <Box display="flex" gap={2} flexWrap="wrap" mb={3}>
-            <Box flex="1 1 250px" minWidth={250}>
-              <TextField
-                fullWidth
-                label="CUIT"
-                value={formData.CUIT}
-                onChange={handleInputChange('CUIT')}
-                placeholder="XX-XXXXXXXX-X"
-                helperText="Formato: XX-XXXXXXXX-X"
-                sx={{
-                  '& .MuiOutlinedInput-root': {
-                    '&:hover fieldset': {
-                      borderColor: azul.primary,
-                    },
-                    '&.Mui-focused fieldset': {
-                      borderColor: azul.primary,
-                    },
-                  },
-                  '& .MuiInputLabel-root.Mui-focused': {
-                    color: azul.primary,
-                  }
-                }}
-              />
-            </Box>
-          </Box>
-
-          <Box display="flex" gap={2} flexWrap="wrap" mb={3}>
-            <Box flex="1 1 250px" minWidth={250}>
-              <FormControl fullWidth>
-                <InputLabel sx={{ '&.Mui-focused': { color: azul.primary } }}>Tipo IVA</InputLabel>
-                <Select
-                  value={formData.TipoIva}
-                  label="Tipo IVA"
-                  onChange={(e) => setFormData(prev => ({ ...prev, TipoIva: e.target.value }))}
+              <Box sx={{ ml: 'auto', display: 'flex', alignItems: 'center', gap: 1.25 }}>
+                {esEdicion && (
+                  <>
+                    {typeof proveedor?.Codigo === 'number' && (
+                      <Chip
+                        label={`Código ${proveedor.Codigo}`}
+                        size="small"
+                        sx={{
+                          bgcolor: 'rgba(0,0,0,0.35)',
+                          color: '#fff',
+                          border: '1px solid rgba(255,255,255,0.32)',
+                          fontWeight: 600,
+                          px: 1.5,
+                          height: 28,
+                        }}
+                      />
+                    )}
+                    {proveedor?.Rubro && (
+                      <Chip
+                        label={proveedor.Rubro}
+                        size="small"
+                        sx={{
+                          bgcolor: 'rgba(0,0,0,0.35)',
+                          color: '#fff',
+                          border: '1px solid rgba(255,255,255,0.32)',
+                          fontWeight: 600,
+                          px: 1.5,
+                          height: 28,
+                        }}
+                      />
+                    )}
+                    {headerTipoIvaLabel && (
+                      <Chip
+                        label={headerTipoIvaLabel}
+                        size="small"
+                        sx={{
+                          bgcolor: 'rgba(0,0,0,0.35)',
+                          color: '#fff',
+                          border: '1px solid rgba(255,255,255,0.32)',
+                          fontWeight: 600,
+                          px: 1.5,
+                          height: 28,
+                        }}
+                      />
+                    )}
+                  </>
+                )}
+                <CrystalIconButton
+                  baseColor={COLORS.primary}
+                  onClick={handleClose}
                   sx={{
-                    '&:hover .MuiOutlinedInput-notchedOutline': {
-                      borderColor: azul.primary,
-                    },
-                    '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                      borderColor: azul.primary,
-                    }
+                    minWidth: 40,
+                    height: 40,
+                    borderRadius: '50%',
+                    background: 'rgba(0,0,0,0.28)',
+                    color: '#fff',
+                    '&:hover': { background: 'rgba(0,0,0,0.4)' },
                   }}
                 >
-                  {tiposIva.map((tipo) => (
-                    <MenuItem key={tipo.value} value={tipo.value.toString()}>
-                      {tipo.label}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
+                  <Icon icon="mdi:close" width={20} height={20} />
+                </CrystalIconButton>
+              </Box>
             </Box>
+          </DialogTitle>
 
-            <Box flex="1 1 250px" minWidth={250}>
-              <TextField
-                fullWidth
-                label="Saldo"
-                value={formData.Saldo}
-                onChange={handleInputChange('Saldo')}
-                type="number"
+          <Divider
+            sx={{
+              height: DIV_H,
+              border: 0,
+              backgroundImage: `
+                linear-gradient(to bottom, rgba(255,255,255,0.70), rgba(255,255,255,0.70)),
+                linear-gradient(to bottom, rgba(0,0,0,0.22), rgba(0,0,0,0.22)),
+                linear-gradient(90deg, rgba(255,255,255,0.05), ${COLORS.primary}, rgba(255,255,255,0.05))
+              `,
+              backgroundRepeat: 'no-repeat, no-repeat, repeat',
+              backgroundSize: '100% 1px, 100% 1px, 100% 100%',
+              backgroundPosition: 'top left, bottom left, center',
+              flex: '0 0 auto',
+            }}
+          />
+
+          <DialogContent
+            sx={{
+              p: 0,
+              borderRadius: 0,
+              overflow: 'auto',
+              maxHeight: CONTENT_MAX,
+              flex: '0 1 auto',
+            }}
+          >
+            <Box sx={{ position: 'relative', borderRadius: 0, overflow: 'hidden' }}>
+              <WoodBackdrop accent={COLORS.primary} radius={0} inset={0} strength={0.55} texture="wide" />
+              <Box
+                component="form"
+                onSubmit={(event) => {
+                  event.preventDefault();
+                  handleSubmit();
+                }}
                 sx={{
-                  '& .MuiOutlinedInput-root': {
-                    '&:hover fieldset': {
-                      borderColor: azul.primary,
-                    },
-                    '&.Mui-focused fieldset': {
-                      borderColor: azul.primary,
-                    },
-                  },
-                  '& .MuiInputLabel-root.Mui-focused': {
-                    color: azul.primary,
-                  }
+                  position: 'relative',
+                  zIndex: 1,
+                  p: 3,
+                  borderRadius: 0,
+                  backdropFilter: 'saturate(118%) blur(0.4px)',
+                  background: 'rgba(255,255,255,0.84)',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: 3,
                 }}
-              />
+              >
+                <Box>
+                  <Typography variant="h6" fontWeight={700} color={COLORS.textStrong} gutterBottom>
+                    Datos generales
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    Completá la información principal del proveedor. Podés actualizarla cuando quieras.
+                  </Typography>
+                </Box>
+
+                <Box display="flex" flexDirection={{ xs: 'column', md: 'row' }} gap={2.5}>
+                  <TextField
+                    label="Código"
+                    value={formData.Codigo}
+                    onChange={handleInputChange('Codigo')}
+                    type="number"
+                    helperText="Código interno único"
+                    fullWidth
+                    disabled={saving}
+                    sx={fieldSx}
+                  />
+                  <TextField
+                    label="Nombre del proveedor"
+                    value={formData.Nombre}
+                    onChange={handleInputChange('Nombre')}
+                    required
+                    fullWidth
+                    disabled={saving}
+                    sx={fieldSx}
+                  />
+                </Box>
+
+                <Box display="flex" flexDirection={{ xs: 'column', md: 'row' }} gap={2.5}>
+                  <TextField
+                    label="Contacto"
+                    value={formData.Contacto}
+                    onChange={handleInputChange('Contacto')}
+                    fullWidth
+                    disabled={saving}
+                    sx={fieldSx}
+                  />
+                  <TextField
+                    label="Rubro"
+                    value={formData.Rubro}
+                    onChange={handleInputChange('Rubro')}
+                    fullWidth
+                    disabled={saving}
+                    sx={fieldSx}
+                  />
+                </Box>
+
+                <Box>
+                  <Typography variant="h6" fontWeight={700} color={COLORS.textStrong} gutterBottom>
+                    Información de contacto
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    Datos para ubicar y comunicarse con el proveedor.
+                  </Typography>
+                </Box>
+
+                <Box display="flex" flexDirection={{ xs: 'column', md: 'row' }} gap={2.5}>
+                  <TextField
+                    label="Teléfono"
+                    value={formData.Telefono}
+                    onChange={handleInputChange('Telefono')}
+                    fullWidth
+                    disabled={saving}
+                    sx={fieldSx}
+                  />
+                  <TextField
+                    label="Celular"
+                    value={formData.Celular}
+                    onChange={handleInputChange('Celular')}
+                    fullWidth
+                    disabled={saving}
+                    sx={fieldSx}
+                  />
+                </Box>
+
+                <Box display="flex" flexDirection={{ xs: 'column', md: 'row' }} gap={2.5}>
+                  <TextField
+                    label="Email"
+                    value={formData.Mail}
+                    onChange={handleInputChange('Mail')}
+                    type="email"
+                    fullWidth
+                    disabled={saving}
+                    sx={fieldSx}
+                  />
+                  <TextField
+                    label="Sitio web"
+                    value={formData.Web}
+                    onChange={handleInputChange('Web')}
+                    fullWidth
+                    disabled={saving}
+                    sx={fieldSx}
+                  />
+                </Box>
+
+                <Box display="flex" flexDirection={{ xs: 'column', md: 'row' }} gap={2.5}>
+                  <TextField
+                    label="Fax"
+                    value={formData.Fax}
+                    onChange={handleInputChange('Fax')}
+                    fullWidth
+                    disabled={saving}
+                    sx={fieldSx}
+                  />
+                  <TextField
+                    label="Observaciones"
+                    value={formData.Observaciones}
+                    onChange={handleInputChange('Observaciones')}
+                    fullWidth
+                    disabled={saving}
+                    multiline
+                    minRows={2}
+                    sx={fieldSx}
+                  />
+                </Box>
+
+                <Box>
+                  <Typography variant="h6" fontWeight={700} color={COLORS.textStrong} gutterBottom>
+                    Información fiscal
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    Ajustá los datos impositivos y financieros si es necesario.
+                  </Typography>
+                </Box>
+
+                <Box display="flex" flexDirection={{ xs: 'column', md: 'row' }} gap={2.5}>
+                  <TextField
+                    label="CUIT"
+                    value={formData.CUIT}
+                    onChange={handleInputChange('CUIT')}
+                    placeholder="XX-XXXXXXXX-X"
+                    helperText="Formato requerido: XX-XXXXXXXX-X"
+                    fullWidth
+                    disabled={saving}
+                    sx={fieldSx}
+                  />
+                  <FormControl fullWidth disabled={saving} sx={{ '& .MuiInputLabel-root.Mui-focused': { color: COLORS.primary } }}>
+                    <InputLabel>Tipo IVA</InputLabel>
+                    <Select
+                      label="Tipo IVA"
+                      value={formData.TipoIva}
+                      onChange={handleTipoIvaChange}
+                      sx={selectSx}
+                    >
+                      {TIPO_IVA_OPTIONS.map((tipo) => (
+                        <MenuItem key={tipo.value} value={tipo.value}>
+                          {tipo.label}
+                        </MenuItem>
+                      ))}
+                    </Select>
+                    {tipoIvaHelperLabel && (
+                      <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5, ml: 1 }}>
+                        Seleccionado: {tipoIvaHelperLabel}
+                      </Typography>
+                    )}
+                  </FormControl>
+                </Box>
+
+                <Box>
+                  <Typography variant="h6" fontWeight={700} color={COLORS.textStrong} gutterBottom>
+                    Ajustes comerciales
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    Configurá el saldo de cuenta corriente y los ajustes porcentuales que se mostrarán en el detalle del proveedor.
+                  </Typography>
+                </Box>
+
+                <Box
+                  sx={{
+                    display: 'grid',
+                    gridTemplateColumns: { xs: '1fr', md: 'repeat(3, minmax(0, 1fr))' },
+                    gap: 2.5,
+                  }}
+                >
+                  <TextField
+                    label="Saldo"
+                    value={formData.Saldo}
+                    onChange={handleInputChange('Saldo')}
+                    type="number"
+                    fullWidth
+                    disabled={saving}
+                    sx={fieldSx}
+                  />
+                  <TextField
+                    label="Recargo del proveedor (%)"
+                    value={formData.PorcentajeRecargoProveedor}
+                    onChange={handleInputChange('PorcentajeRecargoProveedor')}
+                    type="number"
+                    fullWidth
+                    disabled={saving}
+                    inputProps={{ step: 0.01, min: -100, max: 100 }}
+                    helperText="Se suma al precio base en las ventas relacionadas"
+                    sx={fieldSx}
+                  />
+                  <TextField
+                    label="Descuento del proveedor (%)"
+                    value={formData.PorcentajeDescuentoProveedor}
+                    onChange={handleInputChange('PorcentajeDescuentoProveedor')}
+                    type="number"
+                    fullWidth
+                    disabled={saving}
+                    inputProps={{ step: 0.01, min: -100, max: 100 }}
+                    helperText="Se aplica después de los recargos configurados"
+                    sx={fieldSx}
+                  />
+                </Box>
+
+                <Box>
+                  <Typography variant="h6" fontWeight={700} color={COLORS.textStrong} gutterBottom>
+                    Ubicación
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    Indicá la dirección para pedidos y facturación.
+                  </Typography>
+                </Box>
+
+                <TextField
+                  label="Dirección"
+                  value={formData.Direccion}
+                  onChange={handleInputChange('Direccion')}
+                  fullWidth
+                  disabled={saving}
+                  sx={fieldSx}
+                />
+
+                <Box display="flex" flexDirection={{ xs: 'column', md: 'row' }} gap={2.5}>
+                  <TextField
+                    label="Localidad"
+                    value={formData.Localidad}
+                    onChange={handleInputChange('Localidad')}
+                    fullWidth
+                    disabled={saving}
+                    sx={fieldSx}
+                  />
+                  <TextField
+                    label="Provincia"
+                    value={formData.Provincia}
+                    onChange={handleInputChange('Provincia')}
+                    fullWidth
+                    disabled={saving}
+                    sx={fieldSx}
+                  />
+                </Box>
+
+                <Box display="flex" flexDirection={{ xs: 'column', md: 'row' }} gap={2.5}>
+                  <TextField
+                    label="Código postal"
+                    value={formData.CP}
+                    onChange={handleInputChange('CP')}
+                    helperText="4 dígitos"
+                    fullWidth
+                    disabled={saving}
+                    sx={fieldSx}
+                  />
+                  <TextField
+                    label="País"
+                    value={formData.Pais}
+                    onChange={handleInputChange('Pais')}
+                    fullWidth
+                    disabled={saving}
+                    sx={fieldSx}
+                  />
+                </Box>
+
+                {(error || validationErrors.length > 0) && (
+                  <Box display="flex" flexDirection="column" gap={1.25}>
+                    {error && (
+                      <Typography variant="body2" color="error" fontWeight={600}>
+                        {error}
+                      </Typography>
+                    )}
+                    {validationErrors.length > 0 && (
+                      <Box display="flex" flexDirection="column" gap={0.5}>
+                        {validationErrors.map((err) => (
+                          <Typography key={err} variant="body2" color="error">
+                            • {err}
+                          </Typography>
+                        ))}
+                      </Box>
+                    )}
+                  </Box>
+                )}
+              </Box>
             </Box>
-          </Box>
+          </DialogContent>
 
-          {/* Información adicional */}
-          <Typography variant="h6" fontWeight={600} color={azul.primary} mb={2} mt={2}>
-            Información Adicional
-          </Typography>
+          <Divider
+            sx={{
+              height: DIV_H,
+              border: 0,
+              backgroundImage: `
+                linear-gradient(to bottom, rgba(0,0,0,0.22), rgba(0,0,0,0.22)),
+                linear-gradient(to bottom, rgba(255,255,255,0.70), rgba(255,255,255,0.70)),
+                linear-gradient(90deg, rgba(255,255,255,0.05), ${COLORS.primary}, rgba(255,255,255,0.05))
+              `,
+              backgroundRepeat: 'no-repeat, no-repeat, repeat',
+              backgroundSize: '100% 1px, 100% 1px, 100% 100%',
+              backgroundPosition: 'top left, bottom left, center',
+              flex: '0 0 auto',
+            }}
+          />
 
-          <Box display="flex" gap={2} flexWrap="wrap" mb={3}>
-            <Box flex="1 1 100%" minWidth={300}>
-              <TextField
-                fullWidth
-                label="Observaciones"
-                value={formData.Observaciones}
-                onChange={handleInputChange('Observaciones')}
-                multiline
-                rows={3}
+          <DialogActions sx={{ p: 0, m: 0, minHeight: FOOTER_H }}>
+            <Box sx={{ width: '100%', display: 'flex', justifyContent: 'flex-end', px: 3, py: 2.5, gap: 1.5 }}>
+              <CrystalSoftButton
+                baseColor={COLORS.primary}
+                onClick={handleClose}
+                disabled={saving}
                 sx={{
-                  '& .MuiOutlinedInput-root': {
-                    '&:hover fieldset': {
-                      borderColor: azul.primary,
-                    },
-                    '&.Mui-focused fieldset': {
-                      borderColor: azul.primary,
-                    },
-                  },
-                  '& .MuiInputLabel-root.Mui-focused': {
-                    color: azul.primary,
-                  }
+                  minHeight: 44,
+                  px: 3,
+                  fontWeight: 600,
                 }}
-              />
-            </Box>
-          </Box>
-
-          {/* Ubicación */}
-          <Typography variant="h6" fontWeight={600} color={azul.primary} mb={2} mt={2}>
-            Ubicación
-          </Typography>
-
-          <Box display="flex" gap={2} flexWrap="wrap" mb={3}>
-            <Box flex="1 1 100%" minWidth={300}>
-              <TextField
-                fullWidth
-                label="Dirección"
-                value={formData.Direccion}
-                onChange={handleInputChange('Direccion')}
+              >
+                Cancelar
+              </CrystalSoftButton>
+              <CrystalButton
+                baseColor={COLORS.primary}
+                onClick={handleSubmit}
+                disabled={!botonHabilitado}
                 sx={{
-                  '& .MuiOutlinedInput-root': {
-                    '&:hover fieldset': {
-                      borderColor: azul.primary,
-                    },
-                    '&.Mui-focused fieldset': {
-                      borderColor: azul.primary,
-                    },
+                  minHeight: 44,
+                  px: 3,
+                  fontWeight: 700,
+                  '&:disabled': {
+                    opacity: 0.55,
+                    boxShadow: 'none',
                   },
-                  '& .MuiInputLabel-root.Mui-focused': {
-                    color: azul.primary,
-                  }
                 }}
-              />
+              >
+                {saving ? 'Guardando…' : esEdicion ? 'Actualizar Proveedor' : 'Crear Proveedor'}
+              </CrystalButton>
             </Box>
-          </Box>
-
-          <Box display="flex" gap={2} flexWrap="wrap" mb={3}>
-            <Box flex="1 1 200px" minWidth={200}>
-              <TextField
-                fullWidth
-                label="Localidad"
-                value={formData.Localidad}
-                onChange={handleInputChange('Localidad')}
-                sx={{
-                  '& .MuiOutlinedInput-root': {
-                    '&:hover fieldset': {
-                      borderColor: azul.primary,
-                    },
-                    '&.Mui-focused fieldset': {
-                      borderColor: azul.primary,
-                    },
-                  },
-                  '& .MuiInputLabel-root.Mui-focused': {
-                    color: azul.primary,
-                  }
-                }}
-              />
-            </Box>
-
-            <Box flex="1 1 200px" minWidth={200}>
-              <TextField
-                fullWidth
-                label="Provincia"
-                value={formData.Provincia}
-                onChange={handleInputChange('Provincia')}
-              sx={{
-                '& .MuiOutlinedInput-root': {
-                  '&:hover fieldset': {
-                    borderColor: azul.primary,
-                  },
-                  '&.Mui-focused fieldset': {
-                    borderColor: azul.primary,
-                  },
-                },
-                  '& .MuiInputLabel-root.Mui-focused': {
-                    color: azul.primary,
-                  }
-                }}
-              />
-            </Box>
-
-            <Box flex="1 1 200px" minWidth={200}>
-              <TextField
-                fullWidth
-                label="Código Postal"
-                value={formData.CP}
-                onChange={handleInputChange('CP')}
-                helperText="4 dígitos"
-                sx={{
-                  '& .MuiOutlinedInput-root': {
-                    '&:hover fieldset': {
-                      borderColor: azul.primary,
-                    },
-                    '&.Mui-focused fieldset': {
-                      borderColor: azul.primary,
-                    },
-                  },
-                  '& .MuiInputLabel-root.Mui-focused': {
-                    color: azul.primary,
-                  }
-                }}
-              />
-            </Box>
-          </Box>
-
-          <Box display="flex" gap={2} flexWrap="wrap" mb={3}>
-            <Box flex="1 1 250px" minWidth={250}>
-              <TextField
-                fullWidth
-                label="País"
-                value={formData.Pais}
-                onChange={handleInputChange('Pais')}
-                sx={{
-                  '& .MuiOutlinedInput-root': {
-                    '&:hover fieldset': {
-                      borderColor: azul.primary,
-                    },
-                    '&.Mui-focused fieldset': {
-                      borderColor: azul.primary,
-                    },
-                  },
-                  '& .MuiInputLabel-root.Mui-focused': {
-                    color: azul.primary,
-                  }
-                }}
-              />
-            </Box>
-          </Box>
+          </DialogActions>
         </Box>
-      </DialogContent>
-
-      <DialogActions sx={{ 
-        p: 3, 
-        pt: 2,
-        gap: 2
-      }}>
-        <Button 
-          onClick={cerrarModal} 
-          variant="outlined"
-          sx={{
-            borderColor: 'grey.400',
-            color: 'grey.600',
-            '&:hover': {
-              borderColor: 'grey.600',
-              backgroundColor: 'grey.50'
-            }
-          }}
-        >
-          Cancelar
-        </Button>
-        <Button 
-          onClick={guardarProveedor}
-          variant="contained"
-          sx={{
-            backgroundColor: azul.primary,
-            '&:hover': {
-              backgroundColor: azul.primaryHover
-            }
-          }}
-        >
-          {esEdicion ? 'Actualizar' : 'Crear'} Proveedor
-        </Button>
-      </DialogActions>
+      </TexturedPanel>
     </Dialog>
   );
 };

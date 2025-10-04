@@ -1,11 +1,14 @@
 'use client';
+import { useRef } from 'react';
 import { Grid, Box, Typography, Button, Stack } from '@mui/material';
 import { IconPlus, IconDownload, IconCurrencyDollar, IconTags } from '@tabler/icons-react';
 import PageContainer from '@/components/container/PageContainer';
 import DashboardCard from '@/components/shared/DashboardCard';
-import TablaProveedores from '@/components/proveedores/TablaProveedores';
+import TablaProveedores, { TablaProveedoresHandle } from '@/components/proveedores/TablaProveedores';
 
 const GestionProveedores = () => {
+  const tablaRef = useRef<TablaProveedoresHandle>(null);
+
   return (
     <PageContainer title="Gestión de Proveedores" description="Administra todos los proveedores y sus cuentas corrientes">
       <Box>
@@ -66,6 +69,7 @@ const GestionProveedores = () => {
                     backgroundColor: '#FF6B35',
                     '&:hover': { backgroundColor: '#E55A2B' }
                   }}
+                  onClick={() => tablaRef.current?.abrirCrearProveedor()}
                 >
                   Nuevo Proveedor
                 </Button>
@@ -75,7 +79,7 @@ const GestionProveedores = () => {
           
           <Grid size={12}>
             <DashboardCard>
-              <TablaProveedores />
+              <TablaProveedores ref={tablaRef} />
             </DashboardCard>
           </Grid>
         </Grid>

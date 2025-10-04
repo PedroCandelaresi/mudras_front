@@ -1,7 +1,7 @@
 // /src/components/proveedores/TablaProveedores.tsx
 'use client';
 
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, forwardRef, useImperativeHandle, useCallback } from 'react';
 import {
   Box,
   Paper,
@@ -34,6 +34,10 @@ import {
 /* ======================== Tipos ======================== */
 type ColKey = 'nombre' | 'codigo' | 'cuit';
 type ColFilters = Partial<Record<ColKey, string>>;
+
+export interface TablaProveedoresHandle {
+  abrirCrearProveedor: () => void;
+}
 
 interface Props {
   onNuevoProveedor?: () => void;
@@ -90,7 +94,7 @@ const WoodSection: React.FC<React.PropsWithChildren> = ({ children }) => (
 );
 
 /* ======================== Componente ======================== */
-const TablaProveedores: React.FC<Props> = ({
+const TablaProveedores = forwardRef<TablaProveedoresHandle, Props>(({
   onNuevoProveedor,
   puedeCrear = true,
 
@@ -105,7 +109,7 @@ const TablaProveedores: React.FC<Props> = ({
   hideViewAction = false,
   hideEditAction = false,
   hideDeleteAction = false,
-}) => {
+}, ref) => {
   const { data, loading, error, refetch } = useQuery<ProveedoresResponse>(GET_PROVEEDORES);
 
   // estado tabla
@@ -202,13 +206,17 @@ const TablaProveedores: React.FC<Props> = ({
     }
   };
 
-  const handleNuevoProveedor = () => {
-    if (onNuevoProveedor) return onNuevoProveedor();
+  const abrirModalCrear = useCallback(() => {
+    setProveedorSeleccionado(null);
+    setModalEditar(true);
+  }, []);
+
+  const handleNuevoProveedor = useCallback(() => {
+    onNuevoProveedor?.();
     if (showEditModal) {
-      setProveedorSeleccionado(null);
-      setModalEditar(true);
+      abrirModalCrear();
     }
-  };
+  }, [onNuevoProveedor, showEditModal, abrirModalCrear]);
 
   const handleProveedorGuardado = () => {
     refetch();
@@ -228,6 +236,12 @@ const TablaProveedores: React.FC<Props> = ({
     setModalEliminar(false);
     setProveedorSeleccionado(null);
   };
+
+  useImperativeHandle(ref, () => ({
+    abrirCrearProveedor: () => {
+      abrirModalCrear();
+    },
+  }), [abrirModalCrear]);
 
   const handleChangePage = (_: unknown, newPage: number) => setPage(newPage);
   const handleChangeRowsPerPage = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -714,6 +728,8 @@ const TablaProveedores: React.FC<Props> = ({
       )}
     </>
   );
-};
+});
+
+TablaProveedores.displayName = 'TablaProveedores';
 
 export default TablaProveedores;

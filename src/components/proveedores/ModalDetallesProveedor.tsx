@@ -1,20 +1,35 @@
 // /src/components/proveedores/ModalDetallesProveedor.tsx
 'use client';
 import {
-  Dialog, DialogTitle, DialogContent, DialogActions,
-  Typography, Box, Chip, TextField, InputAdornment, Divider, Card, CardContent
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Typography,
+  Box,
+  Chip,
+  TextField,
+  InputAdornment,
+  Divider,
+  Card,
+  CardContent,
+  Tooltip,
 } from '@mui/material';
 import { alpha, darken } from '@mui/material/styles';
 import { useState, useEffect, useMemo, useCallback, type ComponentProps } from 'react';
 import { Icon } from '@iconify/react';
-import { azul, verde } from '@/ui/colores';
+import { azul, verde, marron as marronPalette } from '@/ui/colores';
 import { WoodBackdrop } from '@/components/ui/TexturedFrame/WoodBackdrop';
 import { TexturedPanel } from '@/components/ui/TexturedFrame/TexturedPanel';
 import { CrystalSoftButton } from '@/components/ui/CrystalButton';
 import { TablaArticulos } from '@/components/articulos';
 import { useQuery } from '@apollo/client/react';
-import { GET_PROVEEDOR } from '@/components/proveedores/graphql/queries';
-import type { ProveedorResponse, Proveedor } from '@/interfaces/proveedores';
+import { GET_PROVEEDOR, RUBROS_POR_PROVEEDOR } from '@/components/proveedores/graphql/queries';
+import type {
+  ProveedorResponse,
+  Proveedor,
+  RubrosPorProveedorListResponse,
+} from '@/interfaces/proveedores';
 
 interface ModalDetallesProveedorProps {
   open: boolean;
@@ -43,6 +58,15 @@ const formatCount = (n: number, singular: string, plural?: string) =>
 
 const currency = (v?: number) =>
   (v ?? 0).toLocaleString('es-AR', { style: 'currency', currency: 'ARS', maximumFractionDigits: 0 });
+
+const formatPercentage = (value?: number) => {
+  const numeric = Number.isFinite(Number(value)) ? Number(value) : 0;
+  const formatter = new Intl.NumberFormat('es-AR', {
+    minimumFractionDigits: numeric % 1 === 0 ? 0 : 2,
+    maximumFractionDigits: 2,
+  });
+  return `${formatter.format(numeric)}%`;
+};
 
 /* ======================== Layout ======================== */
 const VH_MAX = 85;
@@ -73,7 +97,11 @@ const ModalDetallesProveedor = ({ open, onClose, proveedor, accentColor }: Modal
   const [estadoTabla, setEstadoTabla] = useState<EstadoTabla>({ total: 0, loading: false, error: undefined });
   const [reloadKey, setReloadKey] = useState(0);
 
-  const proveedorId = proveedor?.IdProveedor ?? null;
+  const proveedorId = useMemo(() => {
+    if (proveedor?.IdProveedor == null) return null;
+    const parsed = Number(proveedor.IdProveedor);
+    return Number.isFinite(parsed) ? parsed : null;
+  }, [proveedor?.IdProveedor]);
 
   // Datos del proveedor (detalle completo)
   const { data: proveedorData } = useQuery<ProveedorResponse>(GET_PROVEEDOR, {
@@ -85,6 +113,94 @@ const ModalDetallesProveedor = ({ open, onClose, proveedor, accentColor }: Modal
   const proveedorCompleto: Proveedor | null = useMemo(
     () => (proveedorData?.proveedor as any) || proveedor || null,
     [proveedorData?.proveedor, proveedor]
+  );
+
+  const [rubroFiltro, setRubroFiltro] = useState<{ id: number | null; nombre: string | null } | null>(null);
+
+  const { data: rubrosData, loading: loadingRubros, error: errorRubros } =
+    useQuery<RubrosPorProveedorListResponse>(RUBROS_POR_PROVEEDOR, {
+      variables: { proveedorId: proveedorId != null ? String(proveedorId) : '0' },
+      skip: !open || proveedorId == null,
+      fetchPolicy: 'cache-and-network',
+    });
+
+  const rubrosRelacionados = useMemo(() => {
+    const mapa = new Map<string, { cantidad: number | null; rubroId: number | null }>();
+    (rubrosData?.rubrosPorProveedor ?? []).forEach((item) => {
+      const nombre = (item.rubroNombre ?? '').trim() || 'Sin rubro';
+      const cantidad = item.cantidadArticulos != null ? Number(item.cantidadArticulos) : null;
+      const rubroId = item.rubroId != null ? Number(item.rubroId) : null;
+      if (!mapa.has(nombre)) {
+        mapa.set(nombre, { cantidad, rubroId });
+      }
+    });
+    return Array.from(mapa.entries()).map(([nombre, meta]) => ({
+      nombre,
+      cantidad: meta.cantidad,
+      rubroId: meta.rubroId,
+    }));
+  }, [rubrosData]);
+
+  const cantidadRubros = rubrosRelacionados.length;
+  const rubrosTooltipTitle = loadingRubros
+    ? 'Cargando rubros asociados…'
+    : errorRubros
+      ? 'No pudimos obtener los rubros asociados.'
+      : cantidadRubros > 0
+        ? rubrosRelacionados
+            .map(({ nombre, cantidad }) =>
+              cantidad != null ? `• ${nombre} (${cantidad} artículos)` : `• ${nombre}`,
+            )
+            .join('\n')
+        : 'Este proveedor aún no está asociado a rubros.';
+
+  const rubroFiltroId = rubroFiltro?.id ?? null;
+  const rubroFiltroNombre = rubroFiltro?.nombre ?? null;
+
+  const totalArticulosProveedor = useMemo(() => {
+    const relaciones = rubrosData?.rubrosPorProveedor ?? [];
+    const sum = relaciones.reduce((acc, item) => {
+      const cantidad = item.cantidadArticulos != null ? Number(item.cantidadArticulos) : 0;
+      return acc + (Number.isFinite(cantidad) ? cantidad : 0);
+    }, 0);
+    if (sum > 0) return sum;
+    if (Array.isArray(proveedorCompleto?.articulos)) {
+      return proveedorCompleto.articulos.length;
+    }
+    return estadoTabla.total;
+  }, [rubrosData?.rubrosPorProveedor, proveedorCompleto?.articulos, estadoTabla.total]);
+
+  const porcentajeRecargoProveedor = Number(proveedorCompleto?.PorcentajeRecargoProveedor ?? 0);
+  const porcentajeDescuentoProveedor = Number(proveedorCompleto?.PorcentajeDescuentoProveedor ?? 0);
+  const tieneRecargo = Math.abs(porcentajeRecargoProveedor) > 0.0001;
+  const tieneDescuento = Math.abs(porcentajeDescuentoProveedor) > 0.0001;
+  const recargoTooltipTitle = tieneRecargo
+    ? `Aplicado sobre el precio base de artículos: ${formatPercentage(porcentajeRecargoProveedor)}`
+    : 'Configurá un recargo personalizado para este proveedor.';
+  const descuentoTooltipTitle = tieneDescuento
+    ? `Se descuenta tras aplicar el recargo: ${formatPercentage(porcentajeDescuentoProveedor)}`
+    : 'Podés definir un descuento en el precio final de los articulos de este proveedor.';
+
+  const contactoTooltipTitle = (() => {
+    const detalles: string[] = [];
+    if (proveedorCompleto?.Mail) detalles.push(`Email: ${proveedorCompleto.Mail}`);
+    if (proveedorCompleto?.Telefono || proveedorCompleto?.Celular) {
+      const tel = [proveedorCompleto.Telefono, proveedorCompleto.Celular].filter(Boolean).join(' / ');
+      detalles.push(`Teléfono: ${tel}`);
+    }
+    const localidad = [proveedorCompleto?.Localidad, proveedorCompleto?.Provincia].filter(Boolean).join(', ');
+    const direccion = [proveedorCompleto?.Direccion, localidad].filter(Boolean).join(' · ');
+    if (direccion) detalles.push(`Dirección: ${direccion}${proveedorCompleto?.CP ? ` (CP ${proveedorCompleto.CP})` : ''}`);
+    return detalles.length ? detalles.join('\n') : 'Sin datos de contacto adicionales.';
+  })();
+
+  const renderTooltip = useCallback(
+    (text: string) => (
+      <Box sx={{ whiteSpace: 'pre-line', lineHeight: 1.4, maxWidth: 280 }}>
+        {text}
+      </Box>
+    ),
+    [],
   );
 
   const totalArticulos = estadoTabla.total;
@@ -105,8 +221,13 @@ const ModalDetallesProveedor = ({ open, onClose, proveedor, accentColor }: Modal
     const base: FiltrosTablaControlados = { pagina, limite };
     if (typeof proveedorId === 'number') base.proveedorId = proveedorId;
     if (busquedaPersonalizada) base.busqueda = busquedaPersonalizada;
+    if (rubroFiltro?.id != null) {
+      base.rubroId = rubroFiltro.id;
+    } else if (rubroFiltro?.nombre) {
+      base.rubro = rubroFiltro.nombre;
+    }
     return base;
-  }, [pagina, limite, proveedorId, busquedaPersonalizada]);
+  }, [pagina, limite, proveedorId, busquedaPersonalizada, rubroFiltro]);
 
   // Hooks para sincronizar resets al abrir/cambiar proveedor
   useEffect(() => {
@@ -115,6 +236,7 @@ const ModalDetallesProveedor = ({ open, onClose, proveedor, accentColor }: Modal
     setBusquedaPersonalizada('');
     setFiltroInput('');
     setEstadoTabla({ total: 0, loading: false, error: undefined });
+    setRubroFiltro(null);
   }, [open, proveedorId]);
 
   // Si cambia el proveedor, recargar tabla
@@ -122,7 +244,7 @@ const ModalDetallesProveedor = ({ open, onClose, proveedor, accentColor }: Modal
     if (!open || proveedorId == null) return;
     setPaginacion((prev) => ({ pagina: 0, limite: prev.limite }));
     setReloadKey((prev) => prev + 1);
-  }, [open, proveedorId]);
+  }, [open, proveedorId, rubroFiltro]);
 
   const handleTablaFiltersChange = useCallback((filtros: FiltrosTablaControlados) => {
     setPaginacion((prev) => {
@@ -151,6 +273,20 @@ const ModalDetallesProveedor = ({ open, onClose, proveedor, accentColor }: Modal
       return next;
     });
   }, []);
+
+  const handleSeleccionarRubro = useCallback(
+    (entrada?: { rubroId: number | null; nombre: string | null }) => {
+      setRubroFiltro((prev) => {
+        if (!entrada) return null;
+        const next = { id: entrada.rubroId ?? null, nombre: entrada.nombre ?? null };
+        const same = prev?.id === next.id && prev?.nombre === next.nombre;
+        return same ? null : next;
+      });
+      setPaginacion((prev) => ({ pagina: 0, limite: prev.limite }));
+      setReloadKey((prev) => prev + 1);
+    },
+    [],
+  );
 
   const onCerrar = () => {
     setFiltroInput('');
@@ -218,7 +354,7 @@ const ModalDetallesProveedor = ({ open, onClose, proveedor, accentColor }: Modal
                   />
                 )}
                 <Chip
-                  label={formatCount(totalArticulos, 'artículo', 'artículos')}
+                  label={formatCount(totalArticulosProveedor, 'artículo', 'artículos')}
                   size="small"
                   sx={{ bgcolor: 'rgba(0,0,0,0.35)', color: '#fff', border: `1px solid ${COLORS.chipBorder}`, fontWeight: 600, px: 1.5, py: 0.5, height: 28 }}
                 />
@@ -286,116 +422,208 @@ const ModalDetallesProveedor = ({ open, onClose, proveedor, accentColor }: Modal
                 }}
               >
                 {/* Tarjetas de info rápida */}
-                <Box display="flex" gap={2} flexWrap="wrap" mb={3}>
-                  <Card sx={{
-                    flex: '1 1 260px',
-                    minWidth: 260,
-                    borderRadius: 2,
-                    border: `1px solid ${alpha(COLORS.primary, 0.18)}`,
-                    background: alpha(COLORS.primary, 0.06),
-                    boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.24)',
-                  }}>
-                    <CardContent sx={{ p: 2.25 }}>
-                      <Box display="flex" alignItems="center" gap={1.25} mb={1}>
-                        <Box sx={{
-                          width: 28, height: 28, borderRadius: '50%',
-                          display: 'grid', placeItems: 'center',
-                          bgcolor: alpha(COLORS.primary, 0.18)
-                        }}>
-                          <Icon icon="mdi:account" width={16} height={16} color={COLORS.primary} />
+                <Box
+                  sx={{
+                    display: 'grid',
+                    gap: 1.75,
+                    gridTemplateColumns: {
+                      xs: 'repeat(2, minmax(0, 1fr))',
+                      md: 'repeat(4, minmax(0, 1fr))',
+                    },
+                    mb: 3,
+                  }}
+                >
+                  <Tooltip placement="top" arrow title={renderTooltip(contactoTooltipTitle)}>
+                    <Card
+                      sx={{
+                        borderRadius: 2,
+                        border: `1px solid ${alpha(COLORS.primary, 0.18)}`,
+                        background: alpha(COLORS.primary, 0.06),
+                        boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.24)',
+                      }}
+                    >
+                      <CardContent sx={{ p: 2, display: 'flex', flexDirection: 'column', gap: 1 }}>
+                        <Box display="flex" alignItems="center" gap={1}>
+                          <Box
+                            sx={{
+                              width: 24,
+                              height: 24,
+                              borderRadius: '50%',
+                              display: 'grid',
+                              placeItems: 'center',
+                              bgcolor: alpha(COLORS.primary, 0.18),
+                            }}
+                          >
+                            <Icon icon="mdi:account" width={15} height={15} color={COLORS.primary} />
+                          </Box>
+                          <Typography variant="subtitle2" fontWeight={700} color={COLORS.textStrong}>
+                            Contacto
+                          </Typography>
                         </Box>
-                        <Typography variant="subtitle2" fontWeight={700} color={COLORS.textStrong}>
-                          Contacto
+                        <Typography variant="h6" fontWeight={700} color={COLORS.primary}>
+                          {proveedorCompleto?.Contacto || proveedorCompleto?.Nombre || '—'}
                         </Typography>
-                      </Box>
-                      <Typography variant="body2" fontWeight={600}>
-                        {proveedorCompleto?.Contacto || '—'}
-                      </Typography>
-                      <Typography variant="caption" color="text.secondary">
-                        {proveedorCompleto?.Mail || 'Sin email'}{NBSP}•{NBSP}{proveedorCompleto?.Telefono || proveedorCompleto?.Celular || 'Sin teléfono'}
-                      </Typography>
-                    </CardContent>
-                  </Card>
+                      </CardContent>
+                    </Card>
+                  </Tooltip>
 
-                  <Card sx={{
-                    flex: '1 1 260px',
-                    minWidth: 260,
-                    borderRadius: 2,
-                    border: `1px solid ${alpha(COLORS.primary, 0.18)}`,
-                    background: alpha(COLORS.primary, 0.06),
-                    boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.24)',
-                  }}>
-                    <CardContent sx={{ p: 2.25 }}>
-                      <Box display="flex" alignItems="center" gap={1.25} mb={1}>
-                        <Box sx={{
-                          width: 28, height: 28, borderRadius: '50%',
-                          display: 'grid', placeItems: 'center',
-                          bgcolor: alpha(COLORS.primary, 0.18)
-                        }}>
-                          <Icon icon="mdi:map-marker" width={16} height={16} color={COLORS.primary} />
+                  <Tooltip placement="top" arrow title={renderTooltip(rubrosTooltipTitle)}>
+                    <Card
+                      sx={{
+                        borderRadius: 2,
+                        border: `1px solid ${alpha(COLORS.primary, 0.18)}`,
+                        background: alpha(COLORS.primary, 0.05),
+                        boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.22)',
+                      }}
+                    >
+                      <CardContent sx={{ p: 2, display: 'flex', flexDirection: 'column', gap: 1 }}>
+                        <Box display="flex" alignItems="center" gap={1}>
+                          <Box
+                            sx={{
+                              width: 24,
+                              height: 24,
+                              borderRadius: '50%',
+                              display: 'grid',
+                              placeItems: 'center',
+                              bgcolor: alpha(COLORS.primary, 0.16),
+                            }}
+                          >
+                            <Icon icon="mdi:layers" width={15} height={15} color={COLORS.primary} />
+                          </Box>
+                          <Typography variant="subtitle2" fontWeight={700} color={COLORS.textStrong}>
+                            Rubros asociados
+                          </Typography>
                         </Box>
-                        <Typography variant="subtitle2" fontWeight={700} color={COLORS.textStrong}>
-                          Ubicación
+                        <Typography variant="h6" fontWeight={800} color={COLORS.primary}>
+                          {loadingRubros ? '…' : errorRubros ? '—' : formatCount(cantidadRubros, 'rubro')}
                         </Typography>
-                      </Box>
-                      <Typography variant="body2" fontWeight={600}>
-                        {proveedorCompleto?.Direccion || '—'}
-                      </Typography>
-                      <Typography variant="caption" color="text.secondary">
-                        {[proveedorCompleto?.Localidad, proveedorCompleto?.Provincia].filter(Boolean).join(', ') || '—'}{NBSP}{proveedorCompleto?.CP ? `(CP ${proveedorCompleto.CP})` : ''}
-                      </Typography>
-                    </CardContent>
-                  </Card>
+                      </CardContent>
+                    </Card>
+                  </Tooltip>
 
-                  <Card sx={{
-                    flex: '1 1 260px',
-                    minWidth: 260,
-                    borderRadius: 2,
-                    border: `1px solid ${alpha(COLORS.primary, 0.18)}`,
-                    background: alpha(COLORS.primary, 0.06),
-                    boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.24)',
-                  }}>
-                    <CardContent sx={{ p: 2.25 }}>
-                      <Box display="flex" alignItems="center" gap={1.25} mb={1}>
-                        <Box sx={{
-                          width: 28, height: 28, borderRadius: '50%',
-                          display: 'grid', placeItems: 'center',
-                          bgcolor: alpha(COLORS.primary, 0.18)
-                        }}>
-                          <Icon icon="mdi:cash" width={16} height={16} color={COLORS.primary} />
+                  <Tooltip placement="top" arrow title={renderTooltip(recargoTooltipTitle)}>
+                    <Card
+                      sx={{
+                        borderRadius: 2,
+                        border: `1px solid ${alpha(COLORS.primary, 0.18)}`,
+                        background: alpha(COLORS.primary, 0.05),
+                        boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.22)',
+                      }}
+                    >
+                      <CardContent sx={{ p: 2, display: 'flex', flexDirection: 'column', gap: 1 }}>
+                        <Box display="flex" alignItems="center" gap={1}>
+                          <Box
+                            sx={{
+                              width: 24,
+                              height: 24,
+                              borderRadius: '50%',
+                              display: 'grid',
+                              placeItems: 'center',
+                              bgcolor: alpha(COLORS.primary, 0.16),
+                            }}
+                          >
+                            <Icon icon="mdi:trending-up" width={15} height={15} color={COLORS.primary} />
+                          </Box>
+                          <Typography variant="subtitle2" fontWeight={700} color={COLORS.textStrong}>
+                            Recargo por proveedor
+                          </Typography>
                         </Box>
-                        <Typography variant="subtitle2" fontWeight={700} color={COLORS.textStrong}>
-                          Saldo
+                        <Typography variant="h6" fontWeight={800} color={COLORS.primary}>
+                          {formatPercentage(porcentajeRecargoProveedor)}
                         </Typography>
-                      </Box>
-                      <Typography variant="h6" fontWeight={800} color={COLORS.primary}>
-                        {currency(proveedorCompleto?.Saldo)}
-                      </Typography>
-                      <Typography variant="caption" color="text.secondary">
-                        Condición: {proveedorCompleto?.TipoIva || '—'}{proveedorCompleto?.Rubro ? ` • Rubro: ${proveedorCompleto.Rubro}` : ''}
-                      </Typography>
-                    </CardContent>
-                  </Card>
+                      </CardContent>
+                    </Card>
+                  </Tooltip>
+
+                  <Tooltip placement="top" arrow title={renderTooltip(descuentoTooltipTitle)}>
+                    <Card
+                      sx={{
+                        borderRadius: 2,
+                        border: `1px solid ${alpha(COLORS.primary, 0.18)}`,
+                        background: alpha(COLORS.primary, 0.05),
+                        boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.22)',
+                      }}
+                    >
+                      <CardContent sx={{ p: 2, display: 'flex', flexDirection: 'column', gap: 1 }}>
+                        <Box display="flex" alignItems="center" gap={1}>
+                          <Box
+                            sx={{
+                              width: 24,
+                              height: 24,
+                              borderRadius: '50%',
+                              display: 'grid',
+                              placeItems: 'center',
+                              bgcolor: alpha(COLORS.primary, 0.16),
+                            }}
+                          >
+                            <Icon icon="mdi:trending-down" width={15} height={15} color={COLORS.primary} />
+                          </Box>
+                          <Typography variant="subtitle2" fontWeight={700} color={COLORS.textStrong}>
+                            Descuento por proveedor
+                          </Typography>
+                        </Box>
+                        <Typography variant="h6" fontWeight={800} color={COLORS.primary}>
+                          {formatPercentage(porcentajeDescuentoProveedor)}
+                        </Typography>
+                      </CardContent>
+                    </Card>
+                  </Tooltip>
                 </Box>
 
-                {/* Observaciones */}
-                {Boolean(proveedorCompleto?.Observaciones) && (
-                  <Box
-                    sx={{
-                      p: 2.25,
-                      mb: 2.5,
-                      borderRadius: 2,
-                      border: `1px solid ${alpha(COLORS.primary, 0.18)}`,
-                      background: alpha(COLORS.primary, 0.05),
-                      boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.22)',
-                    }}
-                  >
-                    <Typography variant="subtitle2" fontWeight={700} color={COLORS.textStrong} gutterBottom>
-                      Observaciones
+                {cantidadRubros > 0 && (
+                  <Box mt={2.5} display="flex" flexDirection="column" gap={1.25}>
+                    <Typography variant="subtitle2" fontWeight={700} color={COLORS.textStrong}>
+                      Rubros del proveedor
                     </Typography>
-                    <Typography variant="body2" color="text.secondary">
-                      {proveedorCompleto?.Observaciones}
-                    </Typography>
+                    <Box display="flex" flexWrap="wrap" gap={1} mb={2}>
+                      <Chip
+                        key="rubro-todos"
+                        label="Todos"
+                        clickable
+                        variant={!rubroFiltro ? 'filled' : 'outlined'}
+                        sx={{
+                          fontWeight: 600,
+                          bgcolor: !rubroFiltro ? marronPalette.primary : 'transparent',
+                          color: !rubroFiltro ? '#fff' : marronPalette.primary,
+                          borderColor: marronPalette.primary,
+                          '&:hover': {
+                            bgcolor: !rubroFiltro
+                              ? marronPalette.primaryHover
+                              : alpha(marronPalette.primary, 0.08),
+                          },
+                        }}
+                        onClick={() => handleSeleccionarRubro()}
+                      />
+                      {rubrosRelacionados.map(({ nombre, cantidad, rubroId }) => {
+                        const isActive =
+                          rubroFiltroId != null
+                            ? rubroId != null && rubroFiltroId === rubroId
+                            : rubroFiltroNombre != null && rubroFiltroNombre === nombre;
+                        const label = cantidad != null ? `${nombre} (${cantidad})` : nombre;
+                        return (
+                          <Chip
+                            key={`${rubroId ?? nombre}`}
+                            label={label}
+                            clickable
+                            variant={isActive ? 'filled' : 'outlined'}
+                            sx={{
+                              fontWeight: 600,
+                              bgcolor: isActive ? marronPalette.primary : 'transparent',
+                              color: isActive ? '#fff' : marronPalette.primary,
+                              borderColor: marronPalette.primary,
+                              '&:hover': {
+                                bgcolor: isActive
+                                  ? marronPalette.primaryHover
+                                  : alpha(marronPalette.primary, 0.08),
+                              },
+                            }}
+                            onClick={() =>
+                              handleSeleccionarRubro({ rubroId: rubroId ?? null, nombre })
+                            }
+                          />
+                        );
+                      })}
+                    </Box>
                   </Box>
                 )}
 
@@ -457,7 +685,7 @@ const ModalDetallesProveedor = ({ open, onClose, proveedor, accentColor }: Modal
                 {/* Tabla de artículos — usando el mismo componente genérico */}
                 <Box mt={2}>
                   <TablaArticulos
-                    key={`${proveedorId ?? 'prov'}-${reloadKey}`}
+                    key={`${proveedorId ?? 'prov'}-${rubroFiltro?.id ?? rubroFiltro?.nombre ?? 'all'}-${reloadKey}`}
                     columns={columnasTabla}
                     showToolbar={false}
                     allowCreate={false}

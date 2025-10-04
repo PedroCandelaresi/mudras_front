@@ -83,7 +83,7 @@ export const OBTENER_PROVEEDORES_CON_STOCK = gql`
 `;
 
 export const OBTENER_RUBROS_POR_PROVEEDOR = gql`
-  query ObtenerRubrosPorProveedor($proveedorId: Int!) {
+  query ObtenerRubrosPorProveedor($proveedorId: ID!) {
     obtenerRubrosPorProveedor(proveedorId: $proveedorId) {
       rubro
     }
