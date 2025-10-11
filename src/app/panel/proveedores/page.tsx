@@ -5,11 +5,10 @@ import CrystalButton, { CrystalSoftButton, forceWhiteIconsSX } from '@/component
 import PageContainer from '@/components/container/PageContainer';
 import ProveedoresTable from '@/components/proveedores/TablaProveedores';
 import { useState } from 'react';
-import { marron } from '@/components/rubros/colores-marron';
 import { Icon } from '@iconify/react';
-import TablaRubros from '@/components/rubros/TablaRubros';
+import TablaPedidos from '@/components/pedidos/TablaPedidos';
 import { TexturedPanel } from '@/components/ui/TexturedFrame/TexturedPanel';
-import { azul } from '@/ui/colores';
+import { azul, azulOscuro } from '@/ui/colores';
 
 const createBevelWrapper = (color: string) => {
   const edgeWidth = 2;
@@ -67,9 +66,9 @@ export default function Proveedores() {
   const handleTabChange = (_e: React.SyntheticEvent, v: number) => setTabValue(v);
 
   const isRubros = tabValue === 1;
-  const activeColor = isRubros ? marron.primary : azul.primary;
-  const activeHover = isRubros ? (marron.primaryHover ?? '#4E342E') : (azul.primaryHover ?? '#1565c0');
-  const baseBg = isRubros ? (marron.chipBg ?? '#E6D3C8') : (azul.toolbarBg ?? '#e3f2fd');
+  const activeColor = isRubros ? azulOscuro.primary : azul.primary;
+  const activeHover = isRubros ? (azulOscuro.primaryHover ?? '#4E342E') : (azul.primaryHover ?? '#1565c0');
+  const baseBg = isRubros ? (azulOscuro.chipBg ?? '#E6D3C8') : (azul.toolbarBg ?? '#e3f2fd');
 
   return (
     <PageContainer title="Proveedores - Mudras" description="Gestión de proveedores">
@@ -119,21 +118,21 @@ export default function Proveedores() {
               {/* Rubros (frambuesa) */}
               {tabValue === 1 ? (
                 <CrystalButton
-                  baseColor={marron.primary}
+                  baseColor={azulOscuro.primary}
                   startIcon={<Icon icon="mdi:tag" />}
                   onClick={() => setTabValue(1)}
                   sx={{ ...forceWhiteIconsSX, minHeight: 40, borderRadius: 1, px: 2 }}
                 >
-                  Rubros
+                  Pedidos
                 </CrystalButton>
               ) : (
                 <CrystalSoftButton
-                  baseColor={marron.primary}
+                  baseColor={azulOscuro.primary}
                   startIcon={<Icon icon="mdi:tag" />}
                   onClick={() => setTabValue(1)}
                   sx={{ ...forceWhiteIconsSX, minHeight: 40, borderRadius: 1, px: 2 }}
                 >
-                  Rubros
+                  Pedidos
                 </CrystalSoftButton>
               )}
             </Box>
@@ -147,7 +146,7 @@ export default function Proveedores() {
                   // wrapper tenue azul para acompañar la tabla
                   sx={{
                     borderRadius: 2,
-                    bgcolor: baseBg,
+                    bgcolor: azul.primary,
                     transition: 'background-color .2s ease',
                   }}
                 >
@@ -168,12 +167,12 @@ export default function Proveedores() {
                   // wrapper tenue frambuesa
                   sx={{
                     borderRadius: 2,
-                    bgcolor: baseBg,
+                    bgcolor: azulOscuro.primary,
                     transition: 'background-color .2s ease',
                   }}
                 >
                   {/* Usa tu wrapper con modales ya cableados */}
-                  <TablaRubros puedeCrear={userRole === 'admin' || userRole === 'diseñadora'} />
+                  <TablaPedidos puedeCrear={userRole === 'admin' || userRole === 'diseñadora'} />
                 </Box>
               )}
             </Box>

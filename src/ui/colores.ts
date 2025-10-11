@@ -15,6 +15,7 @@ export const marron = {
   chipBg: '#d7ccc8',
   chipText: '#5d4037',
   rowHover: '#efebe9',
+  alternateRow: '#f5ede9', // ✅ agregado para coherencia visual con verde
 };
 
 export const verde = {
@@ -70,6 +71,7 @@ export const teal = {
   primaryHover: '#00695c',
   textStrong: '#0b3a39',
   rowHover: '#e6faf8',
+  alternateRow: '#f0fcf9', // ✅ agregado
 };
 
 export type PaletaTeal = typeof teal;
@@ -87,6 +89,7 @@ export const violeta = {
   primaryHover: '#6a1b9a',
   textStrong: '#4a148c',
   rowHover: '#f5e9fb',
+  alternateRow: '#f9f1fc', // ✅ agregado
 };
 
 export type PaletaVioleta = typeof violeta;
@@ -106,7 +109,10 @@ export const grisVerdoso = {
   chipBg: '#b8d0b8',
   chipText: '#2d3e2d',
   rowHover: '#e8f2e8',
+  alternateRow: '#f2f8f2', // ✅ agregado
 };
+
+export type PaletaGrisVerdoso = typeof grisVerdoso;
 
 // Depósitos = gris rojizo oscuro
 export const grisRojizo = {
@@ -123,7 +129,49 @@ export const grisRojizo = {
   chipBg: '#d0b8b8',
   chipText: '#3e2d2d',
   rowHover: '#f2e8e8',
+  alternateRow: '#f8efef', // ✅ agregado
 };
 
-export type PaletaGrisVerdoso = typeof grisVerdoso;
 export type PaletaGrisRojizo = typeof grisRojizo;
+
+// Borgoña oscuro = logística / movimientos de stock
+export const borgoña = {
+  headerBg: '#4A0E21',
+  headerText: '#FBE9EB',
+  headerBorder: '#7A2A3A',
+  toolbarBg: '#F7EAEA',
+  toolbarBorder: '#E2C6C6',
+  borderOuter: '#7A2A3A',
+  borderInner: '#E2C6C6',
+  primary: '#6B1E2C',
+  primaryHover: '#4A0E21',
+  textStrong: '#3B0B18',
+  chipBg: '#E2C6C6',
+  chipText: '#3B0B18',
+  rowHover: '#F7EAEA',
+  alternateRow: '#FAF0F0',
+  actionHover: '#F2D8D8',
+};
+
+export type PaletaBorgoña = typeof borgoña;
+
+// Azul oscuro = para vistas “dark blue”
+export const azulOscuro = {
+  headerBg: '#0B1426',       // navy bien oscuro
+  headerText: '#E7EEF8',     // texto claro
+  headerBorder: '#214A86',   // borde del header
+  toolbarBg: '#E9F1FB',      // fondo claro para toolbars
+  toolbarBorder: '#C3D6EE',
+  borderOuter: '#214A86',
+  borderInner: '#C3D6EE',
+  primary: '#0E3A8A',        // acción principal (más intensa que el azul normal)
+  primaryHover: '#0A2E6D',
+  textStrong: '#091324',     // texto fuerte, casi negro azulado
+  chipBg: '#C3D6EE',
+  chipText: '#091324',
+  rowHover: '#E9F1FB',       // hover de fila sutil y coherente
+  alternateRow: '#F1F6FD',   // zebra alterna
+  actionHover: '#D5E4F7',    // hover de acciones suave
+};
+
+export type PaletaAzulOscuro = typeof azulOscuro;

@@ -3,7 +3,7 @@ import { Grid, Box, Typography, Button, Stack } from '@mui/material';
 import { IconPlus, IconDownload, IconFilter } from '@tabler/icons-react';
 import PageContainer from '@/components/container/PageContainer';
 import DashboardCard from '@/components/shared/DashboardCard';
-import TablaMovimientosStock from '@/components/articulos/TablaMovimientosStock';
+import TablaMovimientosStock from '@/components/stock/TablaMovimientosStock';
 
 const MovimientosStock = () => {
   return (

@@ -250,45 +250,16 @@ const TablaProveedores = forwardRef<TablaProveedoresHandle, Props>(({
   };
 
   /* ======================== Loading / Error ======================== */
+/* ======================== Loading / Error ======================== */
   if (loading) {
     return (
       <WoodSection>
+        {/* Skeleton de toolbar */}
         <Box sx={{ px: 1, py: 1, mb: 2 }}>
-          <Typography variant="h6" fontWeight={700} color={azul.textStrong}>
-            <IconUsers style={{ marginRight: 8, verticalAlign: 'middle' }} />
-            Proveedores
-          </Typography>
+          <Skeleton variant="rounded" height={44} sx={{ borderRadius: 2 }} />
         </Box>
-        <TableContainer
-          sx={{
-            border: '1px solid',
-            borderColor: alpha(accentInterior, 0.38),
-            borderRadius: 0,
-            overflow: 'hidden',
-            bgcolor: 'rgba(245, 251, 255, 0.9)',
-          }}
-        >
-          <WoodBackdrop accent={woodTintInterior} radius={0} inset={0} strength={0.12} texture="tabla" />
-          <Box sx={{ position: 'absolute', inset: 0, backgroundColor: alpha('#f5fbff', 0.82), zIndex: 0 }} />
-          <Table size="small" sx={{ position: 'relative', zIndex: 2 }}>
-            <TableHead>
-              <TableRow>
-                {['Proveedor', 'Código', 'Teléfono', 'Email', 'CUIT'].map((h) => (
-                  <TableCell key={h}><Skeleton variant="text" width="100%" /></TableCell>
-                ))}
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {Array.from({ length: 5 }).map((_, r) => (
-                <TableRow key={r}>
-                  {Array.from({ length: 5 }).map((_, c) => (
-                    <TableCell key={c}><Skeleton variant="text" width="100%" /></TableCell>
-                  ))}
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </TableContainer>
+        {/* Skeleton de tabla */}
+        <Skeleton variant="rounded" height={360} sx={{ borderRadius: 2 }} />
       </WoodSection>
     );
   }
@@ -439,6 +410,10 @@ const TablaProveedores = forwardRef<TablaProveedoresHandle, Props>(({
             textTransform: 'uppercase',
             letterSpacing: 0.4,
           },
+                    // ✅ divisores sutiles entre columnas del header
+                    '& .MuiTableHead-root .MuiTableCell-head:not(:last-of-type)': {
+                      borderRight: `3px solid ${alpha(azul.headerBorder, 0.5)}`,
+                    },
         }}
       >
         <TableHead>

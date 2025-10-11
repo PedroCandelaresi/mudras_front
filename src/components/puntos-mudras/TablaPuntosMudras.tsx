@@ -79,7 +79,7 @@ export default function TablaPuntosMudras({ tipo, onEditarPunto, onVerInventario
     refetchQueries: [{ query: OBTENER_PUNTOS_MUDRAS }]
   });
 
-  const puntos = data?.obtenerPuntosMudras || [];
+  const puntos = (data?.obtenerPuntosMudras || []).filter((punto) => punto.tipo === tipo);
 
   const puntosFiltrados = puntos.filter(punto => {
     if (!busqueda) return true;
