@@ -10,8 +10,8 @@ export const OBTENER_STOCK_PUNTO_MUDRAS = gql`
       stockAsignado
       stockTotal
       rubro {
-        Id
-        Rubro
+        id
+        nombre
       }
     }
   }
@@ -124,10 +124,10 @@ export interface StockPuntoMudrasResponse {
     precio: number;
     stockAsignado: number;
     stockTotal: number;
-    rubro: {
-      Id: number;
-      Rubro: string;
-    };
+    rubro?: {
+      id: number;
+      nombre: string;
+    } | null;
   }>;
 }
 

@@ -36,7 +36,9 @@ async function proxy(req: NextRequest, method: 'POST' | 'GET') {
   if (token) {
     headers['Authorization'] = /^Bearer\s+/i.test(token) ? token : `Bearer ${token}`;
   }
-  const secret = process.env.X_SECRET_KEY;
+  const secret =
+    process.env.X_SECRET_KEY ||
+    process.env.NEXT_PUBLIC_X_SECRET_KEY;
   if (secret) headers['X-Secret-Key'] = secret;
 
   const url = method === 'GET' ? `${join(base, '/graphql')}${new URL(req.url).search}` : join(base, '/graphql');

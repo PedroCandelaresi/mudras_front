@@ -67,7 +67,10 @@ export const OBTENER_STOCK_PUNTO_MUDRAS = gql`
       precio
       stockAsignado
       stockTotal
-      rubro
+      rubro {
+        id
+        nombre
+      }
     }
   }
 `;
@@ -85,7 +88,10 @@ export const OBTENER_PROVEEDORES_CON_STOCK = gql`
 export const OBTENER_RUBROS_POR_PROVEEDOR = gql`
   query ObtenerRubrosPorProveedor($proveedorId: ID!) {
     obtenerRubrosPorProveedor(proveedorId: $proveedorId) {
-      rubro
+      rubro {
+        id
+        nombre
+      }
     }
   }
 `;
@@ -104,7 +110,10 @@ export const BUSCAR_ARTICULOS_PARA_ASIGNACION = gql`
       stockTotal
       stockAsignado
       stockDisponible
-      rubro
+      rubro {
+        id
+        nombre
+      }
       proveedor
     }
   }
@@ -136,7 +145,7 @@ export const OBTENER_ESTADISTICAS_PROVEEDOR_RUBRO = gql`
 export interface PuntoMudras {
   id: number;
   nombre: string;
-  tipo: 'venta' | 'deposito';
+  tipo: TipoPuntoMudras;
   descripcion?: string | null;
   direccion?: string | null;
   telefono?: string | null;
@@ -158,7 +167,10 @@ export interface ArticuloConStockPuntoMudras {
   precio: number;
   stockAsignado: number;
   stockTotal: number;
-  rubro?: string | null;
+  rubro?: {
+    id: number;
+    nombre: string;
+  } | null;
 }
 
 export interface ProveedorBasico {
@@ -201,6 +213,8 @@ export interface EstadisticasProveedorRubro {
 export interface ObtenerPuntosMudrasResponse {
   obtenerPuntosMudras: PuntoMudras[];
 }
+
+export type TipoPuntoMudras = 'venta' | 'deposito';
 
 export interface ObtenerEstadisticasPuntosMudrasResponse {
   obtenerEstadisticasPuntosMudras: {

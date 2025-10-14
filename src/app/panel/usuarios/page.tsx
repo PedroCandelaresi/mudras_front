@@ -3,11 +3,10 @@ import { Alert, Box, Snackbar, Typography, Tabs, Tab, Paper, Button } from '@mui
 import PageContainer from '@/components/container/PageContainer';
 import React from 'react';
 import { UserTable, type UsuarioListado } from '@/components/usuarios/UserTable';
+import { InternalUsersTable } from '@/components/usuarios/InternalUsersTable';
 import { CreateUserModal, type CrearUsuarioForm } from '@/components/usuarios/CreateUserModal';
 import { EditUserModal, type EditarUsuarioForm } from '@/components/usuarios/EditUserModal';
 import { AssignRolesModal, type RolItem } from '@/components/usuarios/AssignRolesModal';
-import { apiFetch } from '@/lib/api';
-import { DeleteUserDialog } from '@/components/usuarios/DeleteUserDialog';
 import { usePermisos } from '@/lib/permisos';
 import { RolesTable, type PermisoItem } from '@/components/roles/RolesTable';
 import { AssignPermisosModal } from '@/components/roles/AssignPermisosModal';
@@ -18,22 +17,25 @@ import { EditPermisoModal, type EditarPermisoForm } from '@/components/permisos/
 import { Icon } from '@iconify/react';
 import { useSearchParams } from 'next/navigation';
 import { TexturedPanel } from '@/components/ui/TexturedFrame/TexturedPanel';
+import { DeleteUserDialog } from '@/components/usuarios/DeleteUserDialog';
+import { apiFetch } from '@/lib/api';
 
 export default function Usuarios() {
   const { tienePermiso } = usePermisos();
-  const puedeCrear = tienePermiso('users.create');
-  const puedeEditar = tienePermiso('users.update');
-  const puedeEliminar = tienePermiso('users.delete');
-  const puedeAsignarRoles = tienePermiso('users.assign_roles') || tienePermiso('roles.assign');
+  // Ajuste de nombres para coincidir con los permisos del backend (usuarios.*)
+  const puedeCrear = tienePermiso('usuarios.create');
+  const puedeEditar = tienePermiso('usuarios.update');
+  const puedeEliminar = tienePermiso('usuarios.delete');
+  const puedeAsignarRoles = tienePermiso('roles.assign');
 
-  // Tabs: 0 Usuarios, 1 Roles, 2 Permisos
+  // Tabs: 0 Usuarios (auth), 1 Internos (empleados), 2 Roles, 3 Permisos
   const searchParams = useSearchParams();
   const [tab, setTab] = React.useState(0);
   React.useEffect(() => {
     const t = searchParams?.get('tab');
     if (t != null) {
       const n = Number(t);
-      if (!Number.isNaN(n) && n >= 0 && n <= 2) setTab(n);
+      if (!Number.isNaN(n) && n >= 0 && n <= 3) setTab(n);
     }
   }, [searchParams]);
 
@@ -45,6 +47,7 @@ export default function Usuarios() {
   const [rolesDisponibles, setRolesDisponibles] = React.useState<RolItem[]>([]);
   const [refetchToken, setRefetchToken] = React.useState(0);
 
+  // Queries y mutations
   // Estado para pestaña Roles
   const [rolSel, setRolSel] = React.useState<RolItem | null>(null);
   const [modalPermisosAbierto, setModalPermisosAbierto] = React.useState(false);
@@ -232,6 +235,7 @@ export default function Usuarios() {
               }}
             >
               <Tab icon={<Icon icon="mdi:account-group" />} label="Usuarios" iconPosition="start" />
+              <Tab icon={<Icon icon="mdi:account-tie-outline" />} label="Internos" iconPosition="start" />
               <Tab icon={<Icon icon="mdi:shield-account" />} label="Roles" iconPosition="start" />
               <Tab icon={<Icon icon="mdi:clipboard-text-outline" />} label="Permisos" iconPosition="start" />
             </Tabs>
@@ -250,13 +254,18 @@ export default function Usuarios() {
                 />
               )}
 
-              {/* Pestaña Roles */}
+              {/* Pestaña Internos */}
               {tab === 1 && (
+                <InternalUsersTable />
+              )}
+
+              {/* Pestaña Roles */}
+              {tab === 2 && (
                 <RolesTable onAsignarPermisos={abrirAsignacionPermisos} onCrear={() => setCrearRolAbierto(true)} refetchToken={refetchRolesToken} />
               )}
 
               {/* Pestaña Permisos */}
-              {tab === 2 && (
+              {tab === 3 && (
                 <PermisosTable onCrear={() => setCrearPermAbierto(true)} onEditar={abrirEditarPermiso} onEliminar={abrirEliminarPermiso} refetchToken={refetchPermsToken} />
               )}
             </Box>

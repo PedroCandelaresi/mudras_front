@@ -39,6 +39,7 @@ export const OBTENER_PUESTOS_VENTA = gql`
       requiereCliente
       emitirComprobanteAfip
       puntoVentaAfip
+      configuracion
     }
   }
 `;
@@ -235,6 +236,29 @@ export interface PuestoVenta {
   requiereCliente: boolean;
   emitirComprobanteAfip: boolean;
   puntoVentaAfip?: number | null;
+  configuracion?: string | null;
+}
+
+export const OBTENER_CLIENTES_VENTA = gql`
+  query ObtenerClientesVenta {
+    clientes {
+      id
+      nombre
+      apellido
+      razonSocial
+    }
+  }
+`;
+
+export interface ClienteVenta {
+  id: number;
+  nombre?: string | null;
+  apellido?: string | null;
+  razonSocial?: string | null;
+}
+
+export interface ClientesVentaResponse {
+  clientes: ClienteVenta[];
 }
 
 export interface VentaCajaResumen {

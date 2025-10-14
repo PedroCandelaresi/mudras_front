@@ -67,21 +67,28 @@ export interface CrearVentaCajaInput {
   tipoVenta: string;
   puestoVentaId: number;
   clienteId?: number;
+  usuarioId?: number;
+  descuentoPorcentaje?: number;
+  descuentoMonto?: number;
   observaciones?: string;
+  generarFactura?: boolean;
+  cuitCliente?: string;
   detalles: {
     articuloId: number;
     cantidad: number;
     precioUnitario: number;
     descuentoPorcentaje?: number;
+    descuentoMonto?: number;
     observaciones?: string;
   }[];
   pagos: {
     metodoPago: MetodoPago;
     monto: number;
-    referencia?: string;
-    numeroTarjetaUltimos4?: string;
-    tipoTarjeta?: string;
-    numeroCuotas?: number;
+    marcaTarjeta?: string;
+    ultimos4Digitos?: string;
+    cuotas?: number;
+    numeroAutorizacion?: string;
+    numeroComprobante?: string;
     observaciones?: string;
   }[];
 }
@@ -131,9 +138,10 @@ export interface ReintentarEmisionAfipResponse {
 export interface PagoVenta {
   metodoPago: MetodoPago;
   monto: number;
-  referencia?: string;
-  numeroTarjetaUltimos4?: string;
-  tipoTarjeta?: string;
-  numeroCuotas?: number;
+  marcaTarjeta?: string;
+  ultimos4Digitos?: string;
+  cuotas?: number;
+  numeroAutorizacion?: string;
+  numeroComprobante?: string;
   observaciones?: string;
 }

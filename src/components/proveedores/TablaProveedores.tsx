@@ -250,7 +250,7 @@ const TablaProveedores = forwardRef<TablaProveedoresHandle, Props>(({
   };
 
   /* ======================== Loading / Error ======================== */
-/* ======================== Loading / Error ======================== */
+
   if (loading) {
     return (
       <WoodSection>

@@ -50,7 +50,7 @@ type ArticuloColumnKey =
   | 'acciones';
 type ColKey = Extract<ArticuloColumnKey, 'descripcion' | 'codigo' | 'rubro' | 'proveedor' | 'estado'>;
 type ColFilters = Partial<Record<ColKey, string>>;
-type ColumnDef = {
+export type ColumnDef = {
   key: ArticuloColumnKey;
   header?: string;
   width?: string | number;

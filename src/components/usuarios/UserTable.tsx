@@ -1,12 +1,13 @@
 "use client";
 
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { apiFetch } from '@/lib/api';
+import React, { useState } from 'react';
 import { Box, Button, Chip, CircularProgress, IconButton, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TablePagination, TableRow, Tooltip, Typography, TextField, InputAdornment, Menu, Divider, Stack } from '@mui/material';
 import { IconEdit, IconTrash, IconUserShield } from '@tabler/icons-react';
 import { IconSearch } from '@tabler/icons-react';
 import { IconDotsVertical } from '@tabler/icons-react';
 import { marron } from '@/ui/colores';
+import { useQuery } from '@apollo/client/react';
+import { USUARIOS_ADMIN_QUERY } from './graphql/queries';
 
 export interface UsuarioListado {
   id: string;
@@ -20,6 +21,36 @@ export interface UsuarioListado {
   roles?: string[];
 }
 
+interface UsuariosAdminQueryResponse {
+  usuariosAdmin: {
+    total: number;
+    items: Array<{
+      id: string;
+      username: string | null;
+      email: string | null;
+      displayName: string;
+      userType: 'EMPRESA' | 'CLIENTE';
+      isActive: boolean;
+      mustChangePassword: boolean;
+      createdAt: string;
+      updatedAt: string;
+      roles: string[];
+    }>;
+  };
+}
+
+interface UsuariosAdminQueryVariables {
+  filtros: {
+    pagina?: number;
+    limite?: number;
+    busqueda?: string;
+    username?: string;
+    email?: string;
+    nombre?: string;
+    estado?: string;
+  };
+}
+
 interface Props {
   onCrear?: () => void;
   onEditar?: (u: UsuarioListado) => void;
@@ -29,8 +60,6 @@ interface Props {
 }
 
 export function UserTable({ onCrear, onEditar, onRoles, onEliminar, refetchToken }: Props) {
-  const [cargando, setCargando] = useState<boolean>(true);
-  const [error, setError] = useState<string | null>(null);
   const [pagina, setPagina] = useState(0);
   const [limite, setLimite] = useState(20);
   const [total, setTotal] = useState(0);
@@ -47,33 +76,51 @@ export function UserTable({ onCrear, onEditar, onRoles, onEliminar, refetchToken
     estado: '',
   });
 
-  const cargar = useCallback(async () => {
-    try {
-      setCargando(true);
-      const qp = new URLSearchParams({ pagina: String(pagina), limite: String(limite) });
-      // Construir búsqueda combinada como en Artículos (si backend no soporta campos específicos)
-      const busquedaCompuesta = [
-        filtro,
-        filtrosColumna.username,
-        filtrosColumna.email,
-        filtrosColumna.nombre,
-        filtrosColumna.estado,
-      ].filter(Boolean).join(' ').trim();
-      if (busquedaCompuesta) qp.set('busqueda', busquedaCompuesta);
-      const res = await apiFetch<{ items: UsuarioListado[]; total: number }>(`/users?${qp.toString()}`);
-      setUsuarios(res.items);
-      setTotal(res.total);
-      setError(null);
-    } catch (e: any) {
-      setError(e?.message || 'Error al cargar');
-    } finally {
-      setCargando(false);
-    }
+  const filtrosVariables = React.useMemo(() => {
+    const filtrosActivos = {
+      pagina,
+      limite,
+      busqueda: filtro || undefined,
+      username: filtrosColumna.username || undefined,
+      email: filtrosColumna.email || undefined,
+      nombre: filtrosColumna.nombre || undefined,
+      estado: filtrosColumna.estado || undefined,
+    };
+
+    return {
+      filtros: filtrosActivos,
+    };
   }, [pagina, limite, filtro, filtrosColumna]);
 
-  useEffect(() => {
-    cargar();
-  }, [cargar, refetchToken]);
+  const { data, loading, error, refetch } = useQuery<UsuariosAdminQueryResponse, UsuariosAdminQueryVariables>(USUARIOS_ADMIN_QUERY, {
+    variables: filtrosVariables,
+    fetchPolicy: 'cache-and-network',
+  });
+
+  React.useEffect(() => {
+    if (refetchToken !== undefined) {
+      refetch(filtrosVariables);
+    }
+  }, [refetchToken, refetch, filtrosVariables]);
+
+  React.useEffect(() => {
+    if (!data?.usuariosAdmin) return;
+    const { total: totalUsuarios, items } = data.usuariosAdmin;
+    setTotal(totalUsuarios);
+    setUsuarios(
+      items.map((usuario) => ({
+        id: usuario.id,
+        username: usuario.username ?? null,
+        email: usuario.email ?? null,
+        displayName: usuario.displayName,
+        userType: usuario.userType,
+        isActive: usuario.isActive,
+        createdAt: usuario.createdAt,
+        updatedAt: usuario.updatedAt,
+        roles: usuario.roles,
+      })),
+    );
+  }, [data]);
 
   const limpiarFiltros = () => {
     setFiltro('');
@@ -129,7 +176,7 @@ export function UserTable({ onCrear, onEditar, onRoles, onEliminar, refetchToken
           <Button variant="outlined" color="inherit" onClick={limpiarFiltros} sx={{ textTransform: 'none', borderColor: marron.headerBorder, color: marron.textStrong, '&:hover': { borderColor: marron.primaryHover, bgcolor: marron.toolbarBg } }}>
             Limpiar filtros
           </Button>
-          {cargando && <CircularProgress size={20} />}
+          {loading && <CircularProgress size={20} />}
         </Box>
       </Box>
 

@@ -56,8 +56,8 @@ import {
   type PuestosVentaResponse,
   type FiltrosHistorialInput,
   type VentaCaja,
-} from '@/components/caja-registradora/graphql/queries';
-import { CANCELAR_VENTA_CAJA } from '@/components/caja-registradora/graphql/mutations';
+} from '@/components/ventas/caja-registradora/graphql/queries';
+import { CANCELAR_VENTA_CAJA } from '@/components/ventas/caja-registradora/graphql/mutations';
 
 const ESTADOS_VENTA = [
   { value: 'PENDIENTE', label: 'Pendiente', color: 'warning' as const },

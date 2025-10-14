@@ -59,6 +59,26 @@ export const azul = {
 
 export type PaletaAzul = typeof azul;
 
+
+export const naranjaCaja = {
+  headerBg: '#6B2B06',
+  headerText: '#FFF4E8',
+  headerBorder: '#D46A1C',
+  toolbarBg: '#FFF0E0',
+  toolbarBorder: '#F5C396',
+  borderOuter: '#D46A1C',
+  borderInner: '#F5C396',
+  primary: '#F28C28',
+  primaryHover: '#D97A1F',
+  textStrong: '#5A2104',
+  chipBg: '#F9C89B',
+  chipText: '#5A2104',
+  rowHover: '#FFE7CC',
+  alternateRow: '#FFF3E2',
+  actionHover: '#FBD8B2',
+};
+
+export type PaletaNaranjaCaja = typeof naranjaCaja;
 export const teal = {
   headerBg: '#0f4d4b',
   headerText: '#e6fffb',
@@ -110,6 +130,7 @@ export const grisVerdoso = {
   chipText: '#2d3e2d',
   rowHover: '#e8f2e8',
   alternateRow: '#f2f8f2', // ✅ agregado
+  actionHover: '#dfece0',
 };
 
 export type PaletaGrisVerdoso = typeof grisVerdoso;
@@ -130,6 +151,7 @@ export const grisRojizo = {
   chipText: '#3e2d2d',
   rowHover: '#f2e8e8',
   alternateRow: '#f8efef', // ✅ agregado
+  actionHover: '#efe0e0', 
 };
 
 export type PaletaGrisRojizo = typeof grisRojizo;
