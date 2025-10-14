@@ -3,7 +3,6 @@ import { Alert, Box, Snackbar, Typography, Tabs, Tab, Paper, Button } from '@mui
 import PageContainer from '@/components/container/PageContainer';
 import React from 'react';
 import { UserTable, type UsuarioListado } from '@/components/usuarios/UserTable';
-import { InternalUsersTable } from '@/components/usuarios/InternalUsersTable';
 import { CreateUserModal, type CrearUsuarioForm } from '@/components/usuarios/CreateUserModal';
 import { EditUserModal, type EditarUsuarioForm } from '@/components/usuarios/EditUserModal';
 import { AssignRolesModal, type RolItem } from '@/components/usuarios/AssignRolesModal';
@@ -254,18 +253,13 @@ export default function Usuarios() {
                 />
               )}
 
-              {/* Pestaña Internos */}
-              {tab === 1 && (
-                <InternalUsersTable />
-              )}
-
               {/* Pestaña Roles */}
-              {tab === 2 && (
+              {tab === 1 && (
                 <RolesTable onAsignarPermisos={abrirAsignacionPermisos} onCrear={() => setCrearRolAbierto(true)} refetchToken={refetchRolesToken} />
               )}
 
               {/* Pestaña Permisos */}
-              {tab === 3 && (
+              {tab === 2 && (
                 <PermisosTable onCrear={() => setCrearPermAbierto(true)} onEditar={abrirEditarPermiso} onEliminar={abrirEliminarPermiso} refetchToken={refetchPermsToken} />
               )}
             </Box>
