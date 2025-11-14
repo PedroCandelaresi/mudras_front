@@ -29,6 +29,7 @@ import {
   IconButton,
   Card,
   CardContent,
+  Snackbar,
 } from '@mui/material';
 import { alpha, darken } from '@mui/material/styles';
 import { Icon } from '@iconify/react';
@@ -36,6 +37,7 @@ import { IconPlus, IconTrash } from '@tabler/icons-react';
 import {
   CREAR_VENTA_CAJA,
   type MetodoPago,
+  type MedioPagoCaja,
   type PagoVenta,
   type CrearVentaCajaResponse,
   type CrearVentaCajaInput,
@@ -45,7 +47,7 @@ import { TexturedPanel } from '@/components/ui/TexturedFrame/TexturedPanel';
 import { WoodBackdrop } from '@/components/ui/TexturedFrame/WoodBackdrop';
 import CrystalButton, { CrystalSoftButton } from '@/components/ui/CrystalButton';
 import { verde } from '@/ui/colores';
-import { USUARIOS_GESTION_POR_ROL_QUERY } from '@/components/usuarios/graphql/queries';
+import { USUARIOS_CAJA_AUTH_QUERY } from '@/components/usuarios/graphql/queries';
 
 interface ArticuloVenta {
   id: number;
@@ -56,24 +58,10 @@ interface ArticuloVenta {
   subtotal: number;
 }
 
-interface UsuarioOption {
-  id: number;
-  label: string;
-}
+interface UsuarioOption { id: string; label: string }
 
-interface UsuarioGestion {
-  id: number;
-  nombre?: string | null;
-  apellido?: string | null;
-  username?: string | null;
-  email?: string | null;
-  rol?: string | null;
-  estado?: string | null;
-}
-
-interface UsuariosCajaRespuesta {
-  usuariosGestionPorRol?: UsuarioGestion[];
-}
+interface UsuarioCajaAuth { id: string; username?: string | null; email?: string | null; displayName: string }
+interface UsuariosCajaRespuesta { usuariosCajaAuth?: UsuarioCajaAuth[] }
 
 
 interface ModalConfirmacionVentaProps {
@@ -135,11 +123,13 @@ export const ModalConfirmacionVenta: React.FC<ModalConfirmacionVentaProps> = ({
     metodoPago: 'EFECTIVO',
     monto: 0,
   });
+  const [dniCuit, setDniCuit] = useState<string>('');
   const [usuarios, setUsuarios] = useState<UsuarioOption[]>([]);
   const [cargandoUsuarios, setCargandoUsuarios] = useState<boolean>(false);
   const [errorUsuarios, setErrorUsuarios] = useState<string | null>(null);
   const [usuarioSeleccionado, setUsuarioSeleccionado] = useState<UsuarioOption | null>(null);
-  const [perfilUsuarioId, setPerfilUsuarioId] = useState<number | null>(null);
+  const [perfilUsuarioId, setPerfilUsuarioId] = useState<string | null>(null);
+  const [snack, setSnack] = useState<{ open: boolean; msg: string; sev: 'success'|'error'|'info' }>({ open: false, msg: '', sev: 'success' });
 
   console.log('🧾 [ModalConfirmacionVenta] render', {
     open,
@@ -155,7 +145,7 @@ export const ModalConfirmacionVenta: React.FC<ModalConfirmacionVentaProps> = ({
   });
 
   const [obtenerUsuarios, { called: usuariosCalled, loading: usuariosLoading, data: usuariosData, error: usuariosError }] =
-    useLazyQuery<UsuariosCajaRespuesta>(USUARIOS_GESTION_POR_ROL_QUERY, {
+    useLazyQuery<UsuariosCajaRespuesta>(USUARIOS_CAJA_AUTH_QUERY, {
       fetchPolicy: 'network-only',
     });
 
@@ -175,9 +165,9 @@ export const ModalConfirmacionVenta: React.FC<ModalConfirmacionVentaProps> = ({
     }
   }, [usuariosCalled, usuariosLoading, usuariosData, usuariosError]);
 
-  const puestoVentaIdSeleccionado = presetPuestoVentaId ?? 0;
+  const puestoVentaIdSeleccionado = presetPuestoVentaId ?? 0; // compat
   const puntoMudrasIdSeleccionado = presetPuntoMudrasId ?? null;
-  const puntoValido = Boolean(puestoVentaIdSeleccionado && puntoMudrasIdSeleccionado);
+  const puntoValido = Boolean(puntoMudrasIdSeleccionado);
   const descripcionPunto = descripcionPuntoSeleccionado ||
     (puntoMudrasIdSeleccionado ? `Punto ${puntoMudrasIdSeleccionado}` : 'Sin punto asignado');
 
@@ -192,33 +182,19 @@ export const ModalConfirmacionVenta: React.FC<ModalConfirmacionVentaProps> = ({
       setCargandoUsuarios(true);
       setErrorUsuarios(null);
 
-      const rolBuscado = 'CAJA';
-      console.log('🧾 [ModalConfirmacionVenta] obtenerUsuarios ->', { rol: rolBuscado });
-      const { data } = await obtenerUsuarios({ variables: { rol: rolBuscado } });
+      const { data } = await obtenerUsuarios({ variables: { rolSlug: 'caja_registradora' } });
       console.log('🧾 [ModalConfirmacionVenta] cargarUsuarios:data', data);
-      const opciones = (data?.usuariosGestionPorRol || [])
+      const opciones = (data?.usuariosCajaAuth || [])
         .map((item) => {
-          const idNumerico = Number(item.id);
-          if (!Number.isFinite(idNumerico) || idNumerico <= 0) {
-            console.warn('🧾 [ModalConfirmacionVenta] cargarUsuarios: usuario inválido', item);
-            return null;
-          }
-
-          const nombreCompleto = [item.nombre, item.apellido].filter((p) => (p || '').trim()).join(' ');
-          const etiqueta =
-            (nombreCompleto && nombreCompleto.trim()) ||
-            (item.username && item.username.trim()) ||
-            `Usuario #${idNumerico}`;
-
+          const etiqueta = item.displayName?.trim() || item.username?.trim() || item.email?.trim() || `Usuario ${item.id.substring(0,6)}`;
+          
           console.log('🧾 [ModalConfirmacionVenta] cargarUsuarios:opcion', {
-            idNumerico,
-            nombreCompleto,
+            id: item.id,
             username: item.username,
             etiqueta,
-            rol: item.rol,
           });
           return {
-            id: idNumerico,
+            id: item.id,
             label: etiqueta,
           } as UsuarioOption;
         })
@@ -243,14 +219,13 @@ export const ModalConfirmacionVenta: React.FC<ModalConfirmacionVentaProps> = ({
       const uid = respuesta?.perfil?.uid;
       if (typeof uid === 'number' && Number.isFinite(uid)) {
         console.log('🧾 [ModalConfirmacionVenta] cargarPerfilUsuario:uid', uid);
-        setPerfilUsuarioId(uid);
+        setPerfilUsuarioId(String(uid));
       } else {
-        const sub = respuesta?.perfil?.sub;
-        const id = sub !== undefined ? Number(sub) : null;
-        if (id && Number.isFinite(id)) {
-          console.log('🧾 [ModalConfirmacionVenta] cargarPerfilUsuario:sub->id', id);
-          setPerfilUsuarioId(id);
-        }
+      const sub = respuesta?.perfil?.sub;
+      if (typeof sub === 'string' && sub) {
+        console.log('🧾 [ModalConfirmacionVenta] cargarPerfilUsuario:sub', sub);
+        setPerfilUsuarioId(sub);
+      }
       }
     } catch (error) {
       console.error('🧾 [ModalConfirmacionVenta] cargarPerfilUsuario:error', error);
@@ -266,6 +241,7 @@ export const ModalConfirmacionVenta: React.FC<ModalConfirmacionVentaProps> = ({
     },
     onError: (error) => {
       console.error('🧾 [ModalConfirmacionVenta] crearVenta:onError', error);
+      setSnack({ open: true, msg: error?.message || 'No se pudo completar la venta', sev: 'error' });
     },
   });
 
@@ -274,6 +250,7 @@ export const ModalConfirmacionVenta: React.FC<ModalConfirmacionVentaProps> = ({
   const totalPagos = pagos.reduce((sum, pago) => sum + pago.monto, 0);
   const diferencia = totalPagos - subtotal;
   const cambio = diferencia > 0 ? diferencia : 0;
+  const requiereDni = useMemo(() => pagos.some((p) => p.metodoPago !== 'EFECTIVO'), [pagos]);
 
   // Resetear formulario al abrir
   useEffect(() => {
@@ -287,6 +264,7 @@ export const ModalConfirmacionVenta: React.FC<ModalConfirmacionVentaProps> = ({
       metodoPago: 'EFECTIVO',
       monto: subtotal,
     });
+    setDniCuit('');
     setUsuarioSeleccionado(null);
     setErrorUsuarios(null);
   }, [open, subtotal]);
@@ -329,7 +307,7 @@ export const ModalConfirmacionVenta: React.FC<ModalConfirmacionVentaProps> = ({
       return;
     }
 
-    const preferidoId = presetUsuarioId ?? perfilUsuarioId ?? usuarios[0]?.id;
+    const preferidoId = (presetUsuarioId ? String(presetUsuarioId) : null) ?? perfilUsuarioId ?? usuarios[0]?.id;
     console.log('🧾 [ModalConfirmacionVenta] useEffect[usuarioPreferido]: calculado', {
       presetUsuarioId,
       perfilUsuarioId,
@@ -382,26 +360,62 @@ export const ModalConfirmacionVenta: React.FC<ModalConfirmacionVentaProps> = ({
     });
     if (!puestoVentaIdSeleccionado || pagos.length === 0 || !usuarioSeleccionado) return;
     if (!puntoValido) return;
+    if (requiereDni && (!dniCuit || dniCuit.trim().length < 7)) {
+      alert('Para pagos no en efectivo se requiere DNI/CUIT del cliente');
+      return;
+    }
+
+    const mapMetodoPago = (m: MetodoPago): MedioPagoCaja | null => {
+      switch (m) {
+        case 'EFECTIVO': return 'EFECTIVO';
+        case 'TARJETA_DEBITO': return 'DEBITO';
+        case 'TARJETA_CREDITO': return 'CREDITO';
+        case 'TRANSFERENCIA': return 'TRANSFERENCIA';
+        case 'CUENTA_CORRIENTE': return 'CUENTA_CORRIENTE';
+        // Si en UI se selecciona un método no soportado por el backend, devolvemos null
+        case 'CHEQUE':
+        case 'OTRO':
+        default:
+          return null;
+      }
+    };
+
+    const pagosTransformados = pagos.map((p) => ({
+      medioPago: mapMetodoPago(p.metodoPago),
+      monto: p.monto,
+      marcaTarjeta: p.marcaTarjeta,
+      ultimos4Digitos: p.ultimos4Digitos,
+      cuotas: p.cuotas,
+      numeroAutorizacion: p.numeroAutorizacion,
+      numeroComprobante: p.numeroComprobante,
+      observaciones: p.observaciones,
+    })).filter((p) => p.medioPago !== null) as Array<{
+      medioPago: MedioPagoCaja;
+      monto: number;
+      marcaTarjeta?: string;
+      ultimos4Digitos?: string;
+      cuotas?: number;
+      numeroAutorizacion?: string;
+      numeroComprobante?: string;
+      observaciones?: string;
+    }>;
+
+    if (pagosTransformados.length !== pagos.length) {
+      alert('Hay métodos de pago no soportados. Usa efectivo, débito, crédito, transferencia, QR o cuenta corriente.');
+      return;
+    }
 
     const input: CrearVentaCajaInput = {
       tipoVenta: 'MOSTRADOR',
-      puestoVentaId: puestoVentaIdSeleccionado,
-      usuarioId: usuarioSeleccionado.id,
+      usuarioAuthId: usuarioSeleccionado.id,
+      puntoMudrasId: puntoMudrasIdSeleccionado!,
+      cuitCliente: requiereDni ? dniCuit.trim() : undefined,
       detalles: articulos.map(art => ({
-        articuloId: art.id,
-        cantidad: art.cantidad,
-        precioUnitario: art.precioUnitario,
+        articuloId: Number(art.id),
+        cantidad: Number(art.cantidad),
+        precioUnitario: Number(art.precioUnitario),
       })),
-      pagos: pagos.map(pago => ({
-        metodoPago: pago.metodoPago,
-        monto: pago.monto,
-        marcaTarjeta: pago.marcaTarjeta,
-        ultimos4Digitos: pago.ultimos4Digitos,
-        cuotas: pago.cuotas,
-        numeroAutorizacion: pago.numeroAutorizacion,
-        numeroComprobante: pago.numeroComprobante,
-        observaciones: pago.observaciones,
-      })),
+      pagos: pagosTransformados,
     };
 
     console.log('🧾 [ModalConfirmacionVenta] handleConfirmarVenta:mutationInput', input);
@@ -409,7 +423,6 @@ export const ModalConfirmacionVenta: React.FC<ModalConfirmacionVentaProps> = ({
   };
 
   const puedeConfirmar =
-    puestoVentaIdSeleccionado > 0 &&
     pagos.length > 0 &&
     Math.abs(diferencia) < 0.01 &&
     Boolean(usuarioSeleccionado) &&
@@ -497,34 +510,37 @@ export const ModalConfirmacionVenta: React.FC<ModalConfirmacionVentaProps> = ({
                 >
                   Confirmar Venta
                 </Typography>
-                <Typography
-                  variant="caption"
-                  color="rgba(255,255,255,0.85)"
-                  sx={{ textShadow: '0 1px 2px rgba(0,0,0,0.6)' }}
-                >
-                  Revisa los detalles y configura el pago
-                </Typography>
+                {descripcionPunto && (
+                  <Typography
+                    variant="caption"
+                    color="rgba(255,255,255,0.92)"
+                    sx={{ textShadow: '0 1px 2px rgba(0,0,0,0.6)', fontWeight: 700 }}
+                  >
+                    Punto de venta: {descripcionPunto}
+                  </Typography>
+                )}
               </Box>
-
-              <CrystalSoftButton
-                baseColor={COLORS.primary}
-                onClick={handleClose}
-                title="Cerrar"
-                sx={{
-                  width: 40,
-                  height: 40,
-                  minWidth: 40,
-                  p: 0,
-                  borderRadius: '50%',
-                  display: 'grid',
-                  placeItems: 'center',
-                  transform: 'none !important',
-                  transition: 'none',
-                  '&:hover': { transform: 'none !important' },
-                }}
-              >
-                <Icon icon="mdi:close" color="#fff" width={22} height={22} />
-              </CrystalSoftButton>
+              <Box sx={{ ml: 'auto', display: 'flex', alignItems: 'center' }}>
+                <CrystalSoftButton
+                  baseColor={COLORS.primary}
+                  onClick={handleClose}
+                  title="Cerrar"
+                  sx={{
+                    width: 40,
+                    height: 40,
+                    minWidth: 40,
+                    p: 0,
+                    borderRadius: '50%',
+                    display: 'grid',
+                    placeItems: 'center',
+                    transform: 'none !important',
+                    transition: 'none',
+                    '&:hover': { transform: 'none !important' },
+                  }}
+                >
+                  <Icon icon="mdi:close" color="#fff" width={22} height={22} />
+                </CrystalSoftButton>
+              </Box>
             </Box>
           </DialogTitle>
 
@@ -619,31 +635,15 @@ export const ModalConfirmacionVenta: React.FC<ModalConfirmacionVentaProps> = ({
                           <Grid size={{ xs: 12 }}>
                             <TextField
                               fullWidth
-                              label="Punto de venta"
-                              value={descripcionPunto}
-                              InputProps={{ readOnly: true }}
-                              sx={[
-                                fieldSx,
-                                {
-                                  '& .MuiOutlinedInput-root': {
-                                    ...(fieldSx['& .MuiOutlinedInput-root'] as Record<string, unknown>),
-                                    background: alpha(COLORS.primary, 0.05),
-                                    cursor: 'not-allowed',
-                                  },
-                                },
-                              ]}
-                              helperText={
-                                puntoValido
-                                  ? `Puesto de venta asignado: #${puestoVentaIdSeleccionado}`
-                                  : 'Selecciona un punto de venta desde la página para continuar'
-                              }
+                              label="DNI o CUIT del cliente (requerido si no es efectivo)"
+                              value={dniCuit}
+                              onChange={(e) => setDniCuit(e.target.value)}
+                              sx={fieldSx}
+                              required={requiereDni}
                             />
-                            {!puntoValido && (
-                              <Alert severity="warning" sx={{ mt: 1 }}>
-                                No hay punto de venta asignado. Selecciona uno en la página antes de procesar la venta.
-                              </Alert>
-                            )}
                           </Grid>
+
+                          {/* Punto de venta informativo eliminado del cuerpo; ahora se muestra en el header */}
                         </Grid>
                       </CardContent>
                     </Card>
@@ -909,6 +909,12 @@ export const ModalConfirmacionVenta: React.FC<ModalConfirmacionVentaProps> = ({
           </DialogActions>
         </Box>
       </TexturedPanel>
+      {/* Snackbar para feedback de errores */}
+      <Snackbar open={snack.open} autoHideDuration={2600} onClose={() => setSnack((s) => ({ ...s, open: false }))} anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}>
+        <Alert onClose={() => setSnack((s) => ({ ...s, open: false }))} severity={snack.sev} variant="filled" sx={{ width: '100%' }}>
+          {snack.msg}
+        </Alert>
+      </Snackbar>
     </Dialog>
   );
 }

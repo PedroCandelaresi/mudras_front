@@ -54,6 +54,15 @@ export const REINTENTAR_EMISION_AFIP = gql`
   }
 `;
 
+// Enum GraphQL compatible con backend (MedioPagoCaja)
+export type MedioPagoCaja =
+  | 'EFECTIVO'
+  | 'DEBITO'
+  | 'CREDITO'
+  | 'TRANSFERENCIA'
+  | 'QR'
+  | 'CUENTA_CORRIENTE';
+
 export type MetodoPago =
   | 'EFECTIVO'
   | 'TARJETA_DEBITO'
@@ -65,9 +74,9 @@ export type MetodoPago =
 
 export interface CrearVentaCajaInput {
   tipoVenta: string;
-  puestoVentaId: number;
+  puntoMudrasId: number;
   clienteId?: number;
-  usuarioId?: number;
+  usuarioAuthId?: string;
   descuentoPorcentaje?: number;
   descuentoMonto?: number;
   observaciones?: string;
@@ -82,7 +91,7 @@ export interface CrearVentaCajaInput {
     observaciones?: string;
   }[];
   pagos: {
-    metodoPago: MetodoPago;
+    medioPago: MedioPagoCaja;
     monto: number;
     marcaTarjeta?: string;
     ultimos4Digitos?: string;

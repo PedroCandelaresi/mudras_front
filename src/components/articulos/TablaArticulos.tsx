@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState, useCallback } from 'react';
 import {
   Box,
   Button,
@@ -36,6 +36,9 @@ import { crearConfiguracionBisel, crearEstilosBisel } from '@/components/ui/beve
 import { WoodBackdrop } from '@/components/ui/TexturedFrame/WoodBackdrop';
 import CrystalButton, { CrystalIconButton, CrystalSoftButton } from '@/components/ui/CrystalButton';
 import { azul, verde } from '@/ui/colores';
+import ModalDetallesArticulo from '@/components/articulos/ModalDetallesArticulo';
+import ModalEliminarArticulo from '@/components/articulos/ModalEliminarArticulo';
+import { calcularPrecioDesdeArticulo } from '@/utils/precioVenta';
 
 /* ======================== Tipos de columnas ======================== */
 type ArticuloColumnKey =
@@ -45,6 +48,7 @@ type ArticuloColumnKey =
   | 'rubro'
   | 'stock'
   | 'precio'
+  | 'iva'
   | 'proveedor'
   | 'estado'
   | 'acciones';
@@ -102,6 +106,13 @@ type ArticulosTableProps = {
     loading: boolean;
     error?: Error;
   }) => void;
+  /**
+   * Si es true (por defecto), la tabla mostrará acciones internas (ver/eliminar)
+   * usando sus propios modales cuando no se proveen handlers externos.
+   * Útil para pantallas generales como Panel > Artículos. En contextos embebidos
+   * (e.g. detalles de rubro/proveedor) los handlers externos siguen teniendo prioridad.
+   */
+  useInternalModals?: boolean;
 };
 
 /* ======================== Estética ======================== */
@@ -157,6 +168,32 @@ const getStockLabel = (stock: number, stockMinimo: number) => {
   return 'Disponible';
 };
 
+const formatCurrency = (valor: number) => `$${Number(valor || 0).toLocaleString('es-AR')}`;
+
+const obtenerPrecioCalculado = (articulo: Articulo) => {
+  const precio = calcularPrecioDesdeArticulo(articulo);
+  if (!precio) {
+    return Number(articulo.PrecioVenta ?? 0);
+  }
+  return precio;
+};
+
+const obtenerStockTotal = (articulo: Articulo) => {
+  if (typeof articulo.totalStock === 'number' && !Number.isNaN(articulo.totalStock)) {
+    return articulo.totalStock;
+  }
+  const fallback = parseFloat(String(articulo.Deposito ?? articulo.Stock ?? 0));
+  return Number.isNaN(fallback) ? 0 : fallback;
+};
+
+const normalizarIva = (valor?: number | null): number | null => {
+  if (valor == null) return null;
+  const num = Number(valor);
+  if (Number.isNaN(num)) return null;
+  if (num === 0 || num === 10.5 || num === 21) return num;
+  return null;
+};
+
 /* ======================== Componente ======================== */
 const TablaArticulos: React.FC<ArticulosTableProps> = ({
   columns,
@@ -175,10 +212,12 @@ const TablaArticulos: React.FC<ArticulosTableProps> = ({
   onDelete,
   dense = true,
   onDataLoaded,
+  useInternalModals = true,
 }) => {
   const [page, setPage] = useState(initialServerFilters?.pagina ?? 0);
   const [rowsPerPage, setRowsPerPage] = useState(initialServerFilters?.limite ?? defaultPageSize);
   const [globalInput, setGlobalInput] = useState(initialServerFilters?.busqueda ?? '');
+  const [globalSearchDraft, setGlobalSearchDraft] = useState(controlledFilters?.busqueda ?? initialServerFilters?.busqueda ?? '');
   const [localFilters, setLocalFilters] = useState({
     codigo: initialServerFilters?.codigo ?? '',
     descripcion: initialServerFilters?.descripcion ?? '',
@@ -204,6 +243,10 @@ const TablaArticulos: React.FC<ArticulosTableProps> = ({
   const globalSearch = useMemo(() => {
     const g = (controlledFilters?.busqueda ?? globalInput)?.trim();
     return g || undefined;
+  }, [controlledFilters?.busqueda, globalInput]);
+
+  useEffect(() => {
+    setGlobalSearchDraft(controlledFilters?.busqueda ?? globalInput);
   }, [controlledFilters?.busqueda, globalInput]);
 
   const filtrosServidor = useMemo<FiltrosServidor>(() => ({
@@ -246,6 +289,30 @@ const TablaArticulos: React.FC<ArticulosTableProps> = ({
   const articulos: Articulo[] = (data?.buscarArticulos?.articulos ?? []).filter((a): a is Articulo => !!a);
   const total: number = data?.buscarArticulos?.total ?? 0;
   const estadoActual = controlledFilters?.estado ?? localFilters.estado;
+
+  // ===== Modales internos (detalles + eliminar) =====
+  const [modalDetallesOpen, setModalDetallesOpen] = useState(false);
+  const [modalEliminarOpen, setModalEliminarOpen] = useState(false);
+  const [articuloSeleccionado, setArticuloSeleccionado] = useState<Pick<Articulo, 'id' | 'Descripcion' | 'Codigo'> | null>(null);
+  const [textoConfirmEliminar, setTextoConfirmEliminar] = useState('');
+
+  const openDetalles = useCallback((a: Articulo) => {
+    setArticuloSeleccionado({ id: a.id, Descripcion: a.Descripcion, Codigo: a.Codigo });
+    setModalDetallesOpen(true);
+  }, []);
+
+  const openEliminar = useCallback((a: Articulo) => {
+    setArticuloSeleccionado({ id: a.id, Descripcion: a.Descripcion, Codigo: a.Codigo });
+    setTextoConfirmEliminar('');
+    setModalEliminarOpen(true);
+  }, []);
+
+  const closeModals = () => {
+    setModalDetallesOpen(false);
+    setModalEliminarOpen(false);
+    setArticuloSeleccionado(null);
+    setTextoConfirmEliminar('');
+  };
 
   useEffect(() => {
     if (!onDataLoaded) return;
@@ -295,9 +362,32 @@ const TablaArticulos: React.FC<ArticulosTableProps> = ({
     });
   };
 
+  const ejecutarBusqueda = useCallback(() => {
+    const next = (globalSearchDraft ?? '').trim();
+    if (controlledFilters) {
+      onFiltersChange?.({
+        ...filtrosServidor,
+        busqueda: next || undefined,
+        estado: estadoSeleccionado,
+        pagina: 0,
+      });
+      if (!next && globalSearch === undefined) {
+        refetch();
+      }
+    } else {
+      if (next === globalInput) {
+        refetch();
+      } else {
+        setGlobalInput(next);
+        setPage(0);
+      }
+    }
+  }, [controlledFilters, filtrosServidor, globalSearchDraft, globalInput, estadoSeleccionado, onFiltersChange, refetch, globalSearch]);
+
   const limpiarFiltros = () => {
     if (!controlledFilters) {
       setGlobalInput('');
+      setGlobalSearchDraft('');
       setLocalFilters({
         codigo: '',
         descripcion: '',
@@ -308,6 +398,14 @@ const TablaArticulos: React.FC<ArticulosTableProps> = ({
         proveedorId: undefined,
       });
       setPage(0);
+    } else {
+      setGlobalSearchDraft('');
+      onFiltersChange?.({
+        ...filtrosServidor,
+        busqueda: undefined,
+        estado: undefined,
+        pagina: 0,
+      });
     }
     refetch();
   };
@@ -348,14 +446,14 @@ const TablaArticulos: React.FC<ArticulosTableProps> = ({
     return paginas;
   };
 
+  const handleView = onView ?? (useInternalModals ? openDetalles : undefined);
+  const handleDelete = onDelete ?? (useInternalModals ? openEliminar : undefined);
+
   const defaultRenderers: Record<ArticuloColumnKey, (a: Articulo) => React.ReactNode> = {
     descripcion: (a) => (
       <Box display="flex" flexDirection="column">
         <Typography variant="body2" fontWeight={700} sx={{ color: darken(militaryGreen, 0.2) }}>
           {a.Descripcion || '-'}
-        </Typography>
-        <Typography variant="caption" color="text.secondary">
-          #{a.id}
         </Typography>
       </Box>
     ),
@@ -389,25 +487,42 @@ const TablaArticulos: React.FC<ArticulosTableProps> = ({
       />
     ),
     stock: (a) => {
-      const dep = parseFloat(String(a.Deposito ?? 0)) || 0;
+      const total = Number(obtenerStockTotal(a).toFixed(2));
       return (
-        <Typography variant="body2" fontWeight={700} color={dep <= 0 ? 'error.main' : headerBg}>
-          {dep} {abrevUnidad(a.Unidad as UnidadMedida)}
+        <Typography variant="body2" fontWeight={700} color={total <= 0 ? 'error.main' : headerBg}>
+          {total} {abrevUnidad(a.Unidad as UnidadMedida)}
         </Typography>
       );
     },
-    precio: (a) => (
-      <Typography variant="body2" fontWeight={700} color={headerBg}>
-        ${(a.PrecioVenta || 0).toLocaleString('es-AR')}
-      </Typography>
-    ),
+    precio: (a) => {
+      const precio = obtenerPrecioCalculado(a);
+      return (
+        <Typography variant="body2" fontWeight={700} color={headerBg}>
+          {formatCurrency(precio)}
+        </Typography>
+      );
+    },
+    iva: (a) => {
+      const ivaVal = normalizarIva(a.AlicuotaIva);
+      return (
+        <Chip
+          label={ivaVal !== null ? `${ivaVal.toString().replace('.', ',')}%` : '—'}
+          size="small"
+          sx={{
+            bgcolor: alpha(accentExterior, 0.18),
+            color: darken(militaryGreen, 0.35),
+            fontWeight: 600,
+          }}
+        />
+      );
+    },
     proveedor: (a) => (
       <Typography variant="body2" color="text.secondary">
         {a.proveedor?.Nombre || 'Sin proveedor'}
       </Typography>
     ),
     estado: (a) => {
-      const dep = parseFloat(String(a.Deposito ?? 0)) || 0;
+      const dep = obtenerStockTotal(a);
       const min = a.StockMinimo || 0;
       return (
         <Chip
@@ -420,9 +535,9 @@ const TablaArticulos: React.FC<ArticulosTableProps> = ({
     },
     acciones: (a) => (
       <Box display="flex" justifyContent="center" gap={0.75}>
-        {onView && (
+        {handleView && (
           <Tooltip title="Ver detalles">
-            <CrystalIconButton baseColor={azul.primary} onClick={() => onView(a)}>
+            <CrystalIconButton baseColor={azul.primary} onClick={() => handleView(a)}>
               <IconEye size={16} />
             </CrystalIconButton>
           </Tooltip>
@@ -434,9 +549,9 @@ const TablaArticulos: React.FC<ArticulosTableProps> = ({
             </CrystalIconButton>
           </Tooltip>
         )}
-        {onDelete && (
+        {handleDelete && (
           <Tooltip title="Eliminar">
-            <CrystalIconButton baseColor={colorAccionEliminar} onClick={() => onDelete(a)}>
+            <CrystalIconButton baseColor={colorAccionEliminar} onClick={() => handleDelete(a)}>
               <IconTrash size={16} />
             </CrystalIconButton>
           </Tooltip>
@@ -487,10 +602,13 @@ const TablaArticulos: React.FC<ArticulosTableProps> = ({
           <TextField
             size="small"
             placeholder="Buscar descripción, código o proveedor…"
-            value={controlledFilters?.busqueda ?? globalInput}
-            onChange={(e) => setGlobalInput(e.target.value)}
+            value={globalSearchDraft}
+            onChange={(e) => setGlobalSearchDraft(e.target.value)}
             onKeyDown={(e) => {
-              if (e.key === 'Enter') refetch();
+              if (e.key === 'Enter') {
+                e.preventDefault();
+                ejecutarBusqueda();
+              }
             }}
             InputProps={{
               startAdornment: (
@@ -524,7 +642,7 @@ const TablaArticulos: React.FC<ArticulosTableProps> = ({
             <CrystalButton
               baseColor={verde.primary}
               startIcon={<IconSearch size={18} />}
-              onClick={() => refetch()}
+              onClick={ejecutarBusqueda}
               disabled={loading}
             >
               Buscar
@@ -594,7 +712,7 @@ const TablaArticulos: React.FC<ArticulosTableProps> = ({
           '& .MuiTableCell-head': {
             fontSize: '0.75rem',
             fontWeight: 600,
-            bgcolor: '#3E2723',
+            bgcolor: verde.headerBg,
             color: alpha('#FFFFFF', 0.94),
             boxShadow: 'inset 0 -1px 0 rgba(255,255,255,0.12)',
             textTransform: 'uppercase',
@@ -622,6 +740,8 @@ const TablaArticulos: React.FC<ArticulosTableProps> = ({
                       <IconButton
                         size="small"
                         color="inherit"
+                        aria-label={`Filtrar columna ${column.header ?? column.key}`}
+                        aria-haspopup="menu"
                         onClick={(e) => {
                           setColumnaActiva(column.key as ColKey);
                           setFiltroColInput(filtrosColumna[column.key] || '');
@@ -897,6 +1017,27 @@ const TablaArticulos: React.FC<ArticulosTableProps> = ({
           </Box>
         )}
       </Menu>
+
+      {/* Modales internos como en Rubros (opcional) */}
+      {useInternalModals && (
+        <>
+          <ModalDetallesArticulo
+            open={modalDetallesOpen}
+            onClose={closeModals}
+            articulo={articuloSeleccionado as any}
+            accentColor={verde.primary}
+            stockContext={{ label: 'Stock total' }}
+          />
+          <ModalEliminarArticulo
+            open={modalEliminarOpen}
+            onClose={closeModals}
+            articulo={articuloSeleccionado as any}
+            textoConfirmacion={textoConfirmEliminar}
+            setTextoConfirmacion={setTextoConfirmEliminar}
+            onSuccess={() => refetch()}
+          />
+        </>
+      )}
     </>
   );
 };

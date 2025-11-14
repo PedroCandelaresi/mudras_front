@@ -7,13 +7,16 @@ import {
   Typography, 
   Tabs, 
   Tab, 
-  Chip
+  Chip,
+  Snackbar,
+  Alert
 } from '@mui/material';
 import { Icon } from '@iconify/react';
 import { useQuery } from '@apollo/client/react';
 import PageContainer from '@/components/container/PageContainer';
 import TablaPuntosMudras from '@/components/puntos-mudras/TablaPuntosMudras';
 import ModalPuntoMudras from '@/components/puntos-mudras/ModalPuntoMudras';
+import ModalInventarioPunto from '@/components/puntos-mudras/ModalInventarioPunto';
 import { grisVerdoso, grisRojizo } from '@/ui/colores';
 import {
   OBTENER_ESTADISTICAS_PUNTOS_MUDRAS,
@@ -56,6 +59,9 @@ export default function PuntosMudrasPage() {
   const [tipoModal, setTipoModal] = useState<'venta' | 'deposito'>('venta');
   const [puntoEditar, setPuntoEditar] = useState<PuntoMudras | undefined>(undefined);
   const [refetchTrigger, setRefetchTrigger] = useState(0);
+  const [inventarioOpen, setInventarioOpen] = useState(false);
+  const [puntoInventario, setPuntoInventario] = useState<PuntoMudras | null>(null);
+  const [snack, setSnack] = useState<{ open: boolean; msg: string; sev: 'success'|'error'|'info' }>({ open: false, msg: '', sev: 'success' });
 
   // Query para estadísticas
   const { data: estadisticas, loading: loadingEstadisticas, error: errorEstadisticas, refetch: refetchEstadisticas } = useQuery<ObtenerEstadisticasPuntosMudrasResponse>(
@@ -91,6 +97,7 @@ export default function PuntosMudrasPage() {
     refetchEstadisticas();
     // Trigger refetch de las tablas
     setRefetchTrigger(prev => prev + 1);
+    setSnack({ open: true, msg: 'Punto guardado correctamente', sev: 'success' });
     // El modal se cerrará automáticamente desde handleGuardar
   };
 
@@ -177,6 +184,8 @@ export default function PuntosMudrasPage() {
                   tipo="venta" 
                   onEditarPunto={abrirModalEditar}
                   onNuevoPunto={() => abrirModalCrear('venta')}
+                  onVerInventario={(p) => { setPuntoInventario(p as any); setInventarioOpen(true); }}
+                  onEliminado={(p) => setSnack({ open: true, msg: `Punto eliminado: ${p.nombre}`, sev: 'success' })}
                   key={`venta-${refetchTrigger}`}
                 />
               )}
@@ -187,6 +196,8 @@ export default function PuntosMudrasPage() {
                   tipo="deposito" 
                   onEditarPunto={abrirModalEditar}
                   onNuevoPunto={() => abrirModalCrear('deposito')}
+                  onVerInventario={(p) => { setPuntoInventario(p as any); setInventarioOpen(true); }}
+                  onEliminado={(p) => setSnack({ open: true, msg: `Depósito eliminado: ${p.nombre}`, sev: 'success' })}
                   key={`deposito-${refetchTrigger}`}
                 />
               )}
@@ -203,6 +214,17 @@ export default function PuntosMudrasPage() {
         punto={puntoEditar}
         tipo={tipoModal}
       />
+
+      <ModalInventarioPunto
+        open={inventarioOpen}
+        onClose={() => setInventarioOpen(false)}
+        punto={puntoInventario as any}
+      />
+      <Snackbar open={snack.open} autoHideDuration={2600} onClose={() => setSnack((s) => ({ ...s, open: false }))} anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}>
+        <Alert onClose={() => setSnack((s) => ({ ...s, open: false }))} severity={snack.sev} variant="filled" sx={{ width: '100%' }}>
+          {snack.msg}
+        </Alert>
+      </Snackbar>
     </PageContainer>
   );
 }

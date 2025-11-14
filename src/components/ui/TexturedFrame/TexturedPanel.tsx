@@ -84,35 +84,20 @@ const Shell = styled('div', {
       'radius','accent','variant','outlineWidth',
       'bevelWidth','bevelIntensity','vignetteStrength',
     ].includes(String(prop)),
-})<ShellProps>(({ radius, variant, outlineWidth, accent, bevelIntensity, vignetteStrength }) => ({
+})<ShellProps>(({ radius }) => ({
   position: 'relative',
   borderRadius: radius,
   overflow: 'hidden',
   padding: 0,
 
-  // Separación del fondo
-  filter: 'drop-shadow(0 12px 28px rgba(0,0,0,.12))',
-  ...(variant === 'outlined' ? { boxShadow: `0 0 0 ${outlineWidth}px ${accent}` } : null),
+  /* 🔥 Nada de fondo ni degradados ni sombras */
+  background: 'transparent',
+  boxShadow: 'none',
+  filter: 'none',
 
-  // --- BISÉL EXTERIOR (sólo box-shadows) ---
-  // luz arriba / sombra abajo / filo fino blanco
-  boxShadow: [
-    `inset 0 1px 0 rgba(255,255,255,${0.70 * bevelIntensity})`,
-    `inset 0 -3px 10px rgba(0,0,0,${0.22 * bevelIntensity})`,
-    `inset 0 0 0 1px rgba(255,255,255,${0.18 * bevelIntensity})`,
-  ].join(', '),
-
-  // Vignette sutil para dar volumen perimetral (sin círculos)
   '&::after': {
     content: '""',
-    position: 'absolute',
-    inset: 0,
-    borderRadius: radius,
-    background:
-      `linear-gradient(180deg, rgba(0,0,0,${0.06 * vignetteStrength}), rgba(0,0,0,0) 30%)`,
-    mixBlendMode: 'multiply',
-    pointerEvents: 'none',
-    zIndex: 1,
+    display: 'none',
   },
 }));
 
@@ -133,7 +118,7 @@ const Panel = styled(Box, {
   tintOpacity, tintMode, radius, bevelWidth, bevelIntensity, glossStrength,
 }) => ({
   position: 'relative',
-  borderRadius: Math.max(0, radius - 2),
+  borderRadius: Math.max(0, radius),
   overflow: 'hidden',
   padding: contentPadding,
 
@@ -187,21 +172,19 @@ const Panel = styled(Box, {
   },
 
   /* BISEL INTERIOR (anillo pegado al borde interno) */
-'& .tp-innerBevel': {
-  position: 'absolute',
-  inset: 0,
-  borderRadius: Math.max(0, radius - 2),
-  pointerEvents: 'none',
-  zIndex: 5,
+  '& .tp-innerBevel': {
+    position: 'absolute',
+    inset: 0,
+    borderRadius: Math.max(0, radius - Math.min(radius, Math.max(1.5, bevelWidth))),
+    pointerEvents: 'none',
+    zIndex: 5,
 
-  // --- BISÉL INTERIOR (sólo inset shadows) ---
-  // luz arriba / sombra abajo / filo interno blanco muy fino
-  boxShadow: [
-    `inset 0 1px 0 rgba(255,255,255,${0.65 * bevelIntensity})`,
-    `inset 0 -3px 8px rgba(0,0,0,${0.20 * bevelIntensity})`,
-    `inset 0 0 0 1px rgba(255,255,255,${0.12 * bevelIntensity})`,
-  ].join(', '),
-},
+    boxShadow: [
+      `inset 0 1px 0 rgba(255,255,255,${0.65 * bevelIntensity})`,
+      `inset 0 -3px 8px rgba(0,0,0,${0.20 * bevelIntensity})`,
+      `inset 0 0 0 1px rgba(255,255,255,${0.12 * bevelIntensity})`,
+    ].join(', '),
+  },
 
 
   '@supports not ((mask: radial-gradient(black, white)))': {

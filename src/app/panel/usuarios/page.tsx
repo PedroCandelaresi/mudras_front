@@ -1,10 +1,11 @@
 'use client';
-import { Alert, Box, Snackbar, Typography, Tabs, Tab, Paper, Button } from '@mui/material';
+import { Alert, Box, Snackbar, Typography } from '@mui/material';
+import { alpha, lighten, darken } from '@mui/material/styles';
 import PageContainer from '@/components/container/PageContainer';
 import React from 'react';
 import { UserTable, type UsuarioListado } from '@/components/usuarios/UserTable';
-import { CreateUserModal, type CrearUsuarioForm } from '@/components/usuarios/CreateUserModal';
-import { EditUserModal, type EditarUsuarioForm } from '@/components/usuarios/EditUserModal';
+// Reemplazado por UpsertEmpresaUserModal
+import UpsertEmpresaUserModal from '@/components/usuarios/UpsertEmpresaUserModal';
 import { AssignRolesModal, type RolItem } from '@/components/usuarios/AssignRolesModal';
 import { usePermisos } from '@/lib/permisos';
 import { RolesTable, type PermisoItem } from '@/components/roles/RolesTable';
@@ -16,8 +17,58 @@ import { EditPermisoModal, type EditarPermisoForm } from '@/components/permisos/
 import { Icon } from '@iconify/react';
 import { useSearchParams } from 'next/navigation';
 import { TexturedPanel } from '@/components/ui/TexturedFrame/TexturedPanel';
+import CrystalButton, { CrystalSoftButton, forceWhiteIconsSX } from '@/components/ui/CrystalButton';
 import { DeleteUserDialog } from '@/components/usuarios/DeleteUserDialog';
 import { apiFetch } from '@/lib/api';
+import { marron } from '@/ui/colores';
+
+// Wrapper estilo Artículos pero con paleta marrón
+const createBevelWrapper = (color: string) => {
+  const edgeWidth = 2;
+  const topHighlightColor = alpha(lighten(color, 0.85), 0.9);
+  const bottomShadowColor = alpha(darken(color, 0.6), 0.85);
+  const leftHighlightColor = alpha(lighten(color, 0.6), 0.8);
+  const rightShadowColor = alpha(darken(color, 0.6), 0.76);
+  const borderTint = alpha(lighten(color, 0.2), 0.6);
+  const innerLight = alpha(lighten(color, 0.58), 0.22);
+  const innerShadow = alpha(darken(color, 0.62), 0.26);
+
+  return {
+    position: 'relative' as const,
+    borderRadius: 2,
+    overflow: 'hidden' as const,
+    background: 'transparent',
+    '&::before': {
+      content: '""',
+      position: 'absolute',
+      inset: 0,
+      borderRadius: 'inherit',
+      pointerEvents: 'none' as const,
+      boxShadow: `
+        inset 0 ${edgeWidth}px 0 ${topHighlightColor},
+        inset 0 -${edgeWidth + 0.4}px 0 ${bottomShadowColor},
+        inset ${edgeWidth}px 0 0 ${leftHighlightColor},
+        inset -${edgeWidth + 0.4}px 0 0 ${rightShadowColor}
+      `,
+      zIndex: 3,
+    },
+    '&::after': {
+      content: '""',
+      position: 'absolute',
+      inset: edgeWidth,
+      borderRadius: 'inherit',
+      pointerEvents: 'none' as const,
+      border: `1px solid ${borderTint}`,
+      boxShadow: `
+        inset 0 ${edgeWidth * 5.2}px ${edgeWidth * 6.4}px ${innerLight},
+        inset 0 -${edgeWidth * 5.2}px ${edgeWidth * 6.4}px ${innerShadow}
+      `,
+      mixBlendMode: 'soft-light' as const,
+      zIndex: 2,
+    },
+    '& > *': { position: 'relative', zIndex: 1 },
+  };
+};
 
 export default function Usuarios() {
   const { tienePermiso } = usePermisos();
@@ -27,7 +78,7 @@ export default function Usuarios() {
   const puedeEliminar = tienePermiso('usuarios.delete');
   const puedeAsignarRoles = tienePermiso('roles.assign');
 
-  // Tabs: 0 Usuarios (auth), 1 Internos (empleados), 2 Roles, 3 Permisos
+  // Tabs: 0 Mudras (EMPRESA), 1 Clientes (CLIENTE), 2 Roles, 3 Permisos
   const searchParams = useSearchParams();
   const [tab, setTab] = React.useState(0);
   React.useEffect(() => {
@@ -67,28 +118,7 @@ export default function Usuarios() {
   const ok = (msg: string) => { setSnackSev('success'); setSnackMsg(msg); setSnackOpen(true); };
   const fail = (msg: string) => { setSnackSev('error'); setSnackMsg(msg); setSnackOpen(true); };
 
-  async function crearUsuario(data: CrearUsuarioForm) {
-    try {
-      await apiFetch('/users', { method: 'POST', body: data });
-      setCrearAbierto(false);
-      ok('Usuario creado correctamente');
-      setRefetchToken((v) => v + 1);
-    } catch (e: any) {
-      fail(e?.message || 'Error al crear usuario');
-    }
-  }
-
-  async function guardarUsuario(data: EditarUsuarioForm) {
-    if (!usuarioSel) return;
-    try {
-      await apiFetch(`/users/${usuarioSel.id}`, { method: 'PUT', body: data });
-      setEditarAbierto(false);
-      ok('Usuario actualizado');
-      setRefetchToken((v) => v + 1);
-    } catch (e: any) {
-      fail(e?.message || 'Error al actualizar usuario');
-    }
-  }
+  // Modal unificado maneja creación y edición
 
   async function abrirRoles(u: UsuarioListado) {
     setUsuarioSel(u);
@@ -183,14 +213,14 @@ export default function Usuarios() {
     }
   }
 
+  const activeColor = marron.primary;
+  const baseBg = alpha('#4B2E25', 0.9);
+
   return (
     <PageContainer title="Usuarios - Mudras" description="Gestión de usuarios, roles y permisos">
-      <Box>
-        <Typography variant="h4" fontWeight={700} color="#5d4037" sx={{ mb: 2 }}>
-          Gestión de Usuarios
-        </Typography>
+      <Box sx={createBevelWrapper(activeColor)}>
         <TexturedPanel
-          accent="#5d4037"
+          accent={activeColor}
           radius={14}
           contentPadding={12}
           bgTintPercent={22}
@@ -207,68 +237,96 @@ export default function Usuarios() {
           glossStrength={1.0}
           vignetteStrength={0.9}
         >
-          {/* Toolbar superior con tabs estilo Artículos pero en paleta marrón */}
-          <Box sx={{ bgcolor: 'transparent', px: 2, py: 1.5 }}>
-            <Tabs
-              value={tab}
-              onChange={(_e, v) => setTab(v)}
-              aria-label="usuarios tabs"
-              TabIndicatorProps={{ sx: { display: 'none' } }}
-              sx={{
-                '& .MuiTabs-flexContainer': { gap: 1 },
-                '& .MuiTab-root': {
-                  color: 'white',
-                  textTransform: 'none',
-                  fontWeight: 600,
-                  minHeight: 40,
-                  px: 2,
-                  borderRadius: 1.5,
-                  bgcolor: '#8d6e63',
-                  '&:hover': { bgcolor: '#a1887f' },
-                  '& .MuiTab-iconWrapper': { mr: 1 }
-                },
-                '& .MuiTab-root.Mui-selected': {
-                  bgcolor: '#5d4037',
-                  color: 'common.white'
-                }
-              }}
-            >
-              <Tab icon={<Icon icon="mdi:account-group" />} label="Usuarios" iconPosition="start" />
-              <Tab icon={<Icon icon="mdi:account-tie-outline" />} label="Internos" iconPosition="start" />
-              <Tab icon={<Icon icon="mdi:shield-account" />} label="Roles" iconPosition="start" />
-              <Tab icon={<Icon icon="mdi:clipboard-text-outline" />} label="Permisos" iconPosition="start" />
-            </Tabs>
+          {/* Toolbar con estilo Crystal */}
+          <Box sx={{ bgcolor: 'transparent', px: 1, py: 1.5 }}>
+            <Box sx={{ display: 'flex', gap: 1 }}>
+              {tab === 0 ? (
+                <CrystalButton baseColor={marron.primary} startIcon={<Icon icon="mdi:account-tie-outline" />} onClick={() => setTab(0)} sx={{ ...forceWhiteIconsSX, minHeight: 40, borderRadius: 1, px: 2 }}>
+                  Mudras
+                </CrystalButton>
+              ) : (
+                <CrystalSoftButton baseColor={marron.primary} startIcon={<Icon icon="mdi:account-tie-outline" />} onClick={() => setTab(0)} sx={{ ...forceWhiteIconsSX, minHeight: 40, borderRadius: 1, px: 2 }}>
+                  Mudras
+                </CrystalSoftButton>
+              )}
+              {tab === 1 ? (
+                <CrystalButton baseColor={marron.primary} startIcon={<Icon icon="mdi:account" />} onClick={() => setTab(1)} sx={{ ...forceWhiteIconsSX, minHeight: 40, borderRadius: 1, px: 2 }}>
+                  Clientes
+                </CrystalButton>
+              ) : (
+                <CrystalSoftButton baseColor={marron.primary} startIcon={<Icon icon="mdi:account" />} onClick={() => setTab(1)} sx={{ ...forceWhiteIconsSX, minHeight: 40, borderRadius: 1, px: 2 }}>
+                  Clientes
+                </CrystalSoftButton>
+              )}
+              {tab === 2 ? (
+                <CrystalButton baseColor={marron.primary} startIcon={<Icon icon="mdi:shield-account" />} onClick={() => setTab(2)} sx={{ ...forceWhiteIconsSX, minHeight: 40, borderRadius: 1, px: 2 }}>
+                  Roles
+                </CrystalButton>
+              ) : (
+                <CrystalSoftButton baseColor={marron.primary} startIcon={<Icon icon="mdi:shield-account" />} onClick={() => setTab(2)} sx={{ ...forceWhiteIconsSX, minHeight: 40, borderRadius: 1, px: 2 }}>
+                  Roles
+                </CrystalSoftButton>
+              )}
+              {tab === 3 ? (
+                <CrystalButton baseColor={marron.primary} startIcon={<Icon icon="mdi:clipboard-text-outline" />} onClick={() => setTab(3)} sx={{ ...forceWhiteIconsSX, minHeight: 40, borderRadius: 1, px: 2 }}>
+                  Permisos
+                </CrystalButton>
+              ) : (
+                <CrystalSoftButton baseColor={marron.primary} startIcon={<Icon icon="mdi:clipboard-text-outline" />} onClick={() => setTab(3)} sx={{ ...forceWhiteIconsSX, minHeight: 40, borderRadius: 1, px: 2 }}>
+                  Permisos
+                </CrystalSoftButton>
+              )}
+            </Box>
           </Box>
-          {/* Contenido con mismo fondo y padding */}
+
+          {/* Contenido principal */}
           <Box sx={{ bgcolor: 'transparent', px: 2, pb: 2, pt: 1.5 }}>
             <Box sx={{ pt: 2 }}>
-              {/* Pestaña Usuarios */}
               {tab === 0 && (
-                <UserTable
-                  onCrear={puedeCrear ? () => setCrearAbierto(true) : undefined}
-                  onEditar={puedeEditar ? (u) => { setUsuarioSel(u); setEditarAbierto(true); } : undefined}
-                  onRoles={puedeAsignarRoles ? (u) => { abrirRoles(u); } : undefined}
-                  onEliminar={puedeEliminar ? (u) => abrirEliminar(u) : undefined}
-                  refetchToken={refetchToken}
-                />
+                <Box sx={{ borderRadius: 2, bgcolor: baseBg, transition: 'background-color .2s ease' }}>
+                  <UserTable
+                    onCrear={puedeCrear ? () => setCrearAbierto(true) : undefined}
+                    onEditar={puedeEditar ? (u) => { setUsuarioSel(u); setEditarAbierto(true); } : undefined}
+                    onRoles={puedeAsignarRoles ? (u) => { abrirRoles(u); } : undefined}
+                    onEliminar={puedeEliminar ? (u) => abrirEliminar(u) : undefined}
+                    refetchToken={refetchToken}
+                    onlyType="EMPRESA"
+                  />
+                </Box>
               )}
 
-              {/* Pestaña Roles */}
               {tab === 1 && (
+                <Box sx={{ borderRadius: 2, bgcolor: baseBg, transition: 'background-color .2s ease' }}>
+                  <UserTable
+                    onCrear={undefined}
+                    onEditar={puedeEditar ? (u) => { setUsuarioSel(u); setEditarAbierto(true); } : undefined}
+                    onRoles={undefined}
+                    onEliminar={puedeEliminar ? (u) => abrirEliminar(u) : undefined}
+                    refetchToken={refetchToken}
+                    onlyType="CLIENTE"
+                  />
+                </Box>
+              )}
+
+              {tab === 2 && (
                 <RolesTable onAsignarPermisos={abrirAsignacionPermisos} onCrear={() => setCrearRolAbierto(true)} refetchToken={refetchRolesToken} />
               )}
 
-              {/* Pestaña Permisos */}
-              {tab === 2 && (
+              {tab === 3 && (
                 <PermisosTable onCrear={() => setCrearPermAbierto(true)} onEditar={abrirEditarPermiso} onEliminar={abrirEliminarPermiso} refetchToken={refetchPermsToken} />
               )}
             </Box>
           </Box>
         </TexturedPanel>
-
-        {/* Modales Usuarios */}
-        <CreateUserModal open={crearAbierto} onClose={() => setCrearAbierto(false)} onSubmit={crearUsuario} />
-        <EditUserModal open={editarAbierto} usuario={usuarioSel} onClose={() => setEditarAbierto(false)} onSubmit={guardarUsuario} />
+      
+        {/* Modal Usuarios (Mudras) unificado, inspirado en Rubros */}
+        <UpsertEmpresaUserModal
+          open={crearAbierto || editarAbierto}
+          mode={crearAbierto ? 'create' : 'edit'}
+          usuario={editarAbierto ? usuarioSel as any : null}
+          onClose={() => { setCrearAbierto(false); setEditarAbierto(false); }}
+          onSaved={() => setRefetchToken((v) => v + 1)}
+        />
         <AssignRolesModal
           open={rolesAbierto}
           rolesDisponibles={rolesDisponibles}

@@ -403,7 +403,7 @@ const TablaRubros: React.FC<Props> = ({ onNuevoRubro, puedeCrear = true }) => {
               <Box display="flex" alignItems="center" justifyContent="space-between">
                 Nombre
                 <Tooltip title="Filtrar columna">
-                  <IconButton size="small" color="inherit" onClick={abrirMenuColumna('nombre')}>
+                  <IconButton size="small" color="inherit" aria-label="Filtrar columna nombre" aria-haspopup="menu" onClick={abrirMenuColumna('nombre')}>
                     <IconDotsVertical size={16} />
                   </IconButton>
                 </Tooltip>
@@ -415,7 +415,7 @@ const TablaRubros: React.FC<Props> = ({ onNuevoRubro, puedeCrear = true }) => {
               <Box display="flex" alignItems="center" justifyContent="space-between">
                 Código
                 <Tooltip title="Filtrar columna">
-                  <IconButton size="small" color="inherit" onClick={abrirMenuColumna('codigo')}>
+                  <IconButton size="small" color="inherit" aria-label="Filtrar columna código" aria-haspopup="menu" onClick={abrirMenuColumna('codigo')}>
                     <IconDotsVertical size={16} />
                   </IconButton>
                 </Tooltip>

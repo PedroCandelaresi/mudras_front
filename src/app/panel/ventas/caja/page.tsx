@@ -21,12 +21,7 @@ import {
 import { ModalConfirmacionVenta } from '@/components/ventas/caja-registradora/ModalConfirmacionVenta';
 import { IconCheck } from '@tabler/icons-react';
 
-import {
-  type ArticuloCaja,
-  OBTENER_PUESTOS_VENTA,
-  type PuestosVentaResponse,
-  type PuestoVenta,
-} from '@/components/ventas/caja-registradora/graphql/queries';
+import { type ArticuloCaja } from '@/components/ventas/caja-registradora/graphql/queries';
 import {
   OBTENER_PUNTOS_MUDRAS,
   type ObtenerPuntosMudrasResponse,
@@ -34,6 +29,7 @@ import {
   type TipoPuntoMudras,
 } from '@/components/puntos-mudras/graphql/queries';
 import { useQuery } from '@apollo/client/react';
+import { calcularPrecioDesdeArticulo } from '@/utils/precioVenta';
 
 /* ======================== Tipos / helpers ======================== */
 interface PuntoOption {
@@ -162,7 +158,7 @@ export default function CajaRegistradoraPage() {
 
   const { data: puntosMudrasData, loading: cargandoPuntos, error: errorPuntos } =
     useQuery<ObtenerPuntosMudrasResponse>(OBTENER_PUNTOS_MUDRAS);
-  const { data: puestosData } = useQuery<PuestosVentaResponse>(OBTENER_PUESTOS_VENTA);
+  // Ya no se consultan puestos_venta; se trabaja sólo con puntos_mudras
 
   const mostrarMensaje = useCallback((texto: string, tipo: 'success' | 'error' | 'info' = 'info') => {
     setMensaje({ texto, tipo });
@@ -170,32 +166,37 @@ export default function CajaRegistradoraPage() {
 
   const puntosDisponibles = useMemo<PuntoOption[]>(() => {
     const puntosMudras = (puntosMudrasData?.obtenerPuntosMudras ?? []) as PuntoMudras[];
-    const puestosVenta = (puestosData?.obtenerPuestosVenta ?? []) as PuestoVenta[];
     const normalizar = (v?: string | null) => v?.trim().toLowerCase() ?? '';
 
     return puntosMudras
       .filter((p) => p.activo && (String(p.tipo).toLowerCase() === 'venta'))
-      .map((p) => {
-        const puestoPorConfig = puestosVenta.find((pv) => extraerPuntoMudrasId(pv.configuracion) === p.id);
-        const puestoPorNombre = puestosVenta.find((pv) => normalizar(pv.nombre) === normalizar(p.nombre));
-        const vinculado = puestoPorConfig ?? puestoPorNombre;
-        return {
-          puestoVentaId: vinculado?.id ?? p.id,
-          nombre: p.nombre,
-          puntoMudrasId: p.id,
-          etiquetaDescripcion: p.descripcion ? `${p.nombre} · ${p.descripcion}` : p.nombre,
-          tipo: p.tipo,
-          requiereCliente: vinculado?.requiereCliente ?? false,
-          puestoFallback: !vinculado,
-        } as PuntoOption;
-      });
-  }, [puntosMudrasData, puestosData]);
+      .map((p) => ({
+        puestoVentaId: p.id,
+        nombre: p.nombre,
+        puntoMudrasId: p.id,
+        etiquetaDescripcion: p.descripcion ? `${p.nombre} · ${p.descripcion}` : p.nombre,
+        tipo: p.tipo,
+        requiereCliente: false,
+        puestoFallback: false,
+      } as PuntoOption));
+  }, [puntosMudrasData]);
 
   useEffect(() => {
     if (puntosDisponibles.length && !puntoSeleccionado) {
       setPuntoSeleccionado(puntosDisponibles[0]);
     }
   }, [puntosDisponibles, puntoSeleccionado]);
+
+  useEffect(() => {
+    if (!puntoSeleccionado?.puntoMudrasId) return;
+    setArticulos((prev) => {
+      const filtrados = prev.filter((a) => a.puntoOrigenId === puntoSeleccionado.puntoMudrasId);
+      if (filtrados.length !== prev.length) {
+        mostrarMensaje('Se quitaron artículos que no pertenecían al punto seleccionado.', 'info');
+      }
+      return filtrados;
+    });
+  }, [puntoSeleccionado?.puntoMudrasId, mostrarMensaje]);
 
   const articulosEnCarrito = useMemo(
     () => articulos.reduce((acc, a) => ((acc[a.id] = a.cantidad), acc), {} as Record<number, number>),
@@ -212,12 +213,24 @@ export default function CajaRegistradoraPage() {
         mostrarMensaje('Selecciona un punto de venta antes de agregar artículos', 'error');
         return;
       }
+
+      const precioCalculado = calcularPrecioDesdeArticulo(articulo);
+      const precioFinal = precioCalculado && precioCalculado > 0
+        ? precioCalculado
+        : Number(articulo.PrecioVenta ?? 0);
+
       setArticulos((prev) => {
         const existente = prev.find((a) => a.id === articulo.id);
         if (existente) {
           return prev.map((a) =>
             a.id === articulo.id
-              ? { ...a, cantidad: a.cantidad + cantidad, subtotal: (a.cantidad + cantidad) * a.PrecioVenta }
+              ? {
+                  ...a,
+                  PrecioVenta: precioFinal,
+                  cantidad: a.cantidad + cantidad,
+                  subtotal: (a.cantidad + cantidad) * precioFinal,
+                  puntoOrigenId: puntoSeleccionado.puntoMudrasId,
+                }
               : a
           );
         }
@@ -225,13 +238,27 @@ export default function CajaRegistradoraPage() {
           ...prev,
           {
             ...articulo,
+            PrecioVenta: precioFinal,
             Unidad: articulo.Unidad ?? 'UN',
             Rubro: articulo.rubro?.Rubro || articulo.Rubro || 'Sin rubro',
-            rubro: { id: articulo.rubro?.Id ?? 0, Descripcion: articulo.rubro?.Rubro || articulo.Rubro || 'Sin rubro' },
-            proveedor: { IdProveedor: 0, Nombre: 'Sin proveedor' },
+            rubro: {
+              id: articulo.rubro?.Id ?? 0,
+              Descripcion: articulo.rubro?.Rubro || articulo.Rubro || 'Sin rubro',
+              Id: articulo.rubro?.Id,
+              Rubro: articulo.rubro?.Rubro || articulo.Rubro || 'Sin rubro',
+              PorcentajeRecargo: articulo.rubro?.PorcentajeRecargo ?? null,
+              PorcentajeDescuento: articulo.rubro?.PorcentajeDescuento ?? null,
+            },
+            proveedor: {
+              IdProveedor: articulo.proveedor?.IdProveedor ?? 0,
+              Nombre: articulo.proveedor?.Nombre ?? 'Sin proveedor',
+              PorcentajeRecargoProveedor: articulo.proveedor?.PorcentajeRecargoProveedor ?? null,
+              PorcentajeDescuentoProveedor: articulo.proveedor?.PorcentajeDescuentoProveedor ?? null,
+            },
             cantidad,
-            subtotal: cantidad * articulo.PrecioVenta,
+            subtotal: cantidad * precioFinal,
             seleccionado: true,
+            puntoOrigenId: puntoSeleccionado.puntoMudrasId,
           },
         ];
       });
@@ -241,7 +268,11 @@ export default function CajaRegistradoraPage() {
   );
 
   const handleActualizarCantidad = useCallback((id: number, n: number) => {
-    setArticulos((prev) => prev.map((a) => (a.id === id ? { ...a, cantidad: n, subtotal: n * a.PrecioVenta } : a)));
+    setArticulos((prev) =>
+      prev.map((a) =>
+        a.id === id ? { ...a, cantidad: n, subtotal: n * a.PrecioVenta } : a
+      )
+    );
   }, []);
 
   const handleEliminarArticulo = useCallback(
@@ -268,6 +299,14 @@ export default function CajaRegistradoraPage() {
     }
     if (articulosSeleccionados.length === 0) {
       mostrarMensaje('Selecciona al menos un artículo para continuar', 'error');
+      return;
+    }
+    const puntoActual = puntoSeleccionado.puntoMudrasId;
+    const articulosInvalidos = articulosSeleccionados.filter(
+      (a) => a.puntoOrigenId !== puntoActual
+    );
+    if (articulosInvalidos.length > 0) {
+      mostrarMensaje('Hay artículos que no pertenecen al punto seleccionado. Eliminalos antes de procesar la venta.', 'error');
       return;
     }
     setModalVentaAbierto(true);
@@ -342,7 +381,6 @@ export default function CajaRegistradoraPage() {
                   {puntoSeleccionado?.puntoMudrasId ? (
                     <BusquedaArticulos
                       puntoMudrasId={puntoSeleccionado.puntoMudrasId}
-                      puestoVentaId={puntoSeleccionado?.puestoVentaId ?? undefined}
                       onAgregarArticulo={handleAgregarArticulo}
                       articulosEnCarrito={articulosEnCarrito}
                     />
@@ -500,6 +538,7 @@ export default function CajaRegistradoraPage() {
         }))}
         presetPuestoVentaId={puntoSeleccionado?.puestoVentaId}
         presetPuntoMudrasId={puntoSeleccionado?.puntoMudrasId}
+        descripcionPuntoSeleccionado={puntoSeleccionado?.etiquetaDescripcion || undefined}
         onVentaCreada={handleVentaCreada}  // ✅ agrega esto
       />
 

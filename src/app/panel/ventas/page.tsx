@@ -3,14 +3,14 @@ import { Box, Typography, Tabs, Tab } from '@mui/material';
 import PageContainer from '@/components/container/PageContainer';
 import TablaVentas from '@/app/components/dashboards/mudras/TablaVentas';
 import { verde } from '@/ui/colores';
+import { TexturedPanel } from '@/components/ui/TexturedFrame/TexturedPanel';
 import { useState } from 'react';
 import { Icon } from '@iconify/react';
-import { GraficoBarras } from '@/components/estadisticas/GraficoBarras';
-import { TexturedPanel } from '@/components/ui/TexturedFrame/TexturedPanel';
 
 export default function Ventas() {
   const [tabValue, setTabValue] = useState(0);
   const handleTabChange = (_e: React.SyntheticEvent, v: number) => setTabValue(v);
+
   return (
     <PageContainer title="Ventas - Mudras" description="Gestión de ventas">
       <Box>
@@ -35,7 +35,7 @@ export default function Ventas() {
           glossStrength={1.0}
           vignetteStrength={0.9}
         >
-          {/* Tabs superiores */}
+          {/* Tabs superiores (solo Historial para mantener estética) */}
           <Box sx={{ bgcolor: 'transparent', px: 2, py: 1.5 }}>
             <Tabs
               value={tabValue}
@@ -61,7 +61,6 @@ export default function Ventas() {
                 }
               }}
             >
-              <Tab icon={<Icon icon="mdi:chart-line" />} label="Estadísticas" iconPosition="start" />
               <Tab icon={<Icon icon="mdi:receipt-text-outline" />} label="Historial de Ventas" iconPosition="start" />
             </Tabs>
           </Box>
@@ -69,25 +68,7 @@ export default function Ventas() {
           {/* Contenido */}
           <Box sx={{ bgcolor: 'transparent', px: 2, pb: 2, pt: 1.5 }}>
             <Box sx={{ pt: 2 }}>
-              {tabValue === 0 && (
-                <Box>
-                  <GraficoBarras
-                    titulo="Ventas por día (demo)"
-                    datos={[
-                      { etiqueta: 'Lun', valor: 12, color: '#66bb6a' },
-                      { etiqueta: 'Mar', valor: 18, color: '#43a047' },
-                      { etiqueta: 'Mié', valor: 9, color: '#2e7d32' },
-                      { etiqueta: 'Jue', valor: 22, color: '#1b5e20' },
-                      { etiqueta: 'Vie', valor: 16, color: '#388e3c' },
-                    ]}
-                    anchoBarra={72}
-                    colorBorde={verde.headerBorder}
-                  />
-                </Box>
-              )}
-              {tabValue === 1 && (
-                <TablaVentas />
-              )}
+              {tabValue === 0 && <TablaVentas />}
             </Box>
           </Box>
         </TexturedPanel>

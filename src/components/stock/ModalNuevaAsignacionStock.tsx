@@ -25,9 +25,13 @@ import {
   InputLabel,
   Select,
   MenuItem,
-  Autocomplete
+  Autocomplete,
+  Snackbar,
+  Alert as MuiAlert
 } from '@mui/material';
 import { Icon } from '@iconify/react';
+import { useLazyQuery, useQuery } from '@apollo/client/react';
+import { OBTENER_PROVEEDORES_CON_STOCK, OBTENER_RUBROS_POR_PROVEEDOR, BUSCAR_ARTICULOS_PARA_ASIGNACION } from '@/components/puntos-mudras/graphql/queries';
 import { verde } from '@/ui/colores';
 
 interface ProveedorBasico {
@@ -76,175 +80,57 @@ export default function ModalNuevaAsignacionStock({ open, onClose, puntoVenta, o
   const [articulos, setArticulos] = useState<ArticuloFiltrado[]>([]);
   const [asignaciones, setAsignaciones] = useState<AsignacionStock[]>([]);
   const [loading, setLoading] = useState(false);
-  const [loadingProveedores, setLoadingProveedores] = useState(false);
-  const [loadingRubros, setLoadingRubros] = useState(false);
+  // (loadingProveedores/loadingRubros provienen de los hooks de Apollo)
   const [error, setError] = useState<string>('');
+  const [snack, setSnack] = useState<{ open: boolean; msg: string; sev: 'success'|'error'|'info' }>(() => ({ open: false, msg: '', sev: 'success' }));
+  const [confirmOpen, setConfirmOpen] = useState(false);
 
   // Cargar proveedores al abrir el modal
+  // Apollo: cargar proveedores al abrir
+  const { data: proveedoresData, loading: loadingProveedores } = useQuery(OBTENER_PROVEEDORES_CON_STOCK, { skip: !open, fetchPolicy: 'cache-and-network' });
   useEffect(() => {
-    if (open) {
-      cargarProveedores();
-    }
-  }, [open]);
+    if (!open) return;
+    setProveedores((proveedoresData?.obtenerProveedoresConStock || []) as any);
+  }, [open, proveedoresData]);
 
   // Cargar rubros cuando se selecciona un proveedor
+  const [getRubros, { data: rubrosData, loading: loadingRubros }] = useLazyQuery(OBTENER_RUBROS_POR_PROVEEDOR, { fetchPolicy: 'network-only' });
   useEffect(() => {
     if (proveedorSeleccionado) {
-      cargarRubrosPorProveedor(proveedorSeleccionado.id);
+      getRubros({ variables: { proveedorId: String(proveedorSeleccionado.id) } });
     } else {
       setRubros([]);
       setRubroSeleccionado('');
     }
-  }, [proveedorSeleccionado]);
+  }, [proveedorSeleccionado, getRubros]);
+  useEffect(() => {
+    if (rubrosData?.obtenerRubrosPorProveedor) {
+      const list = rubrosData.obtenerRubrosPorProveedor as any[];
+      setRubros(list);
+      if (list.length === 1) setRubroSeleccionado(list[0].rubro as string);
+    }
+  }, [rubrosData]);
 
+  const [buscarArticulosQuery, { data: articulosData, loading: buscandoArticulos, error: errorBuscar }] = useLazyQuery(BUSCAR_ARTICULOS_PARA_ASIGNACION, { fetchPolicy: 'network-only' });
   const buscarArticulos = useCallback(async () => {
-    if (!proveedorSeleccionado || busqueda.length < 3) {
-      return;
-    }
-
-    setLoading(true);
+    if (!proveedorSeleccionado || busqueda.length < 3) return;
     setError('');
-
-    try {
-      const response = await fetch('/api/graphql', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          query: `
-            query BuscarArticulosParaAsignacion($proveedorId: Int, $rubro: String, $busqueda: String) {
-              buscarArticulosParaAsignacion(proveedorId: $proveedorId, rubro: $rubro, busqueda: $busqueda) {
-                id
-                nombre
-                codigo
-                precio
-                stockTotal
-                stockAsignado
-                stockDisponible
-                rubro
-                proveedor
-              }
-            }
-          `,
-          variables: {
-            proveedorId: proveedorSeleccionado.id,
-            rubro: rubroSeleccionado || null,
-            busqueda,
-          },
-        }),
-      });
-
-      const result = await response.json();
-
-      if (result.errors) {
-        throw new Error(result.errors[0].message);
-      }
-
-      setArticulos(result.data.buscarArticulosParaAsignacion || []);
-      console.log(`🔍 Encontrados ${result.data.buscarArticulosParaAsignacion?.length || 0} artículos`);
-    } catch (error) {
-      console.error('Error al buscar artículos:', error);
-      setError('Error al buscar artículos');
-    } finally {
-      setLoading(false);
+    await buscarArticulosQuery({ variables: { proveedorId: proveedorSeleccionado.id, rubro: rubroSeleccionado || null, busqueda } });
+  }, [proveedorSeleccionado, rubroSeleccionado, busqueda, buscarArticulosQuery]);
+  useEffect(() => {
+    if (articulosData?.buscarArticulosParaAsignacion) {
+      setArticulos(articulosData.buscarArticulosParaAsignacion as any[]);
     }
-  }, [proveedorSeleccionado, rubroSeleccionado, busqueda]);
+  }, [articulosData]);
+  useEffect(() => {
+    if (errorBuscar) setError(errorBuscar.message);
+  }, [errorBuscar]);
 
   // Buscar artículos cuando se aplican filtros
   useEffect(() => {
-    if (proveedorSeleccionado && busqueda.length >= 3) {
-      buscarArticulos();
-    } else {
-      setArticulos([]);
-    }
+    if (proveedorSeleccionado && busqueda.length >= 3) buscarArticulos();
+    else setArticulos([]);
   }, [proveedorSeleccionado, busqueda, buscarArticulos]);
-
-  const cargarProveedores = async () => {
-    setLoadingProveedores(true);
-    setError('');
-    
-    try {
-      const response = await fetch('/api/graphql', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          query: `
-            query ObtenerProveedoresConStock {
-              obtenerProveedoresConStock {
-                id
-                nombre
-                codigo
-              }
-            }
-          `
-        })
-      });
-
-      const result = await response.json();
-      
-      if (result.errors) {
-        throw new Error(result.errors[0].message);
-      }
-
-      setProveedores(result.data.obtenerProveedoresConStock || []);
-      console.log(`🏭 Cargados ${result.data.obtenerProveedoresConStock?.length || 0} proveedores`);
-    } catch (error) {
-      console.error('Error al cargar proveedores:', error);
-      setError('Error al cargar la lista de proveedores');
-    } finally {
-      setLoadingProveedores(false);
-    }
-  };
-
-  const cargarRubrosPorProveedor = async (proveedorId: number) => {
-    setLoadingRubros(true);
-    setError('');
-    
-    try {
-      const response = await fetch('/api/graphql', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          query: `
-            query ObtenerRubrosPorProveedor($proveedorId: ID!) {
-              obtenerRubrosPorProveedor(proveedorId: $proveedorId) {
-                rubro
-              }
-            }
-          `,
-          variables: { proveedorId: String(proveedorId) }
-        })
-      });
-
-      const result = await response.json();
-      
-      if (result.errors) {
-        throw new Error(result.errors[0].message);
-      }
-
-      const rubrosData = result.data.obtenerRubrosPorProveedor || [];
-      setRubros(rubrosData);
-      
-      // Si solo hay un rubro, seleccionarlo automáticamente
-      if (rubrosData.length === 1) {
-        setRubroSeleccionado(rubrosData[0].rubro);
-      } else {
-        setRubroSeleccionado('');
-      }
-      
-      console.log(`📋 Cargados ${rubrosData.length} rubros para proveedor ${proveedorId}`);
-    } catch (error) {
-      console.error('Error al cargar rubros:', error);
-      setError('Error al cargar los rubros del proveedor');
-    } finally {
-      setLoadingRubros(false);
-    }
-  };
 
   const handleBusquedaKeyPress = (event: React.KeyboardEvent) => {
     if (event.key === 'Enter' && busqueda.length >= 3 && proveedorSeleccionado) {
@@ -279,20 +165,18 @@ export default function ModalNuevaAsignacionStock({ open, onClose, puntoVenta, o
       setError('Debe asignar stock a al menos un artículo');
       return;
     }
+    setConfirmOpen(true);
+  };
 
+  const aplicarAsignaciones = async () => {
     setLoading(true);
     setError('');
 
     try {
-      console.log('🚀 Enviando asignaciones:', asignaciones);
-      
-      // Procesar cada asignación
       for (const asignacion of asignaciones) {
         const response = await fetch('/api/graphql', {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             query: `
               mutation ModificarStockPunto($puntoMudrasId: Int!, $articuloId: Int!, $nuevaCantidad: Float!) {
@@ -303,29 +187,22 @@ export default function ModalNuevaAsignacionStock({ open, onClose, puntoVenta, o
                 )
               }
             `,
-            variables: {
-              puntoMudrasId: puntoVenta.id,
-              articuloId: asignacion.articuloId,
-              nuevaCantidad: asignacion.cantidad
-            }
-          })
+            variables: { puntoMudrasId: puntoVenta.id, articuloId: asignacion.articuloId, nuevaCantidad: asignacion.cantidad },
+          }),
         });
-
         const result = await response.json();
-        
-        if (result.errors) {
-          throw new Error(result.errors[0].message);
-        }
+        if (result.errors) throw new Error(result.errors[0].message);
       }
-      
-      console.log(`✅ Stock asignado exitosamente a ${puntoVenta.nombre}`);
+      setSnack({ open: true, msg: `Stock asignado a ${puntoVenta.nombre}`, sev: 'success' });
       onStockAsignado();
       handleCerrar();
     } catch (error) {
       console.error('Error al asignar stock:', error);
       setError('Error al asignar el stock: ' + (error as Error).message);
+      setSnack({ open: true, msg: 'Error al asignar el stock', sev: 'error' });
     } finally {
       setLoading(false);
+      setConfirmOpen(false);
     }
   };
 
@@ -456,7 +333,7 @@ export default function ModalNuevaAsignacionStock({ open, onClose, puntoVenta, o
         </Paper>
 
         {/* Resultados */}
-        {loading && (
+        {(buscandoArticulos || loading) && (
           <Box display="flex" justifyContent="center" py={4}>
             <Typography>Buscando artículos...</Typography>
           </Box>
@@ -497,18 +374,25 @@ export default function ModalNuevaAsignacionStock({ open, onClose, puntoVenta, o
                         />
                       </TableCell>
                       <TableCell align="right">
-                        <TextField
-                          type="number"
-                          size="small"
-                          value={cantidadAsignada}
-                          onChange={(e) => handleAsignarStock(articulo.id, parseInt(e.target.value) || 0)}
-                          inputProps={{ 
-                            min: 0, 
-                            max: articulo.stockDisponible,
-                            style: { textAlign: 'right' }
-                          }}
-                          sx={{ width: 80 }}
-                        />
+                        <Box sx={{ display: 'flex', gap: 1, justifyContent: 'flex-end', alignItems: 'center' }}>
+                          <TextField
+                            type="number"
+                            size="small"
+                            value={cantidadAsignada}
+                            onChange={(e) => handleAsignarStock(articulo.id, parseInt(e.target.value) || 0)}
+                            inputProps={{ 
+                              min: 0, 
+                              max: articulo.stockDisponible,
+                              style: { textAlign: 'right' }
+                            }}
+                            sx={{ width: 80 }}
+                          />
+                          <Tooltip title={`Asignar máximo (${articulo.stockDisponible})`}>
+                            <IconButton size="small" onClick={() => handleAsignarStock(articulo.id, articulo.stockDisponible)}>
+                              <Icon icon="mdi:arrow-collapse-down" />
+                            </IconButton>
+                          </Tooltip>
+                        </Box>
                       </TableCell>
                       <TableCell align="center">
                         {cantidadAsignada > 0 && (
@@ -531,20 +415,24 @@ export default function ModalNuevaAsignacionStock({ open, onClose, puntoVenta, o
           </TableContainer>
         )}
 
-        {/* Resumen de asignaciones */}
-        {asignaciones.length > 0 && (
-          <Paper elevation={0} sx={{ p: 2, mt: 2, bgcolor: '#e8f5e8', border: '1px solid #4caf50' }}>
-            <Typography variant="subtitle2" fontWeight={600} gutterBottom>
-              Resumen de Asignaciones
-            </Typography>
-            <Typography variant="body2">
-              <strong>Total de artículos:</strong> {asignaciones.length}
-            </Typography>
-            <Typography variant="body2">
-              <strong>Total de unidades:</strong> {totalAsignaciones}
-            </Typography>
-          </Paper>
-        )}
+      {/* Resumen de asignaciones */}
+      {asignaciones.length > 0 && (
+        <Paper elevation={0} sx={{ p: 2, mt: 2, bgcolor: '#e8f5e8', border: '1px solid #4caf50' }}>
+          <Typography variant="subtitle2" fontWeight={600} gutterBottom>
+            Resumen de Asignaciones
+          </Typography>
+          <Typography variant="body2">
+            <strong>Total de artículos:</strong> {asignaciones.length}
+          </Typography>
+          <Typography variant="body2">
+            <strong>Total de unidades:</strong> {totalAsignaciones}
+          </Typography>
+          <Box sx={{ display: 'flex', gap: 1, mt: 1 }}>
+            <Button size="small" variant="outlined" onClick={() => setAsignaciones([])}>Limpiar todas</Button>
+            <Button size="small" variant="contained" onClick={() => setAsignaciones(articulos.filter(a => a.stockDisponible > 0).map(a => ({ articuloId: a.id, cantidad: a.stockDisponible })))} sx={{ bgcolor: verde.primary }}>Asignar máximo (lote)</Button>
+          </Box>
+        </Paper>
+      )}
       </DialogContent>
 
       <DialogActions sx={{ px: 3, pb: 2 }}>
@@ -561,6 +449,23 @@ export default function ModalNuevaAsignacionStock({ open, onClose, puntoVenta, o
           {loading ? 'Asignando...' : `Asignar Stock (${asignaciones.length})`}
         </Button>
       </DialogActions>
+      {/* Confirmación lote */}
+      <Dialog open={confirmOpen} onClose={() => setConfirmOpen(false)}>
+        <DialogTitle>Confirmar asignaciones</DialogTitle>
+        <DialogContent>
+          <Typography variant="body2">Se aplicarán {asignaciones.length} asignaciones por un total de {totalAsignaciones} unidades al punto “{puntoVenta?.nombre}”.</Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setConfirmOpen(false)}>Cancelar</Button>
+          <Button variant="contained" onClick={aplicarAsignaciones} disabled={loading} sx={{ bgcolor: verde.primary }}>Aplicar</Button>
+        </DialogActions>
+      </Dialog>
+      {/* Snackbar */}
+      <Snackbar open={snack.open} autoHideDuration={2600} onClose={() => setSnack((s) => ({ ...s, open: false }))} anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}>
+        <MuiAlert onClose={() => setSnack((s) => ({ ...s, open: false }))} severity={snack.sev} variant="filled" sx={{ width: '100%' }}>
+          {snack.msg}
+        </MuiAlert>
+      </Snackbar>
     </Dialog>
   );
 }

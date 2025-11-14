@@ -10,6 +10,7 @@ export const ARTICULO_FRAGMENT = gql`
     PrecioVenta
     PrecioCompra
     StockMinimo
+    totalStock
     AlicuotaIva
     Deposito
     FechaCompra
@@ -40,10 +41,14 @@ export const ARTICULO_FRAGMENT = gql`
     proveedor {
       IdProveedor
       Nombre
+      PorcentajeRecargoProveedor
+      PorcentajeDescuentoProveedor
     }
     rubro {
       Id
       Rubro
+      PorcentajeRecargo
+      PorcentajeDescuento
     }
   }
 `;

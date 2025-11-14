@@ -23,6 +23,8 @@ import {
 } from '@mui/material';
 import { IconDotsVertical, IconEye, IconRefresh, IconSearch, IconReceipt, IconPlus, IconTrash, IconEdit } from '@tabler/icons-react';
 import { verde } from '@/ui/colores';
+import { useQuery } from '@apollo/client/react';
+import { OBTENER_HISTORIAL_VENTAS } from '@/components/ventas/caja-registradora/graphql/queries';
 
 export interface VentaListado {
   id: string;
@@ -33,18 +35,7 @@ export interface VentaListado {
   estado: 'PAGADA' | 'PENDIENTE' | 'CANCELADA';
 }
 
-const datosFicticios: VentaListado[] = [
-  { id: 'v1', fecha: '2025-09-01T10:15:00Z', nro: 'A-0001-00000001', cliente: 'María López', total: 45200, estado: 'PAGADA' },
-  { id: 'v2', fecha: '2025-09-01T12:20:00Z', nro: 'A-0001-00000002', cliente: 'Carlos Gómez', total: 31800, estado: 'PENDIENTE' },
-  { id: 'v3', fecha: '2025-09-02T09:05:00Z', nro: 'A-0001-00000003', cliente: 'Lucía Pérez', total: 27650, estado: 'PAGADA' },
-  { id: 'v4', fecha: '2025-09-02T11:42:00Z', nro: 'A-0001-00000004', cliente: 'Diego Fernández', total: 15800, estado: 'CANCELADA' },
-  { id: 'v5', fecha: '2025-09-03T16:10:00Z', nro: 'A-0001-00000005', cliente: 'Ana Torres', total: 50400, estado: 'PAGADA' },
-  { id: 'v6', fecha: '2025-09-04T14:30:00Z', nro: 'A-0001-00000006', cliente: 'Roberto Silva', total: 22100, estado: 'PAGADA' },
-  { id: 'v7', fecha: '2025-09-04T16:45:00Z', nro: 'A-0001-00000007', cliente: 'Carmen Ruiz', total: 38900, estado: 'PENDIENTE' },
-  { id: 'v8', fecha: '2025-09-05T11:20:00Z', nro: 'A-0001-00000008', cliente: 'José Martínez', total: 19500, estado: 'PAGADA' },
-  { id: 'v9', fecha: '2025-09-05T15:10:00Z', nro: 'A-0001-00000009', cliente: 'Laura González', total: 41200, estado: 'CANCELADA' },
-  { id: 'v10', fecha: '2025-09-06T09:30:00Z', nro: 'A-0001-00000010', cliente: 'Miguel Herrera', total: 33750, estado: 'PAGADA' },
-];
+// Datos reales consultados vía GraphQL
 
 export function TablaVentas() {
   const [page, setPage] = useState(0);
@@ -62,16 +53,41 @@ export function TablaVentas() {
   };
   const cerrarMenu = () => { setMenuAnchor(null); setColumnaActiva(null); };
 
+  // Consultar historial de ventas
+  const { data, loading, refetch } = useQuery(OBTENER_HISTORIAL_VENTAS, {
+    variables: { filtros: { limite: 200, offset: 0 } },
+    fetchPolicy: 'cache-and-network',
+  });
+
+  const mapEstado = (e?: string | null): 'PAGADA' | 'PENDIENTE' | 'CANCELADA' => {
+    const v = String(e || '').toLowerCase();
+    if (v === 'confirmada') return 'PAGADA';
+    if (v === 'cancelada') return 'CANCELADA';
+    return 'PENDIENTE';
+  };
+
+  const rows: VentaListado[] = useMemo(() => {
+    const ventas = data?.obtenerHistorialVentas?.ventas || [];
+    return ventas.map((v: any) => ({
+      id: String(v.id),
+      fecha: v.fecha,
+      nro: v.numeroVenta,
+      cliente: v.nombreUsuario || '-',
+      total: Number(v.total || 0),
+      estado: mapEstado(v.estado),
+    }));
+  }, [data]);
+
   const ventasFiltradas = useMemo(() => {
     const q = busqueda.toLowerCase();
-    return datosFicticios.filter((v) => {
+    return rows.filter((v) => {
       const pasaTexto = !q || v.nro.toLowerCase().includes(q) || v.cliente.toLowerCase().includes(q) || v.estado.toLowerCase().includes(q);
       const pasaCliente = filtrosColumna.cliente ? v.cliente.toLowerCase().includes(filtrosColumna.cliente.toLowerCase()) : true;
       const pasaEstado = filtrosColumna.estado ? v.estado.toLowerCase().includes(filtrosColumna.estado.toLowerCase()) : true;
       const pasaNro = filtrosColumna.nro ? v.nro.toLowerCase().includes(filtrosColumna.nro.toLowerCase()) : true;
       return pasaTexto && pasaCliente && pasaEstado && pasaNro;
     });
-  }, [busqueda, filtrosColumna]);
+  }, [busqueda, filtrosColumna, rows]);
 
   const totalPaginas = Math.ceil(ventasFiltradas.length / rowsPerPage);
   const paginaActual = page + 1;
@@ -135,6 +151,9 @@ export function TablaVentas() {
             InputProps={{ startAdornment: (<InputAdornment position="start"><IconSearch size={20} /></InputAdornment>) }}
             sx={{ minWidth: 240 }}
           />
+          <Button variant="outlined" color="inherit" startIcon={<IconRefresh />} onClick={() => refetch()}>
+            Actualizar
+          </Button>
           <Tooltip title="Buscar (Enter)">
             <span>
               <Button
@@ -174,7 +193,7 @@ export function TablaVentas() {
                 </Box>
               </TableCell>
               <TableCell sx={{ fontWeight: 700, color: verde.headerText, borderBottom: '3px solid', borderColor: verde.headerBorder }}>
-                <Box display="flex" alignItems="center" justifyContent="space-between">Cliente
+                <Box display="flex" alignItems="center" justifyContent="space-between">Usuario
                   <Tooltip title="Filtrar columna">
                     <IconButton size="small" color="inherit" onClick={abrirMenu('cliente')}>
                       <IconDotsVertical size={16} />
@@ -196,6 +215,13 @@ export function TablaVentas() {
             </TableRow>
           </TableHead>
           <TableBody>
+            {loading && (
+              <TableRow>
+                <TableCell colSpan={6}>
+                  <Skeleton variant="rounded" height={48} />
+                </TableCell>
+              </TableRow>
+            )}
             {ventasPaginadas.map((v, idx) => (
               <TableRow key={v.id} sx={{ bgcolor: idx % 2 === 1 ? 'grey.50' : 'inherit', '&:hover': { bgcolor: verde.toolbarBg } }}>
                 <TableCell>

@@ -425,6 +425,8 @@ const TablaProveedores = forwardRef<TablaProveedoresHandle, Props>(({
                 <Tooltip title="Filtrar columna">
                   <IconButton
                     size="small" color="inherit"
+                    aria-label="Filtrar columna proveedor"
+                    aria-haspopup="menu"
                     onClick={(e) => { setColumnaActiva('nombre'); setFiltroColInput(filtrosColumna.nombre || ''); setMenuAnchor(e.currentTarget); }}
                   >
                     <IconDotsVertical size={16} />
@@ -440,6 +442,8 @@ const TablaProveedores = forwardRef<TablaProveedoresHandle, Props>(({
                 <Tooltip title="Filtrar columna">
                   <IconButton
                     size="small" color="inherit"
+                    aria-label="Filtrar columna código"
+                    aria-haspopup="menu"
                     onClick={(e) => { setColumnaActiva('codigo'); setFiltroColInput(filtrosColumna.codigo || ''); setMenuAnchor(e.currentTarget); }}
                   >
                     <IconDotsVertical size={16} />
@@ -458,6 +462,8 @@ const TablaProveedores = forwardRef<TablaProveedoresHandle, Props>(({
                 <Tooltip title="Filtrar columna">
                   <IconButton
                     size="small" color="inherit"
+                    aria-label="Filtrar columna CUIT"
+                    aria-haspopup="menu"
                     onClick={(e) => { setColumnaActiva('cuit'); setFiltroColInput(filtrosColumna.cuit || ''); setMenuAnchor(e.currentTarget); }}
                   >
                     <IconDotsVertical size={16} />

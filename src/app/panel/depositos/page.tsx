@@ -1,166 +1,255 @@
 'use client';
-import { Box, Typography, Paper, Tabs, Tab } from '@mui/material';
-import PageContainer from '@/components/container/PageContainer';
-import { useState, useEffect } from 'react';
+
+import { useState, useMemo, useEffect, useCallback } from 'react';
+import { Alert, Box, LinearProgress, Tab, Tabs, Typography } from '@mui/material';
 import { useQuery } from '@apollo/client/react';
-import { grisRojizo } from '@/ui/colores';
 import { Icon } from '@iconify/react';
+
+import PageContainer from '@/components/container/PageContainer';
+import { TexturedPanel } from '@/components/ui/TexturedFrame/TexturedPanel';
+import TablaStockPuntoVenta from '@/components/puntos-venta/TablaStockPuntoVenta';
+import ModalModificarStockPunto from '@/components/stock/ModalModificarStockPunto';
+import ModalNuevaAsignacionStock from '@/components/stock/ModalNuevaAsignacionStock';
+import ModalDetallesArticulo from '@/components/articulos/ModalDetallesArticulo';
+import type { Articulo } from '@/app/interfaces/mudras.types';
+import type { PuntoMudras } from '@/interfaces/puntos-mudras';
 import {
   OBTENER_PUNTOS_MUDRAS,
+  OBTENER_STOCK_PUNTO_MUDRAS,
   type ObtenerPuntosMudrasResponse,
+  type ArticuloConStockPuntoMudras,
 } from '@/components/puntos-mudras/graphql/queries';
-import { PuntoMudras } from '@/interfaces/puntos-mudras';
-import TablaStockPuntoVenta from '@/components/stock/TablaStockPuntoVenta';
-import { TexturedPanel } from '@/components/ui/TexturedFrame/TexturedPanel';
 
-export default function Depositos() {
-  const [tabValue, setTabValue] = useState(0);
-  const [depositos, setDepositos] = useState<PuntoMudras[]>([]);
-  const [refetchTrigger, setRefetchTrigger] = useState(0);
+const depositTheme = {
+  accent: '#8b1f2b',
+  woodTintExterior: '#f8d8d8',
+  woodTintInterior: '#f5c1c1',
+  tableBodyBg: 'rgba(252, 234, 234, 0.72)',
+  tableBodyAlt: 'rgba(232, 189, 189, 0.38)',
+  headerBg: '#5d141d',
+  panelOverlay: '#fdecec',
+  buttonColor: '#a02834',
+};
 
-  // Obtener solo depósitos
-  const { data: depositosData, refetch: refetchDepositos } = useQuery<ObtenerPuntosMudrasResponse>(OBTENER_PUNTOS_MUDRAS);
+export default function DepositosPage() {
+  const [activeKey, setActiveKey] = useState<string>('');
+  const [modalStockOpen, setModalStockOpen] = useState(false);
+  const [modalAsignacionOpen, setModalAsignacionOpen] = useState(false);
+  const [modalDetallesOpen, setModalDetallesOpen] = useState(false);
+  const [articuloSeleccionado, setArticuloSeleccionado] = useState<ArticuloConStockPuntoMudras | null>(null);
+  const [articuloDetalles, setArticuloDetalles] = useState<Pick<Articulo, 'id' | 'Descripcion' | 'Codigo'> | null>(null);
+  const [stockContext, setStockContext] = useState<{ value?: number; label?: string } | null>(null);
+
+  const {
+    data: depositosData,
+    loading: loadingDepositos,
+    error: errorDepositos,
+    refetch: refetchDepositos,
+  } = useQuery<ObtenerPuntosMudrasResponse>(OBTENER_PUNTOS_MUDRAS, {
+    fetchPolicy: 'cache-and-network',
+  });
 
   useEffect(() => {
-    if (depositosData?.obtenerPuntosMudras) {
-      // Filtrar solo depósitos
-      const soloDepositos = depositosData.obtenerPuntosMudras.filter(punto => punto.tipo === 'deposito');
-      setDepositos(soloDepositos);
-    }
-  }, [depositosData]);
-
-  // Refetch cuando se actualiza el trigger
-  useEffect(() => {
-    if (refetchTrigger > 0) {
-      refetchDepositos();
-    }
-  }, [refetchTrigger, refetchDepositos]);
-
-  // Escuchar eventos de actualización de puntos mudras
-  useEffect(() => {
-    const handlePuntosActualizados = () => {
-      refetchDepositos();
+    const handler = () => {
+      void refetchDepositos();
     };
-
-    window.addEventListener('puntosVentaActualizados', handlePuntosActualizados);
-    
-    return () => {
-      window.removeEventListener('puntosVentaActualizados', handlePuntosActualizados);
-    };
+    window.addEventListener('puntosVentaActualizados', handler);
+    return () => window.removeEventListener('puntosVentaActualizados', handler);
   }, [refetchDepositos]);
 
-  const handleTabChange = (_e: React.SyntheticEvent, v: number) => setTabValue(v);
+  const depositos = useMemo<PuntoMudras[]>(
+    () => (depositosData?.obtenerPuntosMudras ?? []).filter((p) => p.tipo === 'deposito'),
+    [depositosData]
+  );
 
-  const handleNuevaAsignacion = (deposito: PuntoMudras) => {
-    console.log('Nueva asignación en depósito:', deposito.nombre);
-  };
+  useEffect(() => {
+    if (!depositos.length) {
+      setActiveKey('');
+      return;
+    }
+    if (!activeKey || !depositos.some((p) => String(p.id) === activeKey)) {
+      setActiveKey(String(depositos[0].id));
+    }
+  }, [depositos, activeKey]);
 
-  const handleModificarStock = (articulo: any) => {
-    console.log('Modificar stock en depósito:', articulo);
-  };
+  const depositoSeleccionado = useMemo(
+    () => depositos.find((p) => String(p.id) === activeKey) ?? null,
+    [depositos, activeKey]
+  );
+  const depositoSeleccionadoId = depositoSeleccionado?.id ?? null;
+
+  const {
+    data: stockData,
+    loading: loadingStock,
+    error: errorStock,
+    refetch: refetchStock,
+  } = useQuery<{ obtenerStockPuntoMudras: ArticuloConStockPuntoMudras[] }>(OBTENER_STOCK_PUNTO_MUDRAS, {
+    skip: !depositoSeleccionadoId,
+    variables: { puntoMudrasId: depositoSeleccionadoId ?? 0 },
+    fetchPolicy: 'cache-and-network',
+  });
+
+  const articulosDelDeposito = depositoSeleccionado ? stockData?.obtenerStockPuntoMudras ?? [] : [];
+
+  const handleAbrirModalStock = useCallback((articulo: ArticuloConStockPuntoMudras) => {
+    setArticuloSeleccionado(articulo);
+    setModalStockOpen(true);
+  }, []);
+
+  const handleCerrarModalStock = useCallback(() => {
+    setModalStockOpen(false);
+    setArticuloSeleccionado(null);
+  }, []);
+
+  const handleStockActualizado = useCallback(async () => {
+    handleCerrarModalStock();
+    if (depositoSeleccionadoId) {
+      await refetchStock({ puntoMudrasId: depositoSeleccionadoId });
+    }
+  }, [handleCerrarModalStock, depositoSeleccionadoId, refetchStock]);
+
+  const handleNuevaAsignacion = useCallback(() => {
+    if (!depositoSeleccionado) return;
+    setModalAsignacionOpen(true);
+  }, [depositoSeleccionado]);
+
+  const handleCerrarAsignacion = useCallback(() => {
+    setModalAsignacionOpen(false);
+  }, []);
+
+  const handleAsignacionCompletada = useCallback(async () => {
+    setModalAsignacionOpen(false);
+    if (depositoSeleccionadoId) {
+      await refetchStock({ puntoMudrasId: depositoSeleccionadoId });
+    }
+  }, [depositoSeleccionadoId, refetchStock]);
+
+  const handleVerDetalles = useCallback(
+    (articulo: ArticuloConStockPuntoMudras) => {
+      const articuloBase = articulo.articulo;
+      const id = articuloBase?.id ?? articulo.id;
+      setArticuloDetalles({
+        id,
+        Descripcion: articuloBase?.Descripcion ?? articulo.nombre,
+        Codigo: articuloBase?.Codigo ?? articulo.codigo,
+      });
+      setStockContext({
+        value: Number(articulo.stockAsignado ?? 0),
+        label: depositoSeleccionado ? `Stock en ${depositoSeleccionado.nombre}` : 'Stock asignado',
+      });
+      setModalDetallesOpen(true);
+    },
+    [depositoSeleccionado]
+  );
+
+  const handleCerrarDetalles = useCallback(() => {
+    setModalDetallesOpen(false);
+    setArticuloDetalles(null);
+    setStockContext(null);
+  }, []);
 
   return (
     <PageContainer title="Depósitos - Mudras" description="Gestión de stock en depósitos">
-      <Box>
-        <Typography variant="h4" fontWeight={700} color={grisRojizo.textStrong} sx={{ mb: 2 }}>
-          Stock en Depósitos
-        </Typography>
-        <TexturedPanel
-          accent="#d32f2f"
-          radius={14}
-          contentPadding={12}
-          bgTintPercent={22}
-          bgAlpha={0.98}
-          tintMode="soft-light"
-          tintOpacity={0.42}
-          textureScale={1.1}
-          textureBaseOpacity={0.18}
-          textureBoostOpacity={0.12}
-          textureContrast={0.92}
-          textureBrightness={1.03}
-          bevelWidth={12}
-          bevelIntensity={1.0}
-          glossStrength={1.0}
-          vignetteStrength={0.9}
-        >
-          {/* Toolbar superior con tabs dinámicos */}
-          <Box sx={{ bgcolor: 'transparent', px: 2, py: 1.5 }}>
-            <Tabs
-              value={tabValue}
-              onChange={handleTabChange}
-              aria-label="depositos tabs"
-              variant="scrollable"
-              scrollButtons="auto"
-              TabIndicatorProps={{ sx: { display: 'none' } }}
-              sx={{
-                '& .MuiTabs-flexContainer': { gap: 1 },
-                '& .MuiTab-root': {
-                  color: 'white',
-                  textTransform: 'none',
-                  fontWeight: 600,
-                  minHeight: 40,
-                  px: 2,
-                  borderRadius: 1.5,
-                  bgcolor: '#f44336',
-                  '&:hover': { bgcolor: '#ef5350' },
-                  '& .MuiTab-iconWrapper': { mr: 1 }
-                },
-                '& .MuiTab-root.Mui-selected': {
-                  bgcolor: '#d32f2f',
-                  color: 'common.white'
-                }
-              }}
-            >
-              {/* Tabs dinámicos para cada depósito */}
-              {depositos.map((deposito, index) => (
-                <Tab 
-                  key={deposito.id}
-                  icon={<Icon icon="mdi:warehouse" />} 
-                  label={deposito.nombre} 
-                  iconPosition="start" 
-                />
-              ))}
-              {depositos.length === 0 && (
-                <Tab 
-                  icon={<Icon icon="mdi:alert-circle" />} 
-                  label="No hay depósitos" 
-                  iconPosition="start"
-                  disabled
-                />
-              )}
-            </Tabs>
-          </Box>
-          {/* Contenido */}
-          <Box sx={{ bgcolor: 'transparent', px: 2, pb: 2, pt: 1.5 }}>
-            <Box sx={{ pt: 2 }}>
-              {/* Tabs dinámicos para stock por depósito */}
-              {depositos.map((deposito, index) => {
-                return tabValue === index && (
-                  <TablaStockPuntoVenta 
-                    key={deposito.id}
-                    puntoVenta={deposito}
-                    onModificarStock={handleModificarStock}
-                    onNuevaAsignacion={() => handleNuevaAsignacion(deposito)}
-                    refetchTrigger={refetchTrigger}
-                  />
-                );
-              })}
-              
-              {/* Mensaje cuando no hay depósitos */}
-              {depositos.length === 0 && (
-                <Box textAlign="center" py={4}>
-                  <Typography variant="h6" color="text.secondary" mb={2}>
-                    No hay depósitos creados
-                  </Typography>
-                  <Typography color="text.secondary">
-                    Ve a <strong>Administración → Puntos Mudras</strong> para crear depósitos
-                  </Typography>
-                </Box>
-              )}
-            </Box>
-          </Box>
-        </TexturedPanel>
-      </Box>
+      {loadingDepositos && <LinearProgress sx={{ mb: 2 }} />}
+      {errorDepositos && (
+        <Alert severity="error" sx={{ mb: 2 }}>
+          {errorDepositos.message || 'No se pudo cargar la lista de depósitos.'}
+        </Alert>
+      )}
+
+      <TexturedPanel accent={depositTheme.accent} radius={14} contentPadding={12} bgTintPercent={22} bgAlpha={0.98}>
+        <Box sx={{ px: 2, py: 1.5 }}>
+          <Tabs
+            value={activeKey}
+            onChange={(_, key) => setActiveKey(String(key))}
+            variant="scrollable"
+            scrollButtons="auto"
+            aria-label="Depósitos tabs"
+            TabIndicatorProps={{ sx: { display: 'none' } }}
+            sx={{
+              '& .MuiTabs-flexContainer': { gap: 1 },
+              '& .MuiTab-root': {
+                textTransform: 'none',
+                fontWeight: 600,
+                minHeight: 40,
+                px: 2,
+                borderRadius: 1.5,
+                bgcolor: alpha(depositTheme.accent, 0.85),
+                color: 'white',
+                '&:hover': { bgcolor: depositTheme.accent },
+              },
+              '& .MuiTab-root.Mui-selected': {
+                bgcolor: depositTheme.accent,
+                color: 'common.white',
+              },
+            }}
+          >
+            {depositos.map((deposito) => (
+              <Tab
+                key={deposito.id}
+                value={String(deposito.id)}
+                icon={<Icon icon="mdi:warehouse" />}
+                label={deposito.nombre}
+                iconPosition="start"
+              />
+            ))}
+            {depositos.length === 0 && (
+              <Tab
+                value="empty"
+                icon={<Icon icon="mdi:alert-circle" />}
+                label="No hay depósitos"
+                iconPosition="start"
+                disabled
+              />
+            )}
+          </Tabs>
+        </Box>
+
+        <Box sx={{ px: 2, pb: 2 }}>
+          {!depositoSeleccionado ? (
+            <Alert severity="info" sx={{ mt: 2 }}>
+              Seleccioná un depósito para ver su stock.
+            </Alert>
+          ) : (
+            <TablaStockPuntoVenta
+              articulos={articulosDelDeposito}
+              loading={loadingStock}
+              error={errorStock}
+              puntoNombre={depositoSeleccionado.nombre}
+              onEditStock={handleAbrirModalStock}
+              onViewDetails={handleVerDetalles}
+              onNewAssignment={handleNuevaAsignacion}
+              themeOverride={depositTheme}
+            />
+          )}
+        </Box>
+      </TexturedPanel>
+
+      {modalStockOpen && articuloSeleccionado && depositoSeleccionadoId && (
+        <ModalModificarStockPunto
+          open={modalStockOpen}
+          onClose={handleCerrarModalStock}
+          articulo={{ ...articuloSeleccionado, puntoVentaId: depositoSeleccionadoId }}
+          onStockActualizado={handleStockActualizado}
+        />
+      )}
+
+      {depositoSeleccionado && (
+        <ModalNuevaAsignacionStock
+          open={modalAsignacionOpen}
+          onClose={handleCerrarAsignacion}
+          puntoVenta={depositoSeleccionado}
+          onStockAsignado={handleAsignacionCompletada}
+        />
+      )}
+
+      <ModalDetallesArticulo
+        open={modalDetallesOpen}
+        onClose={handleCerrarDetalles}
+        articulo={articuloDetalles}
+        stockContext={stockContext ?? undefined}
+        accentColor={depositTheme.accent}
+      />
     </PageContainer>
   );
 }

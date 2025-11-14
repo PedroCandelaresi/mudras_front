@@ -1,4 +1,6 @@
 import { gql } from '@apollo/client';
+import { ARTICULO_FRAGMENT } from '@/components/articulos/graphql/queries';
+import type { Articulo } from '@/app/interfaces/mudras.types';
 
 export const OBTENER_PUNTOS_MUDRAS = gql`
   query ObtenerPuntosMudras {
@@ -59,6 +61,7 @@ export const OBTENER_ESTADISTICAS_PUNTOS_MUDRAS = gql`
 `;
 
 export const OBTENER_STOCK_PUNTO_MUDRAS = gql`
+  ${ARTICULO_FRAGMENT}
   query ObtenerStockPuntoMudras($puntoMudrasId: Int!) {
     obtenerStockPuntoMudras(puntoMudrasId: $puntoMudrasId) {
       id
@@ -70,6 +73,9 @@ export const OBTENER_STOCK_PUNTO_MUDRAS = gql`
       rubro {
         id
         nombre
+      }
+      articulo {
+        ...ArticuloFragment
       }
     }
   }
@@ -171,6 +177,7 @@ export interface ArticuloConStockPuntoMudras {
     id: number;
     nombre: string;
   } | null;
+  articulo?: Articulo | null;
 }
 
 export interface ProveedorBasico {

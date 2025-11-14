@@ -53,8 +53,16 @@ export interface Articulo {
   estado?: EstadoArticulo;
   imagenesUrls?: string[];
   proveedor?: {
-    id: number;
-    RazonSocial: string;
+    IdProveedor: number;
+    Nombre?: string;
+    PorcentajeRecargoProveedor?: number;
+    PorcentajeDescuentoProveedor?: number;
+  };
+  rubro?: {
+    Id: number;
+    Rubro?: string;
+    PorcentajeRecargo?: number;
+    PorcentajeDescuento?: number;
   };
 }
 

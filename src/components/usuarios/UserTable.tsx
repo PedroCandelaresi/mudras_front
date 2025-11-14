@@ -57,9 +57,10 @@ interface Props {
   onRoles?: (u: UsuarioListado) => void;
   onEliminar?: (u: UsuarioListado) => void;
   refetchToken?: number | string;
+  onlyType?: 'EMPRESA' | 'CLIENTE';
 }
 
-export function UserTable({ onCrear, onEditar, onRoles, onEliminar, refetchToken }: Props) {
+export function UserTable({ onCrear, onEditar, onRoles, onEliminar, refetchToken, onlyType }: Props) {
   const [pagina, setPagina] = useState(0);
   const [limite, setLimite] = useState(20);
   const [total, setTotal] = useState(0);
@@ -106,21 +107,21 @@ export function UserTable({ onCrear, onEditar, onRoles, onEliminar, refetchToken
   React.useEffect(() => {
     if (!data?.usuariosAdmin) return;
     const { total: totalUsuarios, items } = data.usuariosAdmin;
-    setTotal(totalUsuarios);
-    setUsuarios(
-      items.map((usuario) => ({
-        id: usuario.id,
-        username: usuario.username ?? null,
-        email: usuario.email ?? null,
-        displayName: usuario.displayName,
-        userType: usuario.userType,
-        isActive: usuario.isActive,
-        createdAt: usuario.createdAt,
-        updatedAt: usuario.updatedAt,
-        roles: usuario.roles,
-      })),
-    );
-  }, [data]);
+    const mapeados = items.map((usuario) => ({
+      id: usuario.id,
+      username: usuario.username ?? null,
+      email: usuario.email ?? null,
+      displayName: usuario.displayName,
+      userType: usuario.userType,
+      isActive: usuario.isActive,
+      createdAt: usuario.createdAt,
+      updatedAt: usuario.updatedAt,
+      roles: usuario.roles,
+    }));
+    const filtrados = onlyType ? mapeados.filter((u) => u.userType === onlyType) : mapeados;
+    setTotal(onlyType ? filtrados.length : totalUsuarios);
+    setUsuarios(filtrados);
+  }, [data, onlyType]);
 
   const limpiarFiltros = () => {
     setFiltro('');

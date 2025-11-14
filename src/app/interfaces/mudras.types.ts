@@ -10,6 +10,7 @@ export interface Articulo {
   PrecioCompra?: number;
   StockMinimo?: number;
   Stock?: number;
+  totalStock?: number;
   AlicuotaIva?: number;
   Deposito?: number;
   FechaCompra?: Date;
@@ -38,6 +39,7 @@ export interface Articulo {
   Combustible?: boolean;
   ImpuestoPorcentual?: boolean;
   proveedor?: Proveedor;
+  rubro?: Rubro;
 }
 
 export interface Proveedor {
@@ -61,6 +63,9 @@ export interface Proveedor {
   Pais?: string;
   Fax?: string;
   FechaModif?: Date;
+  PorcentajeRecargoProveedor?: number;
+  PorcentajeDescuentoProveedor?: number;
+  rubroId?: number;
 }
 
 export interface Stock {
@@ -77,4 +82,6 @@ export interface Rubro {
   Rubro?: string;
   Codigo?: string;
   UnidadPorDefecto?: UnidadMedida; // Unidad sugerida para los artículos de este rubro
+  PorcentajeRecargo?: number;
+  PorcentajeDescuento?: number;
 }

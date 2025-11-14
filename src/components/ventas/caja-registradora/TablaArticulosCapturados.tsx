@@ -33,6 +33,7 @@ export interface ArticuloCapturado {
   Codigo: string;
   Descripcion: string;
   PrecioVenta: number;
+  PrecioCompra?: number;
   Deposito: number;
   StockMinimo: number;
   EnPromocion: boolean;
@@ -46,11 +47,16 @@ export interface ArticuloCapturado {
     Descripcion?: string;
     Id?: number;
     Rubro?: string;
+    PorcentajeRecargo?: number | null;
+    PorcentajeDescuento?: number | null;
   };
   proveedor: {
     IdProveedor: number;
     Nombre: string;
+    PorcentajeRecargoProveedor?: number | null;
+    PorcentajeDescuentoProveedor?: number | null;
   };
+  puntoOrigenId?: number | null;
   cantidad: number;
   subtotal: number;
   seleccionado: boolean;

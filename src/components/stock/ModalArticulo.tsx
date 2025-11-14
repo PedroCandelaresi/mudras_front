@@ -168,7 +168,7 @@ export default function ModalArticulo({ abierto, articulo, onCerrar }: ModalArti
         await actualizarArticulo({
           variables: {
             actualizarArticuloDto: {
-              id: articulo.id,
+              id: Number(articulo.id),
               ...datosEnvio
             }
           }

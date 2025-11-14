@@ -1,4 +1,5 @@
 import { gql } from '@apollo/client';
+import type { ArticuloPrecioContext } from '@/utils/precioVenta';
 
 export const BUSCAR_ARTICULOS_CAJA = gql`
   query BuscarArticulosCaja($input: BuscarArticuloInput!) {
@@ -7,6 +8,12 @@ export const BUSCAR_ARTICULOS_CAJA = gql`
       Codigo
       Descripcion
       PrecioVenta
+      PrecioCompra
+      CostoPromedio
+      PrecioListaProveedor
+      PorcentajeGanancia
+      AlicuotaIva
+      totalStock
       Deposito
       StockMinimo
       EnPromocion
@@ -15,6 +22,8 @@ export const BUSCAR_ARTICULOS_CAJA = gql`
       rubro {
         Id
         Rubro
+        PorcentajeRecargo
+        PorcentajeDescuento
       }
       stockDisponible
       stockDespuesVenta
@@ -22,6 +31,8 @@ export const BUSCAR_ARTICULOS_CAJA = gql`
       proveedor {
         IdProveedor
         Nombre
+        PorcentajeRecargoProveedor
+        PorcentajeDescuentoProveedor
       }
     }
   }
@@ -39,7 +50,6 @@ export const OBTENER_PUESTOS_VENTA = gql`
       requiereCliente
       emitirComprobanteAfip
       puntoVentaAfip
-      configuracion
     }
   }
 `;
@@ -54,32 +64,12 @@ export const OBTENER_HISTORIAL_VENTAS = gql`
         tipoVenta
         estado
         total
-        cliente {
-          id
-          Nombre
-          Apellido
-        }
-        usuario {
-          id
-          Nombre
-        }
-        puestoVenta {
-          id
-          nombre
-        }
+        nombreUsuario
+        nombrePuesto
       }
-      totalRegistros
+      total
       totalPaginas
       paginaActual
-      resumen {
-        totalVentas
-        montoTotal
-        ventasPorEstado {
-          estado
-          cantidad
-          monto
-        }
-      }
     }
   }
 `;
@@ -99,7 +89,7 @@ export const OBTENER_DETALLE_VENTA = gql`
       total
       cambio
       observaciones
-      puestoVenta {
+      puntoMudras {
         id
         nombre
       }
@@ -110,9 +100,9 @@ export const OBTENER_DETALLE_VENTA = gql`
         Email
         Telefono
       }
-      usuario {
+      usuarioAuth {
         id
-        Nombre
+        displayName
       }
       detalles {
         id
@@ -134,13 +124,14 @@ export const OBTENER_DETALLE_VENTA = gql`
       }
       pagos {
         id
-        metodoPago
+        medioPago
         monto
-        referencia
-        numeroTarjetaUltimos4
-        tipoTarjeta
-        numeroCuotas
+        numeroComprobante
+        marcaTarjeta
+        ultimos4Digitos
+        cuotas
         observaciones
+        creadoEn
       }
       comprobantesAfip {
         id
@@ -199,11 +190,17 @@ export const OBTENER_COMPROBANTES_PENDIENTES = gql`
   }
 `;
 
-export interface ArticuloCaja {
+export interface ArticuloCaja extends ArticuloPrecioContext {
   id: number;
   Codigo: string;
   Descripcion: string;
   PrecioVenta: number;
+  PrecioCompra?: number;
+  CostoPromedio?: number;
+  PrecioListaProveedor?: number;
+  PorcentajeGanancia?: number;
+  AlicuotaIva?: number;
+  totalStock?: number;
   Deposito: number;
   StockMinimo: number;
   EnPromocion: boolean;
@@ -212,6 +209,8 @@ export interface ArticuloCaja {
   rubro?: {
     Id: number;
     Rubro: string;
+    PorcentajeRecargo?: number | null;
+    PorcentajeDescuento?: number | null;
   } | null;
   stockDisponible: number;
   stockDespuesVenta: number;
@@ -219,6 +218,8 @@ export interface ArticuloCaja {
   proveedor?: {
     IdProveedor: number;
     Nombre: string;
+    PorcentajeRecargoProveedor?: number | null;
+    PorcentajeDescuentoProveedor?: number | null;
   } | null;
 }
 
@@ -236,7 +237,6 @@ export interface PuestoVenta {
   requiereCliente: boolean;
   emitirComprobanteAfip: boolean;
   puntoVentaAfip?: number | null;
-  configuracion?: string | null;
 }
 
 export const OBTENER_CLIENTES_VENTA = gql`
@@ -268,36 +268,16 @@ export interface VentaCajaResumen {
   tipoVenta: string;
   estado: string;
   total: number;
-  cliente?: {
-    id: number;
-    Nombre: string;
-    Apellido: string;
-  } | null;
-  usuario: {
-    id: number;
-    Nombre: string;
-  };
-  puestoVenta: {
-    id: number;
-    nombre: string;
-  };
+  nombreUsuario: string;
+  nombrePuesto: string;
 }
 
 export interface HistorialVentasResponse {
   obtenerHistorialVentas: {
     ventas: VentaCajaResumen[];
-    totalRegistros: number;
+    total: number;
     totalPaginas: number;
     paginaActual: number;
-    resumen: {
-      totalVentas: number;
-      montoTotal: number;
-      ventasPorEstado: {
-        estado: string;
-        cantidad: number;
-        monto: number;
-      }[];
-    };
   };
 }
 

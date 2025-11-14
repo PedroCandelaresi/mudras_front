@@ -29,13 +29,20 @@ import { TexturedPanel } from '@/components/ui/TexturedFrame/TexturedPanel';
 import { WoodBackdrop } from '@/components/ui/TexturedFrame/WoodBackdrop';
 import CrystalButton, { CrystalSoftButton } from '@/components/ui/CrystalButton';
 import { verde as verdePalette } from '@/ui/colores';
+import { calcularPrecioDesdeArticulo } from '@/utils/precioVenta';
 
 /* ======================== Props ======================== */
+interface StockContextProps {
+  value?: number;
+  label?: string;
+}
+
 interface ModalDetallesArticuloProps {
   open: boolean;
   onClose: () => void;
   articulo?: Pick<Articulo, 'id' | 'Descripcion' | 'Codigo'> | null;
   accentColor?: string;
+  stockContext?: StockContextProps;
 }
 
 /* ======================== Utils ======================== */
@@ -63,7 +70,7 @@ const DIV_H = 3;
 const CONTENT_MAX = `calc(${VH_MAX}vh - ${HEADER_H + FOOTER_H + DIV_H * 2}px)`;
 
 /* ======================== Componente ======================== */
-const ModalDetallesArticulo = ({ open, onClose, articulo, accentColor }: ModalDetallesArticuloProps) => {
+const ModalDetallesArticulo = ({ open, onClose, articulo, accentColor, stockContext }: ModalDetallesArticuloProps) => {
   const COLORS = useMemo(() => makeColors(accentColor), [accentColor]);
 
   const articuloId = useMemo(() => {
@@ -91,6 +98,8 @@ const ModalDetallesArticulo = ({ open, onClose, articulo, accentColor }: ModalDe
     return null;
   }, [data?.articulo, articuloId, articulo]);
 
+  const precioCalculado = useMemo(() => calcularPrecioDesdeArticulo(articuloCompleto ?? undefined), [articuloCompleto]);
+
   // Refetch al abrir
   useEffect(() => {
     if (open && articuloId != null) {
@@ -107,7 +116,15 @@ const ModalDetallesArticulo = ({ open, onClose, articulo, accentColor }: ModalDe
   if (!articuloCompleto && !loading && !error) return null;
 
   // ===== Datos calculados
-  const stockActual = Number(articuloCompleto?.Deposito ?? 0);
+  const fallbackStock =
+    typeof articuloCompleto?.totalStock === 'number'
+      ? Number(articuloCompleto.totalStock)
+      : Number(articuloCompleto?.Deposito ?? articuloCompleto?.Stock ?? 0);
+  const stockActual =
+    typeof stockContext?.value === 'number' ? stockContext.value : fallbackStock;
+  const stockLabelText =
+    stockContext?.label ??
+    (typeof articuloCompleto?.totalStock === 'number' ? 'Stock total' : 'Stock actual');
   const stockMinimo = Number(articuloCompleto?.StockMinimo ?? 0);
   const stockChip =
     stockActual <= 0
@@ -360,7 +377,7 @@ const ModalDetallesArticulo = ({ open, onClose, articulo, accentColor }: ModalDe
                               <Icon icon="mdi:package-variant-closed" width={15} height={15} color={COLORS.primary} />
                             </Box>
                             <Typography variant="subtitle2" fontWeight={700} color={COLORS.textStrong}>
-                              Stock actual
+                              {stockLabelText}
                             </Typography>
                           </Box>
                           <Box display="flex" alignItems="center" gap={1}>
@@ -399,7 +416,7 @@ const ModalDetallesArticulo = ({ open, onClose, articulo, accentColor }: ModalDe
                             </Typography>
                           </Box>
                           <Typography variant="h6" fontWeight={800} color={COLORS.primary}>
-                            {currency(articuloCompleto?.PrecioVenta)}
+                            {currency(precioCalculado)}
                           </Typography>
                         </CardContent>
                       </Card>

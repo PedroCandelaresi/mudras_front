@@ -24,18 +24,12 @@ const httpLink = createHttpLink({
 
 const authLink = setContext((_, { headers }) => {
   const secretKey = process.env.NEXT_PUBLIC_X_SECRET_KEY;
-  
-  console.log('🚀 [APOLLO] Configurando headers para GraphQL request');
-  console.log('🚀 [APOLLO] X-Secret-Key presente:', secretKey ? 'SÍ' : 'NO');
-  console.log('🚀 [APOLLO] Headers actuales:', headers);
-  
+
   const finalHeaders = {
     ...headers,
-    ...(secretKey ? { 'X-Secret-Key': secretKey } : {}),
+    ...(secretKey ? { 'x-secret-key': secretKey } : {}),
   };
-  
-  console.log('🚀 [APOLLO] Headers finales:', finalHeaders);
-  
+
   return {
     headers: finalHeaders,
   };

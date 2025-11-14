@@ -16,21 +16,16 @@ import {
   type ArticuloCaja,
 } from '@/components/ventas/caja-registradora/graphql/queries';
 import { naranjaCaja } from '@/ui/colores';
-import CrystalButton, { CrystalIconButton } from '@/components/ui/CrystalButton'; // si no usás CrystalButton, podés importar solo CrystalIconButton
+import { calcularPrecioDesdeArticulo } from '@/utils/precioVenta';
 
 
 interface Props {
   puntoMudrasId?: number; // <-- ahora opcional
-  puestoVentaId?: number;
   onAgregarArticulo: (articulo: ArticuloCaja, cantidad: number) => void;
   articulosEnCarrito: Record<number, number>;
 }
 
-export const BusquedaArticulos: React.FC<Props> = ({
-  puntoMudrasId,
-  puestoVentaId,
-  onAgregarArticulo,
-}) => {
+export const BusquedaArticulos: React.FC<Props> = ({ puntoMudrasId, onAgregarArticulo }) => {
   const apollo = useApolloClient();
 
   // control del Autocomplete
@@ -39,14 +34,7 @@ export const BusquedaArticulos: React.FC<Props> = ({
 
   // consulta para el dropdown (solo cuando hay input, está abierto y hay punto)
   const { data, loading } = useQuery<BuscarArticulosCajaResponse>(BUSCAR_ARTICULOS_CAJA, {
-    variables: {
-      input: {
-        nombre: input.trim() || undefined,
-        puntoMudrasId,
-        puestoVentaId,
-        limite: 20,
-      },
-    },
+    variables: { input: { nombre: input.trim() || undefined, puntoMudrasId, limite: 20 } },
     skip: !puntoMudrasId || input.trim().length < 2 || !open,
     fetchPolicy: 'cache-and-network',
   });
@@ -64,14 +52,7 @@ export const BusquedaArticulos: React.FC<Props> = ({
 
       const res = await apollo.query<BuscarArticulosCajaResponse>({
         query: BUSCAR_ARTICULOS_CAJA,
-        variables: {
-          input: {
-            codigoBarras: codigo,
-            puntoMudrasId,
-            puestoVentaId,
-            limite: 1,
-          },
-        },
+        variables: { input: { codigoBarras: codigo, puntoMudrasId, limite: 1 } },
         fetchPolicy: 'no-cache',
       });
 
@@ -84,7 +65,7 @@ export const BusquedaArticulos: React.FC<Props> = ({
       }
       return false;
     },
-    [apollo, onAgregarArticulo, puntoMudrasId, puestoVentaId]
+    [apollo, onAgregarArticulo, puntoMudrasId]
   );
 
   // === Marco translúcido que se conserva SIEMPRE ===
@@ -209,7 +190,7 @@ export const BusquedaArticulos: React.FC<Props> = ({
                   </Typography>
                   <Typography variant="caption" color="text.secondary" noWrap>
                     #{a.Codigo ?? 's/c'} · {a.Rubro ?? 'Sin rubro'} · $
-                    {Number(a.PrecioVenta ?? 0).toLocaleString('es-AR')}
+                    {(calcularPrecioDesdeArticulo(a) || Number(a.PrecioVenta ?? 0)).toLocaleString('es-AR')}
                   </Typography>
                 </Box>
               </li>

@@ -19,7 +19,9 @@ import {
   Skeleton,
   Button,
   Tooltip,
-  TablePagination
+  TablePagination,
+  Snackbar,
+  Alert
 } from '@mui/material';
 import { Search, Store, Warehouse, MoreVert } from '@mui/icons-material';
 import { IconSearch, IconPlus, IconTrash, IconEdit, IconEye, IconRefresh } from '@tabler/icons-react';
@@ -44,9 +46,10 @@ interface TablaPuntosMudrasProps {
   onEditarPunto?: (punto: PuntoMudras) => void;
   onVerInventario?: (punto: PuntoMudras) => void;
   onNuevoPunto?: () => void;
+  onEliminado?: (punto: PuntoMudras) => void;
 }
 
-export default function TablaPuntosMudras({ tipo, onEditarPunto, onVerInventario, onNuevoPunto }: TablaPuntosMudrasProps) {
+export default function TablaPuntosMudras({ tipo, onEditarPunto, onVerInventario, onNuevoPunto, onEliminado }: TablaPuntosMudrasProps) {
   const [busqueda, setBusqueda] = useState('');
   const [menuAnchor, setMenuAnchor] = useState<null | HTMLElement>(null);
   const [puntoSeleccionado, setPuntoSeleccionado] = useState<PuntoMudras | null>(null);
@@ -54,6 +57,7 @@ export default function TablaPuntosMudras({ tipo, onEditarPunto, onVerInventario
   const [eliminando, setEliminando] = useState(false);
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(50);
+  const [snack, setSnack] = useState<{ open: boolean; msg: string; sev: 'success'|'error'|'info' }>({ open: false, msg: '', sev: 'success' });
 
   // Query para obtener puntos desde el backend
   const { data, loading, error, refetch } = useQuery<ObtenerPuntosMudrasResponse>(OBTENER_PUNTOS_MUDRAS);
@@ -64,6 +68,11 @@ export default function TablaPuntosMudras({ tipo, onEditarPunto, onVerInventario
       console.log('✅ [ELIMINACION] Eliminación completada exitosamente:', data);
       setEliminando(false);
       setModalEliminarAbierto(false);
+      if (puntoSeleccionado && onEliminado) onEliminado(puntoSeleccionado);
+      // Feedback interno si no hay manejador externo
+      if (!onEliminado && puntoSeleccionado) {
+        setSnack({ open: true, msg: `${puntoSeleccionado.tipo === 'venta' ? 'Punto' : 'Depósito'} eliminado: ${puntoSeleccionado.nombre}` , sev: 'success' });
+      }
       setPuntoSeleccionado(null);
       refetch();
       setMenuAnchor(null);
@@ -75,6 +84,7 @@ export default function TablaPuntosMudras({ tipo, onEditarPunto, onVerInventario
       console.error('❌ [ELIMINACION] Error completo:', JSON.stringify(error, null, 2));
       setEliminando(false);
       setModalEliminarAbierto(false);
+      setSnack({ open: true, msg: error?.message || 'Error al eliminar el punto', sev: 'error' });
     },
     refetchQueries: [{ query: OBTENER_PUNTOS_MUDRAS }]
   });
@@ -610,6 +620,12 @@ export default function TablaPuntosMudras({ tipo, onEditarPunto, onVerInventario
         onCancelar={handleCancelarEliminacion}
         cargando={eliminando}
       />
+      {/* Snackbar interno para feedback */}
+      <Snackbar open={snack.open} autoHideDuration={2500} onClose={() => setSnack((s) => ({ ...s, open: false }))} anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}>
+        <Alert onClose={() => setSnack((s) => ({ ...s, open: false }))} severity={snack.sev} variant="filled" sx={{ width: '100%' }}>
+          {snack.msg}
+        </Alert>
+      </Snackbar>
     </Paper>
   );
 }

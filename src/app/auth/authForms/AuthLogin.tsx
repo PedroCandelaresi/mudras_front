@@ -9,6 +9,8 @@ import {
   Stack,
   Divider,
   Alert,
+  IconButton,
+  InputAdornment,
 } from "@mui/material";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -20,6 +22,7 @@ import AuthSocialButtons from "./AuthSocialButtons";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { IconEye, IconEyeOff } from '@tabler/icons-react';
 
 const esquema = z.object({
   username: z.string().min(1, 'Usuario o email requerido'),
@@ -39,8 +42,16 @@ const AuthLogin = ({ title, subtitle, subtext }: loginType) => {
     defaultValues: { username: '', password: '', recordar: true },
   });
 
+  const [mostrarPassword, setMostrarPassword] = React.useState(false);
+
   const onSubmit = async (data: Formulario) => {
     try {
+      // Si ingresa un email, derivar al login de clientes (OAuth)
+      if (/@/.test(data.username)) {
+        const next = encodeURIComponent(siguiente || '/cliente/panel');
+        router.replace(`/cliente?next=${next}`);
+        return;
+      }
       const res = await fetch('/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -86,7 +97,7 @@ const AuthLogin = ({ title, subtitle, subtext }: loginType) => {
             position="relative"
             px={2}
           >
-            o ingresar con email
+            ingresar con usuario nombre.apellido
           </Typography>
         </Divider>
       </Box>
@@ -105,12 +116,21 @@ const AuthLogin = ({ title, subtitle, subtext }: loginType) => {
             <CustomFormLabel htmlFor="password">Contraseña</CustomFormLabel>
             <CustomTextField
               id="password"
-              type="password"
+              type={mostrarPassword ? 'text' : 'password'}
               variant="outlined"
               fullWidth
               error={!!errors.password}
               helperText={errors.password?.message}
               {...register('password')}
+              InputProps={{
+                endAdornment: (
+                  <InputAdornment position="end">
+                    <IconButton aria-label="mostrar contraseña" onClick={() => setMostrarPassword((v) => !v)} edge="end">
+                      {mostrarPassword ? <IconEyeOff size={18} /> : <IconEye size={18} />}
+                    </IconButton>
+                  </InputAdornment>
+                ),
+              }}
             />
           </Box>
           <Stack

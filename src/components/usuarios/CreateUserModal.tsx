@@ -1,6 +1,6 @@
 "use client";
 import React from 'react';
-import { Dialog, DialogActions, DialogContent, DialogTitle, Button, TextField, FormControlLabel, Checkbox } from '@mui/material';
+import { Dialog, DialogActions, DialogContent, DialogTitle, Button, TextField, FormControlLabel, Checkbox, IconButton, InputAdornment } from '@mui/material';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -38,6 +38,7 @@ export function CreateUserModal({ open, onClose, onSubmit }: Props) {
     defaultValues: { isActive: true },
     resolver: zodResolver(schema),
   });
+  const [mostrarPassword, setMostrarPassword] = React.useState(false);
 
   const submit = handleSubmit((data) => { onSubmit(data); reset(); });
 
@@ -49,7 +50,23 @@ export function CreateUserModal({ open, onClose, onSubmit }: Props) {
           <TextField label="Usuario" {...register('username')} size="small" error={!!errors.username} helperText={errors.username?.message} />
           <TextField label="Email" {...register('email')} size="small" error={!!errors.email} helperText={errors.email?.message} />
           <TextField label="Nombre a mostrar" {...register('displayName')} size="small" error={!!errors.displayName} helperText={errors.displayName?.message} />
-          <TextField label="Password temporal" type="password" {...register('passwordTemporal')} size="small" error={!!errors.passwordTemporal} helperText={errors.passwordTemporal?.message} />
+          <TextField 
+            label="Password temporal" 
+            type={mostrarPassword ? 'text' : 'password'} 
+            {...register('passwordTemporal')} 
+            size="small" 
+            error={!!errors.passwordTemporal} 
+            helperText={errors.passwordTemporal?.message}
+            InputProps={{
+              endAdornment: (
+                <InputAdornment position="end">
+                  <IconButton aria-label="mostrar contraseña" onClick={() => setMostrarPassword((v) => !v)} edge="end">
+                    {mostrarPassword ? '🙈' : '👁️'}
+                  </IconButton>
+                </InputAdornment>
+              ),
+            }}
+          />
           <FormControlLabel control={<Checkbox defaultChecked {...register('isActive')} />} label="Activo" />
         </div>
       </DialogContent>

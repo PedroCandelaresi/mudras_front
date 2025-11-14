@@ -1,0 +1,466 @@
+'use client';
+
+import { useCallback, useMemo, useState, type PropsWithChildren } from 'react';
+import {
+  Alert,
+  Box,
+  Chip,
+  InputAdornment,
+  Skeleton,
+  Stack,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  TextField,
+  Tooltip,
+  Typography,
+} from '@mui/material';
+import { alpha, darken } from '@mui/material/styles';
+import { IconClipboardList, IconEdit, IconEye, IconPlus, IconSearch, IconX } from '@tabler/icons-react';
+import CrystalButton, { CrystalIconButton, CrystalSoftButton } from '@/components/ui/CrystalButton';
+import { crearConfiguracionBisel, crearEstilosBisel } from '@/components/ui/bevel';
+import { WoodBackdrop } from '@/components/ui/TexturedFrame/WoodBackdrop';
+import type { ArticuloConStockPuntoMudras } from '@/components/puntos-mudras/graphql/queries';
+import type { Articulo } from '@/app/interfaces/mudras.types';
+import { calcularPrecioDesdeArticulo } from '@/utils/precioVenta';
+import { verde, azul } from '@/ui/colores';
+
+type TablaStockTheme = {
+  accent?: string;
+  accentInterior?: string;
+  woodTintExterior?: string;
+  woodTintInterior?: string;
+  tableBodyBg?: string;
+  tableBodyAlt?: string;
+  headerBg?: string;
+  panelOverlay?: string;
+  buttonColor?: string;
+};
+
+const DEFAULT_THEME: Required<Omit<TablaStockTheme, 'buttonColor'>> & { buttonColor: string } = {
+  accent: '#2b4735',
+  accentInterior: darken('#2b4735', 0.3),
+  woodTintExterior: '#c7d8cb',
+  woodTintInterior: '#b2c4b6',
+  tableBodyBg: 'rgba(235, 247, 238, 0.58)',
+  tableBodyAlt: 'rgba(191, 214, 194, 0.32)',
+  headerBg: darken('#2b4735', 0.12),
+  panelOverlay: '#f2f7f4',
+  buttonColor: '#2b4735',
+};
+
+const numberFormatter = new Intl.NumberFormat('es-AR', { maximumFractionDigits: 2 });
+const currencyFormatter = new Intl.NumberFormat('es-AR', {
+  style: 'currency',
+  currency: 'ARS',
+  maximumFractionDigits: 2,
+});
+
+type Props = {
+  articulos: ArticuloConStockPuntoMudras[];
+  loading?: boolean;
+  error?: Error;
+  puntoNombre?: string | null;
+  onEditStock?: (articulo: ArticuloConStockPuntoMudras) => void;
+  onViewDetails?: (articulo: ArticuloConStockPuntoMudras) => void;
+  onNewAssignment?: () => void;
+  themeOverride?: TablaStockTheme;
+};
+
+const TablaStockPuntoVenta: React.FC<Props> = ({
+  articulos,
+  loading = false,
+  error,
+  puntoNombre,
+  onEditStock,
+  onViewDetails,
+  onNewAssignment,
+  themeOverride,
+}) => {
+  const accent = themeOverride?.accent ?? DEFAULT_THEME.accent;
+  const accentExterior = accent;
+  const accentInterior = themeOverride?.accentInterior ?? (themeOverride?.accent ? darken(themeOverride.accent, 0.3) : DEFAULT_THEME.accentInterior);
+  const woodTintExterior = themeOverride?.woodTintExterior ?? DEFAULT_THEME.woodTintExterior;
+  const woodTintInterior = themeOverride?.woodTintInterior ?? DEFAULT_THEME.woodTintInterior;
+  const tableBodyBg = themeOverride?.tableBodyBg ?? DEFAULT_THEME.tableBodyBg;
+  const tableBodyAlt = themeOverride?.tableBodyAlt ?? DEFAULT_THEME.tableBodyAlt;
+  const headerBg = themeOverride?.headerBg ?? (themeOverride?.accent ? darken(themeOverride.accent, 0.12) : DEFAULT_THEME.headerBg);
+  const panelOverlay = themeOverride?.panelOverlay ?? DEFAULT_THEME.panelOverlay;
+  const buttonColor = themeOverride?.buttonColor ?? accent;
+  const textStrong = darken(accent, 0.15);
+  const chipText = darken(accent, 0.35);
+
+  const biselExteriorConfig = crearConfiguracionBisel(accent, 1.45);
+  const estilosBiselExterior = crearEstilosBisel(biselExteriorConfig, { zContenido: 2 });
+
+  const WoodSection: React.FC<PropsWithChildren> = ({ children }) => (
+    <Box
+      sx={{
+        position: 'relative',
+        borderRadius: 2,
+        overflow: 'hidden',
+        boxShadow: '0 18px 40px rgba(0,0,0,0.12)',
+        background: 'transparent',
+        ...estilosBiselExterior,
+      }}
+    >
+      <WoodBackdrop accent={woodTintExterior} radius={3} inset={0} strength={0.16} texture="tabla" />
+      <Box
+        sx={{
+          position: 'absolute',
+          inset: 0,
+          backgroundColor: alpha(panelOverlay, 0.78),
+          zIndex: 0,
+        }}
+      />
+      <Box sx={{ position: 'relative', zIndex: 2, p: 2.75 }}>{children}</Box>
+    </Box>
+  );
+  const [busquedaDraft, setBusquedaDraft] = useState('');
+  const [busquedaAplicada, setBusquedaAplicada] = useState('');
+
+  const articulosFiltrados = useMemo(() => {
+    if (!busquedaAplicada) return articulos;
+    const term = busquedaAplicada.toLowerCase();
+    return articulos.filter((item) =>
+      [item.codigo, item.nombre, item.rubro?.nombre]
+        .filter(Boolean)
+        .some((value) => value!.toLowerCase().includes(term))
+    );
+  }, [articulos, busquedaAplicada]);
+
+  const ejecutarBusqueda = useCallback(() => {
+    setBusquedaAplicada((busquedaDraft || '').trim());
+  }, [busquedaDraft]);
+
+  const limpiarFiltros = useCallback(() => {
+    setBusquedaDraft('');
+    setBusquedaAplicada('');
+  }, []);
+
+  const obtenerPrecioUnitario = useCallback((item: ArticuloConStockPuntoMudras) => {
+    if (item.articulo) {
+      const calculado = calcularPrecioDesdeArticulo(item.articulo as Articulo);
+      if (calculado && calculado > 0) {
+        return calculado;
+      }
+    }
+    return Number(item.precio ?? 0);
+  }, []);
+
+  const totalUnidades = useMemo(
+    () => articulosFiltrados.reduce((acc, item) => acc + (Number(item.stockAsignado) || 0), 0),
+    [articulosFiltrados]
+  );
+
+  const valorEstimado = useMemo(
+    () =>
+      articulosFiltrados.reduce(
+        (acc, item) => acc + obtenerPrecioUnitario(item) * (Number(item.stockAsignado) || 0),
+        0
+      ),
+    [articulosFiltrados, obtenerPrecioUnitario]
+  );
+
+  const resumenInventario = `${articulosFiltrados.length} artículos visibles • ${numberFormatter.format(
+    totalUnidades
+  )} unidades • ${currencyFormatter.format(valorEstimado)} estimados`;
+  const showActions = Boolean(onEditStock || onViewDetails);
+
+  const toolbar = (
+    <Box
+      sx={{
+        px: 1,
+        pb: 2,
+        display: 'flex',
+        flexDirection: { xs: 'column', lg: 'row' },
+        gap: { xs: 1.25, lg: 2 },
+        alignItems: { xs: 'flex-start', lg: 'center' },
+        justifyContent: 'space-between',
+      }}
+    >
+      <Box>
+        <Typography
+          variant="h6"
+          fontWeight={700}
+          color={textStrong}
+          sx={{ display: 'flex', alignItems: 'center', gap: 1 }}
+        >
+          <IconClipboardList size={20} />
+          {puntoNombre ? `Stock en ${puntoNombre}` : 'Stock del punto de venta'}
+        </Typography>
+        <Typography variant="body2" color="text.secondary">
+          {resumenInventario}
+        </Typography>
+      </Box>
+
+      <Box
+        display="flex"
+        alignItems="center"
+        gap={1.25}
+        flexWrap="wrap"
+        justifyContent={{ xs: 'flex-start', lg: 'flex-end' }}
+        sx={{ width: '100%' }}
+      >
+        {onNewAssignment && (
+          <CrystalButton
+            baseColor={buttonColor}
+            startIcon={<IconPlus size={18} />}
+            onClick={onNewAssignment}
+            sx={{ minHeight: 40 }}
+          >
+            Nueva asignación
+          </CrystalButton>
+        )}
+
+        <TextField
+          value={busquedaDraft}
+          onChange={(e) => setBusquedaDraft(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') {
+              e.preventDefault();
+              ejecutarBusqueda();
+            }
+          }}
+          placeholder="Buscar por código, descripción o rubro"
+          size="small"
+          sx={{
+            minWidth: { xs: '100%', sm: 260 },
+            flexGrow: 1,
+            maxWidth: 360,
+            '& .MuiOutlinedInput-root': {
+              backgroundColor: 'rgba(255, 250, 244, 0.6)',
+              backdropFilter: 'saturate(125%) blur(0.5px)',
+              borderRadius: 2,
+            },
+            '& .MuiOutlinedInput-root fieldset': {
+              borderColor: alpha(accentExterior, 0.35),
+            },
+            '& .MuiOutlinedInput-root:hover fieldset': {
+              borderColor: alpha(accentExterior, 0.5),
+            },
+            '& .MuiOutlinedInput-root.Mui-focused fieldset': {
+              borderColor: accentExterior,
+            },
+          }}
+          InputProps={{
+            startAdornment: (
+              <InputAdornment position="start">
+                <IconSearch size={18} />
+              </InputAdornment>
+            ),
+          }}
+        />
+
+        <Tooltip title="Buscar (Enter)">
+          <span>
+            <CrystalButton
+              baseColor="#35563d"
+              startIcon={<IconSearch size={16} />}
+              onClick={ejecutarBusqueda}
+              disabled={loading}
+              sx={{ minHeight: 40 }}
+            >
+              Buscar
+            </CrystalButton>
+          </span>
+        </Tooltip>
+
+        <CrystalSoftButton
+          baseColor="#35563d"
+          startIcon={<IconX size={16} />}
+          onClick={limpiarFiltros}
+          disabled={!busquedaDraft && !busquedaAplicada}
+          sx={{ minHeight: 40 }}
+        >
+          Limpiar filtros
+        </CrystalSoftButton>
+      </Box>
+    </Box>
+  );
+
+  const tabla = (
+    <TableContainer
+      sx={{
+        position: 'relative',
+        borderRadius: 0,
+        border: '1px solid',
+        borderColor: alpha(accentInterior, 0.38),
+        bgcolor: 'rgba(255, 250, 242, 0.94)',
+        backdropFilter: 'saturate(110%) blur(0.85px)',
+        overflow: 'hidden',
+        boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.55)',
+      }}
+    >
+      <WoodBackdrop accent={woodTintInterior} radius={0} inset={0} strength={0.12} texture="tabla" />
+      <Box
+        sx={{
+          position: 'absolute',
+          inset: 0,
+          backgroundColor: alpha('#fffaf3', 0.82),
+          zIndex: 0,
+        }}
+      />
+      <Table
+        stickyHeader
+        size="small"
+        sx={{
+          borderRadius: 0,
+          position: 'relative',
+          zIndex: 2,
+          bgcolor: tableBodyBg,
+          '& .MuiTableRow-root': { minHeight: 62 },
+          '& .MuiTableCell-root': {
+            fontSize: '0.75rem',
+            px: 1,
+            py: 1.1,
+            borderBottomColor: alpha(accentInterior, 0.35),
+            bgcolor: 'transparent',
+          },
+          '& .MuiTableBody-root .MuiTableRow-root:nth-of-type(odd) .MuiTableCell-root': {
+            bgcolor: tableBodyBg,
+          },
+          '& .MuiTableBody-root .MuiTableRow-root:nth-of-type(even) .MuiTableCell-root': {
+            bgcolor: tableBodyAlt,
+          },
+          '& .MuiTableBody-root .MuiTableRow-root.MuiTableRow-hover:hover .MuiTableCell-root': {
+            bgcolor: alpha('#d9b18a', 0.42),
+          },
+          '& .MuiTableCell-head': {
+            fontSize: '0.75rem',
+            fontWeight: 600,
+            bgcolor: headerBg,
+            color: alpha('#FFFFFF', 0.94),
+            boxShadow: 'inset 0 -1px 0 rgba(255,255,255,0.12)',
+            textTransform: 'uppercase',
+            letterSpacing: 0.4,
+          },
+          '& .MuiTableHead-root .MuiTableCell-head:not(:last-of-type)': {
+            borderRight: `3px solid ${alpha(darken(headerBg, 0.25), 0.5)}`,
+          },
+        }}
+      >
+        <TableHead>
+          <TableRow>
+            {(['Código', 'Descripción', 'Precio', 'Stock del punto', 'Rubro', ...(showActions ? ['Acciones'] : [])] as const).map((header) => (
+              <TableCell key={header}>{header}</TableCell>
+            ))}
+          </TableRow>
+        </TableHead>
+        <TableBody>
+          {loading
+            ? Array.from({ length: 6 }).map((_, idx) => (
+                <TableRow key={`skeleton-${idx}`}>
+                  {Array.from({ length: 5 }).map((__, cellIdx) => (
+                    <TableCell key={cellIdx}>
+                      <Skeleton variant="text" />
+                    </TableCell>
+                  ))}
+                </TableRow>
+              ))
+            : articulosFiltrados.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={5} align="center" sx={{ py: 4 }}>
+                    {busquedaAplicada
+                      ? 'No hay resultados que coincidan con la búsqueda.'
+                      : 'Este punto aún no tiene stock cargado.'}
+                  </TableCell>
+                </TableRow>
+              ) : (
+                articulosFiltrados.map((item) => {
+                  const precioUnitario = obtenerPrecioUnitario(item);
+                  return (
+                    <TableRow key={item.id} hover>
+                      <TableCell>
+                        <Chip
+                          label={item.codigo ?? 'Sin código'}
+                          size="small"
+                          sx={{
+                            bgcolor: alpha(accentExterior, 0.14),
+                            color: chipText,
+                            fontWeight: 600,
+                          }}
+                        />
+                      </TableCell>
+                      <TableCell>{item.nombre}</TableCell>
+                      <TableCell align="right">
+                        {Number.isFinite(precioUnitario)
+                          ? currencyFormatter.format(precioUnitario)
+                          : '—'}
+                      </TableCell>
+                      <TableCell align="right">{numberFormatter.format(Number(item.stockAsignado) || 0)}</TableCell>
+                      <TableCell>
+                        {item.rubro?.nombre ? (
+                          <Chip
+                            label={item.rubro.nombre}
+                            size="small"
+                            sx={{
+                              bgcolor: alpha(accentExterior, 0.18),
+                              color: '#12331f',
+                              fontWeight: 600,
+                            }}
+                          />
+                        ) : (
+                          <Chip label="Sin rubro" size="small" variant="outlined" />
+                        )}
+                      </TableCell>
+                      {showActions && (
+                        <TableCell align="center">
+                          <Box display="flex" justifyContent="center" gap={0.75}>
+                            {onViewDetails && (
+                              <Tooltip title="Ver detalles">
+                                <span>
+                                  <CrystalIconButton
+                                    baseColor={azul.primary}
+                                    onClick={() => onViewDetails?.(item)}
+                                    disabled={!onViewDetails}
+                                  >
+                                    <IconEye size={16} />
+                                  </CrystalIconButton>
+                                </span>
+                              </Tooltip>
+                            )}
+
+                            {onEditStock && (
+                              <Tooltip title="Editar stock">
+                                <span>
+                                  <CrystalIconButton
+                                    baseColor={buttonColor}
+                                    onClick={() => onEditStock?.(item)}
+                                    disabled={!onEditStock}
+                                  >
+                                    <IconEdit size={16} />
+                                  </CrystalIconButton>
+                                </span>
+                              </Tooltip>
+                            )}
+                          </Box>
+                        </TableCell>
+                      )}
+                    </TableRow>
+                  );
+                })
+              )}
+        </TableBody>
+      </Table>
+    </TableContainer>
+  );
+
+  return (
+    <WoodSection>
+      {toolbar}
+      {error && !loading ? (
+        <Alert severity="error" sx={{ mb: 2 }}>
+          {error.message || 'No se pudo cargar el stock del punto seleccionado.'}
+        </Alert>
+      ) : (
+        tabla
+      )}
+    </WoodSection>
+  );
+};
+
+export default TablaStockPuntoVenta;

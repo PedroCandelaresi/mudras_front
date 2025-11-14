@@ -55,6 +55,20 @@ export const MODIFICAR_STOCK_PUNTO = gql`
   }
 `;
 
+export const TRANSFERIR_STOCK_PUNTO = gql`
+  mutation TransferirStock($input: TransferirStockInput!) {
+    transferirStock(input: $input) {
+      id
+      articuloId
+      cantidad
+      tipoMovimiento
+      fechaMovimiento
+      puntoOrigen { id nombre }
+      puntoDestino { id nombre }
+    }
+  }
+`;
+
 export interface CrearPuntoMudrasInput {
   nombre: string;
   tipo: 'venta' | 'deposito';
