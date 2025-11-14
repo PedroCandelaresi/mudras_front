@@ -5,12 +5,19 @@ import { verde } from '@/ui/colores';
 import CrystalButton, { CrystalIconButton } from '@/components/ui/CrystalButton';
 import { Icon } from '@iconify/react';
 
-type Gasto = {
-  id: number; fecha: string; montoNeto: number; alicuotaIva?: number; montoIva: number; total: number; descripcion?: string;
-  proveedor?: { IdProveedor: number; Nombre?: string } | null; categoria?: { id: number; nombre: string } | null;
+export type TablaGasto = {
+  id: number;
+  fecha?: string | null;
+  montoNeto?: number | null;
+  alicuotaIva?: number | null;
+  montoIva?: number | null;
+  total?: number | null;
+  descripcion?: string | null;
+  proveedor?: { IdProveedor: number; Nombre?: string | null } | null;
+  categoria?: { id: number; nombre?: string | null } | null;
 };
 
-type Props = { gastos: Gasto[]; onDelete?: (id: number) => void };
+type Props = { gastos: TablaGasto[]; onDelete?: (id: number) => void };
 
 const TablaGastos: React.FC<Props> = ({ gastos, onDelete }) => {
   const headerBg = darken(verde.primary, 0.25);
@@ -31,7 +38,7 @@ const TablaGastos: React.FC<Props> = ({ gastos, onDelete }) => {
       <TableBody>
         {gastos.map((g) => (
           <TableRow key={g.id} hover>
-            <TableCell>{new Date(g.fecha).toLocaleDateString('es-AR')}</TableCell>
+            <TableCell>{g.fecha ? new Date(g.fecha).toLocaleDateString('es-AR') : '—'}</TableCell>
             <TableCell>{g.proveedor?.Nombre || (g.proveedor ? `Prov #${g.proveedor.IdProveedor}` : '—')}</TableCell>
             <TableCell>
               {g.categoria ? (
@@ -59,4 +66,3 @@ const TablaGastos: React.FC<Props> = ({ gastos, onDelete }) => {
 };
 
 export default TablaGastos;
-
