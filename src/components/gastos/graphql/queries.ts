@@ -43,3 +43,13 @@ export const GET_CATEGORIAS_GASTO = gql`
     categoriasGasto { id nombre descripcion }
   }
 `;
+
+export interface CategoriaGasto {
+  id: number;
+  nombre?: string | null;
+  descripcion?: string | null;
+}
+
+export interface CategoriasGastoResponse {
+  categoriasGasto: CategoriaGasto[];
+}

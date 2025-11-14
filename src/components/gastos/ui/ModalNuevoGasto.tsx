@@ -2,8 +2,8 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Dialog, DialogTitle, DialogContent, DialogActions, TextField, MenuItem, Box, Typography } from '@mui/material';
 import { useQuery, useMutation } from '@apollo/client/react';
-import { GET_CATEGORIAS_GASTO } from '@/components/gastos/graphql/queries';
-import { GET_PROVEEDORES } from '@/components/proveedores/graphql/queries';
+import { GET_CATEGORIAS_GASTO, type CategoriasGastoResponse, type CategoriaGasto } from '@/components/gastos/graphql/queries';
+import { GET_PROVEEDORES, type GetProveedoresResponse, type ProveedorBasico } from '@/components/proveedores/graphql/queries';
 import { CREAR_GASTO } from '@/components/gastos/graphql/mutations';
 import { TexturedPanel } from '@/components/ui/TexturedFrame/TexturedPanel';
 import CrystalButton, { CrystalSoftButton } from '@/components/ui/CrystalButton';
@@ -12,10 +12,10 @@ import { verde } from '@/ui/colores';
 type Props = { open: boolean; onClose: () => void; onSuccess: () => void };
 
 const ModalNuevoGasto: React.FC<Props> = ({ open, onClose, onSuccess }) => {
-  const { data: catsData } = useQuery(GET_CATEGORIAS_GASTO, { fetchPolicy: 'cache-and-network' });
-  const categorias: Array<{ id: number; nombre: string }> = catsData?.categoriasGasto ?? [];
-  const { data: provData } = useQuery(GET_PROVEEDORES, { fetchPolicy: 'cache-and-network' });
-  const proveedores: Array<{ IdProveedor: number; Nombre?: string }> = provData?.proveedores ?? [];
+  const { data: catsData } = useQuery<CategoriasGastoResponse>(GET_CATEGORIAS_GASTO, { fetchPolicy: 'cache-and-network' });
+  const categorias: CategoriaGasto[] = catsData?.categoriasGasto ?? [];
+  const { data: provData } = useQuery<GetProveedoresResponse>(GET_PROVEEDORES, { fetchPolicy: 'cache-and-network' });
+  const proveedores: ProveedorBasico[] = provData?.proveedores ?? [];
   const [crear, { loading }] = useMutation(CREAR_GASTO);
 
   const [fecha, setFecha] = useState('');
@@ -90,4 +90,3 @@ const ModalNuevoGasto: React.FC<Props> = ({ open, onClose, onSuccess }) => {
 };
 
 export default ModalNuevoGasto;
-

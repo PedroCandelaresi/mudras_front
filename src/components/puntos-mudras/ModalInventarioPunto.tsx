@@ -8,7 +8,13 @@ import {
 } from '@mui/material';
 import { useQuery, useMutation } from '@apollo/client/react';
 import { TexturedPanel } from '@/components/ui/TexturedFrame/TexturedPanel';
-import { OBTENER_STOCK_PUNTO_MUDRAS, OBTENER_PUNTOS_MUDRAS } from '@/components/puntos-mudras/graphql/queries';
+import {
+  OBTENER_STOCK_PUNTO_MUDRAS,
+  OBTENER_PUNTOS_MUDRAS,
+  type ObtenerStockPuntoMudrasResponse,
+  type ObtenerPuntosMudrasResponse,
+  type ArticuloConStockPuntoMudras,
+} from '@/components/puntos-mudras/graphql/queries';
 import Tooltip from '@mui/material/Tooltip';
 import { MODIFICAR_STOCK_PUNTO, TRANSFERIR_STOCK_PUNTO } from '@/components/puntos-mudras/graphql/mutations';
 import CrystalButton, { CrystalSoftButton } from '@/components/ui/CrystalButton';
@@ -16,15 +22,17 @@ import { verde } from '@/ui/colores';
 
 type Props = { open: boolean; onClose: () => void; punto: { id: number; nombre: string; tipo: 'venta'|'deposito' } | null };
 
+type ArticuloInventario = ArticuloConStockPuntoMudras & { stockMinimo?: number | null };
+
 const ModalInventarioPunto: React.FC<Props> = ({ open, onClose, punto }) => {
   const puntoId = punto?.id ?? 0;
-  const { data, loading, error, refetch } = useQuery(OBTENER_STOCK_PUNTO_MUDRAS, { skip: !open || !puntoId, variables: { puntoMudrasId: puntoId }, fetchPolicy: 'cache-and-network' });
-  const items = data?.obtenerStockPuntoMudras ?? [];
+  const { data, loading, error, refetch } = useQuery<ObtenerStockPuntoMudrasResponse>(OBTENER_STOCK_PUNTO_MUDRAS, { skip: !open || !puntoId, variables: { puntoMudrasId: puntoId }, fetchPolicy: 'cache-and-network' });
+  const items: ArticuloInventario[] = data?.obtenerStockPuntoMudras ?? [];
   const [modificar] = useMutation(MODIFICAR_STOCK_PUNTO);
   const [transferir] = useMutation(TRANSFERIR_STOCK_PUNTO);
   const [destinoId, setDestinoId] = useState('');
-  const { data: puntosData } = useQuery(OBTENER_PUNTOS_MUDRAS, { fetchPolicy: 'cache-and-network' });
-  const puntos = (puntosData?.obtenerPuntosMudras ?? []).filter((p: any) => p.id !== puntoId);
+  const { data: puntosData } = useQuery<ObtenerPuntosMudrasResponse>(OBTENER_PUNTOS_MUDRAS, { fetchPolicy: 'cache-and-network' });
+  const puntos = (puntosData?.obtenerPuntosMudras ?? []).filter((p) => p.id !== puntoId);
 
   const [ajustes, setAjustes] = useState<Record<number, string>>({});
   const [transferencias, setTransferencias] = useState<Record<number, string>>({});
@@ -84,7 +92,7 @@ const ModalInventarioPunto: React.FC<Props> = ({ open, onClose, punto }) => {
                 </TableRow>
               </TableHead>
               <TableBody>
-                {items.map((a: any) => (
+                {items.map((a) => (
                   <TableRow key={a.id} hover>
                     <TableCell>{a.codigo}</TableCell>
                     <TableCell>{a.nombre}</TableCell>
@@ -123,7 +131,7 @@ const ModalInventarioPunto: React.FC<Props> = ({ open, onClose, punto }) => {
             sx={{ mr: 'auto', minWidth: 260 }}
           >
             <MenuItem value="">Seleccione destino…</MenuItem>
-            {puntos.map((p: any) => (
+            {puntos.map((p) => (
               <MenuItem key={p.id} value={String(p.id)}>{p.tipo === 'deposito' ? 'Depósito: ' : 'Punto: '}{p.nombre}</MenuItem>
             ))}
           </TextField>

@@ -31,30 +31,18 @@ import {
 } from '@mui/material';
 import { Icon } from '@iconify/react';
 import { useLazyQuery, useQuery } from '@apollo/client/react';
-import { OBTENER_PROVEEDORES_CON_STOCK, OBTENER_RUBROS_POR_PROVEEDOR, BUSCAR_ARTICULOS_PARA_ASIGNACION } from '@/components/puntos-mudras/graphql/queries';
+import {
+  OBTENER_PROVEEDORES_CON_STOCK,
+  OBTENER_RUBROS_POR_PROVEEDOR,
+  BUSCAR_ARTICULOS_PARA_ASIGNACION,
+  type ObtenerProveedoresConStockResponse,
+  type ObtenerRubrosPorProveedorResponse,
+  type BuscarArticulosParaAsignacionResponse,
+  type ProveedorBasico,
+  type RubroBasico,
+  type ArticuloFiltrado,
+} from '@/components/puntos-mudras/graphql/queries';
 import { verde } from '@/ui/colores';
-
-interface ProveedorBasico {
-  id: number;
-  nombre: string;
-  codigo?: number;
-}
-
-interface RubroBasico {
-  rubro: string;
-}
-
-interface ArticuloFiltrado {
-  id: number;
-  nombre: string;
-  codigo: string;
-  precio: number;
-  stockTotal: number;
-  stockAsignado: number;
-  stockDisponible: number;
-  rubro: string;
-  proveedor: string;
-}
 
 interface AsignacionStock {
   articuloId: number;
@@ -87,14 +75,14 @@ export default function ModalNuevaAsignacionStock({ open, onClose, puntoVenta, o
 
   // Cargar proveedores al abrir el modal
   // Apollo: cargar proveedores al abrir
-  const { data: proveedoresData, loading: loadingProveedores } = useQuery(OBTENER_PROVEEDORES_CON_STOCK, { skip: !open, fetchPolicy: 'cache-and-network' });
+  const { data: proveedoresData, loading: loadingProveedores } = useQuery<ObtenerProveedoresConStockResponse>(OBTENER_PROVEEDORES_CON_STOCK, { skip: !open, fetchPolicy: 'cache-and-network' });
   useEffect(() => {
     if (!open) return;
-    setProveedores((proveedoresData?.obtenerProveedoresConStock || []) as any);
+    setProveedores(proveedoresData?.obtenerProveedoresConStock ?? []);
   }, [open, proveedoresData]);
 
   // Cargar rubros cuando se selecciona un proveedor
-  const [getRubros, { data: rubrosData, loading: loadingRubros }] = useLazyQuery(OBTENER_RUBROS_POR_PROVEEDOR, { fetchPolicy: 'network-only' });
+  const [getRubros, { data: rubrosData, loading: loadingRubros }] = useLazyQuery<ObtenerRubrosPorProveedorResponse>(OBTENER_RUBROS_POR_PROVEEDOR, { fetchPolicy: 'network-only' });
   useEffect(() => {
     if (proveedorSeleccionado) {
       getRubros({ variables: { proveedorId: String(proveedorSeleccionado.id) } });
@@ -105,13 +93,13 @@ export default function ModalNuevaAsignacionStock({ open, onClose, puntoVenta, o
   }, [proveedorSeleccionado, getRubros]);
   useEffect(() => {
     if (rubrosData?.obtenerRubrosPorProveedor) {
-      const list = rubrosData.obtenerRubrosPorProveedor as any[];
+      const list = rubrosData.obtenerRubrosPorProveedor;
       setRubros(list);
       if (list.length === 1) setRubroSeleccionado(list[0].rubro as string);
     }
   }, [rubrosData]);
 
-  const [buscarArticulosQuery, { data: articulosData, loading: buscandoArticulos, error: errorBuscar }] = useLazyQuery(BUSCAR_ARTICULOS_PARA_ASIGNACION, { fetchPolicy: 'network-only' });
+  const [buscarArticulosQuery, { data: articulosData, loading: buscandoArticulos, error: errorBuscar }] = useLazyQuery<BuscarArticulosParaAsignacionResponse>(BUSCAR_ARTICULOS_PARA_ASIGNACION, { fetchPolicy: 'network-only' });
   const buscarArticulos = useCallback(async () => {
     if (!proveedorSeleccionado || busqueda.length < 3) return;
     setError('');

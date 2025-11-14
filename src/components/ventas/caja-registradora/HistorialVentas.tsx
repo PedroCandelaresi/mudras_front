@@ -348,20 +348,16 @@ export const HistorialVentas: React.FC = () => {
                           </TableCell>
                           
                           <TableCell>
-                            {venta.cliente ? (
-                              <Typography variant="body2">
-                                {venta.cliente.Nombre} {venta.cliente.Apellido}
-                              </Typography>
-                            ) : (
-                              <Typography variant="body2" color="text.secondary">
-                                Sin cliente
-                              </Typography>
-                            )}
+                            <Typography variant="body2" color={venta.cliente ? 'inherit' : 'text.secondary'}>
+                              {venta.cliente
+                                ? `${venta.cliente.Nombre ?? ''} ${venta.cliente.Apellido ?? ''}`.trim() || 'Sin cliente'
+                                : 'Sin cliente'}
+                            </Typography>
                           </TableCell>
                           
                           <TableCell>
                             <Typography variant="body2">
-                              {venta.puestoVenta.nombre}
+                              {venta.puestoVenta?.nombre ?? venta.nombrePuesto ?? '—'}
                             </Typography>
                           </TableCell>
                           

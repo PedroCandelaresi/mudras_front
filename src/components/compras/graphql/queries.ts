@@ -55,3 +55,28 @@ export const GET_ORDEN_COMPRA = gql`
     }
   }
 `;
+
+export interface OrdenCompraDetalle {
+  id: number;
+  articuloId: number;
+  cantidad: number;
+  precioUnitario?: number | null;
+  cantidadRecibida?: number | null;
+  costoUnitarioRecepcion?: number | null;
+}
+
+export interface OrdenCompraFull {
+  id: number;
+  proveedorId?: number | null;
+  estado?: string | null;
+  observaciones?: string | null;
+  creadoEn?: string | null;
+  fechaEmision?: string | null;
+  fechaRecepcion?: string | null;
+  proveedor?: { IdProveedor: number; Nombre?: string | null } | null;
+  detalles: OrdenCompraDetalle[];
+}
+
+export interface OrdenCompraResponse {
+  ordenCompra?: OrdenCompraFull | null;
+}

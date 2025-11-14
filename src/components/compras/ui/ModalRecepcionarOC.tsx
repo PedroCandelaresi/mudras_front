@@ -2,9 +2,9 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Dialog, DialogTitle, DialogContent, DialogActions, TextField, MenuItem, Box, Typography, Divider } from '@mui/material';
 import { useQuery, useMutation } from '@apollo/client/react';
-import { GET_ORDEN_COMPRA } from '@/components/compras/graphql/queries';
+import { GET_ORDEN_COMPRA, type OrdenCompraResponse, type OrdenCompraDetalle } from '@/components/compras/graphql/queries';
 import { RECEPCIONAR_ORDEN_COMPRA } from '@/components/compras/graphql/mutations';
-import { OBTENER_PUNTOS_MUDRAS } from '@/components/puntos-mudras/graphql/queries';
+import { OBTENER_PUNTOS_MUDRAS, type ObtenerPuntosMudrasResponse } from '@/components/puntos-mudras/graphql/queries';
 import { TexturedPanel } from '@/components/ui/TexturedFrame/TexturedPanel';
 import CrystalButton, { CrystalSoftButton } from '@/components/ui/CrystalButton';
 import { verde } from '@/ui/colores';
@@ -12,11 +12,11 @@ import { verde } from '@/ui/colores';
 type Props = { open: boolean; onClose: () => void; ordenId: number | null; onSuccess: () => void };
 
 const ModalRecepcionarOC: React.FC<Props> = ({ open, onClose, ordenId, onSuccess }) => {
-  const { data, loading, refetch } = useQuery(GET_ORDEN_COMPRA, { skip: !open || !ordenId, variables: { id: ordenId ?? 0 }, fetchPolicy: 'cache-and-network' });
+  const { data, loading, refetch } = useQuery<OrdenCompraResponse>(GET_ORDEN_COMPRA, { skip: !open || !ordenId, variables: { id: ordenId ?? 0 }, fetchPolicy: 'cache-and-network' });
   const orden = data?.ordenCompra;
-  const detalles = orden?.detalles ?? [];
-  const { data: puntosData } = useQuery(OBTENER_PUNTOS_MUDRAS, { fetchPolicy: 'cache-and-network' });
-  const puntos: Array<{ id: number; nombre: string }> = puntosData?.obtenerPuntosMudras ?? [];
+  const detalles: OrdenCompraDetalle[] = orden?.detalles ?? [];
+  const { data: puntosData } = useQuery<ObtenerPuntosMudrasResponse>(OBTENER_PUNTOS_MUDRAS, { fetchPolicy: 'cache-and-network' });
+  const puntos: Array<{ id: number; nombre: string }> = puntosData?.obtenerPuntosMudras?.map((p) => ({ id: p.id, nombre: p.nombre })) ?? [];
   const [puntoId, setPuntoId] = useState('');
   const [cantidades, setCantidades] = useState<Record<number, { cantidad: string; costo: string }>>({});
   const [recepcionar, { loading: saving }] = useMutation(RECEPCIONAR_ORDEN_COMPRA);
@@ -54,7 +54,7 @@ const ModalRecepcionarOC: React.FC<Props> = ({ open, onClose, ordenId, onSuccess
             {loading ? (
               <Typography variant="body2">Cargando detalles…</Typography>
             ) : (
-              detalles.map((d: any) => (
+              detalles.map((d) => (
                 <Box key={d.id} sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: 1, alignItems: 'center' }}>
                   <Typography variant="body2">Detalle #{d.id} · Artículo {d.articuloId}</Typography>
                   <Typography variant="body2">Cant. OC: {d.cantidad}</Typography>
@@ -75,4 +75,3 @@ const ModalRecepcionarOC: React.FC<Props> = ({ open, onClose, ordenId, onSuccess
 };
 
 export default ModalRecepcionarOC;
-

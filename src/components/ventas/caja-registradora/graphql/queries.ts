@@ -85,12 +85,20 @@ export interface HistorialVentaItem {
   nombreCliente?: string | null;
 }
 
+export interface ResumenHistorialVentas {
+  totalVentas?: number;
+  montoTotal?: number;
+  ventasPorEstado?: Array<{ estado: string; cantidad: number }>;
+}
+
 export interface ObtenerHistorialVentasResponse {
   obtenerHistorialVentas: {
     ventas: HistorialVentaItem[];
     total: number;
     totalPaginas: number;
     paginaActual: number;
+    totalRegistros?: number;
+    resumen?: ResumenHistorialVentas;
   };
 }
 
@@ -298,6 +306,8 @@ export interface HistorialVentasResponse {
     total: number;
     totalPaginas: number;
     paginaActual: number;
+    totalRegistros?: number;
+    resumen?: ResumenHistorialVentas;
   };
 }
 
@@ -355,7 +365,15 @@ export interface VentaCajaDetalle {
   puestoVenta: PuestoVenta;
 }
 
-export interface VentaCaja extends VentaCajaResumen {}
+export interface VentaCaja extends VentaCajaResumen {
+  cliente?: {
+    Nombre?: string | null;
+    Apellido?: string | null;
+  } | null;
+  puestoVenta?: {
+    nombre?: string | null;
+  } | null;
+}
 
 export interface PuestosVentaResponse {
   obtenerPuestosVenta: PuestoVenta[];
