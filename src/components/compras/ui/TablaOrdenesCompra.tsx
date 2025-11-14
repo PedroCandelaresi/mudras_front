@@ -5,15 +5,15 @@ import CrystalButton, { CrystalIconButton } from '@/components/ui/CrystalButton'
 import { verde } from '@/ui/colores';
 import { Icon } from '@iconify/react';
 
-interface OrdenCompraRow {
+export interface OrdenCompraRow {
   id: number;
-  proveedorId: number;
-  estado: string;
-  observaciones?: string;
-  creadoEn?: string;
-  fechaEmision?: string;
-  fechaRecepcion?: string;
-  proveedor?: { IdProveedor: number; Nombre?: string } | null;
+  proveedorId?: number | null;
+  estado?: string | null;
+  observaciones?: string | null;
+  creadoEn?: string | null;
+  fechaEmision?: string | null;
+  fechaRecepcion?: string | null;
+  proveedor?: { IdProveedor: number; Nombre?: string | null } | null;
 }
 
 type Props = {
@@ -44,7 +44,11 @@ const TablaOrdenesCompra: React.FC<Props> = ({ ordenes, onEmitir, onRecepcionar,
               <TableCell>#{oc.id}</TableCell>
               <TableCell>{oc.proveedor?.Nombre || `Proveedor #${oc.proveedorId}`}</TableCell>
               <TableCell>
-                <Chip label={oc.estado} size="small" sx={{ fontWeight: 700, bgcolor: alpha(headerBg, 0.2) }} />
+                <Chip
+                  label={oc.estado ?? '—'}
+                  size="small"
+                  sx={{ fontWeight: 700, bgcolor: alpha(headerBg, 0.2) }}
+                />
               </TableCell>
               <TableCell>{oc.fechaEmision ? new Date(oc.fechaEmision).toLocaleString('es-AR') : '—'}</TableCell>
               <TableCell>{oc.fechaRecepcion ? new Date(oc.fechaRecepcion).toLocaleString('es-AR') : '—'}</TableCell>
