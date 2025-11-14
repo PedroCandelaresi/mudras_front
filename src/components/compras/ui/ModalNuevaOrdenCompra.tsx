@@ -2,7 +2,7 @@
 import { useState } from 'react';
 import { Dialog, DialogTitle, DialogContent, DialogActions, TextField, MenuItem } from '@mui/material';
 import { useQuery, useMutation } from '@apollo/client/react';
-import { GET_PROVEEDORES } from '@/components/proveedores/graphql/queries';
+import { GET_PROVEEDORES, type GetProveedoresResponse, type ProveedorBasico } from '@/components/proveedores/graphql/queries';
 import { CREAR_ORDEN_COMPRA } from '@/components/compras/graphql/mutations';
 import { TexturedPanel } from '@/components/ui/TexturedFrame/TexturedPanel';
 import CrystalButton, { CrystalSoftButton } from '@/components/ui/CrystalButton';
@@ -11,8 +11,8 @@ import { verde } from '@/ui/colores';
 type Props = { open: boolean; onClose: () => void; onSuccess: () => void };
 
 const ModalNuevaOrdenCompra: React.FC<Props> = ({ open, onClose, onSuccess }) => {
-  const { data: provData, loading } = useQuery(GET_PROVEEDORES, { fetchPolicy: 'cache-and-network' });
-  const proveedores: Array<{ IdProveedor: number; Nombre?: string }> = provData?.proveedores ?? [];
+  const { data: provData, loading } = useQuery<GetProveedoresResponse>(GET_PROVEEDORES, { fetchPolicy: 'cache-and-network' });
+  const proveedores: ProveedorBasico[] = provData?.proveedores ?? [];
   const [proveedorId, setProveedorId] = useState('');
   const [obs, setObs] = useState('');
   const [crearOrden, { loading: saving }] = useMutation(CREAR_ORDEN_COMPRA);
@@ -48,4 +48,3 @@ const ModalNuevaOrdenCompra: React.FC<Props> = ({ open, onClose, onSuccess }) =>
 };
 
 export default ModalNuevaOrdenCompra;
-

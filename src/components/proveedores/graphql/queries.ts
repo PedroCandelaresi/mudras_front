@@ -29,6 +29,16 @@ export const GET_PROVEEDORES = gql`
   }
 `;
 
+export interface ProveedorBasico {
+  IdProveedor: number;
+  Codigo?: number | null;
+  Nombre?: string | null;
+}
+
+export interface GetProveedoresResponse {
+  proveedores: ProveedorBasico[];
+}
+
 export const GET_PROVEEDOR = gql`
   query GetProveedor($id: Int!) {
     proveedor(id: $id) {
