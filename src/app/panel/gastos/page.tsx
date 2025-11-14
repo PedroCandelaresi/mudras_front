@@ -6,13 +6,13 @@ import PageContainer from '@/components/container/PageContainer';
 import { TexturedPanel } from '@/components/ui/TexturedFrame/TexturedPanel';
 import CrystalButton, { CrystalSoftButton } from '@/components/ui/CrystalButton';
 import { verde } from '@/ui/colores';
-import { GET_GASTOS } from '@/components/gastos/graphql/queries';
+import { GET_GASTOS, type GastosResponse } from '@/components/gastos/graphql/queries';
 import { ELIMINAR_GASTO } from '@/components/gastos/graphql/mutations';
 import TablaGastos from '@/components/gastos/ui/TablaGastos';
 import ModalNuevoGasto from '@/components/gastos/ui/ModalNuevoGasto';
 
 export default function GastosPage() {
-  const { data, loading, error, refetch } = useQuery(GET_GASTOS, { fetchPolicy: 'cache-and-network', variables: {} });
+  const { data, loading, error, refetch } = useQuery<GastosResponse>(GET_GASTOS, { fetchPolicy: 'cache-and-network', variables: {} });
   const gastos = data?.gastos ?? [];
   const [modalOpen, setModalOpen] = useState(false);
   const [eliminar] = useMutation(ELIMINAR_GASTO);
@@ -43,4 +43,3 @@ export default function GastosPage() {
     </PageContainer>
   );
 }
-
