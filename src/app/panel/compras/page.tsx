@@ -7,7 +7,7 @@ import PageContainer from '@/components/container/PageContainer';
 import { TexturedPanel } from '@/components/ui/TexturedFrame/TexturedPanel';
 import CrystalButton, { CrystalSoftButton, forceWhiteIconsSX } from '@/components/ui/CrystalButton';
 import { verde } from '@/ui/colores';
-import { GET_ORDENES_COMPRA, GET_ORDEN_COMPRA } from '@/components/compras/graphql/queries';
+import { GET_ORDENES_COMPRA, GET_ORDEN_COMPRA, type OrdenesCompraResponse } from '@/components/compras/graphql/queries';
 import { CREAR_ORDEN_COMPRA, EMITIR_ORDEN_COMPRA } from '@/components/compras/graphql/mutations';
 import TablaOrdenesCompra from '@/components/compras/ui/TablaOrdenesCompra';
 import ModalNuevaOrdenCompra from '@/components/compras/ui/ModalNuevaOrdenCompra';
@@ -21,7 +21,7 @@ export default function ComprasPage() {
   const [modalDetalleOpen, setModalDetalleOpen] = useState(false);
   const [reloadKey, setReloadKey] = useState(0);
 
-  const { data, loading, error, refetch } = useQuery(GET_ORDENES_COMPRA, { fetchPolicy: 'cache-and-network', variables: {} });
+  const { data, loading, error, refetch } = useQuery<OrdenesCompraResponse>(GET_ORDENES_COMPRA, { fetchPolicy: 'cache-and-network', variables: {} });
   const ordenes = data?.ordenesCompra ?? [];
 
   const [emitirOrden] = useMutation(EMITIR_ORDEN_COMPRA);

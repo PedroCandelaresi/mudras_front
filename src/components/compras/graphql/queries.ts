@@ -15,6 +15,24 @@ export const GET_ORDENES_COMPRA = gql`
   }
 `;
 
+export interface OrdenCompraResumen {
+  id: number;
+  proveedorId?: number | null;
+  estado?: string | null;
+  observaciones?: string | null;
+  creadoEn?: string | null;
+  fechaEmision?: string | null;
+  fechaRecepcion?: string | null;
+  proveedor?: {
+    IdProveedor: number;
+    Nombre?: string | null;
+  } | null;
+}
+
+export interface OrdenesCompraResponse {
+  ordenesCompra: OrdenCompraResumen[];
+}
+
 export const GET_ORDEN_COMPRA = gql`
   query OrdenCompra($id: Int!) {
     ordenCompra(id: $id) {
@@ -37,4 +55,3 @@ export const GET_ORDEN_COMPRA = gql`
     }
   }
 `;
-
