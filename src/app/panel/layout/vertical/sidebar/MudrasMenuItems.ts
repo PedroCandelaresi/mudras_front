@@ -88,12 +88,6 @@ const MudrasMenuItems: NavGroup[] = [
   },
   {
     id: uniqueId(),
-    title: "Gastos",
-    icon: IconReceipt,
-    href: "/panel/gastos",
-  },
-  {
-    id: uniqueId(),
     title: "Puntos de Venta",
     icon: IconShoppingBag,
     href: "/panel/puntos-venta",
