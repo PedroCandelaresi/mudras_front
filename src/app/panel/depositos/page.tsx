@@ -2,6 +2,7 @@
 
 import { useState, useMemo, useEffect, useCallback } from 'react';
 import { Alert, Box, LinearProgress, Tab, Tabs, Typography } from '@mui/material';
+import { alpha } from '@mui/material/styles';
 import { useQuery } from '@apollo/client/react';
 import { Icon } from '@iconify/react';
 
