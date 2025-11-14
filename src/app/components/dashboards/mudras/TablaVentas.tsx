@@ -24,7 +24,7 @@ import {
 import { IconDotsVertical, IconEye, IconRefresh, IconSearch, IconReceipt, IconPlus, IconTrash, IconEdit } from '@tabler/icons-react';
 import { verde } from '@/ui/colores';
 import { useQuery } from '@apollo/client/react';
-import { OBTENER_HISTORIAL_VENTAS } from '@/components/ventas/caja-registradora/graphql/queries';
+import { OBTENER_HISTORIAL_VENTAS, type ObtenerHistorialVentasResponse } from '@/components/ventas/caja-registradora/graphql/queries';
 
 export interface VentaListado {
   id: string;
@@ -54,7 +54,7 @@ export function TablaVentas() {
   const cerrarMenu = () => { setMenuAnchor(null); setColumnaActiva(null); };
 
   // Consultar historial de ventas
-  const { data, loading, refetch } = useQuery(OBTENER_HISTORIAL_VENTAS, {
+  const { data, loading, refetch } = useQuery<ObtenerHistorialVentasResponse>(OBTENER_HISTORIAL_VENTAS, {
     variables: { filtros: { limite: 200, offset: 0 } },
     fetchPolicy: 'cache-and-network',
   });

@@ -73,6 +73,26 @@ export const OBTENER_HISTORIAL_VENTAS = gql`
     }
   }
 `;
+export interface HistorialVentaItem {
+  id: number;
+  numeroVenta: string;
+  fecha: string;
+  tipoVenta: string;
+  estado: string;
+  total: number;
+  nombreUsuario?: string | null;
+  nombrePuesto?: string | null;
+  nombreCliente?: string | null;
+}
+
+export interface ObtenerHistorialVentasResponse {
+  obtenerHistorialVentas: {
+    ventas: HistorialVentaItem[];
+    total: number;
+    totalPaginas: number;
+    paginaActual: number;
+  };
+}
 
 export const OBTENER_DETALLE_VENTA = gql`
   query ObtenerDetalleVenta($id: Int!) {
