@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useMemo, useState, useCallback } from 'react';
+import React, { useMemo, useState, useCallback, useRef, useEffect } from 'react';
 import { useApolloClient, useQuery } from '@apollo/client/react';
 import {
   Autocomplete,
@@ -31,6 +31,13 @@ export const BusquedaArticulos: React.FC<Props> = ({ puntoMudrasId, onAgregarArt
   // control del Autocomplete
   const [open, setOpen] = useState(false);
   const [input, setInput] = useState('');
+  const inputRef = useRef<HTMLInputElement | null>(null);
+
+  useEffect(() => {
+    if (puntoMudrasId && inputRef.current) {
+      inputRef.current.focus();
+    }
+  }, [puntoMudrasId]);
 
   // consulta para el dropdown (solo cuando hay input, está abierto y hay punto)
   const { data, loading } = useQuery<BuscarArticulosCajaResponse>(BUSCAR_ARTICULOS_CAJA, {
@@ -61,6 +68,9 @@ export const BusquedaArticulos: React.FC<Props> = ({ puntoMudrasId, onAgregarArt
         onAgregarArticulo(match, 1);
         setInput('');
         setOpen(false);
+        requestAnimationFrame(() => {
+          inputRef.current?.focus();
+        });
         return true;
       }
       return false;
@@ -133,6 +143,9 @@ export const BusquedaArticulos: React.FC<Props> = ({ puntoMudrasId, onAgregarArt
                 onAgregarArticulo(value, 1);
                 setInput('');
                 setOpen(false);
+                requestAnimationFrame(() => {
+                  inputRef.current?.focus();
+                });
               }
             }}
             renderInput={(params) => (
@@ -140,6 +153,10 @@ export const BusquedaArticulos: React.FC<Props> = ({ puntoMudrasId, onAgregarArt
                 {...params}
                 label="Buscar o escanear"
                 placeholder="Escaneá el código y presioná Enter…"
+                inputRef={(node) => {
+                  params.InputProps.ref?.(node);
+                  inputRef.current = node;
+                }}
                 onKeyDown={async (e) => {
                   if (e.key === 'Enter') {
                     e.preventDefault();

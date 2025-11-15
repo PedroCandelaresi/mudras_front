@@ -40,7 +40,10 @@ interface ModalNuevoArticuloProps {
   open: boolean;
   onClose: () => void;
   articulo?: (
-    Pick<Articulo, 'id' | 'Descripcion' | 'Codigo' | 'PrecioVenta' | 'PrecioCompra' | 'PorcentajeGanancia' | 'AlicuotaIva'> & {
+    Pick<
+      Articulo,
+      'id' | 'Descripcion' | 'Codigo' | 'PrecioVenta' | 'PrecioCompra' | 'PorcentajeGanancia' | 'AlicuotaIva' | 'StockMinimo' | 'Stock' | 'totalStock'
+    > & {
       rubro?: any;
       idProveedor?: number;
     }
@@ -82,6 +85,34 @@ const parseNumericInput = (value: string) => {
   const normalized = value.replace(',', '.');
   const parsed = Number(normalized);
   return Number.isFinite(parsed) ? parsed : 0;
+};
+
+const obtenerStockEditable = (articulo?: Articulo | null): number | null => {
+  if (!articulo) return null;
+  if (typeof articulo.totalStock === 'number' && Number.isFinite(articulo.totalStock)) {
+    return articulo.totalStock;
+  }
+  const stockBase = (articulo as Articulo & { Stock?: number }).Stock;
+  if (typeof stockBase === 'number' && Number.isFinite(stockBase)) {
+    return stockBase;
+  }
+  const deposito = (articulo as Articulo & { Deposito?: number }).Deposito;
+  if (typeof deposito === 'number' && Number.isFinite(deposito)) {
+    return deposito;
+  }
+  return null;
+};
+
+const obtenerStockMinimoEditable = (articulo?: Articulo | null): number | null => {
+  if (!articulo) return null;
+  if (typeof articulo.StockMinimo === 'number' && Number.isFinite(articulo.StockMinimo)) {
+    return articulo.StockMinimo;
+  }
+  const legacy = (articulo as Articulo & { stockMinimo?: number }).stockMinimo;
+  if (typeof legacy === 'number' && Number.isFinite(legacy)) {
+    return legacy;
+  }
+  return null;
 };
 
 type IvaOption = '0' | '10.5' | '21';
@@ -145,18 +176,26 @@ const ModalNuevoArticulo = ({ open, onClose, articulo, onSuccess, accentColor }:
     if (!open) return;
     setError('');
     setSaving(false);
-    const costoReferencia = articulo ? obtenerCostoReferencia(articulo) : 0;
+    if (!articulo) {
+      setForm(INITIAL_STATE);
+      setIva('21');
+      return;
+    }
+
+    const costoReferencia = obtenerCostoReferencia(articulo);
+    const stockActual = obtenerStockEditable(articulo);
+    const stockMinimoActual = obtenerStockMinimoEditable(articulo);
     setForm({
-      descripcion: (articulo?.Descripcion ?? '').toString(),
-      codigo: (articulo?.Codigo ?? '').toString(),
+      descripcion: (articulo.Descripcion ?? '').toString(),
+      codigo: (articulo.Codigo ?? '').toString(),
       costo: costoReferencia ? String(costoReferencia) : '',
-      porcentajeGanancia: articulo?.PorcentajeGanancia != null ? String(articulo.PorcentajeGanancia) : '0',
+      porcentajeGanancia: articulo.PorcentajeGanancia != null ? String(articulo.PorcentajeGanancia) : '0',
       rubroId: (articulo as any)?.rubro?.Id != null ? String((articulo as any).rubro.Id) : '',
-      idProveedor: articulo?.idProveedor != null ? String(articulo.idProveedor) : '',
-      stock: '0',
-      stockMinimo: '0',
+      idProveedor: articulo.idProveedor != null ? String(articulo.idProveedor) : '',
+      stock: stockActual != null ? String(stockActual) : '0',
+      stockMinimo: stockMinimoActual != null ? String(stockMinimoActual) : '0',
     });
-    const alic = (articulo as any)?.AlicuotaIva;
+    const alic = articulo.AlicuotaIva;
     if (alic === 10.5 || alic === 21 || alic === 0) {
       setIva(String(alic) as IvaOption);
     } else {
