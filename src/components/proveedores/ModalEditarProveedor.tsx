@@ -292,6 +292,14 @@ const ModalEditarProveedor = ({ open, onClose, proveedor, onProveedorGuardado }:
       return;
     }
 
+    const parsedProveedorId =
+      esEdicion && proveedor?.IdProveedor != null ? Number(proveedor.IdProveedor) : undefined;
+
+    if (esEdicion && (parsedProveedorId == null || Number.isNaN(parsedProveedorId))) {
+      setError('No se pudo determinar el identificador del proveedor.');
+      return;
+    }
+
     try {
       setSaving(true);
       setError('');
@@ -321,11 +329,11 @@ const ModalEditarProveedor = ({ open, onClose, proveedor, onProveedorGuardado }:
           formData.PorcentajeDescuentoProveedor !== '' ? parseFloat(formData.PorcentajeDescuentoProveedor) : undefined,
       };
 
-      if (esEdicion && proveedor) {
+      if (esEdicion && proveedor && parsedProveedorId != null) {
         await actualizarProveedor({
           variables: {
             updateProveedorInput: {
-              IdProveedor: proveedor.IdProveedor,
+              IdProveedor: parsedProveedorId,
               ...proveedorData,
             },
           },
