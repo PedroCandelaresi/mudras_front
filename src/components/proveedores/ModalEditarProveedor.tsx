@@ -52,7 +52,6 @@ interface FormData {
   Web: string;
   Mail: string;
   Rubro: string;
-  Saldo: string;
   Pais: string;
   Fax: string;
   PorcentajeRecargoProveedor: string;
@@ -100,7 +99,6 @@ const createEmptyFormData = (): FormData => ({
   Web: '',
   Mail: '',
   Rubro: '',
-  Saldo: '',
   Pais: '',
   Fax: '',
   PorcentajeRecargoProveedor: '',
@@ -151,7 +149,6 @@ const ModalEditarProveedor = ({ open, onClose, proveedor, onProveedorGuardado }:
         Web: proveedor.Web ?? '',
         Mail: proveedor.Mail ?? '',
         Rubro: proveedor.Rubro ?? '',
-        Saldo: proveedor.Saldo != null ? proveedor.Saldo.toString() : '',
         Pais: proveedor.Pais ?? '',
         Fax: proveedor.Fax ?? '',
         PorcentajeRecargoProveedor:
@@ -271,10 +268,6 @@ const ModalEditarProveedor = ({ open, onClose, proveedor, onProveedorGuardado }:
       errores.push('El tipo de IVA debe ser un número válido.');
     }
 
-    if (formData.Saldo && Number.isNaN(Number(formData.Saldo))) {
-      errores.push('El saldo debe ser un número válido.');
-    }
-
     if (formData.PorcentajeRecargoProveedor && Number.isNaN(Number(formData.PorcentajeRecargoProveedor))) {
       errores.push('El recargo debe ser un número válido.');
     }
@@ -320,7 +313,6 @@ const ModalEditarProveedor = ({ open, onClose, proveedor, onProveedorGuardado }:
         Web: formData.Web.trim() || undefined,
         Mail: formData.Mail.trim() || undefined,
         Rubro: formData.Rubro.trim() || undefined,
-        Saldo: formData.Saldo ? parseFloat(formData.Saldo) : undefined,
         Pais: formData.Pais.trim() || undefined,
         Fax: formData.Fax.trim() || undefined,
         PorcentajeRecargoProveedor:
@@ -722,26 +714,17 @@ const ModalEditarProveedor = ({ open, onClose, proveedor, onProveedorGuardado }:
                     Ajustes comerciales
                   </Typography>
                   <Typography variant="body2" color="text.secondary">
-                    Configurá el saldo de cuenta corriente y los ajustes porcentuales que se mostrarán en el detalle del proveedor.
+                    Configurá los ajustes porcentuales que se aplicarán en los precios asociados a este proveedor.
                   </Typography>
                 </Box>
 
                 <Box
                   sx={{
                     display: 'grid',
-                    gridTemplateColumns: { xs: '1fr', md: 'repeat(3, minmax(0, 1fr))' },
+                    gridTemplateColumns: { xs: '1fr', md: 'repeat(2, minmax(0, 1fr))' },
                     gap: 2.5,
                   }}
                 >
-                  <TextField
-                    label="Saldo"
-                    value={formData.Saldo}
-                    onChange={handleInputChange('Saldo')}
-                    type="number"
-                    fullWidth
-                    disabled={saving}
-                    sx={fieldSx}
-                  />
                   <TextField
                     label="Recargo del proveedor (%)"
                     value={formData.PorcentajeRecargoProveedor}

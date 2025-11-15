@@ -56,9 +56,6 @@ const NBSP = '\u00A0';
 const formatCount = (n: number, singular: string, plural?: string) =>
   `${n.toLocaleString('es-AR')}${NBSP}${n === 1 ? singular : (plural ?? `${singular}s`)}`;
 
-const currency = (v?: number) =>
-  (v ?? 0).toLocaleString('es-AR', { style: 'currency', currency: 'ARS', maximumFractionDigits: 0 });
-
 const formatPercentage = (value?: number) => {
   const numeric = Number.isFinite(Number(value)) ? Number(value) : 0;
   const formatter = new Intl.NumberFormat('es-AR', {
@@ -357,11 +354,6 @@ const ModalDetallesProveedor = ({ open, onClose, proveedor, accentColor }: Modal
                   label={formatCount(totalArticulosProveedor, 'artículo', 'artículos')}
                   size="small"
                   sx={{ bgcolor: 'rgba(0,0,0,0.35)', color: '#fff', border: `1px solid ${COLORS.chipBorder}`, fontWeight: 600, px: 1.5, py: 0.5, height: 28 }}
-                />
-                <Chip
-                  label={`Saldo${NBSP}${currency(proveedorCompleto?.Saldo)}`}
-                  size="small"
-                  sx={{ bgcolor: 'rgba(0,0,0,0.35)', color: '#fff', border: `1px solid ${COLORS.chipBorder}`, fontWeight: 700, px: 1.5, py: 0.5, height: 28 }}
                 />
               </Box>
 

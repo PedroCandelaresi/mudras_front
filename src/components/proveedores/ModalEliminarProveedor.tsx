@@ -211,7 +211,7 @@ const ModalEliminarProveedor = ({ open, onClose, proveedor, onProveedorEliminado
             <Typography variant="body2" component="ul" sx={{ mt: 1, pl: 2 }}>
               <li>¿Estás seguro de que deseas eliminar el proveedor &quot;{proveedor?.Nombre}&quot;?</li>
               <li>Todos los artículos asociados quedarán sin proveedor</li>
-              <li>Se perderá el historial de compras y cuentas corrientes</li>
+              <li>Se perderá el historial de compras registrado</li>
               <li>Esta acción NO se puede deshacer</li>
             </Typography>
           </Alert>

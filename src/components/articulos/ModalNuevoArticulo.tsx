@@ -185,13 +185,15 @@ const ModalNuevoArticulo = ({ open, onClose, articulo, onSuccess, accentColor }:
       setError('');
 
       // Parseos numéricos seguros
-      const rubroId = form.rubroId !== '' && !Number.isNaN(Number(form.rubroId)) ? Number(form.rubroId) : undefined;
       const idProveedor = form.idProveedor !== '' && !Number.isNaN(Number(form.idProveedor)) ? Number(form.idProveedor) : undefined;
       const stock = form.stock !== '' && !Number.isNaN(Number(form.stock)) ? Number(form.stock) : 0;
       const stockMinimo = form.stockMinimo !== '' && !Number.isNaN(Number(form.stockMinimo)) ? Number(form.stockMinimo) : 0;
       const precioVentaCalculado = precioCalculado > 0 ? precioCalculado : costo;
 
       const shouldSendPrecioCompra = !editando || Math.abs(costo - costoReferenciaOriginal) > 0.0001;
+      const rubroNombre =
+        (selectedRubro?.nombre ? selectedRubro.nombre.trim() : undefined) ||
+        (articulo?.rubro?.Rubro ? articulo.rubro.Rubro.trim() : undefined);
       const common = {
         Codigo: form.codigo.trim(),
         Descripcion: form.descripcion.trim(),
@@ -202,7 +204,7 @@ const ModalNuevoArticulo = ({ open, onClose, articulo, onSuccess, accentColor }:
         stockMinimo,
         AlicuotaIva: Number(iva),
         ImpuestoPorcentual: true,
-        ...(typeof rubroId === 'number' ? { rubroId } : {}),
+        ...(rubroNombre ? { Rubro: rubroNombre } : {}),
         ...(typeof idProveedor === 'number' ? { idProveedor } : {}),
       } as const;
 

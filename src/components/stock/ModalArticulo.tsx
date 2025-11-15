@@ -159,8 +159,9 @@ export default function ModalArticulo({ abierto, articulo, onCerrar }: ModalArti
     if (!validarFormulario()) return;
 
     try {
+      const { rubroId: _rubroId, ...restFormData } = formData;
       const datosEnvio = {
-        ...formData,
+        ...restFormData,
         imagenesUrls: imagenesUrls.length > 0 ? imagenesUrls : undefined
       };
 
