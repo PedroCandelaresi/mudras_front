@@ -127,6 +127,7 @@ export const BusquedaArticulos: React.FC<Props> = ({ puntoMudrasId, onAgregarArt
           <Autocomplete<ArticuloCaja, false, false, true>
             freeSolo
             disablePortal
+            value={null}
             open={open}
             onOpen={() => setOpen(true)}
             onClose={() => setOpen(false)}
