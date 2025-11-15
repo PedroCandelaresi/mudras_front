@@ -233,9 +233,10 @@ export function TablaVentas() {
                     })}
                   </Typography>
                   <Typography variant="caption" color="text.secondary">
-                    {new Date(v.fecha).toLocaleTimeString('es-AR', { 
-                      hour: '2-digit', 
-                      minute: '2-digit' 
+                    {new Date(v.fecha).toLocaleTimeString('es-AR', {
+                      hour: '2-digit',
+                      minute: '2-digit',
+                      hour12: false,
                     })}
                   </Typography>
                 </TableCell>

@@ -405,7 +405,7 @@ const TablaMovimientosStock = () => {
                 >
                   <TableCell>
                     <Typography variant="body2" fontWeight={600}>
-                      {mov.Fecha ? format(new Date(mov.Fecha), "dd 'de' MMMM yyyy", { locale: es }) : '—'}
+                      {mov.Fecha ? format(new Date(mov.Fecha), "dd 'de' MMMM yyyy HH:mm", { locale: es }) : '—'}
                     </Typography>
                   </TableCell>
 
