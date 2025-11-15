@@ -21,7 +21,7 @@ import {
 } from '@mui/material';
 
 import { IconTrash } from '@tabler/icons-react';
-import { TicketType } from '../../../(DashboardLayout)/types/apps/ticket';
+import { TicketType } from '@/app/types/apps/ticket';
 import { TicketContext } from '@/app/context/TicketContext';
 
 const TicketListing = () => {

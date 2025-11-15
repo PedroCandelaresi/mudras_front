@@ -23,8 +23,8 @@ import {
 } from "@mui/material";
 import { format, isValid, parseISO } from "date-fns";
 import Link from "next/link";
-import Logo from "@/app/(DashboardLayout)/layout/shared/logo/Logo";
-import { InvoiceList } from "@/app/(DashboardLayout)/types/apps/invoice";
+import Logo from "@/app/components/shared/Logo";
+import { InvoiceList } from "@/app/types/apps/invoice";
 
 const InvoiceDetail = () => {
   const { invoices } = useContext(InvoiceContext);

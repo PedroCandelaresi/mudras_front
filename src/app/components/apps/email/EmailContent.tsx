@@ -17,7 +17,7 @@ import Image from "next/image";
 import { EmailContext } from "@/app/context/EmailContext";
 
 import dynamic from 'next/dynamic';
-import { AttachType } from "@/app/(DashboardLayout)/types/apps/email";
+import { AttachType } from "@/app/types/apps/email";
 
 const TiptapEditor = dynamic(() => import('@/app/components/forms/form-tiptap/TiptapEditor'), {
   ssr: false,
@@ -210,4 +210,3 @@ const EmailContent = () => {
 }
 
 export default EmailContent;
-

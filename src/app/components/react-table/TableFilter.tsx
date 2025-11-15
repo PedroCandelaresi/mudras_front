@@ -22,10 +22,7 @@ import {
 import { Stack } from "@mui/system";
 
 import DownloadCard from "@/app/components/shared/DownloadCard";
-import {
-  basicsTableData,
-  BasicsTableDataType,
-} from "@/app/(DashboardLayout)/react-tables/filter/FilterTableData";
+import { basicsTableData, BasicsTableDataType } from "@/app/components/react-table/FilterTableData";
 
 import {
   flexRender,

@@ -1,5 +1,5 @@
 import { Grid, Box, Typography } from "@mui/material";
-import Logo from "@/app/(DashboardLayout)/layout/shared/logo/Logo";
+import Logo from "@/app/components/shared/Logo";
 import PageContainer from "@/components/container/PageContainer";
 import AuthForgotPassword from "../../authForms/AuthForgotPassword";
 import Image from "next/image";

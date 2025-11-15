@@ -35,7 +35,17 @@ export interface VentaListado {
   estado: 'PAGADA' | 'PENDIENTE' | 'CANCELADA';
 }
 
-// Datos reales consultados vía GraphQL
+const ARG_TIMEZONE = 'America/Argentina/Buenos_Aires';
+const formatInArgentina = (valor?: string | Date | null, opciones?: Intl.DateTimeFormatOptions) => {
+  if (!valor) return '—';
+  const fecha = new Date(valor);
+  if (Number.isNaN(fecha.getTime())) return '—';
+  const formatter = new Intl.DateTimeFormat('es-AR', {
+    timeZone: ARG_TIMEZONE,
+    ...opciones,
+  });
+  return formatter.format(fecha);
+};
 
 export function TablaVentas() {
   const [page, setPage] = useState(0);
@@ -226,14 +236,14 @@ export function TablaVentas() {
               <TableRow key={v.id} sx={{ bgcolor: idx % 2 === 1 ? 'grey.50' : 'inherit', '&:hover': { bgcolor: verde.toolbarBg } }}>
                 <TableCell>
                   <Typography variant="body2" fontWeight={500}>
-                    {new Date(v.fecha).toLocaleDateString('es-AR', { 
-                      day: '2-digit', 
-                      month: '2-digit', 
-                      year: 'numeric' 
+                    {formatInArgentina(v.fecha, {
+                      day: '2-digit',
+                      month: '2-digit',
+                      year: 'numeric',
                     })}
                   </Typography>
                   <Typography variant="caption" color="text.secondary">
-                    {new Date(v.fecha).toLocaleTimeString('es-AR', {
+                    {formatInArgentina(v.fecha, {
                       hour: '2-digit',
                       minute: '2-digit',
                       hour12: false,

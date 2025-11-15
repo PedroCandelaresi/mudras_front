@@ -2,7 +2,7 @@
 import { createContext, useState, useEffect, ReactNode, Dispatch, SetStateAction } from 'react';
 import React from "react";
 import useSWR from 'swr';
-import { ChatsType, MessageType } from '@/app/(DashboardLayout)/types/apps/chat';
+import { ChatsType, MessageType } from '@/app/types/apps/chat';
 import { getFetcher, postFetcher } from '@/app/api/globalFetcher';
 
 
@@ -109,6 +109,5 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     return <ChatContext.Provider value={value}>{children}</ChatContext.Provider>;
 };
 export type { ChatsType, MessageType };
-
 
 

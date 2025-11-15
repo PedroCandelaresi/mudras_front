@@ -17,7 +17,7 @@ import {
   CommentDataType,
   Reply,
   ProfileType,
-} from '../../../../(DashboardLayout)/types/apps/userProfile';
+} from '@/app/types/apps/userProfile';
 import { UserDataContext } from '@/app/context/UserDataContext';
 
 interface CommentProps {

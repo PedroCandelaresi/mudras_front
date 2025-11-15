@@ -10,7 +10,7 @@ import Typography from '@mui/material/Typography';
 import Scrollbar from "../../custom-scroll/Scrollbar";
 
 import { IconTrash } from "@tabler/icons-react";
-import { NotesType } from '../../../(DashboardLayout)/types/apps/notes';
+import { NotesType } from '@/app/types/apps/notes';
 import { NotesContext } from "@/app/context/NotesContext";
 
 

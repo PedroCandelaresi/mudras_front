@@ -18,7 +18,7 @@ import {
   Button,
   Skeleton,
 } from "@mui/material";
-import Breadcrumb from "@/app/(DashboardLayout)/layout/shared/breadcrumb/Breadcrumb";
+import Breadcrumb from "@/app/components/shared/Breadcrumb";
 import {
   IconEye,
   IconMessage2,
@@ -30,7 +30,7 @@ import BlogComment from "./BlogComment";
 import { uniqueId } from "lodash";
 import BlankCard from "../../../shared/BlankCard";
 
-import type { BlogType } from "../../../../(DashboardLayout)/types/apps/blog";
+import type { BlogType } from "@/app/types/apps/blog";
 import { BlogContext } from "@/app/context/BlogContext";
 
 

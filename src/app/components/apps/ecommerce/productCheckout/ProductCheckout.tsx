@@ -9,7 +9,7 @@ import FirstStep from './FirstStep';
 import SecondStep from './SecondStep';
 import ThirdStep from './ThirdStep';
 import FinalStep from './FinalStep';
-import { ProductType } from '../../../../(DashboardLayout)/types/apps/eCommerce';
+import { ProductType } from '@/app/types/apps/eCommerce';
 import { ProductContext } from '@/app/context/Ecommercecontext/index';
 
 const ProductCheckout = () => {

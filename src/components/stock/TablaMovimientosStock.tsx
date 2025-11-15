@@ -23,8 +23,6 @@ import {
 } from '@mui/material';
 import { alpha } from '@mui/material/styles';
 import { useQuery } from '@apollo/client/react';
-import { format } from 'date-fns';
-import { es } from 'date-fns/locale';
 import {
   IconSearch,
   IconTrendingUp,
@@ -73,6 +71,24 @@ const WoodSection: React.FC<React.PropsWithChildren> = ({ children }) => (
     <Box sx={{ position: 'relative', zIndex: 2, p: 3 }}>{children}</Box>
   </Box>
 );
+
+const ARG_TIMEZONE = 'America/Argentina/Buenos_Aires';
+const formatearFechaHora = (valor?: string | Date | null, opciones?: Intl.DateTimeFormatOptions) => {
+  if (!valor) return '—';
+  const fecha = new Date(valor);
+  if (Number.isNaN(fecha.getTime())) return '—';
+  const formatter = new Intl.DateTimeFormat('es-AR', {
+    timeZone: ARG_TIMEZONE,
+    day: '2-digit',
+    month: 'long',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+    ...opciones,
+  });
+  return formatter.format(fecha);
+};
 
 /* ======================== Componente ======================== */
 const TablaMovimientosStock = () => {
@@ -405,7 +421,7 @@ const TablaMovimientosStock = () => {
                 >
                   <TableCell>
                     <Typography variant="body2" fontWeight={600}>
-                      {mov.Fecha ? format(new Date(mov.Fecha), "dd 'de' MMMM yyyy HH:mm", { locale: es }) : '—'}
+                      {formatearFechaHora(mov.Fecha)}
                     </Typography>
                   </TableCell>
 

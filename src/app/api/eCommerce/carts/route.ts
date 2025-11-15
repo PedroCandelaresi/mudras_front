@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { ProductsData } from "@/app/components/apps/ecommerce/productData";
-import { ProductType } from "@/app/(DashboardLayout)/types/apps/eCommerce";
+import { ProductType } from "@/app/types/apps/eCommerce";
 
 type CartItem = ProductType & { qty: number };
 let cartItems: CartItem[] = [];

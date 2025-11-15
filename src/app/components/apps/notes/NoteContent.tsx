@@ -12,7 +12,7 @@ import { useTheme } from '@mui/material/styles';
 import { IconCheck, IconMenu2 } from '@tabler/icons-react';
 
 import AddNotes from './AddNotes';
-import { NotesType } from '../../../(DashboardLayout)/types/apps/notes';
+import { NotesType } from '@/app/types/apps/notes';
 
 export interface colorsType {
   lineColor: string;

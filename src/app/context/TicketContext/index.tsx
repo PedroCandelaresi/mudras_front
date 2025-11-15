@@ -1,7 +1,7 @@
 
 'use client'
 import React, { createContext, useState, useEffect } from 'react';
-import { TicketType } from '@/app/(DashboardLayout)/types/apps/ticket';
+import { TicketType } from '@/app/types/apps/ticket';
 import useSWR from 'swr';
 import { deleteFetcher, getFetcher } from '@/app/api/globalFetcher';
 
@@ -66,5 +66,4 @@ export const TicketProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         </TicketContext.Provider>
     );
 };
-
 

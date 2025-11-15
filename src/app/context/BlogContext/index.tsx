@@ -1,6 +1,6 @@
 'use client'
 import React, { createContext, useState, useEffect, ReactNode, Dispatch, SetStateAction } from 'react';
-import { BlogType, BlogPostType } from '../../(DashboardLayout)/types/apps/blog';
+import { BlogType, BlogPostType } from '@/app/types/apps/blog';
 import { getFetcher } from '@/app/api/globalFetcher';
 import useSWR from 'swr'
 

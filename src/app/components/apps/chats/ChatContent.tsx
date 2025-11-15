@@ -18,7 +18,7 @@ import {
   IconVideo,
 } from "@tabler/icons-react";
 import { ChatContext } from "@/app/context/ChatContext/index";
-import { ChatsType } from '../../../(DashboardLayout)/types/apps/chat';
+import { ChatsType } from '@/app/types/apps/chat';
 import { formatDistanceToNowStrict } from "date-fns";
 import ChatInsideSidebar from "./ChatInsideSidebar";
 import Scrollbar from "../../../components/custom-scroll/Scrollbar";

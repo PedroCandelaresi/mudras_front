@@ -1,10 +1,10 @@
 'use client'
 import React, { createContext, useState, useEffect } from 'react';
 
-import { PostType, profiledataType, Reply, Comment } from '@/app/(DashboardLayout)/types/apps/userProfile';
+import { PostType, profiledataType, Reply, Comment } from '@/app/types/apps/userProfile';
 import { getFetcher, postFetcher } from '@/app/api/globalFetcher';
 import useSWR from 'swr';
-import { GallaryType, userType } from '@/app/(DashboardLayout)/types/apps/users';
+import { GallaryType, userType } from '@/app/types/apps/users';
 
 // Define context type
 export type UserDataContextType = {

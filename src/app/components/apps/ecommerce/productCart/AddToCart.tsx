@@ -19,7 +19,7 @@ import { IconMinus, IconPlus, IconTrash } from "@tabler/icons-react";
 
 import emptyCart from "/public/images/products/empty-shopping-cart.svg";
 
-import { ProductType } from "../../../../(DashboardLayout)/types/apps/eCommerce";
+import { ProductType } from "@/app/types/apps/eCommerce";
 import Image from "next/image";
 import { ProductContext } from "@/app/context/Ecommercecontext/index";
 import { useContext } from "react";

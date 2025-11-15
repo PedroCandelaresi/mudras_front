@@ -1,6 +1,6 @@
 'use client'
 import React, { createContext, useState, useEffect, ReactNode } from 'react';
-import { ContactType } from '../../(DashboardLayout)/types/apps/contact'
+import { ContactType } from '@/app/types/apps/contact'
 import useSWR, { mutate } from 'swr';
 import { deleteFetcher, getFetcher, postFetcher, putFetcher } from '@/app/api/globalFetcher';
 

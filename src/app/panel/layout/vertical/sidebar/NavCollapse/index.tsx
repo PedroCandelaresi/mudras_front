@@ -21,7 +21,7 @@ import { isNull } from "lodash";
 // plugins
 import { IconChevronDown, IconChevronUp } from "@tabler/icons-react";
 import { useTranslation } from "react-i18next";
-import { NavCollapseProps, NavGroup } from "@/app/(DashboardLayout)/types/layout/sidebar";
+import { NavCollapseProps, NavGroup } from "@/app/types/layout/sidebar";
 
 
 

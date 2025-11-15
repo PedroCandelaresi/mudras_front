@@ -15,12 +15,12 @@ import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import dayjs, { Dayjs } from 'dayjs';
 import moment from "moment";
-import Events, { EventType } from "@/app/(DashboardLayout)/EventData";
+import Events, { EventType } from "@/app/components/apps/calendar/EventData";
 import "react-big-calendar/lib/css/react-big-calendar.css";
 import "./Calendar.css";
 
 import PageContainer from "@/components/container/PageContainer";
-import Breadcrumb from "@/app/(DashboardLayout)/layout/shared/breadcrumb/Breadcrumb";
+import Breadcrumb from "@/app/components/shared/Breadcrumb";
 import { IconCheck } from "@tabler/icons-react";
 import BlankCard from "@/app/components/shared/BlankCard";
 

@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { Grid, Box, Stack, Typography, useTheme, alpha } from "@mui/material";
 import PageContainer from "@/components/container/PageContainer";
-import Logo from "@/app/(DashboardLayout)/layout/shared/logo/Logo";
+import Logo from "@/app/components/shared/Logo";
 import AuthLogin from "../../authForms/AuthLogin";
 import Image from "next/image";
 

@@ -1,7 +1,7 @@
 "use client";
 import React, { createContext, useState, useEffect } from "react";
 
-import { NotesType } from "@/app/(DashboardLayout)/types/apps/notes";
+import { NotesType } from "@/app/types/apps/notes";
 import useSWR from "swr";
 import {
     deleteFetcher,

@@ -16,7 +16,7 @@ import { styled, useTheme } from '@mui/material/styles';
 
 import { useTranslation } from "react-i18next";
 import { CustomizerContext } from "@/app/context/customizerContext";
-import { ItemType } from "@/app/(DashboardLayout)/types/layout/sidebar";
+import { ItemType } from "@/app/types/layout/sidebar";
 
 export default function NavItem({
   item,
@@ -104,4 +104,3 @@ export default function NavItem({
     </List>
   );
 }
-

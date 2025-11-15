@@ -1,4 +1,4 @@
-import type { EmailType } from "@/app/(DashboardLayout)/types/apps/email";
+import type { EmailType } from "@/app/types/apps/email";
 import { sub } from "date-fns";
 import { NextResponse } from "next/server";
 

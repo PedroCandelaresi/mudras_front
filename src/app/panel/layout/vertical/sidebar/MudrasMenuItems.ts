@@ -49,8 +49,7 @@ import {
   IconCalendarEvent,
   IconFileInvoice,
 } from "@tabler/icons-react";
-import { ElementType } from "react-spring";
-import { NavGroup } from "@/app/(DashboardLayout)/types/layout/sidebar";
+import { NavGroup } from "@/app/types/layout/sidebar";
 
 const MudrasMenuItems: NavGroup[] = [
   {
