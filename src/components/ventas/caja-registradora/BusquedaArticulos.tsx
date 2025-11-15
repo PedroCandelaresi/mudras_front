@@ -148,45 +148,54 @@ export const BusquedaArticulos: React.FC<Props> = ({ puntoMudrasId, onAgregarArt
                 });
               }
             }}
-            renderInput={(params) => (
-              <TextField
-                {...params}
-                label="Buscar o escanear"
-                placeholder="Escaneá el código y presioná Enter…"
-                inputRef={(node) => {
-                  params.InputProps.ref?.(node);
-                  inputRef.current = node;
-                }}
-                onKeyDown={async (e) => {
-                  if (e.key === 'Enter') {
-                    e.preventDefault();
-                    const ok = await agregarPorCodigo(input);
-                    if (ok) return;
-                    if (input.trim().length >= 2) setOpen(true);
-                  }
-                }}
-                InputProps={{
-                  ...params.InputProps,
-                  endAdornment: (
-                    <>
-                      {loading ? <CircularProgress size={18} /> : null}
-                      {params.InputProps.endAdornment}
-                    </>
-                  ),
-                }}
-                sx={{
-                  '& .MuiOutlinedInput-root': {
-                    // estética similar a la anterior (fondo muy claro + borde sutil)
-                    backgroundColor: alpha('#fffaf3', 0.72),
-                    backdropFilter: 'saturate(120%) blur(1px)',
-                    borderRadius: 2,
-                    '& fieldset': { borderColor: alpha(naranjaCaja.borderInner, 0.28) },
-                    '&:hover fieldset': { borderColor: alpha(naranjaCaja.borderInner, 0.42) },
-                    '&.Mui-focused fieldset': { borderColor: naranjaCaja.primary },
-                  },
-                }}
-              />
-            )}
+            renderInput={(params) => {
+              const handleRef = (node: HTMLInputElement | null) => {
+                const inputPropsRef = params.InputProps.ref;
+                if (typeof inputPropsRef === 'function') {
+                  inputPropsRef(node);
+                } else if (inputPropsRef && 'current' in inputPropsRef) {
+                  (inputPropsRef as React.MutableRefObject<HTMLInputElement | null>).current = node;
+                }
+                inputRef.current = node;
+              };
+
+              return (
+                <TextField
+                  {...params}
+                  label="Buscar o escanear"
+                  placeholder="Escaneá el código y presioná Enter…"
+                  inputRef={handleRef}
+                  onKeyDown={async (e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      const ok = await agregarPorCodigo(input);
+                      if (ok) return;
+                      if (input.trim().length >= 2) setOpen(true);
+                    }
+                  }}
+                  InputProps={{
+                    ...params.InputProps,
+                    endAdornment: (
+                      <>
+                        {loading ? <CircularProgress size={18} /> : null}
+                        {params.InputProps.endAdornment}
+                      </>
+                    ),
+                  }}
+                  sx={{
+                    '& .MuiOutlinedInput-root': {
+                      // estética similar a la anterior (fondo muy claro + borde sutil)
+                      backgroundColor: alpha('#fffaf3', 0.72),
+                      backdropFilter: 'saturate(120%) blur(1px)',
+                      borderRadius: 2,
+                      '& fieldset': { borderColor: alpha(naranjaCaja.borderInner, 0.28) },
+                      '&:hover fieldset': { borderColor: alpha(naranjaCaja.borderInner, 0.42) },
+                      '&.Mui-focused fieldset': { borderColor: naranjaCaja.primary },
+                    },
+                  }}
+                />
+              );
+            }}
             slotProps={{
               paper: {
                 sx: {
