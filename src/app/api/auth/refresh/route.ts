@@ -16,21 +16,45 @@ function pickAgent(url: string) {
 }
 
 const INTERNAL_BASE = process.env.INTERNAL_BACKEND_URL;
-const PUBLIC_BASE   = process.env.NEXT_PUBLIC_BACKEND_URL;
+const PUBLIC_BASE = process.env.NEXT_PUBLIC_BACKEND_URL;
 
 export async function POST(req: NextRequest) {
   const base = INTERNAL_BASE || PUBLIC_BASE;
-  if (!base) return new NextResponse('BACKEND_URL no configurada', { status: 500 });
+  if (!base) {
+    return new NextResponse('BACKEND_URL no configurada', { status: 500 });
+  }
+
+  // Intentar obtener el refreshToken de la cookie o del body
+  let refreshToken = req.cookies.get('mudras_refresh')?.value || '';
 
   try {
-    const body = await req.json();
-    const res = await fetch(join(base, '/auth/login-email'), {
+    const bodyText = await req.text();
+    if (bodyText) {
+      try {
+        const parsed = JSON.parse(bodyText);
+        if (parsed?.refreshToken && typeof parsed.refreshToken === 'string') {
+          refreshToken = parsed.refreshToken;
+        }
+      } catch {
+        // ignorar body inválido
+      }
+    }
+  } catch {
+    // ignorar errores leyendo el body
+  }
+
+  if (!refreshToken) {
+    return new NextResponse('refreshToken is required', { status: 400 });
+  }
+
+  try {
+    const res = await fetch(join(base, '/auth/refresh'), {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        ...(process.env.X_SECRET_KEY ? { 'X-Secret-Key': process.env.X_SECRET_KEY as any } : {}),
+        ...(process.env.X_SECRET_KEY ? { 'X-Secret-Key': process.env.X_SECRET_KEY as string } : {}),
       },
-      body: JSON.stringify(body),
+      body: JSON.stringify({ refreshToken }),
       cache: 'no-store',
       // @ts-ignore
       agent: pickAgent(base),
@@ -38,7 +62,7 @@ export async function POST(req: NextRequest) {
 
     if (!res.ok) {
       const text = await res.text();
-      return new NextResponse(text || 'Credenciales inválidas', { status: res.status });
+      return new NextResponse(text || 'Refresh inválido', { status: res.status });
     }
 
     const contentType = res.headers.get('content-type') || '';
@@ -49,9 +73,9 @@ export async function POST(req: NextRequest) {
 
     const data = await res.json();
     const accessToken: string | undefined = data.accessToken;
-    const refreshToken: string | undefined = data.refreshToken;
+    const nuevoRefresh: string | undefined = data.refreshToken;
 
-    const respuesta = NextResponse.json({ usuario: data.usuario });
+    const respuesta = NextResponse.json({ ok: true });
 
     if (accessToken) {
       respuesta.cookies.set('mudras_token', accessToken, {
@@ -63,8 +87,8 @@ export async function POST(req: NextRequest) {
       });
     }
 
-    if (refreshToken) {
-      respuesta.cookies.set('mudras_refresh', refreshToken, {
+    if (nuevoRefresh) {
+      respuesta.cookies.set('mudras_refresh', nuevoRefresh, {
         httpOnly: true,
         sameSite: 'lax',
         secure: process.env.NODE_ENV === 'production',
@@ -72,8 +96,11 @@ export async function POST(req: NextRequest) {
         maxAge: 60 * 60 * 24 * 7,
       });
     }
+
     return respuesta;
   } catch (err: any) {
+    console.error('❌ [/api/auth/refresh] Error backend:', err?.message || err);
     return new NextResponse('Error conectando al backend', { status: 502 });
   }
 }
+

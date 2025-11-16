@@ -55,16 +55,30 @@ export async function POST(req: NextRequest) {
     }
 
     const data = await res.json();
-    const token: string | undefined = data.accessToken;
+    const accessToken: string | undefined = data.accessToken;
+    const refreshToken: string | undefined = data.refreshToken;
 
     const respuesta = NextResponse.json({ usuario: data.usuario });
-    if (token) {
-      respuesta.cookies.set('mudras_token', token, {
+
+    if (accessToken) {
+      respuesta.cookies.set('mudras_token', accessToken, {
         httpOnly: true,
         sameSite: 'lax',
         secure: process.env.NODE_ENV === 'production',
         path: '/',
-        maxAge: 60 * 60,
+        // Mantener la sesión activa al menos 24hs
+        maxAge: 60 * 60 * 24,
+      });
+    }
+
+    if (refreshToken) {
+      respuesta.cookies.set('mudras_refresh', refreshToken, {
+        httpOnly: true,
+        sameSite: 'lax',
+        secure: process.env.NODE_ENV === 'production',
+        path: '/',
+        // El refresh por defecto dura 7 días en el backend
+        maxAge: 60 * 60 * 24 * 7,
       });
     }
 

@@ -2,6 +2,7 @@
 
 import { ApolloClient, InMemoryCache, createHttpLink } from '@apollo/client';
 import { setContext } from '@apollo/client/link/context';
+import { onError } from '@apollo/client/link/error';
 import { ApolloProvider as ApolloClientProvider } from '@apollo/client/react';
 import type { ReactNode } from 'react';
 
@@ -14,8 +15,8 @@ import type { ReactNode } from 'react';
 // Usamos SIEMPRE el proxy "/api/graphql" para inyectar Authorization desde cookie httpOnly
 const graphqlUri = process.env.NEXT_PUBLIC_GRAPHQL_ENDPOINT || '/api/graphql';
 
-const httpLink = createHttpLink({ 
-  uri: graphqlUri, 
+const httpLink = createHttpLink({
+  uri: graphqlUri,
   credentials: 'include',
   fetchOptions: {
     credentials: 'include',
@@ -35,8 +36,67 @@ const authLink = setContext((_, { headers }) => {
   };
 });
 
+let isRefreshingToken = false;
+
+const errorLink = onError((err) => {
+  const { graphQLErrors, networkError } = err as any;
+  let isAuthError = false;
+
+  const statusCode =
+    (networkError as any)?.statusCode ??
+    (networkError as any)?.status ??
+    (networkError as any)?.response?.status;
+
+  if (statusCode === 401 || statusCode === 403) {
+    isAuthError = true;
+  }
+
+  if (!isAuthError && graphQLErrors && graphQLErrors.length > 0) {
+    isAuthError = graphQLErrors.some((err) => {
+      const code = (err.extensions as any)?.code;
+      const message = (err.message || '').toLowerCase();
+      return (
+        code === 'UNAUTHENTICATED' ||
+        code === 'FORBIDDEN' ||
+        message.includes('unauthorized') ||
+        message.includes('no autenticado')
+      );
+    });
+  }
+
+  if (!isAuthError) return;
+  if (typeof window === 'undefined') return;
+  if (isRefreshingToken) return;
+
+  isRefreshingToken = true;
+
+  (async () => {
+    try {
+      const res = await fetch('/api/auth/refresh', {
+        method: 'POST',
+        credentials: 'include',
+      });
+
+      if (res.ok) {
+        // Refrescamos y recargamos para que se re-ejecuten las queries con el nuevo token
+        window.location.reload();
+        return;
+      }
+    } catch (e) {
+      // ignoramos, pasamos a redirigir al login
+    } finally {
+      isRefreshingToken = false;
+    }
+
+    const nextPath = typeof window !== 'undefined' ? window.location.pathname || '/panel' : '/panel';
+    const search = typeof window !== 'undefined' ? window.location.search || '' : '';
+    const siguiente = encodeURIComponent(`${nextPath}${search}`);
+    window.location.href = `/auth/auth1/login?siguiente=${siguiente}`;
+  })();
+});
+
 const client = new ApolloClient({
-  link: authLink.concat(httpLink),
+  link: errorLink.concat(authLink.concat(httpLink)),
   cache: new InMemoryCache({
     typePolicies: {
       Query: {
