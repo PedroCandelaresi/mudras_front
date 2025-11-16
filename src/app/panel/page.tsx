@@ -2,6 +2,9 @@
 import { useState, useEffect, PropsWithChildren, useMemo } from 'react';
 import PageContainer from '@/components/container/PageContainer';
 import { Grid, Box, Typography, Card } from '@mui/material';
+import { Icon } from '@iconify/react';
+import StylizedTabbedPanel, { type StylizedTabDefinition } from '@/components/ui/StylizedTabbedPanel';
+import { violeta } from '@/ui/colores';
 import EstadisticasCards from '@/app/components/dashboards/mudras/EstadisticasCards';
 import VentasCards from '@/app/components/dashboards/mudras/VentasCards';
 import ProveedoresCards from '@/app/components/dashboards/mudras/ProveedoresCards';
@@ -11,7 +14,14 @@ import { useQuery } from '@apollo/client/react';
 import { GET_DASHBOARD_STATS } from '@/components/dashboards/mudras/graphql/queries';
 import { DashboardStatsResponse } from '@/app/interfaces/graphql.types';
 
-
+const tabs: StylizedTabDefinition[] = [
+  {
+    key: 'resumen',
+    label: 'Resumen',
+    icon: <Icon icon="mdi:view-dashboard-variant" />,
+    color: violeta.primary,
+  },
+];
 
 function SquareCard({
   title,
@@ -94,8 +104,15 @@ export default function Dashboard() {
     return { barrasPorRubro: barras, donutEstadoStock: donut, totalArticulos: articulos.length };
   }, [data]);
 
+  const [activeTab, setActiveTab] = useState('resumen');
+
   return (
     <PageContainer title="Mudras Gestión" description="Sistema completo de gestión comercial y tienda online">
+      <StylizedTabbedPanel
+        tabs={tabs}
+        activeKey={activeTab}
+        onChange={setActiveTab}
+      >
       <Box mt={1} mx={2}>
         {/* Título Principal */}
         <Box mb={4} textAlign="center">
@@ -254,6 +271,7 @@ export default function Dashboard() {
           </Grid>
         </Grid>
       </Box>
+      </StylizedTabbedPanel>
     </PageContainer>
   );
 }

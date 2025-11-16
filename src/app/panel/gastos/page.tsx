@@ -5,41 +5,81 @@ import { useQuery, useMutation } from '@apollo/client/react';
 import PageContainer from '@/components/container/PageContainer';
 import { TexturedPanel } from '@/components/ui/TexturedFrame/TexturedPanel';
 import CrystalButton, { CrystalSoftButton } from '@/components/ui/CrystalButton';
-import { verde } from '@/ui/colores';
+import StylizedTabbedPanel, { type StylizedTabDefinition } from '@/components/ui/StylizedTabbedPanel';
+import { verde, marron } from '@/ui/colores';
 import { GET_GASTOS, type GastosResponse } from '@/components/gastos/graphql/queries';
 import { ELIMINAR_GASTO } from '@/components/gastos/graphql/mutations';
 import TablaGastos from '@/components/gastos/ui/TablaGastos';
 import ModalNuevoGasto from '@/components/gastos/ui/ModalNuevoGasto';
+import { Icon } from '@iconify/react';
+
+const tabs: StylizedTabDefinition[] = [
+  {
+    key: 'gastos',
+    label: 'Gastos',
+    icon: <Icon icon="mdi:cash-minus" />,
+    color: marron.primary,
+  },
+];
 
 export default function GastosPage() {
-  const { data, loading, error, refetch } = useQuery<GastosResponse>(GET_GASTOS, { fetchPolicy: 'cache-and-network', variables: {} });
+  const { data, loading, error, refetch } = useQuery<GastosResponse>(GET_GASTOS, {
+    fetchPolicy: 'cache-and-network',
+    variables: {},
+  });
   const gastos = data?.gastos ?? [];
   const [modalOpen, setModalOpen] = useState(false);
   const [eliminar] = useMutation(ELIMINAR_GASTO);
+  const [activeTab, setActiveTab] = useState('gastos');
 
   return (
     <PageContainer title="Gastos" description="Gestión de gastos e impuestos">
-      <Box sx={{ position: 'relative', borderRadius: 2, overflow: 'hidden' }}>
-        <TexturedPanel accent={verde.primary} radius={14} contentPadding={12}>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 2 }}>
-            <Typography variant="h6" fontWeight={800} color={verde.headerText}>Gastos</Typography>
-            <Box sx={{ ml: 'auto', display: 'flex', gap: 1 }}>
-              <CrystalButton baseColor={verde.primary} onClick={() => setModalOpen(true)}>Nuevo Gasto</CrystalButton>
-              <CrystalSoftButton baseColor={verde.primary} onClick={() => refetch()}>Refrescar</CrystalSoftButton>
+      <StylizedTabbedPanel
+        tabs={tabs}
+        activeKey={activeTab}
+        onChange={setActiveTab}
+      >
+        <Box sx={{ position: 'relative', borderRadius: 2, overflow: 'hidden' }}>
+          <TexturedPanel accent={verde.primary} radius={14} contentPadding={12}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 2 }}>
+              <Typography variant="h6" fontWeight={800} color={verde.headerText}>
+                Gastos
+              </Typography>
+              <Box sx={{ ml: 'auto', display: 'flex', gap: 1 }}>
+                <CrystalButton baseColor={verde.primary} onClick={() => setModalOpen(true)}>
+                  Nuevo Gasto
+                </CrystalButton>
+                <CrystalSoftButton baseColor={verde.primary} onClick={() => refetch()}>
+                  Refrescar
+                </CrystalSoftButton>
+              </Box>
             </Box>
-          </Box>
 
-          {loading ? (
-            <Skeleton variant="rounded" height={360} />
-          ) : error ? (
-            <Typography color="error">{error.message}</Typography>
-          ) : (
-            <TablaGastos gastos={gastos} onDelete={async (id) => { await eliminar({ variables: { id } }); refetch(); }} />
-          )}
-        </TexturedPanel>
-      </Box>
+            {loading ? (
+              <Skeleton variant="rounded" height={360} />
+            ) : error ? (
+              <Typography color="error">{error.message}</Typography>
+            ) : (
+              <TablaGastos
+                gastos={gastos}
+                onDelete={async (id) => {
+                  await eliminar({ variables: { id } });
+                  refetch();
+                }}
+              />
+            )}
+          </TexturedPanel>
+        </Box>
 
-      <ModalNuevoGasto open={modalOpen} onClose={() => setModalOpen(false)} onSuccess={() => { setModalOpen(false); refetch(); }} />
+        <ModalNuevoGasto
+          open={modalOpen}
+          onClose={() => setModalOpen(false)}
+          onSuccess={() => {
+            setModalOpen(false);
+            refetch();
+          }}
+        />
+      </StylizedTabbedPanel>
     </PageContainer>
   );
 }

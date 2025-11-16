@@ -1,78 +1,96 @@
 'use client';
+import { useState } from 'react';
 import { Box, Typography, Tabs, Tab } from '@mui/material';
 import PageContainer from '@/components/container/PageContainer';
 import TablaVentas from '@/app/components/dashboards/mudras/TablaVentas';
-import { verde } from '@/ui/colores';
+import { verde, violeta } from '@/ui/colores';
 import { TexturedPanel } from '@/components/ui/TexturedFrame/TexturedPanel';
-import { useState } from 'react';
+import StylizedTabbedPanel, { type StylizedTabDefinition } from '@/components/ui/StylizedTabbedPanel';
 import { Icon } from '@iconify/react';
+
+const tabs: StylizedTabDefinition[] = [
+  {
+    key: 'ventas',
+    label: 'Ventas',
+    icon: <Icon icon="mdi:shopping-outline" />,
+    color: violeta.primary,
+  },
+];
 
 export default function Ventas() {
   const [tabValue, setTabValue] = useState(0);
+  const [activeTab, setActiveTab] = useState('ventas');
+
   const handleTabChange = (_e: React.SyntheticEvent, v: number) => setTabValue(v);
 
   return (
     <PageContainer title="Ventas - Mudras" description="Gestión de ventas">
-      <Box>
-        <Typography variant="h4" fontWeight={700} color={verde.textStrong} sx={{ mb: 2 }}>
-          Gestión de Ventas
-        </Typography>
-        <TexturedPanel
-          accent="#2e7d32"
-          radius={14}
-          contentPadding={12}
-          bgTintPercent={22}
-          bgAlpha={0.98}
-          tintMode="soft-light"
-          tintOpacity={0.42}
-          textureScale={1.1}
-          textureBaseOpacity={0.18}
-          textureBoostOpacity={0.12}
-          textureContrast={0.92}
-          textureBrightness={1.03}
-          bevelWidth={12}
-          bevelIntensity={1.0}
-          glossStrength={1.0}
-          vignetteStrength={0.9}
-        >
-          {/* Tabs superiores (solo Historial para mantener estética) */}
-          <Box sx={{ bgcolor: 'transparent', px: 2, py: 1.5 }}>
-            <Tabs
-              value={tabValue}
-              onChange={handleTabChange}
-              aria-label="ventas tabs"
-              TabIndicatorProps={{ sx: { display: 'none' } }}
-              sx={{
-                '& .MuiTabs-flexContainer': { gap: 1 },
-                '& .MuiTab-root': {
-                  color: 'white',
-                  textTransform: 'none',
-                  fontWeight: 600,
-                  minHeight: 40,
-                  px: 2,
-                  borderRadius: 1.5,
-                  bgcolor: '#4caf50',
-                  '&:hover': { bgcolor: '#66bb6a' },
-                  '& .MuiTab-iconWrapper': { mr: 1 }
-                },
-                '& .MuiTab-root.Mui-selected': {
-                  bgcolor: '#2e7d32',
-                  color: 'common.white'
-                }
-              }}
-            >
-              <Tab icon={<Icon icon="mdi:receipt-text-outline" />} label="Historial de Ventas" iconPosition="start" />
-            </Tabs>
-          </Box>
-
-          {/* Contenido */}
-          <Box sx={{ bgcolor: 'transparent', px: 2, pb: 2, pt: 1.5 }}>
-            <Box sx={{ pt: 2 }}>
-              {tabValue === 0 && <TablaVentas />}
+      <StylizedTabbedPanel
+        tabs={tabs}
+        activeKey={activeTab}
+        onChange={setActiveTab}
+      >
+        <Box>
+          <Typography variant="h4" fontWeight={700} color={verde.textStrong} sx={{ mb: 2 }}>
+            Gestión de Ventas
+          </Typography>
+          <TexturedPanel
+            accent="#2e7d32"
+            radius={14}
+            contentPadding={12}
+            bgTintPercent={22}
+            bgAlpha={0.98}
+            tintMode="soft-light"
+            tintOpacity={0.42}
+            textureScale={1.1}
+            textureBaseOpacity={0.18}
+            textureBoostOpacity={0.12}
+            textureContrast={0.92}
+            textureBrightness={1.03}
+            bevelWidth={12}
+            bevelIntensity={1.0}
+            glossStrength={1.0}
+            vignetteStrength={0.9}
+          >
+            {/* Tabs superiores (solo Historial para mantener estética) */}
+            <Box sx={{ bgcolor: 'transparent', px: 2, py: 1.5 }}>
+              <Tabs
+                value={tabValue}
+                onChange={handleTabChange}
+                aria-label="ventas tabs"
+                TabIndicatorProps={{ sx: { display: 'none' } }}
+                sx={{
+                  '& .MuiTabs-flexContainer': { gap: 1 },
+                  '& .MuiTab-root': {
+                    color: 'white',
+                    textTransform: 'none',
+                    fontWeight: 600,
+                    minHeight: 40,
+                    px: 2,
+                    borderRadius: 1.5,
+                    bgcolor: '#4caf50',
+                    '&:hover': { bgcolor: '#66bb6a' },
+                    '& .MuiTab-iconWrapper': { mr: 1 }
+                  },
+                  '& .MuiTab-root.Mui-selected': {
+                    bgcolor: '#2e7d32',
+                    color: 'common.white'
+                  }
+                }}
+              >
+                <Tab icon={<Icon icon="mdi:receipt-text-outline" />} label="Historial de Ventas" iconPosition="start" />
+              </Tabs>
             </Box>
-          </Box>
-        </TexturedPanel>
-      </Box>
+
+            {/* Contenido */}
+            <Box sx={{ bgcolor: 'transparent', px: 2, pb: 2, pt: 1.5 }}>
+              <Box sx={{ pt: 2 }}>
+                {tabValue === 0 && <TablaVentas />}
+              </Box>
+            </Box>
+          </TexturedPanel>
+        </Box>
+      </StylizedTabbedPanel>
     </PageContainer>
   );
 }

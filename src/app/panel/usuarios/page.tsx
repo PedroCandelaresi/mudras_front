@@ -21,6 +21,7 @@ import CrystalButton, { CrystalSoftButton, forceWhiteIconsSX } from '@/component
 import { DeleteUserDialog } from '@/components/usuarios/DeleteUserDialog';
 import { apiFetch } from '@/lib/api';
 import { marron } from '@/ui/colores';
+import StylizedTabbedPanel, { type StylizedTabDefinition } from '@/components/ui/StylizedTabbedPanel';
 
 // Wrapper estilo Artículos pero con paleta marrón
 const createBevelWrapper = (color: string) => {
@@ -69,6 +70,15 @@ const createBevelWrapper = (color: string) => {
     '& > *': { position: 'relative', zIndex: 1 },
   };
 };
+
+const tabsPanel: StylizedTabDefinition[] = [
+  {
+    key: 'usuarios',
+    label: 'Usuarios / Roles / Permisos',
+    icon: <Icon icon="mdi:account-cog" />,
+    color: marron.primary,
+  },
+];
 
 export default function Usuarios() {
   const { tienePermiso } = usePermisos();
@@ -215,9 +225,15 @@ export default function Usuarios() {
 
   const activeColor = marron.primary;
   const baseBg = alpha('#4B2E25', 0.9);
+  const [activePanelTab, setActivePanelTab] = React.useState('usuarios');
 
   return (
     <PageContainer title="Usuarios - Mudras" description="Gestión de usuarios, roles y permisos">
+      <StylizedTabbedPanel
+        tabs={tabsPanel}
+        activeKey={activePanelTab}
+        onChange={setActivePanelTab}
+      >
       <Box sx={createBevelWrapper(activeColor)}>
         <TexturedPanel
           accent={activeColor}
@@ -358,6 +374,7 @@ export default function Usuarios() {
           </Alert>
         </Snackbar>
       </Box>
+      </StylizedTabbedPanel>
     </PageContainer>
   );
 }
