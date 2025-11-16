@@ -10,11 +10,10 @@ import config from '@/app/context/config';
 import Scrollbar from "@/app/components/custom-scroll/Scrollbar";
 import { Profile } from "./SidebarProfile/Profile";
 import { useContext } from "react";
-import { TexturedPanel } from "@/components/ui/TexturedFrame/TexturedPanel";
 
 const Sidebar = () => {
-  // NOTA: lgUp acá significa "pantallas <= lg" (por tu uso de down("lg"))
-  const lgUp = useMediaQuery((theme) => theme.breakpoints.down("lg"));
+  // lgUp = true en pantallas grandes (>= lg), false en mobile/tablet
+  const lgUp = useMediaQuery((theme) => theme.breakpoints.up("lg"));
   const {
     isCollapse,
     isSidebarHover,
@@ -25,7 +24,6 @@ const Sidebar = () => {
 
   const MiniSidebarWidth = config.miniSidebarWidth;
   const SidebarWidth = config.sidebarWidth;
-
   const theme = useTheme();
 
   const toggleWidth =
@@ -43,121 +41,92 @@ const Sidebar = () => {
     setIsSidebarHover(false);
   };
 
-  return (
-    <>
-      {/* Desktop (no es <= lg) */}
-      {!lgUp ? (
-        <Drawer
-          anchor="left"
-          open
-          onMouseEnter={onHoverEnter}
-          onMouseLeave={onHoverLeave}
-          variant="permanent"
-          sx={{
-            zIndex: 1100,
-            width: toggleWidth,
-            flexShrink: 0,
-            '& .MuiDrawer-paper': {
-              width: toggleWidth,
-              boxSizing: "border-box",
-              background: "transparent",
-              borderRight: "0",
-              overflowX: "hidden",
-              "&::-webkit-scrollbar": { display: "none" },
-              scrollbarWidth: "none",
-              transition: theme.transitions.create("width", {
-                duration: `${config.transitionDuration}ms`,
-                easing: config.transitionEasing,
-              }),
-            },
-          }}
-        >
-          <TexturedPanel
-            accent="#c49b3b"
-            radius={0}
-            contentPadding={0}
-            bgTintPercent={26}
-            bgAlpha={0.98}
-            tintMode="soft-light"
-            tintOpacity={0.4}
-            textureScale={1.05}
-            textureBaseOpacity={0.32}
-            textureBoostOpacity={0.24}
-            textureContrast={1.0}
-            textureBrightness={1.02}
-            bevelWidth={6}
-            bevelIntensity={0.8}
-            glossStrength={0.7}
-            vignetteStrength={0.4}
-            fullHeight
-          >
-            <Box sx={{ height: "100%", display: 'flex', flexDirection: 'column' }}>
-              {/* Logo */}
-              <Box px={2} pt={2} pb={1.5}>
-                <Logo />
-              </Box>
+  const desktopDrawer = (
+    <Drawer
+      anchor="left"
+      open
+      onMouseEnter={onHoverEnter}
+      onMouseLeave={onHoverLeave}
+      variant="permanent"
+      sx={{
+        zIndex: 1100,
+        width: toggleWidth,
+        flexShrink: 0,
+        '& .MuiDrawer-paper': {
+          width: toggleWidth,
+          boxSizing: "border-box",
+          // Textura metálica dorada aplicada directamente al paper
+          backgroundImage: 'url("/textures/brushed-metal-1024.png")',
+          backgroundSize: 'cover',
+          backgroundRepeat: 'repeat-y',
+          backgroundPosition: 'center',
+          backgroundColor: '#c49b3b',
+          borderRight: '1px solid rgba(0,0,0,0.25)',
+          overflowX: "hidden",
+          "&::-webkit-scrollbar": { display: "none" },
+          scrollbarWidth: "none",
+          transition: theme.transitions.create("width", {
+            duration: `${config.transitionDuration}ms`,
+            easing: config.transitionEasing,
+          }),
+        },
+      }}
+    >
+      <Box sx={{ height: "100vh", display: "flex", flexDirection: "column" }}>
+        {/* Logo */}
+        <Box px={2} pt={2} pb={1.5}>
+          <Logo />
+        </Box>
 
-              {/* Items con scroll */}
-              <Scrollbar sx={{ flex: 1, minHeight: 0 }}>
-                <SidebarItems />
-              </Scrollbar>
+        {/* Items con scroll central */}
+        <Scrollbar sx={{ flex: 1, minHeight: 0 }}>
+          <SidebarItems />
+        </Scrollbar>
 
-              {/* Perfil al pie */}
-              <Profile />
-            </Box>
-          </TexturedPanel>
-        </Drawer>
-      ) : (
-        // Mobile / <= lg
-        <Drawer
-          anchor="left"
-          open={isMobileSidebar}
-          onClose={() => setIsMobileSidebar(false)}
-          variant="temporary"
-          slotProps={{
-            paper: {
-              sx: {
-                width: SidebarWidth,
-                border: "0 !important",
-                boxShadow: (theme) => theme.shadows[8],
-                background: "transparent",
-              },
-            },
-          }}
-        >
-          <TexturedPanel
-            accent="#c49b3b"
-            radius={0}
-            contentPadding={0}
-            bgTintPercent={26}
-            bgAlpha={0.98}
-            tintMode="soft-light"
-            tintOpacity={0.4}
-            textureScale={1.05}
-            textureBaseOpacity={0.32}
-            textureBoostOpacity={0.24}
-            textureContrast={1.0}
-            textureBrightness={1.02}
-            bevelWidth={6}
-            bevelIntensity={0.8}
-            glossStrength={0.7}
-            vignetteStrength={0.4}
-            fullHeight
-          >
-            <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
-              {/* Logo */}
-              <Box px={1.5} pt={1.5} pb={1}>
-                <Logo />
-              </Box>
-
-              {/* Items */}
-              <SidebarItems />
-            </Box>
-          </TexturedPanel>
-        </Drawer>
-      )}
-    </>
+        {/* Perfil al pie */}
+        <Profile />
+      </Box>
+    </Drawer>
   );
+
+  const mobileDrawer = (
+    <Drawer
+      anchor="left"
+      open={isMobileSidebar}
+      onClose={() => setIsMobileSidebar(false)}
+      variant="temporary"
+      slotProps={{
+        paper: {
+          sx: {
+            width: SidebarWidth,
+            border: "0 !important",
+            boxShadow: (theme) => theme.shadows[8],
+            backgroundImage: 'url("/textures/brushed-metal-1024.png")',
+            backgroundSize: 'cover',
+            backgroundRepeat: 'repeat-y',
+            backgroundPosition: 'center',
+            backgroundColor: '#c49b3b',
+          },
+        },
+      }}
+    >
+      <Box sx={{ height: "100vh", display: "flex", flexDirection: "column" }}>
+        {/* Logo */}
+        <Box px={1.5} pt={1.5} pb={1}>
+          <Logo />
+        </Box>
+
+        {/* Items */}
+        <Scrollbar sx={{ flex: 1, minHeight: 0 }}>
+          <SidebarItems />
+        </Scrollbar>
+
+        <Profile />
+      </Box>
+    </Drawer>
+  );
+
+  return lgUp ? desktopDrawer : mobileDrawer;
 };
 
 export default Sidebar;
