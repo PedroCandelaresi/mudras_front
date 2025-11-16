@@ -82,7 +82,7 @@ export default function RootLayout({
 
   const { activeLayout, isLayout, activeMode, isCollapse, isSidebarHover } = useContext(CustomizerContext);
   const theme = useTheme();
-  const MiniSidebarWidth = config.miniSidebarWidth;
+  const SidebarWidth = config.sidebarWidth;
   return (
     <MainWrapper className={activeMode === 'dark' ? 'darkbg mainwrapper' : 'mainwrapper'}>
       <title>Mudras Gestión</title>
@@ -97,7 +97,9 @@ export default function RootLayout({
         className="page-wrapper"
         sx={{
           [theme.breakpoints.up("lg")]: {
-            ml: isCollapse === "mini-sidebar" ? `87px` : `270px`,
+            // Mantener siempre el mismo margen izquierdo,
+            // así el contenido no se redimensiona al colapsar/expandir la sidebar.
+            ml: `${SidebarWidth}px`,
             transition: theme.transitions.create('margin-left', {
               duration: theme.transitions.duration.standard,
               easing: theme.transitions.easing.sharp,

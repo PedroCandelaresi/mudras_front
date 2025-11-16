@@ -55,12 +55,14 @@ const Sidebar = () => {
         '& .MuiDrawer-paper': {
           width: toggleWidth,
           boxSizing: "border-box",
-          // Textura metálica dorada aplicada directamente al paper
-          backgroundImage: 'url("/textures/brushed-metal-1024.png")',
-          backgroundSize: 'cover',
-          backgroundRepeat: 'repeat-y',
-          backgroundPosition: 'center',
-          backgroundColor: '#c49b3b',
+          // Dorado anaranjado con textura metálica
+          backgroundImage:
+            'linear-gradient(135deg, #FFE4D6 0%, #FFD4B3 40%, #FFC299 100%), url("/textures/brushed-metal-1024.png")',
+          backgroundBlendMode: 'overlay',
+          backgroundSize: 'cover, cover',
+          backgroundRepeat: 'no-repeat, repeat-y',
+          backgroundPosition: 'center, center',
+          backgroundColor: '#FFC299',
           borderRight: '1px solid rgba(0,0,0,0.25)',
           overflowX: "hidden",
           "&::-webkit-scrollbar": { display: "none" },
@@ -101,11 +103,13 @@ const Sidebar = () => {
             width: SidebarWidth,
             border: "0 !important",
             boxShadow: (theme) => theme.shadows[8],
-            backgroundImage: 'url("/textures/brushed-metal-1024.png")',
-            backgroundSize: 'cover',
-            backgroundRepeat: 'repeat-y',
-            backgroundPosition: 'center',
-            backgroundColor: '#c49b3b',
+            backgroundImage:
+              'linear-gradient(135deg, #FFE4D6 0%, #FFD4B3 40%, #FFC299 100%), url("/textures/brushed-metal-1024.png")',
+            backgroundBlendMode: 'overlay',
+            backgroundSize: 'cover, cover',
+            backgroundRepeat: 'no-repeat, repeat-y',
+            backgroundPosition: 'center, center',
+            backgroundColor: '#FFC299',
           },
         },
       }}
