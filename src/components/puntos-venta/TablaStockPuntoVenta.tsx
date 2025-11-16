@@ -121,6 +121,8 @@ const TablaStockPuntoVenta: React.FC<Props> = ({
   );
   const [busquedaDraft, setBusquedaDraft] = useState('');
   const [busquedaAplicada, setBusquedaAplicada] = useState('');
+  const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(50);
 
   const articulosFiltrados = useMemo(() => {
     if (!busquedaAplicada) return articulos;
@@ -169,6 +171,31 @@ const TablaStockPuntoVenta: React.FC<Props> = ({
     totalUnidades
   )} unidades • ${currencyFormatter.format(valorEstimado)} estimados`;
   const showActions = Boolean(onEditStock || onViewDetails);
+
+  const totalPaginas = Math.ceil(articulosFiltrados.length / rowsPerPage) || 1;
+  const paginaActual = page + 1;
+
+  const generarNumerosPaginas = () => {
+    const paginas: (number | '...')[] = [];
+    const maxVisible = 7;
+    if (totalPaginas <= maxVisible) {
+      for (let i = 1; i <= totalPaginas; i++) paginas.push(i);
+    } else if (paginaActual <= 4) {
+      for (let i = 1; i <= 5; i++) paginas.push(i);
+      paginas.push('...', totalPaginas);
+    } else if (paginaActual >= totalPaginas - 3) {
+      paginas.push(1, '...');
+      for (let i = totalPaginas - 4; i <= totalPaginas; i++) paginas.push(i);
+    } else {
+      paginas.push(1, '...', paginaActual - 1, paginaActual, paginaActual + 1, '...', totalPaginas);
+    }
+    return paginas;
+  };
+
+  const articulosPaginados = useMemo(
+    () => articulosFiltrados.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage),
+    [articulosFiltrados, page, rowsPerPage]
+  );
 
   const toolbar = (
     <Box
@@ -370,7 +397,7 @@ const TablaStockPuntoVenta: React.FC<Props> = ({
                   </TableCell>
                 </TableRow>
               ) : (
-                articulosFiltrados.map((item) => {
+                articulosPaginados.map((item) => {
                   const precioUnitario = obtenerPrecioUnitario(item);
                   return (
                     <TableRow key={item.id} hover>
@@ -447,6 +474,49 @@ const TablaStockPuntoVenta: React.FC<Props> = ({
         </TableBody>
       </Table>
     </TableContainer>
+  );
+
+  const paginador = (
+    <Box
+      sx={{
+        mt: 2,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        px: 1,
+      }}
+    >
+      <Typography variant="body2" color="text.secondary">
+        Mostrando {articulosPaginados.length} de {articulosFiltrados.length} artículos
+      </Typography>
+      <Stack direction="row" spacing={1}>
+        {generarNumerosPaginas().map((num, idx) =>
+          num === '...' ? (
+            <Typography key={`ellipsis-${idx}`} variant="body2" color="text.secondary" sx={{ px: 1 }}>
+              ...
+            </Typography>
+          ) : (
+            <CrystalSoftButton
+              key={num}
+              baseColor={buttonColor}
+              sx={{
+                minWidth: 32,
+                minHeight: 32,
+                px: 1,
+                fontSize: '0.775rem',
+                textTransform: 'none',
+                fontWeight: Number(num) === paginaActual ? 800 : 600,
+                boxShadow: 'none',
+              }}
+              onClick={() => setPage(Number(num) - 1)}
+              disabled={num === paginaActual}
+            >
+              {num}
+            </CrystalSoftButton>
+          )
+        )}
+      </Stack>
+    </Box>
   );
 
   return (
