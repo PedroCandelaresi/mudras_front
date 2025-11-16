@@ -30,8 +30,6 @@ import {
 } from '@/components/puntos-mudras/graphql/queries';
 import { useQuery } from '@apollo/client/react';
 import { calcularPrecioDesdeArticulo } from '@/utils/precioVenta';
-import StylizedTabbedPanel, { type StylizedTabDefinition } from '@/components/ui/StylizedTabbedPanel';
-import { Icon } from '@iconify/react';
 
 /* ======================== Tipos / helpers ======================== */
 interface PuntoOption {
@@ -150,15 +148,6 @@ const activeFieldStyles = {
   boxShadow: `inset 0 1px 0 rgba(255,255,255,.65)`,
 };
 /* ======================== Página ======================== */
-
-const panelTabs: StylizedTabDefinition[] = [
-  {
-    key: 'caja',
-    label: 'Caja Registradora',
-    icon: <Icon icon="mdi:cash-register" />,
-    color: naranjaCaja.primary,
-  },
-];
 
 export default function CajaRegistradoraPage() {
   const [articulos, setArticulos] = useState<ArticuloCapturado[]>([]);
@@ -336,15 +325,9 @@ export default function CajaRegistradoraPage() {
 
   const colorCaja = naranjaCaja.primary;
   const sinPuntos = !cargandoPuntos && !errorPuntos && puntosDisponibles.length === 0;
-  const [activePanelTab, setActivePanelTab] = useState('caja');
 
   return (
     <PageContainer title="Caja - Mudras" description="Caja Registradora">
-      <StylizedTabbedPanel
-        tabs={panelTabs}
-        activeKey={activePanelTab}
-        onChange={setActivePanelTab}
-      >
       <Box sx={createBevelWrapper(naranjaCaja.primary)}>
         <TexturedPanel
           accent={naranjaCaja.primary}
@@ -573,7 +556,6 @@ export default function CajaRegistradoraPage() {
           </Alert>
         )}
       </Snackbar>
-      </StylizedTabbedPanel>
     </PageContainer>
   );
 }

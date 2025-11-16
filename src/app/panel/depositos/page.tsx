@@ -20,8 +20,6 @@ import {
   type ObtenerPuntosMudrasResponse,
   type ArticuloConStockPuntoMudras,
 } from '@/components/puntos-mudras/graphql/queries';
-import StylizedTabbedPanel, { type StylizedTabDefinition } from '@/components/ui/StylizedTabbedPanel';
-import { grisRojizo } from '@/ui/colores';
 
 const depositTheme = {
   accent: '#8b1f2b',
@@ -33,15 +31,6 @@ const depositTheme = {
   panelOverlay: '#fdecec',
   buttonColor: '#a02834',
 };
-
-const panelTabs: StylizedTabDefinition[] = [
-  {
-    key: 'depositos',
-    label: 'Depósitos',
-    icon: <Icon icon="mdi:warehouse" />,
-    color: grisRojizo.primary,
-  },
-];
 
 export default function DepositosPage() {
   const [activeKey, setActiveKey] = useState<string>('');
@@ -160,90 +149,82 @@ export default function DepositosPage() {
     setStockContext(null);
   }, []);
 
-  const [activePanelTab, setActivePanelTab] = useState('depositos');
-
   return (
     <PageContainer title="Depósitos - Mudras" description="Gestión de stock en depósitos">
-      <StylizedTabbedPanel
-        tabs={panelTabs}
-        activeKey={activePanelTab}
-        onChange={setActivePanelTab}
-      >
-        {loadingDepositos && <LinearProgress sx={{ mb: 2 }} />}
-        {errorDepositos && (
-          <Alert severity="error" sx={{ mb: 2 }}>
-            {errorDepositos.message || 'No se pudo cargar la lista de depósitos.'}
-          </Alert>
-        )}
+      {loadingDepositos && <LinearProgress sx={{ mb: 2 }} />}
+      {errorDepositos && (
+        <Alert severity="error" sx={{ mb: 2 }}>
+          {errorDepositos.message || 'No se pudo cargar la lista de depósitos.'}
+        </Alert>
+      )}
 
-        <TexturedPanel accent={depositTheme.accent} radius={14} contentPadding={12} bgTintPercent={22} bgAlpha={0.98}>
-          <Box sx={{ px: 2, py: 1.5 }}>
-            <Tabs
-              value={activeKey}
-              onChange={(_, key) => setActiveKey(String(key))}
-              variant="scrollable"
-              scrollButtons="auto"
-              aria-label="Depósitos tabs"
-              TabIndicatorProps={{ sx: { display: 'none' } }}
-              sx={{
-                '& .MuiTabs-flexContainer': { gap: 1 },
-                '& .MuiTab-root': {
-                  textTransform: 'none',
-                  fontWeight: 600,
-                  minHeight: 40,
-                  px: 2,
-                  borderRadius: 1.5,
-                  bgcolor: alpha(depositTheme.accent, 0.85),
-                  color: 'white',
-                  '&:hover': { bgcolor: depositTheme.accent },
-                },
-                '& .MuiTab-root.Mui-selected': {
-                  bgcolor: depositTheme.accent,
-                  color: 'common.white',
-                },
-              }}
-            >
-              {depositos.map((deposito) => (
-                <Tab
-                  key={deposito.id}
-                  value={String(deposito.id)}
-                  icon={<Icon icon="mdi:warehouse" />}
-                  label={deposito.nombre}
-                  iconPosition="start"
-                />
-              ))}
-              {depositos.length === 0 && (
-                <Tab
-                  value="empty"
-                  icon={<Icon icon="mdi:alert-circle" />}
-                  label="No hay depósitos"
-                  iconPosition="start"
-                  disabled
-                />
-              )}
-            </Tabs>
-          </Box>
-
-          <Box sx={{ px: 2, pb: 2 }}>
-            {!depositoSeleccionado ? (
-              <Alert severity="info" sx={{ mt: 2 }}>
-                Seleccioná un depósito para ver su stock.
-              </Alert>
-            ) : (
-              <TablaStockPuntoVenta
-                articulos={articulosDelDeposito}
-                loading={loadingStock}
-                error={errorStock}
-                puntoNombre={depositoSeleccionado.nombre}
-                onEditStock={handleAbrirModalStock}
-                onViewDetails={handleVerDetalles}
-                onNewAssignment={handleNuevaAsignacion}
-                themeOverride={depositTheme}
+      <TexturedPanel accent={depositTheme.accent} radius={14} contentPadding={12} bgTintPercent={22} bgAlpha={0.98}>
+        <Box sx={{ px: 2, py: 1.5 }}>
+          <Tabs
+            value={activeKey}
+            onChange={(_, key) => setActiveKey(String(key))}
+            variant="scrollable"
+            scrollButtons="auto"
+            aria-label="Depósitos tabs"
+            TabIndicatorProps={{ sx: { display: 'none' } }}
+            sx={{
+              '& .MuiTabs-flexContainer': { gap: 1 },
+              '& .MuiTab-root': {
+                textTransform: 'none',
+                fontWeight: 600,
+                minHeight: 40,
+                px: 2,
+                borderRadius: 1.5,
+                bgcolor: alpha(depositTheme.accent, 0.85),
+                color: 'white',
+                '&:hover': { bgcolor: depositTheme.accent },
+              },
+              '& .MuiTab-root.Mui-selected': {
+                bgcolor: depositTheme.accent,
+                color: 'common.white',
+              },
+            }}
+          >
+            {depositos.map((deposito) => (
+              <Tab
+                key={deposito.id}
+                value={String(deposito.id)}
+                icon={<Icon icon="mdi:warehouse" />}
+                label={deposito.nombre}
+                iconPosition="start"
+              />
+            ))}
+            {depositos.length === 0 && (
+              <Tab
+                value="empty"
+                icon={<Icon icon="mdi:alert-circle" />}
+                label="No hay depósitos"
+                iconPosition="start"
+                disabled
               />
             )}
-          </Box>
-        </TexturedPanel>
-      </StylizedTabbedPanel>
+          </Tabs>
+        </Box>
+
+        <Box sx={{ px: 2, pb: 2 }}>
+          {!depositoSeleccionado ? (
+            <Alert severity="info" sx={{ mt: 2 }}>
+              Seleccioná un depósito para ver su stock.
+            </Alert>
+          ) : (
+            <TablaStockPuntoVenta
+              articulos={articulosDelDeposito}
+              loading={loadingStock}
+              error={errorStock}
+              puntoNombre={depositoSeleccionado.nombre}
+              onEditStock={handleAbrirModalStock}
+              onViewDetails={handleVerDetalles}
+              onNewAssignment={handleNuevaAsignacion}
+              themeOverride={depositTheme}
+            />
+          )}
+        </Box>
+      </TexturedPanel>
 
       {modalStockOpen && articuloSeleccionado && depositoSeleccionadoId && (
         <ModalModificarStockPunto
