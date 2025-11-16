@@ -52,8 +52,10 @@ const Sidebar = () => {
             zIndex: 1100,
             width: toggleWidth,
             flexShrink: 0,
-            height: "100%",
-            minHeight: "100vh",
+            position: "fixed",
+            height: "100vh",
+            top: 0,
+            left: 0,
             overflow: "hidden",
             transition: theme.transitions.create("width", {
               duration: `${config.transitionDuration}ms`,
