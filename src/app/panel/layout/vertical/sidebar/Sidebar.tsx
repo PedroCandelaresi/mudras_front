@@ -47,89 +47,66 @@ const Sidebar = () => {
     <>
       {/* Desktop (no es <= lg) */}
       {!lgUp ? (
-        <Box
+        <Drawer
+          anchor="left"
+          open
+          onMouseEnter={onHoverEnter}
+          onMouseLeave={onHoverLeave}
+          variant="permanent"
           sx={{
             zIndex: 1100,
             width: toggleWidth,
             flexShrink: 0,
-            position: "fixed",
-            height: "100vh",
-            top: 0,
-            left: 0,
-            overflow: "hidden",
-            transition: theme.transitions.create("width", {
-              duration: `${config.transitionDuration}ms`,
-              easing: config.transitionEasing,
-            }),
-            willChange: "width",
+            '& .MuiDrawer-paper': {
+              width: toggleWidth,
+              boxSizing: "border-box",
+              background: "transparent",
+              borderRight: "0",
+              overflowX: "hidden",
+              "&::-webkit-scrollbar": { display: "none" },
+              scrollbarWidth: "none",
+              transition: theme.transitions.create("width", {
+                duration: `${config.transitionDuration}ms`,
+                easing: config.transitionEasing,
+              }),
+            },
           }}
         >
-          <Drawer
-            anchor="left"
-            open
-            onMouseEnter={onHoverEnter}
-            onMouseLeave={onHoverLeave}
-            variant="permanent"
-            slotProps={{
-              paper: {
-                sx: {
-                  transition: theme.transitions.create("width", {
-                    duration: `${config.transitionDuration}ms`,
-                    easing: config.transitionEasing,
-                  }),
-                  width: toggleWidth,
-                  boxSizing: "border-box",
-                  background: "transparent",
-                  borderRight: "0",
-                  overflowX: "hidden",
-                  "&::-webkit-scrollbar": {
-                    display: "none",
-                  },
-                  scrollbarWidth: "none",
-                  willChange: "width",
-                },
-              },
-            }}
+          <TexturedPanel
+            accent="#c49b3b"
+            radius={0}
+            contentPadding={0}
+            bgTintPercent={26}
+            bgAlpha={0.98}
+            tintMode="soft-light"
+            tintOpacity={0.4}
+            textureScale={1.05}
+            textureBaseOpacity={0.32}
+            textureBoostOpacity={0.24}
+            textureContrast={1.0}
+            textureBrightness={1.02}
+            bevelWidth={6}
+            bevelIntensity={0.8}
+            glossStrength={0.7}
+            vignetteStrength={0.4}
+            fullHeight
           >
-            {/* ------------------------------------------- */}
-            {/* Sidebar Box */}
-            {/* ------------------------------------------- */}
-            <TexturedPanel
-              accent="#c49b3b"
-              radius={0}
-              contentPadding={0}
-              bgTintPercent={26}
-              bgAlpha={0.98}
-              tintMode="soft-light"
-              tintOpacity={0.4}
-              textureScale={1.05}
-              textureBaseOpacity={0.32}
-              textureBoostOpacity={0.24}
-              textureContrast={1.0}
-              textureBrightness={1.02}
-              bevelWidth={6}
-              bevelIntensity={0.8}
-              glossStrength={0.7}
-              vignetteStrength={0.4}
-              fullHeight
-            >
-              <Box sx={{ height: "100%", display: 'flex', flexDirection: 'column' }}>
-                {/* Logo */}
-                <Box px={2} pt={2} pb={1.5}>
-                  <Logo />
-                </Box>
-
-                {/* Items con scroll */}
-                <Scrollbar sx={{ height: "calc(100% - 160px)" }}>
-                  <SidebarItems />
-                </Scrollbar>
-
-                {/* Perfil al pie */}
-                <Profile />
+            <Box sx={{ height: "100%", display: 'flex', flexDirection: 'column' }}>
+              {/* Logo */}
+              <Box px={2} pt={2} pb={1.5}>
+                <Logo />
               </Box>
-            </TexturedPanel>
-          </Drawer>
-        </Box>
+
+              {/* Items con scroll */}
+              <Scrollbar sx={{ flex: 1, minHeight: 0 }}>
+                <SidebarItems />
+              </Scrollbar>
+
+              {/* Perfil al pie */}
+              <Profile />
+            </Box>
+          </TexturedPanel>
+        </Drawer>
       ) : (
         // Mobile / <= lg
         <Drawer
