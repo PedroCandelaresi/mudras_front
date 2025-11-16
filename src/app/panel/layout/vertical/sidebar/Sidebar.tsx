@@ -98,7 +98,7 @@ const Sidebar = () => {
             <TexturedPanel
               accent="#c49b3b"
               radius={0}
-              contentPadding={12}
+              contentPadding={0}
               bgTintPercent={26}
               bgAlpha={0.98}
               tintMode="soft-light"
@@ -108,15 +108,15 @@ const Sidebar = () => {
               textureBoostOpacity={0.24}
               textureContrast={1.0}
               textureBrightness={1.02}
-              bevelWidth={12}
-              bevelIntensity={0.95}
-              glossStrength={0.9}
-              vignetteStrength={0.85}
+              bevelWidth={6}
+              bevelIntensity={0.8}
+              glossStrength={0.7}
+              vignetteStrength={0.4}
               fullHeight
             >
-              <Box sx={{ height: "100%" }}>
+              <Box sx={{ height: "100%", display: 'flex', flexDirection: 'column' }}>
                 {/* Logo */}
-                <Box px={2} pb={1.5}>
+                <Box px={2} pt={2} pb={1.5}>
                   <Logo />
                 </Box>
 
@@ -152,7 +152,7 @@ const Sidebar = () => {
           <TexturedPanel
             accent="#c49b3b"
             radius={0}
-            contentPadding={10}
+            contentPadding={0}
             bgTintPercent={26}
             bgAlpha={0.98}
             tintMode="soft-light"
@@ -162,19 +162,21 @@ const Sidebar = () => {
             textureBoostOpacity={0.24}
             textureContrast={1.0}
             textureBrightness={1.02}
-            bevelWidth={10}
-            bevelIntensity={0.9}
-            glossStrength={0.9}
-            vignetteStrength={0.8}
+            bevelWidth={6}
+            bevelIntensity={0.8}
+            glossStrength={0.7}
+            vignetteStrength={0.4}
             fullHeight
           >
-            {/* Logo */}
-            <Box px={1.5} pb={1}>
-              <Logo />
-            </Box>
+            <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+              {/* Logo */}
+              <Box px={1.5} pt={1.5} pb={1}>
+                <Logo />
+              </Box>
 
-            {/* Items */}
-            <SidebarItems />
+              {/* Items */}
+              <SidebarItems />
+            </Box>
           </TexturedPanel>
         </Drawer>
       )}
