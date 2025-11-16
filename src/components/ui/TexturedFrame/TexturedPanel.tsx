@@ -95,6 +95,7 @@ const Shell = styled('div', {
   borderRadius: radius,
   overflow: 'hidden',
   padding: 0,
+  width: '100%',
   height: fullHeight ? '100%' : 'auto',
 
   /* 🔥 Nada de fondo ni degradados ni sombras */
