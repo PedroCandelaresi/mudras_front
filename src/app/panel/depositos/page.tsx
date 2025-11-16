@@ -22,14 +22,15 @@ import {
 } from '@/components/puntos-mudras/graphql/queries';
 
 const depositTheme = {
-  accent: '#8b1f2b',
-  woodTintExterior: '#f8d8d8',
-  woodTintInterior: '#f5c1c1',
-  tableBodyBg: 'rgba(252, 234, 234, 0.72)',
-  tableBodyAlt: 'rgba(232, 189, 189, 0.38)',
-  headerBg: '#5d141d',
-  panelOverlay: '#fdecec',
-  buttonColor: '#a02834',
+  // Azul zafiro para depósitos
+  accent: '#0f3d73',
+  woodTintExterior: '#d1e0f5',
+  woodTintInterior: '#bed2ee',
+  tableBodyBg: 'rgba(224, 236, 251, 0.78)',
+  tableBodyAlt: 'rgba(189, 210, 238, 0.42)',
+  headerBg: '#0b2a4d',
+  panelOverlay: '#edf3fb',
+  buttonColor: '#1565c0',
 };
 
 export default function DepositosPage() {

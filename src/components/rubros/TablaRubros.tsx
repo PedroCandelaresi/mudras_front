@@ -36,7 +36,7 @@ import {
 } from '@tabler/icons-react';
 import { BUSCAR_RUBROS } from '@/components/rubros/graphql/queries';
 import type { BuscarRubrosResponse, RubroConEstadisticas } from '@/app/interfaces/graphql.types';
-import { marron, azul, verde } from '@/ui/colores';
+import { verde, azul } from '@/ui/colores';
 import { crearConfiguracionBisel, crearEstilosBisel } from '@/components/ui/bevel';
 import { WoodBackdrop } from '@/components/ui/TexturedFrame/WoodBackdrop';
 import ModalEditarRubro from './ModalEditarRubro';
@@ -71,12 +71,12 @@ type RubroParaModal = {
 };
 
 /* ======================== Estética ======================== */
-const accentExterior = marron.primary;
-const accentInterior = marron.borderInner ?? '#4a3b35';
-const tableBodyBg = 'rgba(253, 245, 236, 0.55)';
-const tableBodyAlt = 'rgba(200, 160, 120, 0.25)';
-const woodTintExterior = '#dcb18c';
-const woodTintInterior = '#c99c76';
+const accentExterior = verde.primary;
+const accentInterior = verde.borderInner ?? '#4a3b35';
+const tableBodyBg = 'rgba(235, 247, 238, 0.58)';
+const tableBodyAlt = 'rgba(191, 214, 194, 0.32)';
+const woodTintExterior = '#c7d8cb';
+const woodTintInterior = '#b2c4b6';
 
 const biselExteriorConfig = crearConfiguracionBisel(accentExterior, 1.5);
 const estilosBiselExterior = crearEstilosBisel(biselExteriorConfig, { zContenido: 2 });
@@ -277,7 +277,7 @@ const TablaRubros: React.FC<Props> = ({ onNuevoRubro, puedeCrear = true }) => {
     <SearchToolbar
       title="Rubros y Categorías"
       icon={<IconCategory style={{ marginRight: 8, verticalAlign: 'middle' }} />}
-      baseColor={marron.primary}
+      baseColor={verde.primary}
       placeholder="Buscar rubros..."
       searchValue={filtroInput}
       onSearchValueChange={setFiltroInput}
@@ -337,16 +337,16 @@ const TablaRubros: React.FC<Props> = ({ onNuevoRubro, puedeCrear = true }) => {
           '& .MuiTableCell-head': {
             fontSize: '0.75rem',
             fontWeight: 600,
-            bgcolor: marron.headerBg,
+            bgcolor: verde.headerBg,
             color: alpha('#FFFFFF', 0.94),
             boxShadow: 'inset 0 -1px 0 rgba(255, 255, 255, 0.12)',
             textTransform: 'uppercase',
             letterSpacing: 0.4,
           },
-                    // ✅ divisores sutiles entre columnas del header
-                    '& .MuiTableHead-root .MuiTableCell-head:not(:last-of-type)': {
-                      borderRight: `3px solid ${alpha(marron.headerBorder, 0.5)}`,
-                    },
+          // ✅ divisores sutiles entre columnas del header
+          '& .MuiTableHead-root .MuiTableCell-head:not(:last-of-type)': {
+            borderRight: `3px solid ${alpha(verde.headerBorder, 0.5)}`,
+          },
         }}
       >
         <TableHead>
@@ -390,7 +390,7 @@ const TablaRubros: React.FC<Props> = ({ onNuevoRubro, puedeCrear = true }) => {
                     label={<IconCategory size={18} />}
                     size="medium"
                     sx={{
-                      bgcolor: marron.primary,
+                      bgcolor: verde.primary,
                       color: '#fff',
                       height: 36,
                       '& .MuiChip-label': { px: 1.1, py: 0.25 },
@@ -403,7 +403,7 @@ const TablaRubros: React.FC<Props> = ({ onNuevoRubro, puedeCrear = true }) => {
                 <Chip
                   label={rubro.codigo || 'Sin código'}
                   size="small"
-                  sx={{ bgcolor: alpha(accentInterior, 0.18), color: marron.textStrong }}
+                  sx={{ bgcolor: alpha(accentInterior, 0.18), color: verde.textStrong }}
                 />
               </TableCell>
               <TableCell align="center">{rubro.cantidadArticulos != null ? rubro.cantidadArticulos : 0}</TableCell>
@@ -469,7 +469,7 @@ const TablaRubros: React.FC<Props> = ({ onNuevoRubro, puedeCrear = true }) => {
             <Button size="small" onClick={limpiarFiltroColumna}>
               Limpiar
             </Button>
-            <CrystalButton size="small" baseColor={marron.primary} onClick={aplicarFiltroColumna}>
+            <CrystalButton size="small" baseColor={verde.primary} onClick={aplicarFiltroColumna}>
               Aplicar
             </CrystalButton>
           </Stack>
@@ -495,16 +495,16 @@ const TablaRubros: React.FC<Props> = ({ onNuevoRubro, puedeCrear = true }) => {
           num === '...' ? (
             <CrystalSoftButton
               key={idx}
-              baseColor={marron.primary}
+              baseColor={verde.primary}
               disabled
-              sx={{ minWidth: 32, minHeight: 30, px: 1, py: 0.25, borderRadius: 2, color: marron.textStrong }}
+              sx={{ minWidth: 32, minHeight: 30, px: 1, py: 0.25, borderRadius: 2, color: verde.textStrong }}
             >
               ...
             </CrystalSoftButton>
           ) : (
             <CrystalButton
               key={num}
-              baseColor={marron.primary}
+              baseColor={verde.primary}
               sx={{
                 minWidth: 32,
                 minHeight: 30,
@@ -574,7 +574,7 @@ const TablaRubros: React.FC<Props> = ({ onNuevoRubro, puedeCrear = true }) => {
         onClose={cerrarModales}
         rubro={rubroSeleccionado}
         onSuccess={refetch}
-        accentColor={marron.primary}
+        accentColor={verde.primary}
       />
 
       <ModalDetallesRubro open={modalDetallesOpen} onClose={cerrarModales} rubro={rubroSeleccionado} />

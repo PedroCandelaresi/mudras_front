@@ -10,6 +10,7 @@ import config from '@/app/context/config';
 import Scrollbar from "@/app/components/custom-scroll/Scrollbar";
 import { Profile } from "./SidebarProfile/Profile";
 import { useContext } from "react";
+import { TexturedPanel } from "@/components/ui/TexturedFrame/TexturedPanel";
 
 const Sidebar = () => {
   // NOTA: lgUp acá significa "pantallas <= lg" (por tu uso de down("lg"))
@@ -79,9 +80,8 @@ const Sidebar = () => {
                   }),
                   width: toggleWidth,
                   boxSizing: "border-box",
-                  background:
-                    "linear-gradient(135deg, #FFE4D6 0%, #FFD4B3 50%, #FFC299 100%)",
-                  borderRight: "1px solid #FF8C42",
+                  background: "transparent",
+                  borderRight: "0",
                   overflowX: "hidden",
                   "&::-webkit-scrollbar": {
                     display: "none",
@@ -95,20 +95,39 @@ const Sidebar = () => {
             {/* ------------------------------------------- */}
             {/* Sidebar Box */}
             {/* ------------------------------------------- */}
-            <Box sx={{ height: "100%" }}>
-              {/* Logo */}
-              <Box px={2}>
-                <Logo />
+            <TexturedPanel
+              accent="#5c6472"
+              radius={0}
+              contentPadding={12}
+              bgTintPercent={26}
+              bgAlpha={0.98}
+              tintMode="soft-light"
+              tintOpacity={0.4}
+              textureScale={1.05}
+              textureBaseOpacity={0.32}
+              textureBoostOpacity={0.24}
+              textureContrast={1.0}
+              textureBrightness={1.02}
+              bevelWidth={12}
+              bevelIntensity={0.95}
+              glossStrength={0.9}
+              vignetteStrength={0.85}
+            >
+              <Box sx={{ height: "100%" }}>
+                {/* Logo */}
+                <Box px={2} pb={1.5}>
+                  <Logo />
+                </Box>
+
+                {/* Items con scroll */}
+                <Scrollbar sx={{ height: "calc(100% - 160px)" }}>
+                  <SidebarItems />
+                </Scrollbar>
+
+                {/* Perfil al pie */}
+                <Profile />
               </Box>
-
-              {/* Items con scroll */}
-              <Scrollbar sx={{ height: "calc(100% - 160px)" }}>
-                <SidebarItems />
-              </Scrollbar>
-
-              {/* Perfil al pie */}
-              <Profile />
-            </Box>
+            </TexturedPanel>
           </Drawer>
         </Box>
       ) : (
@@ -124,17 +143,37 @@ const Sidebar = () => {
                 width: SidebarWidth,
                 border: "0 !important",
                 boxShadow: (theme) => theme.shadows[8],
+                background: "transparent",
               },
             },
           }}
         >
-          {/* Logo */}
-          <Box px={1.5}>
-            <Logo />
-          </Box>
+          <TexturedPanel
+            accent="#5c6472"
+            radius={0}
+            contentPadding={10}
+            bgTintPercent={26}
+            bgAlpha={0.98}
+            tintMode="soft-light"
+            tintOpacity={0.4}
+            textureScale={1.05}
+            textureBaseOpacity={0.32}
+            textureBoostOpacity={0.24}
+            textureContrast={1.0}
+            textureBrightness={1.02}
+            bevelWidth={10}
+            bevelIntensity={0.9}
+            glossStrength={0.9}
+            vignetteStrength={0.8}
+          >
+            {/* Logo */}
+            <Box px={1.5} pb={1}>
+              <Logo />
+            </Box>
 
-          {/* Items */}
-          <SidebarItems />
+            {/* Items */}
+            <SidebarItems />
+          </TexturedPanel>
         </Drawer>
       )}
     </>

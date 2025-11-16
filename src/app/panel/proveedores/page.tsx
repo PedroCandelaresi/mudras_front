@@ -6,20 +6,20 @@ import ProveedoresTable from '@/components/proveedores/TablaProveedores';
 import TablaPedidos from '@/components/pedidos/TablaPedidos';
 import StylizedTabbedPanel, { type StylizedTabDefinition } from '@/components/ui/StylizedTabbedPanel';
 import { Icon } from '@iconify/react';
-import { azul, azulOscuro, marron } from '@/ui/colores';
+import { azul, azulOscuro } from '@/ui/colores';
 
 const tabs: StylizedTabDefinition[] = [
   {
     key: 'proveedores',
     label: 'Proveedores',
     icon: <Icon icon="mdi:account-group" />,
-    color: marron.primary,
+    color: azul.primary,
   },
   {
     key: 'pedidos',
     label: 'Pedidos',
     icon: <Icon icon="mdi:clipboard-text-outline" />,
-    color: azulOscuro.primary,
+    color: azul.primary,
   },
 ];
 

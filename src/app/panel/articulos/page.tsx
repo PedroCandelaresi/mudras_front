@@ -10,12 +10,12 @@ import TablaMovimientosStock from '@/components/stock/TablaMovimientosStock';
 import ModalNuevoArticulo from '@/components/articulos/ModalNuevoArticulo';
 import ModalModificarStock from '@/components/articulos/ModalModificarStock';
 import type { Articulo } from '@/app/interfaces/mudras.types';
-import { verde, marron, borgoña } from '@/ui/colores';
+import { verde } from '@/ui/colores';
 
 const tabDefinitions: StylizedTabDefinition[] = [
   { key: 'articulos', label: 'Artículos', icon: <Icon icon="mdi:cube-outline" />, color: verde.primary },
-  { key: 'rubros', label: 'Rubros', icon: <Icon icon="mdi:tag" />, color: marron.primary },
-  { key: 'movimientos', label: 'Movimientos de Stock', icon: <Icon icon="mdi:swap-horizontal" />, color: borgoña.primary },
+  { key: 'rubros', label: 'Rubros', icon: <Icon icon="mdi:tag" />, color: verde.primary },
+  { key: 'movimientos', label: 'Movimientos de Stock', icon: <Icon icon="mdi:swap-horizontal" />, color: verde.primary },
 ];
 
 export default function ArticulosPage() {

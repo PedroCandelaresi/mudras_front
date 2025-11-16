@@ -21,6 +21,10 @@ export interface StylizedTabbedPanelProps {
   children?: ReactNode;
   tabsExtra?: ReactNode;
   contentProps?: BoxProps;
+  /**
+   * Si es true, oculta la barra de tabs (útil para pantallas con una sola sección, como el inicio del panel).
+   */
+  hideTabs?: boolean;
 }
 
 export const createBevelWrapper = (color: string) => {
@@ -77,6 +81,7 @@ const StylizedTabbedPanel = ({
   children,
   tabsExtra,
   contentProps,
+  hideTabs,
 }: StylizedTabbedPanelProps) => {
   if (!tabs.length) {
     return <>{children}</>;
@@ -106,38 +111,40 @@ const StylizedTabbedPanel = ({
         glossStrength={1.0}
         vignetteStrength={0.9}
       >
-        <Box
-          sx={{
-            bgcolor: 'transparent',
-            px: 1,
-            py: 1.5,
-            display: 'flex',
-            flexWrap: 'wrap',
-            gap: 1,
-            alignItems: 'center',
-          }}
-        >
-          <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
-            {tabs.map((tab) => {
-              const isActive = tab.key === activeTab.key;
-              const ButtonComp = isActive ? CrystalButton : CrystalSoftButton;
-              return (
-                <ButtonComp
-                  key={tab.key}
-                  baseColor={tab.color}
-                  startIcon={tab.icon}
-                  onClick={() => onChange(tab.key)}
-                  sx={{ ...forceWhiteIconsSX, minHeight: 40, borderRadius: 1, px: 2 }}
-                >
-                  {tab.label}
-                </ButtonComp>
-              );
-            })}
+        {!hideTabs && (
+          <Box
+            sx={{
+              bgcolor: 'transparent',
+              px: 1,
+              py: 1.5,
+              display: 'flex',
+              flexWrap: 'wrap',
+              gap: 1,
+              alignItems: 'center',
+            }}
+          >
+            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+              {tabs.map((tab) => {
+                const isActive = tab.key === activeTab.key;
+                const ButtonComp = isActive ? CrystalButton : CrystalSoftButton;
+                return (
+                  <ButtonComp
+                    key={tab.key}
+                    baseColor={tab.color}
+                    startIcon={tab.icon}
+                    onClick={() => onChange(tab.key)}
+                    sx={{ ...forceWhiteIconsSX, minHeight: 40, borderRadius: 1, px: 2 }}
+                  >
+                    {tab.label}
+                  </ButtonComp>
+                );
+              })}
+            </Box>
+            {tabsExtra && (
+              <Box sx={{ ml: 'auto', display: 'flex', alignItems: 'center', gap: 1 }}>{tabsExtra}</Box>
+            )}
           </Box>
-          {tabsExtra && (
-            <Box sx={{ ml: 'auto', display: 'flex', alignItems: 'center', gap: 1 }}>{tabsExtra}</Box>
-          )}
-        </Box>
+        )}
 
         <Box
           {...contentProps}

@@ -38,18 +38,18 @@ import {
 import { GET_MOVIMIENTOS_STOCK, GET_ARTICULOS } from '@/components/articulos/graphql/queries';
 import { Stock } from '@/app/interfaces/mudras.types';
 import { MovimientosStockResponse } from '@/app/interfaces/graphql.types';
-import { borgoña, verde, azul } from '@/ui/colores';
+import { verde, azul } from '@/ui/colores';
 import { crearConfiguracionBisel, crearEstilosBisel } from '@/components/ui/bevel';
 import { WoodBackdrop } from '@/components/ui/TexturedFrame/WoodBackdrop';
 import CrystalButton, { CrystalIconButton, CrystalSoftButton } from '@/components/ui/CrystalButton';
 import SearchToolbar from '@/components/ui/SearchToolbar';
 
-/* ======================== Estética (borgoña) ======================== */
-const accentExterior = borgoña.primary;
-const accentInterior = borgoña.borderInner ?? '#6B1E2C';
+/* ======================== Estética (verde oliva, como Artículos) ======================== */
+const accentExterior = verde.primary;
+const accentInterior = verde.borderInner ?? '#2b4735';
 
-// Mantengo paneles/wood por coherencia visual, pero toolbar será “flat” como Proveedores
-const woodTintExterior = '#caa3ad';
+// Paneles/wood consistente con Artículos
+const woodTintExterior = '#c7d8cb';
 const colorAccionEliminar = '#b71c1c';
 
 const biselExteriorConfig = crearConfiguracionBisel(accentExterior, 1.4);
@@ -68,7 +68,7 @@ const WoodSection: React.FC<React.PropsWithChildren> = ({ children }) => (
   >
     <WoodBackdrop accent={woodTintExterior} radius={3} inset={0} strength={0.16} texture="tabla" />
     {/* Capa de tinte muy leve */}
-    <Box sx={{ position: 'absolute', inset: 0, backgroundColor: alpha('#fceff1', 0.86), zIndex: 0 }} />
+    <Box sx={{ position: 'absolute', inset: 0, backgroundColor: alpha('#f2f7f4', 0.86), zIndex: 0 }} />
     <Box sx={{ position: 'relative', zIndex: 2, p: 3 }}>{children}</Box>
   </Box>
 );
@@ -240,7 +240,7 @@ const TablaMovimientosStock = () => {
         overflow: 'hidden',              // ✅ recorta header redondeado
         border: '1px solid',
         borderColor: alpha(accentExterior, 0.6),
-        bgcolor: alpha(borgoña.alternateRow, 0.72),
+        bgcolor: alpha(verde.alternateRow, 0.72),
         boxShadow: '0 8px 24px rgba(0,0,0,0.08)',
       }}
     >
@@ -261,7 +261,7 @@ const TablaMovimientosStock = () => {
           borderRadius: 0,
           position: 'relative',
           zIndex: 2,
-          bgcolor: alpha(borgoña.alternateRow, 0.75),
+          bgcolor: alpha(verde.alternateRow, 0.75),
           '& .MuiTableRow-root': { minHeight: 62 },
           '& .MuiTableCell-root': {
             fontSize: '0.75rem',
@@ -271,18 +271,18 @@ const TablaMovimientosStock = () => {
             bgcolor: 'transparent',
           },
           '& .MuiTableBody-root .MuiTableRow-root:nth-of-type(odd) .MuiTableCell-root': {
-            bgcolor: alpha(borgoña.alternateRow, 0.75),
+            bgcolor: alpha(verde.alternateRow, 0.75),
           },
           '& .MuiTableBody-root .MuiTableRow-root:nth-of-type(even) .MuiTableCell-root': {
-            bgcolor: alpha(borgoña.rowHover, 0.55),
+            bgcolor: alpha(verde.rowHover, 0.55),
           },
           '& .MuiTableBody-root .MuiTableRow-root.MuiTableRow-hover:hover .MuiTableCell-root': {
-            bgcolor: alpha(borgoña.actionHover, 0.7),
+            bgcolor: alpha(verde.actionHover, 0.7),
           },
           '& .MuiTableCell-head': {
             fontSize: '0.75rem',
             fontWeight: 600,
-            bgcolor: borgoña.headerBg,
+            bgcolor: verde.headerBg,
             color: alpha('#FFFFFF', 0.94),
             boxShadow: 'inset 0 -1px 0 rgba(255,255,255,0.12)',
             textTransform: 'uppercase',
@@ -291,7 +291,7 @@ const TablaMovimientosStock = () => {
           },
           // ✅ divisores sutiles entre columnas del header
           '& .MuiTableHead-root .MuiTableCell-head:not(:last-of-type)': {
-            borderRight: `3px solid ${alpha(borgoña.headerBorder, 0.5)}`,
+            borderRight: `3px solid ${alpha(verde.headerBorder, 0.5)}`,
           },
         }}
       >
@@ -340,7 +340,7 @@ const TablaMovimientosStock = () => {
             <TableRow>
               <TableCell colSpan={9}>
                 <Box textAlign="center" py={4}>
-                  <Typography variant="subtitle1" color={borgoña.textStrong} fontWeight={600}>
+                  <Typography variant="subtitle1" color={verde.textStrong} fontWeight={600}>
                     No se encontraron movimientos
                   </Typography>
                   <Typography variant="body2" color="text.secondary">
@@ -369,7 +369,7 @@ const TablaMovimientosStock = () => {
                       ? alpha(verde.primary, 0.12)
                       : esSalida
                         ? alpha('#ff7043', 0.12)
-                        : alpha(borgoña.rowHover, 0.42),
+                        : alpha(verde.rowHover, 0.42),
                     '&:hover': { bgcolor: alpha(accentExterior, 0.1) },
                   }}
                 >
@@ -385,7 +385,7 @@ const TablaMovimientosStock = () => {
                       size="small"
                       sx={{
                         bgcolor: alpha(accentExterior, 0.2),
-                        color: borgoña.textStrong,
+                        color: verde.textStrong,
                         height: 20,
                         '& .MuiChip-label': { px: 0.8, fontWeight: 600 },
                       }}
@@ -521,7 +521,7 @@ const TablaMovimientosStock = () => {
                 key={`ellipsis-${idx}`}
                 baseColor={accentExterior}
                 disabled
-                sx={{ minWidth: 32, minHeight: 30, px: 1, py: 0.25, borderRadius: 2, color: borgoña.textStrong }}
+                sx={{ minWidth: 32, minHeight: 30, px: 1, py: 0.25, borderRadius: 2, color: verde.textStrong }}
               >
                 …
               </CrystalSoftButton>

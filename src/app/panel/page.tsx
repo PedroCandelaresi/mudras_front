@@ -112,6 +112,7 @@ export default function Dashboard() {
         tabs={tabs}
         activeKey={activeTab}
         onChange={setActiveTab}
+        hideTabs
       >
       <Box mt={1} mx={2}>
         {/* Título Principal */}

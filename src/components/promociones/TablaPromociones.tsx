@@ -137,7 +137,7 @@ const TablaPromociones: React.FC<Props> = ({ puedeCrear = true }) => {
       <SearchToolbar
         title="Promociones"
         icon={<IconDiscount2 style={{ marginRight: 8, verticalAlign: 'middle' }} />}
-        baseColor="#2e7d32"
+        baseColor="#f9a825"
         placeholder="Buscar promociones (nombre, estado)"
         searchValue={busqueda}
         onSearchValueChange={setBusqueda}
@@ -149,7 +149,11 @@ const TablaPromociones: React.FC<Props> = ({ puedeCrear = true }) => {
       />
 
       <TableContainer sx={{ borderRadius: 2, border: '1px solid', borderColor: 'grey.200', bgcolor: 'background.paper' }}>
-        <Table stickyHeader size="small" sx={{ '& .MuiTableCell-head': { bgcolor: '#2f3e2e', color: '#eef5ee' } }}>
+        <Table
+          stickyHeader
+          size="small"
+          sx={{ '& .MuiTableCell-head': { bgcolor: '#f9a825', color: '#212121' } }}
+        >
           <TableHead>
             <TableRow>
               <TableCell sx={{ fontWeight: 700, color: '#eef5ee' }}>Nombre</TableCell>
