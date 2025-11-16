@@ -96,7 +96,7 @@ const Sidebar = () => {
             {/* Sidebar Box */}
             {/* ------------------------------------------- */}
             <TexturedPanel
-              accent="#5c6472"
+              accent="#c49b3b"
               radius={0}
               contentPadding={12}
               bgTintPercent={26}
@@ -112,6 +112,7 @@ const Sidebar = () => {
               bevelIntensity={0.95}
               glossStrength={0.9}
               vignetteStrength={0.85}
+              fullHeight
             >
               <Box sx={{ height: "100%" }}>
                 {/* Logo */}
@@ -149,7 +150,7 @@ const Sidebar = () => {
           }}
         >
           <TexturedPanel
-            accent="#5c6472"
+            accent="#c49b3b"
             radius={0}
             contentPadding={10}
             bgTintPercent={26}
@@ -165,6 +166,7 @@ const Sidebar = () => {
             bevelIntensity={0.9}
             glossStrength={0.9}
             vignetteStrength={0.8}
+            fullHeight
           >
             {/* Logo */}
             <Box px={1.5} pb={1}>

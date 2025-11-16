@@ -42,6 +42,11 @@ export type TexturedPanelProps = PropsWithChildren<{
   outlineWidth?: number;
 
   className?: string;
+  /**
+   * Si es true, el wrapper ocupa el 100% de la altura disponible
+   * (útil para layouts como la sidebar).
+   */
+  fullHeight?: boolean;
 }>;
 
 /* ============================== Tipos internos ============================== */
@@ -53,6 +58,7 @@ type ShellProps = {
   bevelWidth: number;
   bevelIntensity: number;
   vignetteStrength: number;
+  fullHeight?: boolean;
 };
 
 type PanelProps = {
@@ -82,13 +88,14 @@ const Shell = styled('div', {
   shouldForwardProp: (prop) =>
     ![
       'radius','accent','variant','outlineWidth',
-      'bevelWidth','bevelIntensity','vignetteStrength',
+      'bevelWidth','bevelIntensity','vignetteStrength','fullHeight',
     ].includes(String(prop)),
-})<ShellProps>(({ radius }) => ({
+})<ShellProps>(({ radius, fullHeight }) => ({
   position: 'relative',
   borderRadius: radius,
   overflow: 'hidden',
   padding: 0,
+  height: fullHeight ? '100%' : 'auto',
 
   /* 🔥 Nada de fondo ni degradados ni sombras */
   background: 'transparent',
@@ -228,6 +235,7 @@ function TexturedPanelBase({
   variant = 'borderless',
   outlineWidth = 1,
   className,
+  fullHeight,
 }: TexturedPanelProps) {
   // Capas estáticas memoizadas: no se vuelven a crear a menos que cambien estas props.
   const staticLayers = useMemo(() => (
@@ -250,6 +258,7 @@ function TexturedPanelBase({
       bevelWidth={bevelWidth}
       bevelIntensity={bevelIntensity}
       vignetteStrength={vignetteStrength}
+      fullHeight={fullHeight}
     >
       <Panel
         accent={accent}
