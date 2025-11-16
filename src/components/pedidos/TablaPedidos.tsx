@@ -15,6 +15,7 @@ import { crearConfiguracionBisel, crearEstilosBisel } from "@/components/ui/beve
 import { WoodBackdrop } from "@/components/ui/TexturedFrame/WoodBackdrop";
 import CrystalButton, { CrystalSoftButton } from "@/components/ui/CrystalButton";
 import { ModalBase } from "@/ui/ModalBase";
+import SearchToolbar from "@/components/ui/SearchToolbar";
 
 /* ======================== Tipos ======================== */
 export interface PedidoItem {
@@ -110,62 +111,19 @@ export function TablaPedidos({ items = [], puedeCrear = false, onNuevoPedido }: 
 
   /* ======================== Toolbar ======================== */
   const toolbar = (
-    <Box
-      display="flex"
-      justifyContent="space-between"
-      alignItems="center"
-      sx={{ px: 1, py: 1, mb: 2, borderRadius: 0, border: "0px" }}
-    >
-      <Typography variant="h6" fontWeight={700} color={azulOscuro.textStrong}>
-        <IconReceipt style={{ marginRight: 8, verticalAlign: "middle" }} />
-        Pedidos
-      </Typography>
-
-      <Box display="flex" alignItems="center" gap={1.5}>
-        {puedeCrear && (
-          <CrystalButton
-            baseColor={azulOscuro.primary}
-            startIcon={<IconPlus size={18} />}
-            onClick={onNuevoPedido}
-          >
-            Nuevo Pedido
-          </CrystalButton>
-        )}
-
-        <TextField
-          size="small"
-          placeholder="Buscar pedidos (ID, cliente, estado)"
-          value={busqueda}
-          onChange={(e) => setBusqueda(e.target.value)}
-          onKeyDown={(e) => { if (e.key === "Enter") setPage(0); }}
-          InputProps={{
-            startAdornment: (
-              <InputAdornment position="start">
-                <IconSearch size={20} />
-              </InputAdornment>
-            ),
-          }}
-          sx={{
-            minWidth: 280,
-            "& .MuiOutlinedInput-root": {
-              backgroundColor: alpha(azulOscuro.toolbarBg, 0.6),
-              backdropFilter: "saturate(125%) blur(0.5px)",
-              borderRadius: 2,
-            },
-            "& .MuiOutlinedInput-root fieldset": { borderColor: alpha(accentExterior, 0.35) },
-            "& .MuiOutlinedInput-root:hover fieldset": { borderColor: alpha(accentExterior, 0.5) },
-            "& .MuiOutlinedInput-root.Mui-focused fieldset": { borderColor: azulOscuro.primary },
-          }}
-        />
-
-        <CrystalSoftButton
-          baseColor={azulOscuro.primary}
-          onClick={() => { setBusqueda(""); setPage(0); }}
-        >
-          Limpiar
-        </CrystalSoftButton>
-      </Box>
-    </Box>
+    <SearchToolbar
+      title="Pedidos"
+      icon={<IconReceipt style={{ marginRight: 8, verticalAlign: "middle" }} />}
+      baseColor={azulOscuro.primary}
+      placeholder="Buscar pedidos (ID, cliente, estado)"
+      searchValue={busqueda}
+      onSearchValueChange={setBusqueda}
+      onSubmitSearch={() => setPage(0)}
+      onClear={() => { setBusqueda(""); setPage(0); }}
+      canCreate={puedeCrear}
+      createLabel="Nuevo Pedido"
+      onCreateClick={onNuevoPedido}
+    />
   );
 
   /* ======================== Tabla ======================== */

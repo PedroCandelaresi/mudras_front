@@ -2,9 +2,7 @@
 
 import React, { useState } from 'react';
 import { Box, Button, Chip, CircularProgress, IconButton, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TablePagination, TableRow, Tooltip, Typography, TextField, InputAdornment, Menu, Divider, Stack } from '@mui/material';
-import { IconEdit, IconTrash, IconUserShield } from '@tabler/icons-react';
-import { IconSearch } from '@tabler/icons-react';
-import { IconDotsVertical } from '@tabler/icons-react';
+import { IconEdit, IconTrash, IconUserShield, IconSearch, IconDotsVertical } from '@tabler/icons-react';
 import { marron } from '@/ui/colores';
 import { useQuery } from '@apollo/client/react';
 import { USUARIOS_ADMIN_QUERY } from './graphql/queries';

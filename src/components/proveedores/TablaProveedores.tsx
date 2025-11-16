@@ -24,6 +24,7 @@ import { marron, azul, verde } from '@/ui/colores';
 import { crearConfiguracionBisel, crearEstilosBisel } from '@/components/ui/bevel';
 import { WoodBackdrop } from '@/components/ui/TexturedFrame/WoodBackdrop';
 import CrystalButton, { CrystalIconButton, CrystalSoftButton } from '@/components/ui/CrystalButton';
+import SearchToolbar from '@/components/ui/SearchToolbar';
 
 import {
   ModalDetallesProveedor,
@@ -286,71 +287,19 @@ const TablaProveedores = forwardRef<TablaProveedoresHandle, Props>(({
 
   /* ======================== Toolbar ======================== */
   const toolbar = (
-    <Box
-      display="flex"
-      justifyContent="space-between"
-      alignItems="center"
-      sx={{ px: 1, py: 1, mb: 2, borderRadius: 0, border: '0px' }}
-    >
-      <Typography variant="h6" fontWeight={700} color={azul.textStrong}>
-        <IconUsers style={{ marginRight: 8, verticalAlign: 'middle' }} />
-        Proveedores
-      </Typography>
-      <Box display="flex" alignItems="center" gap={1.5}>
-        {puedeCrear && (
-          <CrystalButton
-            baseColor={azul.primary}
-            startIcon={<IconPlus size={18} />}
-            onClick={handleNuevoProveedor}
-          >
-            Nuevo Proveedor
-          </CrystalButton>
-        )}
-        <TextField
-          size="small"
-          placeholder="Buscar proveedores..."
-          value={filtro}
-          onChange={(e) => setFiltro(e.target.value)}
-          onKeyDown={(e) => { if (e.key === 'Enter') setPage(0); }}
-          InputProps={{
-            startAdornment: (
-              <InputAdornment position="start">
-                <IconSearch size={20} />
-              </InputAdornment>
-            ),
-          }}
-          sx={{
-            minWidth: 250,
-            '& .MuiOutlinedInput-root': {
-              backgroundColor: 'rgba(241, 248, 255, 0.6)',
-              backdropFilter: 'saturate(125%) blur(0.5px)',
-              borderRadius: 2,
-            },
-            '& .MuiOutlinedInput-root fieldset': { borderColor: alpha(accentExterior, 0.35) },
-            '& .MuiOutlinedInput-root:hover fieldset': { borderColor: alpha(accentExterior, 0.5) },
-            '& .MuiOutlinedInput-root.Mui-focused fieldset': { borderColor: azul.primary },
-          }}
-        />
-        <Tooltip title="Buscar (Enter)">
-          <span>
-            <CrystalButton
-              baseColor={azul.primary}
-              startIcon={<IconSearch size={18} />}
-              onClick={() => setPage(0)}
-            >
-              Buscar
-            </CrystalButton>
-          </span>
-        </Tooltip>
-        <CrystalSoftButton
-          baseColor={azul.primary}
-          startIcon={<IconRefresh />}
-          onClick={() => { setFiltro(''); setFiltrosColumna({}); setPage(0); }}
-        >
-          Limpiar filtros
-        </CrystalSoftButton>
-      </Box>
-    </Box>
+    <SearchToolbar
+      title="Proveedores"
+      icon={<IconUsers style={{ marginRight: 8, verticalAlign: 'middle' }} />}
+      baseColor={azul.primary}
+      placeholder="Buscar proveedores..."
+      searchValue={filtro}
+      onSearchValueChange={setFiltro}
+      onSubmitSearch={() => setPage(0)}
+      onClear={() => { setFiltro(''); setFiltrosColumna({}); setPage(0); }}
+      canCreate={puedeCrear}
+      createLabel="Nuevo Proveedor"
+      onCreateClick={handleNuevoProveedor}
+    />
   );
 
   /* ======================== Tabla ======================== */

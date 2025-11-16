@@ -43,6 +43,7 @@ import ModalEditarRubro from './ModalEditarRubro';
 import ModalDetallesRubro from './ModalDetallesRubro';
 import ModalEliminarRubro from './ModalEliminarRubro';
 import CrystalButton, { CrystalIconButton, CrystalSoftButton } from '@/components/ui/CrystalButton';
+import SearchToolbar from '@/components/ui/SearchToolbar';
 
 type Props = {
   onNuevoRubro?: () => void;
@@ -273,68 +274,20 @@ const TablaRubros: React.FC<Props> = ({ onNuevoRubro, puedeCrear = true }) => {
 
   /* ---------- Toolbar ---------- */
   const toolbar = (
-    <Box display="flex" justifyContent="space-between" alignItems="center" sx={{ px: 1, py: 1, mb: 2, borderRadius: 0, border: '0px' }}>
-      <Typography variant="h6" fontWeight={700} color={marron.textStrong}>
-        <IconCategory style={{ marginRight: 8, verticalAlign: 'middle' }} />
-        Rubros y Categorías
-      </Typography>
-      <Box display="flex" alignItems="center" gap={1.5}>
-        {puedeCrear && (
-          <CrystalButton baseColor={marron.primary} startIcon={<IconPlus size={18} />} onClick={onNuevoRubro || handleNuevoRubro}>
-            Nuevo Rubro
-          </CrystalButton>
-        )}
-        <TextField
-          size="small"
-          placeholder="Buscar rubros..."
-          value={filtroInput}
-          onChange={(e) => setFiltroInput(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter') {
-              // Aplicamos el buscador general (se combina con los filtros por columna)
-              setFiltro(filtroInput);
-              setPage(0);
-            }
-          }}
-          InputProps={{
-            startAdornment: (
-              <InputAdornment position="start">
-                <IconSearch size={20} />
-              </InputAdornment>
-            ),
-          }}
-          sx={{
-            minWidth: 250,
-            '& .MuiOutlinedInput-root': {
-              backgroundColor: 'rgba(255, 250, 244, 0.6)',
-              backdropFilter: 'saturate(125%) blur(0.5px)',
-              borderRadius: 2,
-            },
-            '& .MuiOutlinedInput-root fieldset': { borderColor: alpha(accentExterior, 0.35) },
-            '& .MuiOutlinedInput-root:hover fieldset': { borderColor: alpha(accentExterior, 0.5) },
-            '& .MuiOutlinedInput-root.Mui-focused fieldset': { borderColor: marron.primary },
-          }}
-        />
-        <Tooltip title="Buscar (Enter)">
-          <span>
-            <CrystalButton
-              baseColor={marron.primary}
-              startIcon={<IconSearch size={18} />}
-              onClick={() => {
-                setFiltro(filtroInput);
-                setPage(0);
-              }}
-              disabled={loading}
-            >
-              Buscar
-            </CrystalButton>
-          </span>
-        </Tooltip>
-        <CrystalSoftButton baseColor={marron.primary} startIcon={<IconRefresh />} onClick={limpiarFiltros}>
-          Limpiar filtros
-        </CrystalSoftButton>
-      </Box>
-    </Box>
+    <SearchToolbar
+      title="Rubros y Categorías"
+      icon={<IconCategory style={{ marginRight: 8, verticalAlign: 'middle' }} />}
+      baseColor={marron.primary}
+      placeholder="Buscar rubros..."
+      searchValue={filtroInput}
+      onSearchValueChange={setFiltroInput}
+      onSubmitSearch={() => { setFiltro(filtroInput); setPage(0); }}
+      onClear={limpiarFiltros}
+      canCreate={puedeCrear}
+      createLabel="Nuevo Rubro"
+      onCreateClick={onNuevoRubro || handleNuevoRubro}
+      searchDisabled={loading}
+    />
   );
 
   /* ---------- Tabla ---------- */

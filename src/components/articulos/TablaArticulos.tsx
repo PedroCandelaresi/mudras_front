@@ -39,6 +39,7 @@ import { azul, verde } from '@/ui/colores';
 import ModalDetallesArticulo from '@/components/articulos/ModalDetallesArticulo';
 import ModalEliminarArticulo from '@/components/articulos/ModalEliminarArticulo';
 import { calcularPrecioDesdeArticulo } from '@/utils/precioVenta';
+import SearchToolbar from '@/components/ui/SearchToolbar';
 
 /* ======================== Tipos de columnas ======================== */
 type ArticuloColumnKey =
@@ -567,98 +568,20 @@ const TablaArticulos: React.FC<ArticulosTableProps> = ({
   };
 
   const toolbar = (
-    <Box
-      display="flex"
-      justifyContent="space-between"
-      alignItems="center"
-      sx={{
-        px: 1,
-        py: 1,
-        mb: 2,
-        borderRadius: 0,
-        border: '0px',
-      }}
-    >
-      <Typography
-        variant="h6"
-        fontWeight={700}
-        color={verde.textStrong}
-        sx={{ display: 'flex', alignItems: 'center', gap: 1 }}
-      >
-        <IconClipboardList size={20} />
-        Articulos
-      </Typography>
-      <Box display="flex" alignItems="center" gap={1.5}>
-        {allowCreate && (
-          <CrystalButton
-            baseColor={verde.primary}
-            startIcon={<IconPlus size={18} />}
-            onClick={onCreateClick}
-          >
-            Nuevo artículo
-          </CrystalButton>
-        )}
-        {showGlobalSearch && (
-          <TextField
-            size="small"
-            placeholder="Buscar descripción, código o proveedor…"
-            value={globalSearchDraft}
-            onChange={(e) => setGlobalSearchDraft(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter') {
-                e.preventDefault();
-                ejecutarBusqueda();
-              }
-            }}
-            InputProps={{
-              startAdornment: (
-                <InputAdornment position="start">
-                  <IconSearch size={18} />
-                </InputAdornment>
-              ),
-            }}
-            sx={{
-              minWidth: 250,
-              '& .MuiOutlinedInput-root': {
-                backgroundColor: 'rgba(255, 250, 244, 0.6)',
-                backdropFilter: 'saturate(125%) blur(0.5px)',
-                borderRadius: 2,
-              },
-              '& .MuiOutlinedInput-root fieldset': {
-                borderColor: alpha(accentExterior, 0.35),
-              },
-              '& .MuiOutlinedInput-root:hover fieldset': {
-                borderColor: alpha(accentExterior, 0.5),
-              },
-              '& .MuiOutlinedInput-root.Mui-focused fieldset': {
-                borderColor: verde.primary,
-              },
-            }}
-          />
-        )}
-
-        <Tooltip title="Buscar (Enter)">
-          <span>
-            <CrystalButton
-              baseColor={verde.primary}
-              startIcon={<IconSearch size={18} />}
-              onClick={ejecutarBusqueda}
-              disabled={loading}
-            >
-              Buscar
-            </CrystalButton>
-          </span>
-        </Tooltip>
-
-        <CrystalSoftButton
-          baseColor={verde.primary}
-          startIcon={<IconRefresh />}
-          onClick={limpiarFiltros}
-        >
-          Limpiar filtros
-        </CrystalSoftButton>
-      </Box>
-    </Box>
+    <SearchToolbar
+      title="Artículos"
+      icon={<IconClipboardList size={20} />}
+      baseColor={verde.primary}
+      placeholder="Buscar descripción, código o proveedor…"
+      searchValue={globalSearchDraft}
+      onSearchValueChange={setGlobalSearchDraft}
+      onSubmitSearch={ejecutarBusqueda}
+      onClear={limpiarFiltros}
+      canCreate={allowCreate}
+      createLabel="Nuevo artículo"
+      onCreateClick={onCreateClick}
+      searchDisabled={loading}
+    />
   );
 
 

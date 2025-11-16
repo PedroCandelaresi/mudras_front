@@ -3,6 +3,7 @@ import React, { useMemo, useState } from "react";
 import { Box, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TablePagination, TableRow, Typography, TextField, InputAdornment, Stack, Chip, Tooltip, IconButton, Button } from "@mui/material";
 import { IconSearch, IconCalendar, IconFileText, IconEye } from "@tabler/icons-react";
 import { ModalBase } from "@/ui/ModalBase";
+import SearchToolbar from "@/components/ui/SearchToolbar";
 
 export interface AsientoItem {
   id: number | string;
@@ -79,26 +80,16 @@ const TablaAsientos: React.FC<Props> = ({ items = [] }) => {
 
   return (
     <Paper elevation={0} variant="outlined" sx={{ p: 3, borderRadius: 2 }}>
-      <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
-        <Typography variant="h5" fontWeight={600} color="success.dark">
-          <IconFileText style={{ marginRight: 8, verticalAlign: 'middle' }} />
-          Asientos Contables
-        </Typography>
-        <Stack direction="row" spacing={2} alignItems="center">
-          <TextField
-            size="small"
-            placeholder="Buscar asientos (ID, descripción, comprobante)"
-            value={busqueda}
-            onChange={(e) => setBusqueda(e.target.value)}
-            InputProps={{ startAdornment: (
-              <InputAdornment position="start">
-                <IconSearch size={18} />
-              </InputAdornment>
-            )}}
-            sx={{ minWidth: 320 }}
-          />
-        </Stack>
-      </Box>
+      <SearchToolbar
+        title="Asientos Contables"
+        icon={<IconFileText style={{ marginRight: 8, verticalAlign: 'middle' }} />}
+        baseColor="#2e7d32"
+        placeholder="Buscar asientos (ID, descripción, comprobante)"
+        searchValue={busqueda}
+        onSearchValueChange={setBusqueda}
+        onSubmitSearch={() => setPage(0)}
+        onClear={() => { setBusqueda(""); setPage(0); }}
+      />
 
       <TableContainer sx={{ borderRadius: 2, border: '1px solid', borderColor: 'grey.200', bgcolor: 'background.paper' }}>
         <Table stickyHeader size="small" sx={{ '& .MuiTableCell-head': { bgcolor: '#2f3e2e', color: '#eef5ee' } }}>

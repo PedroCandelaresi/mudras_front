@@ -3,6 +3,7 @@ import React, { useMemo, useState } from "react";
 import { Box, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TablePagination, TableRow, Typography, TextField, InputAdornment, Stack, Chip, Tooltip, IconButton, Button } from "@mui/material";
 import { IconSearch, IconDiscount2, IconCalendar, IconEdit, IconTrash, IconPlus } from "@tabler/icons-react";
 import { ModalBase } from "@/ui/ModalBase";
+import SearchToolbar from "@/components/ui/SearchToolbar";
 import { useMutation, useQuery } from "@apollo/client/react";
 import { GET_PROMOCIONES } from '@/components/promociones/graphql/queries';
 import {
@@ -133,37 +134,19 @@ const TablaPromociones: React.FC<Props> = ({ puedeCrear = true }) => {
 
   return (
     <Paper elevation={0} sx={{ p: 3, border: 'none', boxShadow: 'none', borderRadius: 2, bgcolor: 'background.paper' }}>
-      <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
-        <Typography variant="h5" fontWeight={600} color="success.dark">
-          <IconDiscount2 style={{ marginRight: 8, verticalAlign: 'middle' }} />
-          Promociones
-        </Typography>
-        <Stack direction="row" spacing={2} alignItems="center">
-          {puedeCrear && (
-            <Button
-              variant="contained"
-              color="success"
-              startIcon={<IconPlus size={18} />}
-              onClick={abrirCrear}
-              sx={{ textTransform: 'none' }}
-            >
-              Nueva Promoción
-            </Button>
-          )}
-          <TextField
-            size="small"
-            placeholder="Buscar promociones (nombre, estado)"
-            value={busqueda}
-            onChange={(e) => setBusqueda(e.target.value)}
-            InputProps={{ startAdornment: (
-              <InputAdornment position="start">
-                <IconSearch size={18} />
-              </InputAdornment>
-            )}}
-            sx={{ minWidth: 280 }}
-          />
-        </Stack>
-      </Box>
+      <SearchToolbar
+        title="Promociones"
+        icon={<IconDiscount2 style={{ marginRight: 8, verticalAlign: 'middle' }} />}
+        baseColor="#2e7d32"
+        placeholder="Buscar promociones (nombre, estado)"
+        searchValue={busqueda}
+        onSearchValueChange={setBusqueda}
+        onSubmitSearch={() => setPage(0)}
+        onClear={() => { setBusqueda(""); setPage(0); }}
+        canCreate={puedeCrear}
+        createLabel="Nueva Promoción"
+        onCreateClick={abrirCrear}
+      />
 
       <TableContainer sx={{ borderRadius: 2, border: '1px solid', borderColor: 'grey.200', bgcolor: 'background.paper' }}>
         <Table stickyHeader size="small" sx={{ '& .MuiTableCell-head': { bgcolor: '#2f3e2e', color: '#eef5ee' } }}>

@@ -314,10 +314,11 @@ export default function TablaPuntosMudras({ tipo, onEditarPunto, onVerInventario
             placeholder={`Buscar ${tipo === 'venta' ? 'puntos de venta' : 'depósitos'}...`}
             value={busqueda}
             onChange={(e) => setBusqueda(e.target.value)}
+            onKeyDown={(e) => { if (e.key === 'Enter') refetch(); }}
             InputProps={{ startAdornment: (<InputAdornment position="start"><IconSearch size={20} /></InputAdornment>) }}
             sx={{ minWidth: 250 }}
           />
-          <Tooltip title="Buscar">
+          <Tooltip title="Buscar (Enter)">
             <span>
               <Button
                 variant="contained"
@@ -334,7 +335,7 @@ export default function TablaPuntosMudras({ tipo, onEditarPunto, onVerInventario
             variant="outlined"
             color="inherit"
             startIcon={<IconTrash />}
-            onClick={() => setBusqueda('')}
+            onClick={() => { setBusqueda(''); refetch(); }}
             sx={{ textTransform: 'none', borderColor: paleta.borderOuter, color: paleta.textStrong, '&:hover': { borderColor: paleta.textStrong, bgcolor: paleta.toolbarBg } }}
           >
             Limpiar

@@ -42,6 +42,7 @@ import { borgoña, verde, azul } from '@/ui/colores';
 import { crearConfiguracionBisel, crearEstilosBisel } from '@/components/ui/bevel';
 import { WoodBackdrop } from '@/components/ui/TexturedFrame/WoodBackdrop';
 import CrystalButton, { CrystalIconButton, CrystalSoftButton } from '@/components/ui/CrystalButton';
+import SearchToolbar from '@/components/ui/SearchToolbar';
 
 /* ======================== Estética (borgoña) ======================== */
 const accentExterior = borgoña.primary;
@@ -174,66 +175,19 @@ const TablaMovimientosStock = () => {
     setPage(0);
   };
 
-  // Toolbar: “flat” como Proveedores
+  // Toolbar unificada con SearchToolbar
   const toolbar = (
-    <Box
-      display="flex"
-      justifyContent="space-between"
-      alignItems="center"
-      sx={{ px: 1, py: 1, mb: 2, borderRadius: 0, border: '0px' }}
-    >
-      <Typography variant="h6" fontWeight={700} color={borgoña.textStrong}>
-        <IconTrendingUp style={{ marginRight: 8, verticalAlign: 'middle' }} />
-        Movimientos de Stock
-      </Typography>
-
-      <Stack direction="row" spacing={1.25} alignItems="center">
-        <TextField
-          size="small"
-          placeholder="Buscar por descripción o usuario…"
-          value={filtro}
-          onChange={(e) => setFiltro(e.target.value)}
-          onKeyDown={(e) => { if (e.key === 'Enter') setPage(0); }}
-          InputProps={{
-            startAdornment: (
-              <InputAdornment position="start">
-                <IconSearch size={18} />
-              </InputAdornment>
-            ),
-          }}
-          sx={{
-            minWidth: 240,
-            '& .MuiOutlinedInput-root': {
-              backgroundColor: 'rgba(255,255,255,0.75)',
-              backdropFilter: 'saturate(125%) blur(0.5px)',
-              borderRadius: 2,
-            },
-            '& .MuiOutlinedInput-root fieldset': { borderColor: alpha(accentExterior, 0.32) },
-            '& .MuiOutlinedInput-root:hover fieldset': { borderColor: alpha(accentExterior, 0.48) },
-            '& .MuiOutlinedInput-root.Mui-focused fieldset': { borderColor: accentExterior },
-          }}
-        />
-        <CrystalButton
-          baseColor={accentExterior}
-          startIcon={<IconSearch size={18} />}
-          onClick={() => refetch()}
-          disabled={loading}
-          sx={{ minHeight: 36, px: 2.4 }}
-        >
-          Buscar
-        </CrystalButton>
-
-        <CrystalSoftButton
-          baseColor={accentExterior}
-          startIcon={<IconRefresh size={18} />}
-          onClick={() => { setFiltro(''); setFiltrosColumna({}); setPage(0); void refetch(); }}
-          sx={{ minHeight: 36, px: 2 }}
-        >
-          Limpiar
-        </CrystalSoftButton>
-
-      </Stack>
-    </Box>
+    <SearchToolbar
+      title="Movimientos de Stock"
+      icon={<IconTrendingUp style={{ marginRight: 8, verticalAlign: 'middle' }} />}
+      baseColor={accentExterior}
+      placeholder="Buscar por descripción o usuario…"
+      searchValue={filtro}
+      onSearchValueChange={setFiltro}
+      onSubmitSearch={() => { setPage(0); void refetch(); }}
+      onClear={() => { setFiltro(''); setFiltrosColumna({}); setPage(0); void refetch(); }}
+      searchDisabled={loading}
+    />
   );
 
   // Header filters (UX igual que Proveedores)

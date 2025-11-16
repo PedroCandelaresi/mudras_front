@@ -3,6 +3,7 @@ import React, { useMemo, useState } from "react";
 import { Box, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TablePagination, TableRow, Typography, TextField, InputAdornment, Button, Stack, Chip, Tooltip, IconButton } from "@mui/material";
 import { IconSearch, IconCurrencyDollar, IconCalendar, IconUser, IconEye } from "@tabler/icons-react";
 import { ModalBase } from "@/ui/ModalBase";
+import SearchToolbar from "@/components/ui/SearchToolbar";
 
 export interface VentaItem {
   id: number | string;
@@ -82,26 +83,16 @@ export function TablaVentas({ items = [], puedeCrear = true }: Props) {
 
   return (
     <Paper elevation={0} variant="outlined" sx={{ p: 3, borderRadius: 2 }}>
-      <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
-        <Typography variant="h5" fontWeight={600} color="success.dark">
-          <IconCurrencyDollar style={{ marginRight: 8, verticalAlign: 'middle' }} />
-          Ventas
-        </Typography>
-        <Stack direction="row" spacing={2} alignItems="center">
-          <TextField
-            size="small"
-            placeholder="Buscar ventas (ID, cliente, estado)"
-            value={busqueda}
-            onChange={(e) => setBusqueda(e.target.value)}
-            InputProps={{ startAdornment: (
-              <InputAdornment position="start">
-                <IconSearch size={18} />
-              </InputAdornment>
-            )}}
-            sx={{ minWidth: 280 }}
-          />
-        </Stack>
-      </Box>
+      <SearchToolbar
+        title="Ventas"
+        icon={<IconCurrencyDollar style={{ marginRight: 8, verticalAlign: 'middle' }} />}
+        baseColor="#2e7d32"
+        placeholder="Buscar ventas (ID, cliente, estado)"
+        searchValue={busqueda}
+        onSearchValueChange={setBusqueda}
+        onSubmitSearch={() => setPage(0)}
+        onClear={() => { setBusqueda(""); setPage(0); }}
+      />
 
       <TableContainer sx={{ borderRadius: 2, border: '1px solid', borderColor: 'grey.200', bgcolor: 'background.paper' }}>
         <Table stickyHeader size="small" sx={{ '& .MuiTableCell-head': { bgcolor: '#2f3e2e', color: '#eef5ee' } }}>
@@ -268,4 +259,3 @@ export function TablaVentas({ items = [], puedeCrear = true }: Props) {
     </Paper>
   );
 }
-

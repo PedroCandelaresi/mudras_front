@@ -2,6 +2,7 @@
 import React, { useMemo, useState } from "react";
 import { Box, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TablePagination, TableRow, Typography, TextField, InputAdornment, Stack, Chip, Button, IconButton } from "@mui/material";
 import { IconSearch, IconReportMoney } from "@tabler/icons-react";
+import SearchToolbar from "@/components/ui/SearchToolbar";
 
 export interface CuentaContableItem {
   codigo: string;
@@ -85,24 +86,16 @@ const TablaCuentasContables: React.FC<Props> = ({ items = [] }) => {
 
   return (
     <Paper elevation={0} variant="outlined" sx={{ p: 3, borderRadius: 2 }}>
-      <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
-        <Typography variant="h5" fontWeight={600} color="success.dark">
-          <IconReportMoney style={{ marginRight: 8, verticalAlign: 'middle' }} />
-          Plan de Cuentas
-        </Typography>
-        <TextField
-          size="small"
-          placeholder="Buscar cuentas (código, nombre, tipo)"
-          value={busqueda}
-          onChange={(e) => setBusqueda(e.target.value)}
-          InputProps={{ startAdornment: (
-            <InputAdornment position="start">
-              <IconSearch size={18} />
-            </InputAdornment>
-          )}}
-          sx={{ minWidth: 320 }}
-        />
-      </Box>
+      <SearchToolbar
+        title="Plan de Cuentas"
+        icon={<IconReportMoney style={{ marginRight: 8, verticalAlign: 'middle' }} />}
+        baseColor="#2e7d32"
+        placeholder="Buscar cuentas (código, nombre, tipo)"
+        searchValue={busqueda}
+        onSearchValueChange={setBusqueda}
+        onSubmitSearch={() => setPage(0)}
+        onClear={() => { setBusqueda(""); setPage(0); }}
+      />
 
       <TableContainer sx={{ borderRadius: 2, border: '1px solid', borderColor: 'grey.200', bgcolor: 'background.paper' }}>
         <Table stickyHeader size="small" sx={{ '& .MuiTableCell-head': { bgcolor: '#2f3e2e', color: '#eef5ee' } }}>
