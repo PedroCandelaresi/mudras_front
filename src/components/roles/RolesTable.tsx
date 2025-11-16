@@ -2,9 +2,10 @@
 
 import React, { useEffect, useMemo, useState } from 'react';
 import { apiFetch } from '@/lib/api';
-import { Box, Chip, CircularProgress, IconButton, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Tooltip, TextField, Button, Typography, InputAdornment, Menu, Divider, Stack } from '@mui/material';
-import { IconAdjustments, IconPlus, IconSearch } from '@tabler/icons-react';
+import { Box, Chip, CircularProgress, IconButton, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Tooltip, TextField, Button, Typography, Menu, Divider, Stack } from '@mui/material';
+import { IconAdjustments, IconPlus } from '@tabler/icons-react';
 import { marron } from '@/ui/colores';
+import SearchToolbar from '@/components/ui/SearchToolbar';
 
 export interface PermisoItem { id: string; resource: string; action: string; description?: string | null; }
 export interface RolePermission { permission: PermisoItem }
@@ -20,6 +21,7 @@ export function RolesTable({ onAsignarPermisos, onCrear, refetchToken }: Props) 
   const [cargando, setCargando] = useState<boolean>(true);
   const [roles, setRoles] = useState<RolItem[]>([]);
   const [busqueda, setBusqueda] = useState('');
+  const [busquedaInput, setBusquedaInput] = useState('');
   const [orden, setOrden] = useState<{ campo: 'name' | 'slug'; dir: 'asc' | 'desc' }>({ campo: 'name', dir: 'asc' });
   const [menuAnchor, setMenuAnchor] = useState<null | HTMLElement>(null);
   const [columnaActiva, setColumnaActiva] = useState<null | 'name' | 'slug'>(null);
@@ -62,23 +64,35 @@ export function RolesTable({ onAsignarPermisos, onCrear, refetchToken }: Props) 
 
   return (
     <Paper elevation={0} sx={{ p: 3, border: 'none', boxShadow: 'none', borderRadius: 2, bgcolor: 'background.paper' }}>
-      <Box display="flex" justifyContent="space-between" alignItems="center" sx={{ px: 1, py: 1, bgcolor: marron.toolbarBg, border: '1px solid', borderColor: marron.toolbarBorder, borderRadius: 1, mb: 2 }}>
-        <Typography variant="h6" fontWeight={700} color={marron.textStrong}>Roles</Typography>
-        <Box display="flex" alignItems="center" gap={1.5}>
-          {onCrear && (
-            <Button variant="contained" onClick={onCrear} sx={{ textTransform: 'none', bgcolor: marron.primary, '&:hover': { bgcolor: marron.primaryHover } }} startIcon={<IconPlus size={16} />}>Nuevo Rol</Button>
-          )}
-          <TextField
-            size="small"
-            placeholder="Buscar rol (nombre o slug)"
-            value={busqueda}
-            onChange={(e) => setBusqueda(e.target.value)}
-            sx={{ minWidth: 260 }}
-            InputProps={{ startAdornment: <InputAdornment position="start"><IconSearch size={18} /></InputAdornment> }}
-          />
-          <Button variant="outlined" color="inherit" onClick={() => setBusqueda('')} sx={{ textTransform: 'none', borderColor: marron.headerBorder, color: marron.textStrong, '&:hover': { borderColor: marron.primaryHover, bgcolor: marron.toolbarBg } }}>Limpiar</Button>
-          {cargando && <CircularProgress size={20} />}
-        </Box>
+      <Box
+        sx={{
+          px: 1,
+          py: 1,
+          bgcolor: marron.toolbarBg,
+          border: '1px solid',
+          borderColor: marron.toolbarBorder,
+          borderRadius: 1,
+          mb: 2,
+        }}
+      >
+        <SearchToolbar
+          title="Roles"
+          baseColor={marron.primary}
+          placeholder="Buscar rol (nombre o slug)"
+          searchValue={busquedaInput}
+          onSearchValueChange={setBusquedaInput}
+          onSubmitSearch={() => setBusqueda(busquedaInput)}
+          onClear={() => { setBusqueda(''); setBusquedaInput(''); }}
+          canCreate={Boolean(onCrear)}
+          createLabel="Nuevo Rol"
+          onCreateClick={onCrear}
+          searchDisabled={cargando}
+        />
+        {cargando && (
+          <Box display="flex" justifyContent="flex-end" mt={0.5}>
+            <CircularProgress size={20} />
+          </Box>
+        )}
       </Box>
 
       <TableContainer sx={{ borderRadius: 2, border: '1px solid', borderColor: marron.borderInner, bgcolor: 'background.paper' }}>

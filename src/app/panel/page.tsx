@@ -4,7 +4,7 @@ import PageContainer from '@/components/container/PageContainer';
 import { Grid, Box, Typography, Card } from '@mui/material';
 import { Icon } from '@iconify/react';
 import StylizedTabbedPanel, { type StylizedTabDefinition } from '@/components/ui/StylizedTabbedPanel';
-import { violeta } from '@/ui/colores';
+import { oroBlanco } from '@/ui/colores';
 import EstadisticasCards from '@/app/components/dashboards/mudras/EstadisticasCards';
 import VentasCards from '@/app/components/dashboards/mudras/VentasCards';
 import ProveedoresCards from '@/app/components/dashboards/mudras/ProveedoresCards';
@@ -19,7 +19,7 @@ const tabs: StylizedTabDefinition[] = [
     key: 'resumen',
     label: 'Resumen',
     icon: <Icon icon="mdi:view-dashboard-variant" />,
-    color: violeta.primary,
+    color: oroBlanco.primary,
   },
 ];
 
@@ -120,7 +120,7 @@ export default function Dashboard() {
             variant="h4" 
             fontWeight={700} 
             sx={{ 
-              background: 'linear-gradient(45deg, #7B1FA2 30%, #4A148C 90%)',
+              background: 'linear-gradient(45deg, #e4d5b8 20%, #c2b79b 80%)',
               backgroundClip: 'text',
               WebkitBackgroundClip: 'text',
               WebkitTextFillColor: 'transparent',

@@ -13,18 +13,16 @@ import {
   IconButton,
   Menu,
   MenuItem,
-  TextField,
-  InputAdornment,
   Box,
   Skeleton,
   Button,
   Tooltip,
-  TablePagination,
   Snackbar,
-  Alert
+  Alert,
+  TextField,
 } from '@mui/material';
-import { Search, Store, Warehouse, MoreVert } from '@mui/icons-material';
-import { IconSearch, IconPlus, IconTrash, IconEdit, IconEye, IconRefresh } from '@tabler/icons-react';
+import { Store, Warehouse, MoreVert } from '@mui/icons-material';
+import { IconEdit, IconEye, IconRefresh, IconTrash } from '@tabler/icons-react';
 import { useQuery, useMutation } from '@apollo/client/react';
 import {
   OBTENER_PUNTOS_MUDRAS,
@@ -34,6 +32,7 @@ import { ELIMINAR_PUNTO_MUDRAS } from '@/components/puntos-mudras/graphql/mutati
 import { PuntoMudras, FiltrosPuntosMudras } from '@/interfaces/puntos-mudras';
 import ModalConfirmarEliminacion from '@/components/ui/ModalConfirmarEliminacion';
 import { grisVerdoso, grisRojizo } from '@/ui/colores';
+import SearchToolbar from '@/components/ui/SearchToolbar';
 
 // Extender la interfaz para incluir campos calculados
 interface PuntoMudrasConEstadisticas extends PuntoMudras {
@@ -290,57 +289,42 @@ export default function TablaPuntosMudras({ tipo, onEditarPunto, onVerInventario
 
   return (
     <Paper elevation={0} variant="outlined" sx={{ p: 3, borderColor: paleta.borderOuter, borderRadius: 2, bgcolor: 'background.paper' }}>
-      <Box display="flex" justifyContent="space-between" alignItems="center" sx={{ px: 1, py: 1, bgcolor: paleta.toolbarBg, border: '1px solid', borderColor: paleta.toolbarBorder, borderRadius: 1, mb: 2 }}>
-        <Typography variant="h6" fontWeight={700} color={paleta.textStrong}>
-          {tipo === 'venta' ? (
-            <><Store style={{ marginRight: 8, verticalAlign: 'middle' }} /> Puntos de Venta</>
-          ) : (
-            <><Warehouse style={{ marginRight: 8, verticalAlign: 'middle' }} /> Depósitos</>
-          )}
-        </Typography>
-        <Box display="flex" alignItems="center" gap={1.5}>
-          {onNuevoPunto && (
-            <Button
-              variant="contained"
-              sx={{ textTransform: 'none', bgcolor: paleta.primary, '&:hover': { bgcolor: paleta.primaryHover } }}
-              startIcon={<IconPlus size={18} />}
-              onClick={onNuevoPunto}
-            >
-              Nuevo {tipo === 'venta' ? 'Punto de Venta' : 'Depósito'}
-            </Button>
-          )}
-          <TextField
-            size="small"
-            placeholder={`Buscar ${tipo === 'venta' ? 'puntos de venta' : 'depósitos'}...`}
-            value={busqueda}
-            onChange={(e) => setBusqueda(e.target.value)}
-            onKeyDown={(e) => { if (e.key === 'Enter') refetch(); }}
-            InputProps={{ startAdornment: (<InputAdornment position="start"><IconSearch size={20} /></InputAdornment>) }}
-            sx={{ minWidth: 250 }}
-          />
-          <Tooltip title="Buscar (Enter)">
-            <span>
-              <Button
-                variant="contained"
-                sx={{ textTransform: 'none', bgcolor: paleta.primary, '&:hover': { bgcolor: paleta.primaryHover } }}
-                startIcon={<IconSearch size={18} />}
-                onClick={() => refetch()}
-                disabled={loading}
-              >
-                Buscar
-              </Button>
-            </span>
-          </Tooltip>
-          <Button
-            variant="outlined"
-            color="inherit"
-            startIcon={<IconTrash />}
-            onClick={() => { setBusqueda(''); refetch(); }}
-            sx={{ textTransform: 'none', borderColor: paleta.borderOuter, color: paleta.textStrong, '&:hover': { borderColor: paleta.textStrong, bgcolor: paleta.toolbarBg } }}
-          >
-            Limpiar
-          </Button>
-        </Box>
+      <Box
+        sx={{
+          px: 1,
+          py: 1,
+          bgcolor: paleta.toolbarBg,
+          border: '1px solid',
+          borderColor: paleta.toolbarBorder,
+          borderRadius: 1,
+          mb: 2,
+        }}
+      >
+        <SearchToolbar
+          title={tipo === 'venta' ? 'Puntos de Venta' : 'Depósitos'}
+          icon={
+            tipo === 'venta'
+              ? <Store style={{ marginRight: 8, verticalAlign: 'middle' }} />
+              : <Warehouse style={{ marginRight: 8, verticalAlign: 'middle' }} />
+          }
+          baseColor={paleta.primary}
+          placeholder={`Buscar ${tipo === 'venta' ? 'puntos de venta' : 'depósitos'}...`}
+          searchValue={busqueda}
+          onSearchValueChange={setBusqueda}
+          onSubmitSearch={() => {
+            setPage(0);
+            void refetch();
+          }}
+          onClear={() => {
+            setBusqueda('');
+            setPage(0);
+            void refetch();
+          }}
+          canCreate={Boolean(onNuevoPunto)}
+          createLabel={tipo === 'venta' ? 'Nuevo Punto de Venta' : 'Nuevo Depósito'}
+          onCreateClick={onNuevoPunto}
+          searchDisabled={loading}
+        />
       </Box>
 
       <TableContainer sx={{ borderRadius: 2, border: '1px solid', borderColor: paleta.borderInner, bgcolor: 'background.paper' }}>

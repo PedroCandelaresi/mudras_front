@@ -5,7 +5,6 @@ import {
   Alert,
   Box,
   Chip,
-  InputAdornment,
   Skeleton,
   Stack,
   Table,
@@ -14,19 +13,19 @@ import {
   TableContainer,
   TableHead,
   TableRow,
-  TextField,
   Tooltip,
   Typography,
 } from '@mui/material';
 import { alpha, darken } from '@mui/material/styles';
-import { IconClipboardList, IconEdit, IconEye, IconPlus, IconSearch, IconX } from '@tabler/icons-react';
-import CrystalButton, { CrystalIconButton, CrystalSoftButton } from '@/components/ui/CrystalButton';
+import { IconClipboardList, IconEdit, IconEye } from '@tabler/icons-react';
+import { CrystalIconButton, CrystalSoftButton } from '@/components/ui/CrystalButton';
 import { crearConfiguracionBisel, crearEstilosBisel } from '@/components/ui/bevel';
 import { WoodBackdrop } from '@/components/ui/TexturedFrame/WoodBackdrop';
 import type { ArticuloConStockPuntoMudras } from '@/components/puntos-mudras/graphql/queries';
 import type { Articulo } from '@/app/interfaces/mudras.types';
 import { calcularPrecioDesdeArticulo } from '@/utils/precioVenta';
 import { verde, azul } from '@/ui/colores';
+import SearchToolbar from '@/components/ui/SearchToolbar';
 
 type TablaStockTheme = {
   accent?: string;
@@ -198,115 +197,33 @@ const TablaStockPuntoVenta: React.FC<Props> = ({
   );
 
   const toolbar = (
-    <Box
-      sx={{
-        px: 1,
-        pb: 2,
-        display: 'flex',
-        flexDirection: { xs: 'column', lg: 'row' },
-        gap: { xs: 1.25, lg: 2 },
-        alignItems: { xs: 'flex-start', lg: 'center' },
-        justifyContent: 'space-between',
-      }}
-    >
-      <Box>
-        <Typography
-          variant="h6"
-          fontWeight={700}
-          color={textStrong}
-          sx={{ display: 'flex', alignItems: 'center', gap: 1 }}
-        >
-          <IconClipboardList size={20} />
-          {puntoNombre ? `Stock en ${puntoNombre}` : 'Stock del punto de venta'}
-        </Typography>
+    <>
+      <SearchToolbar
+        title={puntoNombre ? `Stock en ${puntoNombre}` : 'Stock del punto de venta'}
+        icon={<IconClipboardList size={20} />}
+        baseColor={buttonColor}
+        placeholder="Buscar por código, descripción o rubro"
+        searchValue={busquedaDraft}
+        onSearchValueChange={setBusquedaDraft}
+        onSubmitSearch={() => {
+          setPage(0);
+          ejecutarBusqueda();
+        }}
+        onClear={() => {
+          limpiarFiltros();
+          setPage(0);
+        }}
+        canCreate={Boolean(onNewAssignment)}
+        createLabel="Nueva asignación"
+        onCreateClick={onNewAssignment}
+        searchDisabled={loading}
+      />
+      <Box px={1} pb={1}>
         <Typography variant="body2" color="text.secondary">
           {resumenInventario}
         </Typography>
       </Box>
-
-      <Box
-        display="flex"
-        alignItems="center"
-        gap={1.25}
-        flexWrap="wrap"
-        justifyContent={{ xs: 'flex-start', lg: 'flex-end' }}
-        sx={{ width: '100%' }}
-      >
-        {onNewAssignment && (
-          <CrystalButton
-            baseColor={buttonColor}
-            startIcon={<IconPlus size={18} />}
-            onClick={onNewAssignment}
-            sx={{ minHeight: 40 }}
-          >
-            Nueva asignación
-          </CrystalButton>
-        )}
-
-        <TextField
-          value={busquedaDraft}
-          onChange={(e) => setBusquedaDraft(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter') {
-              e.preventDefault();
-              ejecutarBusqueda();
-            }
-          }}
-          placeholder="Buscar por código, descripción o rubro"
-          size="small"
-          sx={{
-            minWidth: { xs: '100%', sm: 260 },
-            flexGrow: 1,
-            maxWidth: 360,
-            '& .MuiOutlinedInput-root': {
-              backgroundColor: 'rgba(255, 250, 244, 0.6)',
-              backdropFilter: 'saturate(125%) blur(0.5px)',
-              borderRadius: 2,
-            },
-            '& .MuiOutlinedInput-root fieldset': {
-              borderColor: alpha(accentExterior, 0.35),
-            },
-            '& .MuiOutlinedInput-root:hover fieldset': {
-              borderColor: alpha(accentExterior, 0.5),
-            },
-            '& .MuiOutlinedInput-root.Mui-focused fieldset': {
-              borderColor: accentExterior,
-            },
-          }}
-          InputProps={{
-            startAdornment: (
-              <InputAdornment position="start">
-                <IconSearch size={18} />
-              </InputAdornment>
-            ),
-          }}
-        />
-
-        <Tooltip title="Buscar (Enter)">
-          <span>
-            <CrystalButton
-              baseColor="#35563d"
-              startIcon={<IconSearch size={16} />}
-              onClick={ejecutarBusqueda}
-              disabled={loading}
-              sx={{ minHeight: 40 }}
-            >
-              Buscar
-            </CrystalButton>
-          </span>
-        </Tooltip>
-
-        <CrystalSoftButton
-          baseColor="#35563d"
-          startIcon={<IconX size={16} />}
-          onClick={limpiarFiltros}
-          disabled={!busquedaDraft && !busquedaAplicada}
-          sx={{ minHeight: 40 }}
-        >
-          Limpiar filtros
-        </CrystalSoftButton>
-      </Box>
-    </Box>
+    </>
   );
 
   const tabla = (

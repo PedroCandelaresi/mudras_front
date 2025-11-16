@@ -3,8 +3,8 @@ import { useState, useEffect, useMemo } from 'react';
 import {
   Box,
   Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
-  Paper, Typography, Button, Chip, IconButton, Tooltip,
-  TextField, InputAdornment, Skeleton, Stack, MenuItem
+  Paper, Typography, Chip, Tooltip,
+  TextField, Skeleton, Stack, MenuItem
 } from '@mui/material';
 import { alpha, darken } from '@mui/material/styles';
 import { Icon } from '@iconify/react';
@@ -14,6 +14,7 @@ import { grisVerdoso } from '@/ui/colores';
 import { WoodBackdrop } from '@/components/ui/TexturedFrame/WoodBackdrop';
 import { crearConfiguracionBisel, crearEstilosBisel } from '@/components/ui/bevel';
 import CrystalButton, { CrystalSoftButton, CrystalIconButton } from '@/components/ui/CrystalButton';
+import SearchToolbar from '@/components/ui/SearchToolbar';
 
 interface ArticuloStock {
   id: number;
@@ -131,7 +132,6 @@ export default function TablaStockPuntoVenta({
 
   const handleBuscar = () => setFiltro(filtroInput.trim());
   const handleLimpiarFiltros = () => { setFiltro(''); setFiltroInput(''); setPage(0); };
-  const onKeyDown = (e: React.KeyboardEvent) => { if (e.key === 'Enter') handleBuscar(); };
 
   const articulosFiltrados = useMemo(() => {
     if (!filtro) return articulos;
@@ -189,79 +189,19 @@ export default function TablaStockPuntoVenta({
   /* ======================== Render ======================== */
   return (
     <WoodSection>
-      {/* Toolbar */}
-      <Box
-        display="flex"
-        justifyContent="space-between"
-        alignItems="center"
-        sx={{ px: 1, py: 1, mb: 2, borderRadius: 0, border: 0 }}
-      >
-        <Typography
-          variant="h6"
-          fontWeight={700}
-          color={grisVerdoso.textStrong}
-          sx={{ display: 'flex', alignItems: 'center', gap: 1 }}
-        >
-          <Icon icon="mdi:store" width={20} height={20} />
-          Stock en {puntoVenta.nombre}
-        </Typography>
-
-        <Box display="flex" alignItems="center" gap={1.25}>
-          <CrystalButton
-            baseColor={grisVerdoso.primary}
-            startIcon={<Icon icon="mdi:plus" />}
-            onClick={onNuevaAsignacion}
-          >
-            Nueva Asignación
-          </CrystalButton>
-          <TextField
-            size="small"
-            placeholder="Buscar por código, nombre o rubro…"
-            value={filtroInput}
-            onChange={(e) => setFiltroInput(e.target.value)}
-            onKeyDown={onKeyDown}
-            InputProps={{
-              startAdornment: (
-                <InputAdornment position="start">
-                  <Icon icon="mdi:magnify" width={18} height={18} />
-                </InputAdornment>
-              ),
-            }}
-            sx={{
-              minWidth: 260,
-              '& .MuiOutlinedInput-root': {
-                backgroundColor: 'rgba(241, 248, 241, 0.6)',
-                backdropFilter: 'saturate(125%) blur(0.5px)',
-                borderRadius: 2,
-              },
-              '& .MuiOutlinedInput-root fieldset': { borderColor: alpha(accentExterior, 0.35) },
-              '& .MuiOutlinedInput-root:hover fieldset': { borderColor: alpha(accentExterior, 0.5) },
-              '& .MuiOutlinedInput-root.Mui-focused fieldset': { borderColor: grisVerdoso.primary },
-            }}
-          />
-
-          <Tooltip title="Buscar (Enter)">
-            <span>
-              <CrystalButton
-                baseColor={grisVerdoso.primary}
-                startIcon={<Icon icon="mdi:magnify" />}
-                onClick={handleBuscar}
-              >
-                Buscar
-              </CrystalButton>
-            </span>
-          </Tooltip>
-
-          <CrystalSoftButton
-            baseColor={grisVerdoso.primary}
-            startIcon={<Icon icon="mdi:filter-off" />}
-            onClick={handleLimpiarFiltros}
-          >
-            Limpiar filtros
-          </CrystalSoftButton>
-
-        </Box>
-      </Box>
+      <SearchToolbar
+        title={`Stock en ${puntoVenta.nombre}`}
+        icon={<Icon icon="mdi:store" width={20} height={20} />}
+        baseColor={grisVerdoso.primary}
+        placeholder="Buscar por código, nombre o rubro…"
+        searchValue={filtroInput}
+        onSearchValueChange={setFiltroInput}
+        onSubmitSearch={handleBuscar}
+        onClear={handleLimpiarFiltros}
+        canCreate
+        createLabel="Nueva Asignación"
+        onCreateClick={onNuevaAsignacion}
+      />
 
       {/* Tabla */}
       <TableContainer

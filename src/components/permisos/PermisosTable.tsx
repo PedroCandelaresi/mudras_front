@@ -2,9 +2,10 @@
 
 import React, { useEffect, useMemo, useState } from 'react';
 import { apiFetch } from '@/lib/api';
-import { Box, Button, Chip, CircularProgress, IconButton, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Tooltip, TextField, Typography, InputAdornment, Menu, Divider, Stack } from '@mui/material';
-import { IconEdit, IconTrash, IconPlus, IconSearch } from '@tabler/icons-react';
+import { Box, Button, Chip, CircularProgress, IconButton, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Tooltip, TextField, Typography, Menu, Divider, Stack } from '@mui/material';
+import { IconEdit, IconTrash, IconSearch } from '@tabler/icons-react';
 import { marron } from '@/ui/colores';
+import SearchToolbar from '@/components/ui/SearchToolbar';
 
 export interface PermisoListado { id: string; resource: string; action: string; description?: string | null }
 
@@ -65,22 +66,35 @@ export function PermisosTable({ onCrear, onEditar, onEliminar, refetchToken }: P
 
   return (
     <Paper elevation={0} sx={{ p: 3, border: 'none', boxShadow: 'none', borderRadius: 2, bgcolor: 'background.paper' }}>
-      <Box display="flex" justifyContent="space-between" alignItems="center" sx={{ px: 1, py: 1, bgcolor: marron.toolbarBg, border: '1px solid', borderColor: marron.toolbarBorder, borderRadius: 1, mb: 2 }}>
-        <Typography variant="h6" fontWeight={700} color={marron.textStrong}>Permisos</Typography>
-        <Box display="flex" alignItems="center" gap={1.5}>
-          {onCrear && (
-            <Button variant="contained" onClick={onCrear} sx={{ textTransform: 'none', bgcolor: marron.primary, '&:hover': { bgcolor: marron.primaryHover } }} startIcon={<IconPlus size={16} />}>
-              Nuevo Permiso
-            </Button>
-          )}
-          <TextField size="small" placeholder="Buscar (recurso:acción)" value={busqueda} onChange={(e) => setBusqueda(e.target.value)} sx={{ minWidth: 260 }}
-            InputProps={{ startAdornment: <InputAdornment position="start"><IconSearch size={18} /></InputAdornment> }}
-          />
-          <Button variant="outlined" color="inherit" onClick={() => setBusqueda('')} sx={{ textTransform: 'none', borderColor: marron.headerBorder, color: marron.textStrong, '&:hover': { borderColor: marron.primaryHover, bgcolor: marron.toolbarBg } }}>
-            Limpiar
-          </Button>
-          {cargando && <CircularProgress size={20} />}
-        </Box>
+      <Box
+        sx={{
+          px: 1,
+          py: 1,
+          bgcolor: marron.toolbarBg,
+          border: '1px solid',
+          borderColor: marron.toolbarBorder,
+          borderRadius: 1,
+          mb: 2,
+        }}
+      >
+        <SearchToolbar
+          title="Permisos"
+          baseColor={marron.primary}
+          placeholder="Buscar (recurso:acción, descripción)"
+          searchValue={busqueda}
+          onSearchValueChange={setBusqueda}
+          onSubmitSearch={() => { void cargar(); }}
+          onClear={() => setBusqueda('')}
+          canCreate={Boolean(onCrear)}
+          createLabel="Nuevo Permiso"
+          onCreateClick={onCrear}
+          searchDisabled={cargando}
+        />
+        {cargando && (
+          <Box display="flex" justifyContent="flex-end" mt={0.5}>
+            <CircularProgress size={20} />
+          </Box>
+        )}
       </Box>
 
       <TableContainer sx={{ borderRadius: 2, border: '1px solid', borderColor: marron.borderInner, bgcolor: 'background.paper' }}>

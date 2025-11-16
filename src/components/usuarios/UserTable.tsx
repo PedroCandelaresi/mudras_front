@@ -6,6 +6,7 @@ import { IconEdit, IconTrash, IconUserShield, IconSearch, IconDotsVertical } fro
 import { marron } from '@/ui/colores';
 import { useQuery } from '@apollo/client/react';
 import { USUARIOS_ADMIN_QUERY } from './graphql/queries';
+import SearchToolbar from '@/components/ui/SearchToolbar';
 
 export interface UsuarioListado {
   id: string;
@@ -142,41 +143,35 @@ export function UserTable({ onCrear, onEditar, onRoles, onEliminar, refetchToken
 
   return (
     <Paper elevation={0} sx={{ p: 3, border: 'none', boxShadow: 'none', borderRadius: 2, bgcolor: 'background.paper' }}>
-      {/* Toolbar superior estilo Artículos pero en marrón */}
-      <Box display="flex" justifyContent="space-between" alignItems="center" sx={{ px: 1, py: 1, bgcolor: marron.toolbarBg, border: '1px solid', borderColor: marron.toolbarBorder, borderRadius: 1 }}>
-        <Typography variant="h6" fontWeight={700} color={marron.textStrong}>Usuarios</Typography>
-        <Box display="flex" alignItems="center" gap={1.5}>
-          {onCrear && (
-            <Button variant="contained" onClick={onCrear} sx={{ textTransform: 'none', bgcolor: marron.primary, '&:hover': { bgcolor: marron.primaryHover } }}>
-              Nuevo Usuario
-            </Button>
-          )}
-          <TextField
-            size="small"
-            placeholder="Buscar usuarios..."
-            value={filtroInput}
-            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFiltroInput(e.target.value)}
-            onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) => {
-              if (e.key === 'Enter') { setFiltro(filtroInput); setPagina(0); }
-            }}
-            InputProps={{ startAdornment: (
-              <InputAdornment position="start"><IconSearch size={18} /></InputAdornment>
-            )}}
-            sx={{ minWidth: 240 }}
-          />
-          <Button
-            variant="contained"
-            onClick={() => { setFiltro(filtroInput); setPagina(0); }}
-            sx={{ textTransform: 'none', bgcolor: marron.primary, '&:hover': { bgcolor: marron.primaryHover } }}
-            startIcon={<IconSearch size={18} />}
-          >
-            Buscar
-          </Button>
-          <Button variant="outlined" color="inherit" onClick={limpiarFiltros} sx={{ textTransform: 'none', borderColor: marron.headerBorder, color: marron.textStrong, '&:hover': { borderColor: marron.primaryHover, bgcolor: marron.toolbarBg } }}>
-            Limpiar filtros
-          </Button>
-          {loading && <CircularProgress size={20} />}
-        </Box>
+      {/* Toolbar superior unificada con SearchToolbar */}
+      <Box
+        sx={{
+          px: 1,
+          py: 1,
+          bgcolor: marron.toolbarBg,
+          border: '1px solid',
+          borderColor: marron.toolbarBorder,
+          borderRadius: 1,
+        }}
+      >
+        <SearchToolbar
+          title="Usuarios"
+          baseColor={marron.primary}
+          placeholder="Buscar usuarios..."
+          searchValue={filtroInput}
+          onSearchValueChange={setFiltroInput}
+          onSubmitSearch={() => { setFiltro(filtroInput); setPagina(0); }}
+          onClear={() => { limpiarFiltros(); setPagina(0); }}
+          canCreate={Boolean(onCrear)}
+          createLabel="Nuevo Usuario"
+          onCreateClick={onCrear}
+          searchDisabled={loading}
+        />
+        {loading && (
+          <Box display="flex" justifyContent="flex-end" mt={0.5}>
+            <CircularProgress size={20} />
+          </Box>
+        )}
       </Box>
 
       <TableContainer sx={{ borderRadius: 2, border: '1px solid', borderColor: marron.borderInner, bgcolor: 'background.paper', mt: 2 }}>

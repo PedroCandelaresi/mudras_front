@@ -197,3 +197,22 @@ export const azulOscuro = {
 };
 
 export type PaletaAzulOscuro = typeof azulOscuro;
+
+// Oro blanco / tono champagne suave para la portada del panel
+export const oroBlanco = {
+  headerBg: '#6d5c3b',
+  headerText: '#fffaf1',
+  headerBorder: '#d0c09a',
+  toolbarBg: '#f6f1e7',
+  toolbarBorder: '#e1d5bf',
+  borderOuter: '#d0c09a',
+  borderInner: '#e1d5bf',
+  primary: '#c2b79b',       // tono principal “oro blanco”
+  primaryHover: '#b3a88e',
+  textStrong: '#4e4532',
+  rowHover: '#f6f1e7',
+  alternateRow: '#f9f4eb',
+  actionHover: '#efe4d2',
+};
+
+export type PaletaOroBlanco = typeof oroBlanco;
