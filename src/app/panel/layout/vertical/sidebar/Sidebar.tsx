@@ -50,13 +50,10 @@ const Sidebar = () => {
         <Box
           sx={{
             zIndex: 1100,
-            // ⬇️ ahora el contenedor acompaña el ancho del paper
             width: toggleWidth,
             flexShrink: 0,
-            position: "fixed",
-            height: "100vh",
-            top: 0,
-            left: 0,
+            height: "100%",
+            minHeight: "100vh",
             overflow: "hidden",
             transition: theme.transitions.create("width", {
               duration: `${config.transitionDuration}ms`,
