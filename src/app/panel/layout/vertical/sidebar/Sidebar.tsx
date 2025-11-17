@@ -21,12 +21,29 @@ const Sidebar = () => {
   } = useContext(CustomizerContext);
 
   const SidebarWidth = config.sidebarWidth;
+  const MiniSidebarWidth = config.miniSidebarWidth;
   const theme = useTheme();
 
   // En escritorio tratamos el sidebar como overlay:
   // isCollapse === "full-sidebar" => Drawer abierto
   // isCollapse === "mini-sidebar" => Drawer cerrado
   const isDesktopSidebarOpen = isCollapse === "full-sidebar";
+
+  // Zona sensible fija en el borde izquierdo para abrir el sidebar al acercar el mouse.
+  const hoverZone = lgUp ? (
+    <Box
+      sx={{
+        position: "fixed",
+        left: 0,
+        top: 0,
+        width: MiniSidebarWidth,
+        height: "100vh",
+        zIndex: 1050,
+        backgroundColor: "transparent",
+      }}
+      onMouseEnter={() => setIsCollapse("full-sidebar")}
+    />
+  ) : null;
 
   const desktopDrawer = (
     <Drawer
@@ -57,7 +74,10 @@ const Sidebar = () => {
         },
       }}
     >
-      <Box sx={{ height: "100vh", display: "flex", flexDirection: "column" }}>
+      <Box
+        sx={{ height: "100vh", display: "flex", flexDirection: "column" }}
+        onMouseLeave={() => setIsCollapse("mini-sidebar")}
+      >
         {/* Logo */}
         <Box px={2} pt={2} pb={1.5}>
           <Logo />
@@ -113,7 +133,14 @@ const Sidebar = () => {
     </Drawer>
   );
 
-  return lgUp ? desktopDrawer : mobileDrawer;
+  return lgUp ? (
+    <>
+      {hoverZone}
+      {desktopDrawer}
+    </>
+  ) : (
+    mobileDrawer
+  );
 };
 
 export default Sidebar;
