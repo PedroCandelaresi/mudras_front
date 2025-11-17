@@ -24,7 +24,7 @@ import { WoodBackdrop } from '@/components/ui/TexturedFrame/WoodBackdrop';
 import type { ArticuloConStockPuntoMudras } from '@/components/puntos-mudras/graphql/queries';
 import type { Articulo } from '@/app/interfaces/mudras.types';
 import { calcularPrecioDesdeArticulo } from '@/utils/precioVenta';
-import { verde, azul } from '@/ui/colores';
+import { azul } from '@/ui/colores';
 import SearchToolbar from '@/components/ui/SearchToolbar';
 
 type TablaStockTheme = {
@@ -40,7 +40,6 @@ type TablaStockTheme = {
 };
 
 const DEFAULT_THEME: Required<Omit<TablaStockTheme, 'buttonColor'>> & { buttonColor: string } = {
-  // Verde primaveral para puntos de venta
   accent: '#66BB6A',
   accentInterior: darken('#66BB6A', 0.28),
   woodTintExterior: '#c8e6c9',
@@ -90,7 +89,7 @@ const TablaStockPuntoVenta: React.FC<Props> = ({
   const headerBg = themeOverride?.headerBg ?? (themeOverride?.accent ? darken(themeOverride.accent, 0.12) : DEFAULT_THEME.headerBg);
   const panelOverlay = themeOverride?.panelOverlay ?? DEFAULT_THEME.panelOverlay;
   const buttonColor = themeOverride?.buttonColor ?? accent;
-  const textStrong = darken(accent, 0.15);
+
   const chipText = darken(accent, 0.35);
 
   const biselExteriorConfig = crearConfiguracionBisel(accent, 1.45);
@@ -108,6 +107,7 @@ const TablaStockPuntoVenta: React.FC<Props> = ({
       }}
     >
       <WoodBackdrop accent={woodTintExterior} radius={3} inset={0} strength={0.16} texture="tabla" />
+
       <Box
         sx={{
           position: 'absolute',
@@ -116,13 +116,15 @@ const TablaStockPuntoVenta: React.FC<Props> = ({
           zIndex: 0,
         }}
       />
+
       <Box sx={{ position: 'relative', zIndex: 2, p: 2.75 }}>{children}</Box>
     </Box>
   );
+
   const [busquedaDraft, setBusquedaDraft] = useState('');
   const [busquedaAplicada, setBusquedaAplicada] = useState('');
   const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(50);
+  const [rowsPerPage] = useState(50);
 
   const articulosFiltrados = useMemo(() => {
     if (!busquedaAplicada) return articulos;
@@ -136,11 +138,13 @@ const TablaStockPuntoVenta: React.FC<Props> = ({
 
   const ejecutarBusqueda = useCallback(() => {
     setBusquedaAplicada((busquedaDraft || '').trim());
+    setPage(0);
   }, [busquedaDraft]);
 
   const limpiarFiltros = useCallback(() => {
     setBusquedaDraft('');
     setBusquedaAplicada('');
+    setPage(0);
   }, []);
 
   const obtenerPrecioUnitario = useCallback((item: ArticuloConStockPuntoMudras) => {
@@ -170,7 +174,44 @@ const TablaStockPuntoVenta: React.FC<Props> = ({
   const resumenInventario = `${articulosFiltrados.length} artículos visibles • ${numberFormatter.format(
     totalUnidades
   )} unidades • ${currencyFormatter.format(valorEstimado)} estimados`;
+
   const showActions = Boolean(onEditStock || onViewDetails);
+
+  /* =============================================================
+     🟢 FIX: TOOLBAR MEMOIZADO (NO SE REMONTA → NO PIERDE FOCO)
+     ============================================================= */
+
+  const toolbar = useMemo(
+    () => (
+      <SearchToolbar
+        title={puntoNombre ? `Stock en ${puntoNombre}` : 'Stock del punto de venta'}
+        icon={<IconClipboardList size={20} />}
+        baseColor={buttonColor}
+        placeholder="Buscar por código, descripción o rubro"
+        searchValue={busquedaDraft}
+        onSearchValueChange={setBusquedaDraft}
+        onSubmitSearch={ejecutarBusqueda}
+        onClear={limpiarFiltros}
+        canCreate={Boolean(onNewAssignment)}
+        createLabel="Nueva asignación"
+        onCreateClick={onNewAssignment}
+        searchDisabled={loading}
+      />
+    ),
+    [
+      puntoNombre,
+      buttonColor,
+      busquedaDraft,
+      loading,
+      onNewAssignment,
+      ejecutarBusqueda,
+      limpiarFiltros,
+    ]
+  );
+
+  /* =============================================================
+     TABLA (sin cambios estructurales)
+     ============================================================= */
 
   const totalPaginas = Math.ceil(articulosFiltrados.length / rowsPerPage) || 1;
   const paginaActual = page + 1;
@@ -178,6 +219,7 @@ const TablaStockPuntoVenta: React.FC<Props> = ({
   const generarNumerosPaginas = () => {
     const paginas: (number | '...')[] = [];
     const maxVisible = 7;
+
     if (totalPaginas <= maxVisible) {
       for (let i = 1; i <= totalPaginas; i++) paginas.push(i);
     } else if (paginaActual <= 4) {
@@ -189,42 +231,13 @@ const TablaStockPuntoVenta: React.FC<Props> = ({
     } else {
       paginas.push(1, '...', paginaActual - 1, paginaActual, paginaActual + 1, '...', totalPaginas);
     }
+
     return paginas;
   };
 
   const articulosPaginados = useMemo(
     () => articulosFiltrados.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage),
     [articulosFiltrados, page, rowsPerPage]
-  );
-
-  // Memoizar el toolbar para que no se remonte en cada render.
-  // Solo depende de valores básicos, no de derivados como articulosFiltrados o resumenInventario.
-  const toolbar = useMemo(
-    () => (
-      <SearchToolbar
-        title={puntoNombre ? `Stock en ${puntoNombre}` : 'Stock del punto de venta'}
-        icon={<IconClipboardList size={20} />}
-        baseColor={buttonColor}
-        placeholder="Buscar por código, descripción o rubro"
-        searchValue={busquedaDraft}
-        onSearchValueChange={setBusquedaDraft}
-        onSubmitSearch={() => {
-          // Aplicar búsqueda y resetear página sin tocar valores derivados.
-          setBusquedaAplicada((busquedaDraft || '').trim());
-          setPage(0);
-        }}
-        onClear={() => {
-          setBusquedaDraft('');
-          setBusquedaAplicada('');
-          setPage(0);
-        }}
-        canCreate={Boolean(onNewAssignment)}
-        createLabel="Nueva asignación"
-        onCreateClick={onNewAssignment}
-        searchDisabled={loading}
-      />
-    ),
-    [puntoNombre, buttonColor, busquedaDraft, loading, onNewAssignment]
   );
 
   const tabla = (
@@ -241,17 +254,16 @@ const TablaStockPuntoVenta: React.FC<Props> = ({
       }}
     >
       <WoodBackdrop accent={woodTintInterior} radius={0} inset={0} strength={0.12} texture="tabla" />
+
       <Box
         sx={{
-          position: 'absolute',
-          inset: 0,
+          position: 'absolute', inset: 0,
           backgroundColor: alpha('#fffaf3', 0.82),
           zIndex: 0,
         }}
       />
-      <Table
-        stickyHeader
-        size="small"
+
+      <Table stickyHeader size="small"
         sx={{
           borderRadius: 0,
           position: 'relative',
@@ -295,100 +307,109 @@ const TablaStockPuntoVenta: React.FC<Props> = ({
             ))}
           </TableRow>
         </TableHead>
-        <TableBody>
-          {loading
-            ? Array.from({ length: 6 }).map((_, idx) => (
-                <TableRow key={`skeleton-${idx}`}>
-                  {Array.from({ length: 5 }).map((__, cellIdx) => (
-                    <TableCell key={cellIdx}>
-                      <Skeleton variant="text" />
-                    </TableCell>
-                  ))}
-                </TableRow>
-              ))
-            : articulosFiltrados.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={5} align="center" sx={{ py: 4 }}>
-                    {busquedaAplicada
-                      ? 'No hay resultados que coincidan con la búsqueda.'
-                      : 'Este punto aún no tiene stock cargado.'}
-                  </TableCell>
-                </TableRow>
-              ) : (
-                articulosPaginados.map((item) => {
-                  const precioUnitario = obtenerPrecioUnitario(item);
-                  return (
-                    <TableRow key={item.id} hover>
-                      <TableCell>
-                        <Chip
-                          label={item.codigo ?? 'Sin código'}
-                          size="small"
-                          sx={{
-                            bgcolor: alpha(accentExterior, 0.14),
-                            color: chipText,
-                            fontWeight: 600,
-                          }}
-                        />
-                      </TableCell>
-                      <TableCell>{item.nombre}</TableCell>
-                      <TableCell align="right">
-                        {Number.isFinite(precioUnitario)
-                          ? currencyFormatter.format(precioUnitario)
-                          : '—'}
-                      </TableCell>
-                      <TableCell align="right">{numberFormatter.format(Number(item.stockAsignado) || 0)}</TableCell>
-                      <TableCell>
-                        {item.rubro?.nombre ? (
-                          <Chip
-                            label={item.rubro.nombre}
-                            size="small"
-                            sx={{
-                              bgcolor: alpha(accentExterior, 0.18),
-                              color: '#12331f',
-                              fontWeight: 600,
-                            }}
-                          />
-                        ) : (
-                          <Chip label="Sin rubro" size="small" variant="outlined" />
-                        )}
-                      </TableCell>
-                      {showActions && (
-                        <TableCell align="center">
-                          <Box display="flex" justifyContent="center" gap={0.75}>
-                            {onViewDetails && (
-                              <Tooltip title="Ver detalles">
-                                <span>
-                                  <CrystalIconButton
-                                    baseColor={azul.primary}
-                                    onClick={() => onViewDetails?.(item)}
-                                    disabled={!onViewDetails}
-                                  >
-                                    <IconEye size={16} />
-                                  </CrystalIconButton>
-                                </span>
-                              </Tooltip>
-                            )}
 
-                            {onEditStock && (
-                              <Tooltip title="Editar stock">
-                                <span>
-                                  <CrystalIconButton
-                                    baseColor={buttonColor}
-                                    onClick={() => onEditStock?.(item)}
-                                    disabled={!onEditStock}
-                                  >
-                                    <IconEdit size={16} />
-                                  </CrystalIconButton>
-                                </span>
-                              </Tooltip>
-                            )}
-                          </Box>
-                        </TableCell>
-                      )}
-                    </TableRow>
-                  );
-                })
-              )}
+        <TableBody>
+          {loading ? (
+            Array.from({ length: 6 }).map((_, idx) => (
+              <TableRow key={`skeleton-${idx}`}>
+                {Array.from({ length: 5 }).map((__, cellIdx) => (
+                  <TableCell key={cellIdx}>
+                    <Skeleton variant="text" />
+                  </TableCell>
+                ))}
+              </TableRow>
+            ))
+          ) : articulosFiltrados.length === 0 ? (
+            <TableRow>
+              <TableCell colSpan={6} align="center" sx={{ py: 4 }}>
+                {busquedaAplicada
+                  ? 'No hay resultados que coincidan con la búsqueda.'
+                  : 'Este punto aún no tiene stock cargado.'}
+              </TableCell>
+            </TableRow>
+          ) : (
+            articulosPaginados.map((item) => {
+              const precioUnitario = obtenerPrecioUnitario(item);
+
+              return (
+                <TableRow key={item.id} hover>
+                  <TableCell>
+                    <Chip
+                      label={item.codigo ?? 'Sin código'}
+                      size="small"
+                      sx={{
+                        bgcolor: alpha(accentExterior, 0.14),
+                        color: chipText,
+                        fontWeight: 600,
+                      }}
+                    />
+                  </TableCell>
+
+                  <TableCell>{item.nombre}</TableCell>
+
+                  <TableCell align="right">
+                    {Number.isFinite(precioUnitario)
+                      ? currencyFormatter.format(precioUnitario)
+                      : '—'}
+                  </TableCell>
+
+                  <TableCell align="right">
+                    {numberFormatter.format(Number(item.stockAsignado) || 0)}
+                  </TableCell>
+
+                  <TableCell>
+                    {item.rubro?.nombre ? (
+                      <Chip
+                        label={item.rubro.nombre}
+                        size="small"
+                        sx={{
+                          bgcolor: alpha(accentExterior, 0.18),
+                          color: '#12331f',
+                          fontWeight: 600,
+                        }}
+                      />
+                    ) : (
+                      <Chip label="Sin rubro" size="small" variant="outlined" />
+                    )}
+                  </TableCell>
+
+                  {showActions && (
+                    <TableCell align="center">
+                      <Box display="flex" justifyContent="center" gap={0.75}>
+                        {onViewDetails && (
+                          <Tooltip title="Ver detalles">
+                            <span>
+                              <CrystalIconButton
+                                baseColor={azul.primary}
+                                onClick={() => onViewDetails(item)}
+                                disabled={!onViewDetails}
+                              >
+                                <IconEye size={16} />
+                              </CrystalIconButton>
+                            </span>
+                          </Tooltip>
+                        )}
+
+                        {onEditStock && (
+                          <Tooltip title="Editar stock">
+                            <span>
+                              <CrystalIconButton
+                                baseColor={buttonColor}
+                                onClick={() => onEditStock(item)}
+                                disabled={!onEditStock}
+                              >
+                                <IconEdit size={16} />
+                              </CrystalIconButton>
+                            </span>
+                          </Tooltip>
+                        )}
+                      </Box>
+                    </TableCell>
+                  )}
+                </TableRow>
+              );
+            })
+          )}
         </TableBody>
       </Table>
     </TableContainer>
@@ -407,6 +428,7 @@ const TablaStockPuntoVenta: React.FC<Props> = ({
       <Typography variant="body2" color="text.secondary">
         Mostrando {articulosPaginados.length} de {articulosFiltrados.length} artículos
       </Typography>
+
       <Stack direction="row" spacing={1}>
         {generarNumerosPaginas().map((num, idx) =>
           num === '...' ? (
@@ -440,17 +462,22 @@ const TablaStockPuntoVenta: React.FC<Props> = ({
   return (
     <WoodSection>
       {toolbar}
+
       <Box px={1} pb={1}>
         <Typography variant="body2" color="text.secondary">
           {resumenInventario}
         </Typography>
       </Box>
+
       {error && !loading ? (
         <Alert severity="error" sx={{ mb: 2 }}>
           {error.message || 'No se pudo cargar el stock del punto seleccionado.'}
         </Alert>
       ) : (
-        tabla
+        <>
+          {tabla}
+          {paginador}
+        </>
       )}
     </WoodSection>
   );
