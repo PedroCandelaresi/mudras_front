@@ -440,6 +440,11 @@ const TablaStockPuntoVenta: React.FC<Props> = ({
   return (
     <WoodSection>
       {toolbar}
+      <Box px={1} pb={1}>
+        <Typography variant="body2" color="text.secondary">
+          {resumenInventario}
+        </Typography>
+      </Box>
       {error && !loading ? (
         <Alert severity="error" sx={{ mb: 2 }}>
           {error.message || 'No se pudo cargar el stock del punto seleccionado.'}

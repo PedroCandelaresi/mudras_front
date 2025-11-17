@@ -20,7 +20,8 @@ import {
   type ArticuloConStockPuntoMudras,
 } from '@/components/puntos-mudras/graphql/queries';
 
-const tabPalette = ['#1B3B25', '#3E2723', '#4A0E21', '#27374D', '#5C2A4A', '#37505C'];
+// Verde primaveral para los tabs de puntos de venta
+const tabPalette = ['#66BB6A', '#5CAF63', '#57B15D', '#6ECB73', '#63C26B', '#5AB962'];
 
 type ObtenerStockPuntoMudrasResponse = {
   obtenerStockPuntoMudras: ArticuloConStockPuntoMudras[];
