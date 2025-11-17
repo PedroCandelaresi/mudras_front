@@ -80,7 +80,7 @@ export default function RootLayout({
     };
   }, [pathname, router]);
 
-  const { activeLayout, isLayout, activeMode, isCollapse, isSidebarHover } = useContext(CustomizerContext);
+  const { activeLayout, isLayout, activeMode, isSidebarPinned } = useContext(CustomizerContext);
   const theme = useTheme();
   const SidebarWidth = config.sidebarWidth;
   return (
@@ -97,8 +97,9 @@ export default function RootLayout({
         className="page-wrapper"
         sx={{
           [theme.breakpoints.up("lg")]: {
-            // Sidebar en overlay: el contenido ocupa siempre todo el ancho.
-            ml: 0,
+            // Si la sidebar está fija, el contenido se corre;
+            // en modo overlay ocupa todo el ancho.
+            ml: isSidebarPinned ? `${SidebarWidth}px` : 0,
           },
         }}
       >

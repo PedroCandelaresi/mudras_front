@@ -24,7 +24,9 @@ interface CustomizerContextState {
   isSidebarHover: boolean;
   setIsSidebarHover: (isHover: boolean) => void;
   isMobileSidebar: boolean;  // Add this
-  setIsMobileSidebar: (isMobileSidebar: boolean) => void
+  setIsMobileSidebar: (isMobileSidebar: boolean) => void;
+  isSidebarPinned: boolean;
+  setIsSidebarPinned: (pinned: boolean) => void;
 }
 
 // Create the context with an initial value
@@ -48,6 +50,7 @@ export const CustomizerContextProvider: React.FC<CustomizerContextProps> = ({ ch
   const [isLanguage, setIsLanguage] = useState<string>(config.isLanguage);
   const [isSidebarHover, setIsSidebarHover] = useState<boolean>(false);
   const [isMobileSidebar, setIsMobileSidebar] = useState<boolean>(false);
+  const [isSidebarPinned, setIsSidebarPinned] = useState<boolean>(config.isSidebarPinned);
   // Set attributes immediately
   useEffect(() => {
     document.documentElement.setAttribute("class", activeMode);
@@ -84,11 +87,12 @@ export const CustomizerContextProvider: React.FC<CustomizerContextProps> = ({ ch
         isSidebarHover,
         setIsSidebarHover,
         isMobileSidebar,
-        setIsMobileSidebar
+        setIsMobileSidebar,
+        isSidebarPinned,
+        setIsSidebarPinned,
       }}
     >
       {children}
     </CustomizerContext.Provider>
   );
 };
-

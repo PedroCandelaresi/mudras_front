@@ -18,19 +18,20 @@ const Sidebar = () => {
     isMobileSidebar,
     setIsMobileSidebar,
     setIsCollapse,
+    isSidebarPinned,
   } = useContext(CustomizerContext);
 
   const SidebarWidth = config.sidebarWidth;
   const MiniSidebarWidth = config.miniSidebarWidth;
   const theme = useTheme();
 
-  // En escritorio tratamos el sidebar como overlay:
-  // isCollapse === "full-sidebar" => Drawer abierto
-  // isCollapse === "mini-sidebar" => Drawer cerrado
-  const isDesktopSidebarOpen = isCollapse === "full-sidebar";
+  // En escritorio distinguimos dos modos:
+  // - Fijo (pinned): Drawer permanente que redimensiona el contenido.
+  // - Overlay (auto-ocultar): Drawer temporal que no afecta el layout.
+  const isDesktopOverlayOpen = !isSidebarPinned && isCollapse === "full-sidebar";
 
-  // Zona sensible fija en el borde izquierdo para abrir el sidebar al acercar el mouse.
-  const hoverZone = lgUp ? (
+  // Zona sensible fija en el borde izquierdo para abrir el sidebar al acercar el mouse (solo overlay).
+  const hoverZone = lgUp && !isSidebarPinned ? (
     <Box
       sx={{
         position: "fixed",
@@ -45,10 +46,10 @@ const Sidebar = () => {
     />
   ) : null;
 
-  const desktopDrawer = (
+  const overlayDrawer = (
     <Drawer
       anchor="left"
-      open={isDesktopSidebarOpen}
+      open={isDesktopOverlayOpen}
       onClose={() => setIsCollapse("mini-sidebar")}
       variant="temporary"
       sx={{
@@ -78,6 +79,50 @@ const Sidebar = () => {
         sx={{ height: "100vh", display: "flex", flexDirection: "column" }}
         onMouseLeave={() => setIsCollapse("mini-sidebar")}
       >
+        {/* Logo */}
+        <Box px={2} pt={2} pb={1.5}>
+          <Logo />
+        </Box>
+
+        {/* Items con scroll central */}
+        <Scrollbar sx={{ flex: 1, minHeight: 0 }}>
+          <SidebarItems />
+        </Scrollbar>
+
+        {/* Perfil al pie */}
+        <Profile />
+      </Box>
+    </Drawer>
+  );
+
+  const pinnedDrawer = (
+    <Drawer
+      anchor="left"
+      open={true}
+      variant="permanent"
+      sx={{
+        zIndex: 1100,
+        width: SidebarWidth,
+        flexShrink: 0,
+        '& .MuiDrawer-paper': {
+          width: SidebarWidth,
+          boxSizing: "border-box",
+          // Dorado anaranjado con textura metálica
+          backgroundImage:
+            'linear-gradient(135deg, #FFE4D6 0%, #FFD4B3 40%, #FFC299 100%), url("/textures/brushed-metal-1024.png")',
+          backgroundBlendMode: 'overlay',
+          backgroundSize: 'cover, cover',
+          backgroundRepeat: 'no-repeat, repeat-y',
+          backgroundPosition: 'center, center',
+          backgroundColor: '#FFC299',
+          borderRight: '1px solid rgba(0,0,0,0.25)',
+          overflowX: "hidden",
+          "&::-webkit-scrollbar": { display: "none" },
+          scrollbarWidth: "none",
+        },
+      }}
+    >
+      <Box sx={{ height: "100vh", display: "flex", flexDirection: "column" }}>
         {/* Logo */}
         <Box px={2} pt={2} pb={1.5}>
           <Logo />
@@ -133,13 +178,16 @@ const Sidebar = () => {
     </Drawer>
   );
 
-  return lgUp ? (
+  if (!lgUp) {
+    return mobileDrawer;
+  }
+
+  // Escritorio: si está fija, mostramos Drawer permanente; si no, overlay + zona de hover.
+  return (
     <>
-      {hoverZone}
-      {desktopDrawer}
+      {isSidebarPinned ? pinnedDrawer : hoverZone}
+      {!isSidebarPinned && overlayDrawer}
     </>
-  ) : (
-    mobileDrawer
   );
 };
 

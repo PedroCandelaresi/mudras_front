@@ -6,6 +6,9 @@ const config = {
   isLayout: "boxed", // This can be full or boxed
   isSidebarHover: true,
   isCollapse: "mini-sidebar",
+  // Si true, la sidebar queda fija y el contenido se redimensiona;
+  // si false, la sidebar funciona en modo auto-ocultar (overlay).
+  isSidebarPinned: false,
   isLanguage: "en",
   isCardShadow: true,
   isMobileSidebar: false,

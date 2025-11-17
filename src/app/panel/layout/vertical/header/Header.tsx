@@ -26,7 +26,18 @@ const Header = () => {
   const [isMounted, setIsMounted] = useState(false);
 
   // drawer
-  const { isSidebarHover, activeMode, setActiveMode, setIsCollapse, isCollapse, setIsSidebarHover, isMobileSidebar, setIsMobileSidebar } = useContext(CustomizerContext);
+  const {
+    isSidebarHover,
+    activeMode,
+    setActiveMode,
+    setIsCollapse,
+    isCollapse,
+    setIsSidebarHover,
+    isMobileSidebar,
+    setIsMobileSidebar,
+    isSidebarPinned,
+    setIsSidebarPinned,
+  } = useContext(CustomizerContext);
 
   // Inicializar fecha solo en el cliente
   useEffect(() => {
@@ -55,8 +66,11 @@ const Header = () => {
     return date.toLocaleDateString('es-AR', options);
   };
 
-  // Topbar siempre ocupa todo el ancho de la ventana.
-  const leftOffsetPx = 0;
+  const SidebarWidth = config.sidebarWidth;
+
+  // En escritorio, si la sidebar está fija, el header se corre;
+  // en modo overlay ocupa todo el ancho.
+  const leftOffsetPx = lgUp && isSidebarPinned ? SidebarWidth : 0;
 
   const AppBarStyled = styled(AppBar)(({ theme }) => ({
     boxShadow: 'none',
@@ -66,9 +80,9 @@ const Header = () => {
     position: 'fixed',
     zIndex: 1300,
     top: 0,
-    left: 0,
+    left: `${leftOffsetPx}px`,
     right: 0,
-    width: '100vw',
+    width: `calc(100vw - ${leftOffsetPx}px)`,
     
     // Sin animaciones complejas: priorizar rendimiento
     minHeight: TopbarHeight,
@@ -86,6 +100,32 @@ const Header = () => {
     <ProductProvider>
       <AppBarStyled position="sticky" color="default">
         <ToolbarStyled>
+          {/* ------------------------------------------- */}
+          {/* Toggle Button Sidebar (izquierda) */}
+          {/* ------------------------------------------- */}
+          <IconButton
+            color="inherit"
+            aria-label="menu"
+            size="small"
+            onClick={() => {
+              if (lgUp) {
+                // En escritorio, alternar entre sidebar fija y modo overlay auto-ocultar.
+                if (isSidebarPinned) {
+                  setIsSidebarPinned(false);
+                  setIsCollapse("mini-sidebar");
+                } else {
+                  setIsSidebarPinned(true);
+                  setIsCollapse("full-sidebar");
+                }
+              } else {
+                // En móviles, seguir usando el drawer temporal clásico.
+                setIsMobileSidebar(!isMobileSidebar);
+              }
+            }}
+          >
+            <IconMenu2 size="18" />
+          </IconButton>
+
           {/* ------------------------------------------- */}
           {/* Fecha y Hora Central */}
           {/* ------------------------------------------- */}
@@ -105,24 +145,8 @@ const Header = () => {
           </Box>
 
           <Stack spacing={1} direction="row" alignItems="center">
-            {/* Search + Hamburguesa movidos a la derecha */}
+            {/* Search a la derecha */}
             <Search />
-            <IconButton
-              color="inherit"
-              aria-label="menu"
-              size="small"
-              onClick={() => {
-                if (lgUp) {
-                  isCollapse === "full-sidebar"
-                    ? setIsCollapse("mini-sidebar")
-                    : setIsCollapse("full-sidebar");
-                } else {
-                  setIsMobileSidebar(!isMobileSidebar);
-                }
-              }}
-            >
-              <IconMenu2 size="18" />
-            </IconButton>
             <Notifications />
             {/* ------------------------------------------- */}
             {/* Toggle Right Sidebar for mobile */}

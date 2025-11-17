@@ -70,10 +70,9 @@ export const SearchToolbar: React.FC<SearchToolbarProps> = ({
 
   const handleSubmit = () => {
     onSubmitSearch();
-    // Reforzar que el input mantenga el foco tras buscar
+    // Mantener el foco en el input tras buscar
     if (inputRef.current) {
       inputRef.current.focus();
-      inputRef.current.select?.();
     }
   };
 
