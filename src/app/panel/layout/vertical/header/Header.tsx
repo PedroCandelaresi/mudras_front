@@ -78,6 +78,8 @@ const Header = () => {
     minHeight: TopbarHeight,
     paddingTop: 0,
     paddingBottom: 0,
+    // Recuperar el marrón oscuro original sobre la textura
+    background: 'linear-gradient(135deg, rgba(45,24,16,0.96) 0%, rgba(74,35,24,0.98) 50%, rgba(61,27,15,0.99) 100%)',
   }));
 
   return (
