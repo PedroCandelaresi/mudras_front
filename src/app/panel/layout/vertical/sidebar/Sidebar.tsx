@@ -31,13 +31,14 @@ const Sidebar = () => {
   const isDesktopOverlayOpen = !isSidebarPinned && isCollapse === "full-sidebar";
 
   // Zona sensible fija en el borde izquierdo para abrir el sidebar al acercar el mouse (solo overlay).
+  // La hacemos bien angosta para no interferir con inputs cercanos al borde.
   const hoverZone = lgUp && !isSidebarPinned ? (
     <Box
       sx={{
         position: "fixed",
         left: 0,
         top: 0,
-        width: MiniSidebarWidth,
+        width: 8,
         height: "100vh",
         zIndex: 1050,
         backgroundColor: "transparent",
@@ -52,6 +53,10 @@ const Sidebar = () => {
       open={isDesktopOverlayOpen}
       onClose={() => setIsCollapse("mini-sidebar")}
       variant="temporary"
+      ModalProps={{
+        // No forzar el foco dentro del Drawer; así no roba el foco de inputs como la searchbox.
+        disableEnforceFocus: true,
+      }}
       sx={{
         zIndex: 1100,
         // Puro overlay: no ocupa ancho en el layout padre.

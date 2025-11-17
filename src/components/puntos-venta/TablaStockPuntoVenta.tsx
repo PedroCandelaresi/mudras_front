@@ -40,16 +40,16 @@ type TablaStockTheme = {
 };
 
 const DEFAULT_THEME: Required<Omit<TablaStockTheme, 'buttonColor'>> & { buttonColor: string } = {
-  // Verde claro tipo cuarzo para puntos de venta
-  accent: '#83b89b',
-  accentInterior: darken('#83b89b', 0.25),
-  woodTintExterior: '#d4e6dd',
-  woodTintInterior: '#c0d8cb',
-  tableBodyBg: 'rgba(232, 245, 237, 0.7)',
-  tableBodyAlt: 'rgba(203, 225, 212, 0.38)',
-  headerBg: darken('#83b89b', 0.3),
-  panelOverlay: '#f4faf6',
-  buttonColor: '#83b89b',
+  // Verde primaveral para puntos de venta
+  accent: '#66BB6A',
+  accentInterior: darken('#66BB6A', 0.28),
+  woodTintExterior: '#c8e6c9',
+  woodTintInterior: '#b2dfbd',
+  tableBodyBg: 'rgba(225, 245, 229, 0.78)',
+  tableBodyAlt: 'rgba(200, 230, 205, 0.42)',
+  headerBg: darken('#66BB6A', 0.32),
+  panelOverlay: '#f1fbf2',
+  buttonColor: '#66BB6A',
 };
 
 const numberFormatter = new Intl.NumberFormat('es-AR', { maximumFractionDigits: 2 });
