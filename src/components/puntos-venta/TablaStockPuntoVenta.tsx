@@ -69,6 +69,43 @@ type Props = {
   themeOverride?: TablaStockTheme;
 };
 
+type WoodSectionProps = PropsWithChildren<{
+  estilosBiselExterior: any;
+  woodTintExterior: string;
+  panelOverlay: string;
+}>;
+
+const WoodSection: React.FC<WoodSectionProps> = ({
+  children,
+  estilosBiselExterior,
+  woodTintExterior,
+  panelOverlay,
+}) => (
+  <Box
+    sx={{
+      position: 'relative',
+      borderRadius: 2,
+      overflow: 'hidden',
+      boxShadow: '0 18px 40px rgba(0,0,0,0.12)',
+      background: 'transparent',
+      ...estilosBiselExterior,
+    }}
+  >
+    <WoodBackdrop accent={woodTintExterior} radius={3} inset={0} strength={0.16} texture="tabla" />
+
+    <Box
+      sx={{
+        position: 'absolute',
+        inset: 0,
+        backgroundColor: alpha(panelOverlay, 0.78),
+        zIndex: 0,
+      }}
+    />
+
+    <Box sx={{ position: 'relative', zIndex: 2, p: 2.75 }}>{children}</Box>
+  </Box>
+);
+
 const TablaStockPuntoVenta: React.FC<Props> = ({
   articulos,
   loading = false,
@@ -94,32 +131,6 @@ const TablaStockPuntoVenta: React.FC<Props> = ({
 
   const biselExteriorConfig = crearConfiguracionBisel(accent, 1.45);
   const estilosBiselExterior = crearEstilosBisel(biselExteriorConfig, { zContenido: 2 });
-
-  const WoodSection: React.FC<PropsWithChildren> = ({ children }) => (
-    <Box
-      sx={{
-        position: 'relative',
-        borderRadius: 2,
-        overflow: 'hidden',
-        boxShadow: '0 18px 40px rgba(0,0,0,0.12)',
-        background: 'transparent',
-        ...estilosBiselExterior,
-      }}
-    >
-      <WoodBackdrop accent={woodTintExterior} radius={3} inset={0} strength={0.16} texture="tabla" />
-
-      <Box
-        sx={{
-          position: 'absolute',
-          inset: 0,
-          backgroundColor: alpha(panelOverlay, 0.78),
-          zIndex: 0,
-        }}
-      />
-
-      <Box sx={{ position: 'relative', zIndex: 2, p: 2.75 }}>{children}</Box>
-    </Box>
-  );
 
   const [busquedaDraft, setBusquedaDraft] = useState('');
   const [busquedaAplicada, setBusquedaAplicada] = useState('');
@@ -460,7 +471,11 @@ const TablaStockPuntoVenta: React.FC<Props> = ({
   );
 
   return (
-    <WoodSection>
+    <WoodSection
+      estilosBiselExterior={estilosBiselExterior}
+      woodTintExterior={woodTintExterior}
+      panelOverlay={panelOverlay}
+    >
       {toolbar}
 
       <Box px={1} pb={1}>
