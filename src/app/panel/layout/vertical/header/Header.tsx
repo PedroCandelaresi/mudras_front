@@ -55,17 +55,8 @@ const Header = () => {
     return date.toLocaleDateString('es-AR', options);
   };
 
-  // Calcular desplazamiento lateral de top bar según estado del sidebar
-  const leftOffsetPx = (() => {
-    // En pantallas grandes respetar el ancho del sidebar (mini o full)
-    if (lgUp) {
-      const isMini = isCollapse === "mini-sidebar" && !isSidebarHover;
-      const width = isMini ? config.miniSidebarWidth : config.sidebarWidth;
-      return width; // Devolver número, no string
-    }
-    // En móviles, topbar ocupa todo el ancho
-    return 0;
-  })();
+  // Topbar siempre ocupa todo el ancho de la ventana.
+  const leftOffsetPx = 0;
 
   const AppBarStyled = styled(AppBar)(({ theme }) => ({
     boxShadow: 'none',
@@ -73,11 +64,11 @@ const Header = () => {
     justifyContent: 'center',
     backdropFilter: 'blur(4px)',
     position: 'fixed',
-    top: 0,
-    left: `${leftOffsetPx}px`,
-    right: 0,
     zIndex: 1300,
-    width: `calc(100vw - ${leftOffsetPx}px)`,
+    top: 0,
+    left: 0,
+    right: 0,
+    width: '100vw',
     
     // Sin animaciones complejas: priorizar rendimiento
     minHeight: TopbarHeight,
@@ -155,4 +146,3 @@ const Header = () => {
 };
 
 export default Header;
-

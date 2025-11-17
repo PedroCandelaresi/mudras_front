@@ -12,51 +12,35 @@ import { Profile } from "./SidebarProfile/Profile";
 import { useContext } from "react";
 
 const Sidebar = () => {
-  // lgUp = true en pantallas grandes (>= lg), false en mobile/tablet
   const lgUp = useMediaQuery((theme) => theme.breakpoints.up("lg"));
   const {
     isCollapse,
-    isSidebarHover,
-    setIsSidebarHover,
     isMobileSidebar,
     setIsMobileSidebar,
+    setIsCollapse,
   } = useContext(CustomizerContext);
 
-  const MiniSidebarWidth = config.miniSidebarWidth;
   const SidebarWidth = config.sidebarWidth;
   const theme = useTheme();
 
-  // Ancho físico del Drawer: cambia entre full y mini,
-  // pero el contenido mantiene siempre el margen de SidebarWidth,
-  // así la tabla no se redimensiona.
-  const toggleWidth =
-    isCollapse === "mini-sidebar" && !isSidebarHover
-      ? MiniSidebarWidth
-      : SidebarWidth;
-
-  const onHoverEnter = () => {
-    if (isCollapse === "mini-sidebar") {
-      setIsSidebarHover(true);
-    }
-  };
-
-  const onHoverLeave = () => {
-    setIsSidebarHover(false);
-  };
+  // En escritorio tratamos el sidebar como overlay:
+  // isCollapse === "full-sidebar" => Drawer abierto
+  // isCollapse === "mini-sidebar" => Drawer cerrado
+  const isDesktopSidebarOpen = isCollapse === "full-sidebar";
 
   const desktopDrawer = (
     <Drawer
       anchor="left"
-      open
-      onMouseEnter={onHoverEnter}
-      onMouseLeave={onHoverLeave}
-      variant="permanent"
+      open={isDesktopSidebarOpen}
+      onClose={() => setIsCollapse("mini-sidebar")}
+      variant="temporary"
       sx={{
         zIndex: 1100,
-        width: toggleWidth,
+        // Puro overlay: no ocupa ancho en el layout padre.
+        width: 0,
         flexShrink: 0,
         '& .MuiDrawer-paper': {
-          width: toggleWidth,
+          width: SidebarWidth,
           boxSizing: "border-box",
           // Dorado anaranjado con textura metálica
           backgroundImage:

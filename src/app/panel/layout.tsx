@@ -97,13 +97,8 @@ export default function RootLayout({
         className="page-wrapper"
         sx={{
           [theme.breakpoints.up("lg")]: {
-            // Mantener siempre el mismo margen izquierdo,
-            // así el contenido no se redimensiona al colapsar/expandir la sidebar.
-            ml: `${SidebarWidth}px`,
-            transition: theme.transitions.create('margin-left', {
-              duration: theme.transitions.duration.standard,
-              easing: theme.transitions.easing.sharp,
-            }),
+            // Sidebar en overlay: el contenido ocupa siempre todo el ancho.
+            ml: 0,
           },
         }}
       >
