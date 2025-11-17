@@ -78,8 +78,9 @@ const Header = () => {
     minHeight: TopbarHeight,
     paddingTop: 0,
     paddingBottom: 0,
-    // Recuperar el marrón oscuro original sobre la textura
-    background: 'linear-gradient(135deg, rgba(45,24,16,0.96) 0%, rgba(74,35,24,0.98) 50%, rgba(61,27,15,0.99) 100%)',
+    // Fondo transparente para que se vea la textura de madera;
+    // el tono marrón oscuro viene del TexturedPanel (accent + tint).
+    background: 'transparent',
   }));
 
   return (
@@ -94,18 +95,18 @@ const Header = () => {
         }}
       >
         <TexturedPanel
-          accent="#3B1A0D"               // marrón oscuro base
+          accent="#2D1810"               // marrón oscuro base (más profundo)
           radius={0}
           contentPadding={0}
-          bgTintPercent={24}
+          bgTintPercent={18}
           bgAlpha={0.98}
           textureUrl="/textures/textura_madera_old.png"
           textureScale={1.05}
-          textureBaseOpacity={0.32}
-          textureBoostOpacity={0.24}
-          textureContrast={1.02}
-          textureBrightness={0.98}
-          tintOpacity={0.46}
+          textureBaseOpacity={0.30}
+          textureBoostOpacity={0.20}
+          textureContrast={1.0}
+          textureBrightness={0.96}
+          tintOpacity={0.55}
           tintMode="soft-light"
           bevelWidth={0}
           bevelIntensity={0}
