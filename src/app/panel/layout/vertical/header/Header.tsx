@@ -79,13 +79,7 @@ const Header = () => {
     zIndex: 1300,
     width: `calc(100vw - ${leftOffsetPx}px)`,
     
-    // Animar tanto left como width para que acompañe suavemente
-    transition: theme.transitions.create(['left', 'width'], {
-      duration: `${config.transitionDuration}ms`,
-      easing: config.transitionEasing,
-    }),
-    
-    willChange: 'left, width',
+    // Sin animaciones complejas: priorizar rendimiento
     minHeight: TopbarHeight,
   }));
 
@@ -161,5 +155,4 @@ const Header = () => {
 };
 
 export default Header;
-
 

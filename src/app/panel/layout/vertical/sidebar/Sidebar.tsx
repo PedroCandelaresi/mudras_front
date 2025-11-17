@@ -22,14 +22,12 @@ const Sidebar = () => {
     setIsMobileSidebar,
   } = useContext(CustomizerContext);
 
-  const MiniSidebarWidth = config.miniSidebarWidth;
   const SidebarWidth = config.sidebarWidth;
   const theme = useTheme();
 
-  const toggleWidth =
-    isCollapse === "mini-sidebar" && !isSidebarHover
-      ? MiniSidebarWidth
-      : SidebarWidth;
+  // Mantener siempre el mismo ancho físico del Drawer para
+  // que el contenido no se redimensione al colapsar/expandir.
+  const toggleWidth = SidebarWidth;
 
   const onHoverEnter = () => {
     if (isCollapse === "mini-sidebar") {
@@ -67,10 +65,6 @@ const Sidebar = () => {
           overflowX: "hidden",
           "&::-webkit-scrollbar": { display: "none" },
           scrollbarWidth: "none",
-          transition: theme.transitions.create("width", {
-            duration: `${config.transitionDuration}ms`,
-            easing: config.transitionEasing,
-          }),
         },
       }}
     >
