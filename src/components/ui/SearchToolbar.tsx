@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useRef } from "react";
+import React, { useRef, memo } from "react";
 import {
   Box,
   TextField,
@@ -51,7 +51,7 @@ export interface SearchToolbarProps {
   searchDisabled?: boolean;
 }
 
-export const SearchToolbar: React.FC<SearchToolbarProps> = ({
+const SearchToolbarInner: React.FC<SearchToolbarProps> = ({
   title,
   icon,
   baseColor,
@@ -172,4 +172,5 @@ export const SearchToolbar: React.FC<SearchToolbarProps> = ({
   );
 };
 
+export const SearchToolbar = memo(SearchToolbarInner);
 export default SearchToolbar;

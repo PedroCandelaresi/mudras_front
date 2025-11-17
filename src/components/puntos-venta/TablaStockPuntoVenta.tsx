@@ -197,8 +197,10 @@ const TablaStockPuntoVenta: React.FC<Props> = ({
     [articulosFiltrados, page, rowsPerPage]
   );
 
-  const toolbar = (
-    <>
+  // Memoizar el toolbar para que no se remonte en cada render.
+  // Solo depende de valores básicos, no de derivados como articulosFiltrados o resumenInventario.
+  const toolbar = useMemo(
+    () => (
       <SearchToolbar
         title={puntoNombre ? `Stock en ${puntoNombre}` : 'Stock del punto de venta'}
         icon={<IconClipboardList size={20} />}
@@ -207,11 +209,13 @@ const TablaStockPuntoVenta: React.FC<Props> = ({
         searchValue={busquedaDraft}
         onSearchValueChange={setBusquedaDraft}
         onSubmitSearch={() => {
+          // Aplicar búsqueda y resetear página sin tocar valores derivados.
+          setBusquedaAplicada((busquedaDraft || '').trim());
           setPage(0);
-          ejecutarBusqueda();
         }}
         onClear={() => {
-          limpiarFiltros();
+          setBusquedaDraft('');
+          setBusquedaAplicada('');
           setPage(0);
         }}
         canCreate={Boolean(onNewAssignment)}
@@ -219,12 +223,8 @@ const TablaStockPuntoVenta: React.FC<Props> = ({
         onCreateClick={onNewAssignment}
         searchDisabled={loading}
       />
-      <Box px={1} pb={1}>
-        <Typography variant="body2" color="text.secondary">
-          {resumenInventario}
-        </Typography>
-      </Box>
-    </>
+    ),
+    [puntoNombre, buttonColor, busquedaDraft, loading, onNewAssignment]
   );
 
   const tabla = (

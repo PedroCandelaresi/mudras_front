@@ -54,6 +54,7 @@ function a11yProps(index: number) {
 }
 
 export default function PuntosMudrasPage() {
+  const paleta = grisRojizo;
   const [tabActual, setTabActual] = useState(0);
   const [modalAbierto, setModalAbierto] = useState(false);
   const [tipoModal, setTipoModal] = useState<'venta' | 'deposito'>('venta');
@@ -104,11 +105,11 @@ export default function PuntosMudrasPage() {
   return (
     <PageContainer title="Puntos Mudras" description="Gestión de puntos de venta y depósitos">
       <Box>
-        <Typography variant="h4" fontWeight={700} color={grisVerdoso.textStrong} sx={{ mb: 2 }}>
+        <Typography variant="h4" fontWeight={700} color={paleta.textStrong} sx={{ mb: 2 }}>
           Gestión de Puntos Mudras
         </Typography>
         <TexturedPanel
-          accent="#424242"
+          accent={paleta.headerBg}
           radius={14}
           contentPadding={12}
           bgTintPercent={20}
@@ -135,19 +136,19 @@ export default function PuntosMudrasPage() {
               sx={{
                 '& .MuiTabs-flexContainer': { gap: 1 },
                 '& .MuiTab-root': {
-                  color: 'white',
+                  color: paleta.headerText,
                   textTransform: 'none',
                   fontWeight: 600,
                   minHeight: 40,
                   px: 2,
                   borderRadius: 1.5,
-                  bgcolor: '#757575',
-                  '&:hover': { bgcolor: '#9e9e9e' },
+                  bgcolor: paleta.primary,
+                  '&:hover': { bgcolor: paleta.primaryHover },
                   '& .MuiTab-iconWrapper': { mr: 1 }
                 },
                 '& .MuiTab-root.Mui-selected': {
-                  bgcolor: '#424242',
-                  color: 'common.white'
+                  bgcolor: paleta.headerBg,
+                  color: paleta.headerText
                 }
               }}
             >
