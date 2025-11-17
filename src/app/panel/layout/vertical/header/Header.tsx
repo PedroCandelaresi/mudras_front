@@ -109,7 +109,7 @@ const Header = () => {
             size="small"
             onClick={() => {
               if (lgUp) {
-                // En escritorio, alternar entre sidebar fija y modo overlay auto-ocultar.
+                // En escritorio: alternar entre modo fijo (pinned) y overlay.
                 if (isSidebarPinned) {
                   setIsSidebarPinned(false);
                   setIsCollapse("mini-sidebar");
