@@ -22,12 +22,17 @@ const Sidebar = () => {
     setIsMobileSidebar,
   } = useContext(CustomizerContext);
 
+  const MiniSidebarWidth = config.miniSidebarWidth;
   const SidebarWidth = config.sidebarWidth;
   const theme = useTheme();
 
-  // Mantener siempre el mismo ancho físico del Drawer para
-  // que el contenido no se redimensione al colapsar/expandir.
-  const toggleWidth = SidebarWidth;
+  // Ancho físico del Drawer: cambia entre full y mini,
+  // pero el contenido mantiene siempre el margen de SidebarWidth,
+  // así la tabla no se redimensiona.
+  const toggleWidth =
+    isCollapse === "mini-sidebar" && !isSidebarHover
+      ? MiniSidebarWidth
+      : SidebarWidth;
 
   const onHoverEnter = () => {
     if (isCollapse === "mini-sidebar") {
