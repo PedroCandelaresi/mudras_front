@@ -7,59 +7,63 @@ export const plus = Plus_Jakarta_Sans({
   fallback: ["Helvetica", "Arial", "sans-serif"],
 });
 
+// Tipografía ajustada para pantallas 1366x768:
+// Reducimos ligeramente todos los tamaños para que quepa más contenido en altura,
+// manteniendo las proporciones entre títulos, textos y botones.
 const typography = {
   fontFamily: plus.style.fontFamily,
   h1: {
     fontWeight: 600,
-    fontSize: '2.25rem',
-    lineHeight: '2.75rem',
+    fontSize: '2rem',
+    lineHeight: '2.5rem',
   },
   h2: {
     fontWeight: 600,
-    fontSize: '1.875rem',
-    lineHeight: '2.25rem',
+    fontSize: '1.7rem',
+    lineHeight: '2.1rem',
   },
   h3: {
     fontWeight: 600,
-    fontSize: '1.5rem',
-    lineHeight: '1.75rem',
+    fontSize: '1.35rem',
+    lineHeight: '1.6rem',
   },
   h4: {
     fontWeight: 600,
-    fontSize: '1.3125rem',
-    lineHeight: '1.6rem',
+    fontSize: '1.2rem',
+    lineHeight: '1.45rem',
   },
   h5: {
     fontWeight: 600,
-    fontSize: '1.125rem',
-    lineHeight: '1.6rem',
+    fontSize: '1.05rem',
+    lineHeight: '1.4rem',
   },
   h6: {
     fontWeight: 600,
-    fontSize: '1rem',
+    fontSize: '0.95rem',
     lineHeight: '1.2rem',
   },
   button: {
     textTransform: 'capitalize',
     fontWeight: 400,
+    fontSize: '0.8rem',
   },
   body1: {
-    fontSize: '0.875rem',
+    fontSize: '0.8rem',
     fontWeight: 400,
-    lineHeight: '1.334rem',
+    lineHeight: '1.25rem',
   },
   body2: {
-    fontSize: '0.75rem',
+    fontSize: '0.7rem',
     letterSpacing: '0rem',
     fontWeight: 400,
-    lineHeight: '1rem',
+    lineHeight: '1.05rem',
   },
   subtitle1: {
-    fontSize: '0.875rem',
+    fontSize: '0.8rem',
     fontWeight: 400,
   },
   subtitle2: {
-    fontSize: '0.875rem',
+    fontSize: '0.75rem',
     fontWeight: 400,
   },
 };

@@ -1,6 +1,6 @@
-'use client';
+"use client";
 
-import React from 'react';
+import React, { useRef } from "react";
 import {
   Box,
   TextField,
@@ -66,6 +66,16 @@ export const SearchToolbar: React.FC<SearchToolbarProps> = ({
   searchDisabled,
 }) => {
   const borderColor = alpha(baseColor, 0.35);
+  const inputRef = useRef<HTMLInputElement | null>(null);
+
+  const handleSubmit = () => {
+    onSubmitSearch();
+    // Reforzar que el input mantenga el foco tras buscar
+    if (inputRef.current) {
+      inputRef.current.focus();
+      inputRef.current.select?.();
+    }
+  };
 
   return (
     <Box
@@ -106,9 +116,10 @@ export const SearchToolbar: React.FC<SearchToolbarProps> = ({
           onKeyDown={(e) => {
             if (e.key === 'Enter') {
               e.preventDefault();
-              onSubmitSearch();
+              handleSubmit();
             }
           }}
+          inputRef={inputRef}
           InputProps={{
             startAdornment: (
               <InputAdornment position="start">
@@ -140,7 +151,7 @@ export const SearchToolbar: React.FC<SearchToolbarProps> = ({
             <CrystalButton
               baseColor={baseColor}
               startIcon={<IconSearch size={18} />}
-              onClick={onSubmitSearch}
+              onClick={handleSubmit}
               disabled={searchDisabled}
             >
               Buscar
@@ -163,4 +174,3 @@ export const SearchToolbar: React.FC<SearchToolbarProps> = ({
 };
 
 export default SearchToolbar;
-

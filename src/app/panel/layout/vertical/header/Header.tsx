@@ -87,32 +87,6 @@ const Header = () => {
       <AppBarStyled position="sticky" color="default">
         <ToolbarStyled>
           {/* ------------------------------------------- */}
-          {/* Toggle Button Sidebar */}
-          {/* ------------------------------------------- */}
-
-          <IconButton
-            color="inherit"
-            aria-label="menu"
-            size="small"
-            onClick={() => {
-              // Toggle sidebar on both mobile and desktop based on screen size
-              if (lgUp) {
-                // For large screens, toggle between full-sidebar and mini-sidebar
-                isCollapse === "full-sidebar" ? setIsCollapse("mini-sidebar") : setIsCollapse("full-sidebar");
-              } else {
-                // For smaller screens, toggle mobile sidebar
-                setIsMobileSidebar(!isMobileSidebar);
-              }
-            }}
-          >
-            <IconMenu2 size="18" />
-          </IconButton>
-          {/* ------------------------------------------- */}
-          {/* Search Dropdown */}
-          {/* ------------------------------------------- */}
-          <Search />
-
-          {/* ------------------------------------------- */}
           {/* Fecha y Hora Central */}
           {/* ------------------------------------------- */}
           <Box flexGrow={1} display="flex" justifyContent="center" alignItems="center">
@@ -131,6 +105,24 @@ const Header = () => {
           </Box>
 
           <Stack spacing={1} direction="row" alignItems="center">
+            {/* Search + Hamburguesa movidos a la derecha */}
+            <Search />
+            <IconButton
+              color="inherit"
+              aria-label="menu"
+              size="small"
+              onClick={() => {
+                if (lgUp) {
+                  isCollapse === "full-sidebar"
+                    ? setIsCollapse("mini-sidebar")
+                    : setIsCollapse("full-sidebar");
+                } else {
+                  setIsMobileSidebar(!isMobileSidebar);
+                }
+              }}
+            >
+              <IconMenu2 size="18" />
+            </IconButton>
             <Notifications />
             {/* ------------------------------------------- */}
             {/* Toggle Right Sidebar for mobile */}

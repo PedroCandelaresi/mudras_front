@@ -99,11 +99,23 @@ export default function ModalNuevaAsignacionStock({ open, onClose, puntoVenta, o
     }
   }, [rubrosData]);
 
-  const [buscarArticulosQuery, { data: articulosData, loading: buscandoArticulos, error: errorBuscar }] = useLazyQuery<BuscarArticulosParaAsignacionResponse>(BUSCAR_ARTICULOS_PARA_ASIGNACION, { fetchPolicy: 'network-only' });
+  const [buscarArticulosQuery, { data: articulosData, loading: buscandoArticulos, error: errorBuscar }] =
+    useLazyQuery<BuscarArticulosParaAsignacionResponse>(BUSCAR_ARTICULOS_PARA_ASIGNACION, {
+      fetchPolicy: "network-only",
+    });
+
+  // Buscar artículos sólo cuando el usuario lo pide (Enter / botón),
+  // no en cada pulsación, para que el input no pierda el foco ni se "trabe".
   const buscarArticulos = useCallback(async () => {
     if (!proveedorSeleccionado || busqueda.length < 3) return;
-    setError('');
-    await buscarArticulosQuery({ variables: { proveedorId: proveedorSeleccionado.id, rubro: rubroSeleccionado || null, busqueda } });
+    setError("");
+    await buscarArticulosQuery({
+      variables: {
+        proveedorId: proveedorSeleccionado.id,
+        rubro: rubroSeleccionado || null,
+        busqueda,
+      },
+    });
   }, [proveedorSeleccionado, rubroSeleccionado, busqueda, buscarArticulosQuery]);
   useEffect(() => {
     if (articulosData?.buscarArticulosParaAsignacion) {
@@ -114,15 +126,18 @@ export default function ModalNuevaAsignacionStock({ open, onClose, puntoVenta, o
     if (errorBuscar) setError(errorBuscar.message);
   }, [errorBuscar]);
 
-  // Buscar artículos cuando se aplican filtros
+  // Limpiar lista de artículos cuando se cambia de proveedor
   useEffect(() => {
-    if (proveedorSeleccionado && busqueda.length >= 3) buscarArticulos();
-    else setArticulos([]);
-  }, [proveedorSeleccionado, busqueda, buscarArticulos]);
+    if (!proveedorSeleccionado) {
+      setArticulos([]);
+      setBusqueda("");
+    }
+  }, [proveedorSeleccionado]);
 
   const handleBusquedaKeyPress = (event: React.KeyboardEvent) => {
-    if (event.key === 'Enter' && busqueda.length >= 3 && proveedorSeleccionado) {
-      buscarArticulos();
+    if (event.key === "Enter" && busqueda.length >= 3 && proveedorSeleccionado) {
+      event.preventDefault();
+      void buscarArticulos();
     }
   };
 
@@ -304,7 +319,13 @@ export default function ModalNuevaAsignacionStock({ open, onClose, puntoVenta, o
                 label="Buscar Artículo"
                 placeholder="Mínimo 3 caracteres + Enter"
                 value={busqueda}
-                onChange={(e) => setBusqueda(e.target.value)}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  setBusqueda(value);
+                  if (!value) {
+                    setArticulos([]);
+                  }
+                }}
                 onKeyPress={handleBusquedaKeyPress}
                 disabled={!proveedorSeleccionado}
                 InputProps={{
