@@ -80,9 +80,8 @@ export default function RootLayout({
     };
   }, [pathname, router]);
 
-  const { activeLayout, isLayout, activeMode, isSidebarPinned } = useContext(CustomizerContext);
+  const { activeLayout, isLayout, activeMode } = useContext(CustomizerContext);
   const theme = useTheme();
-  const SidebarWidth = config.sidebarWidth;
   return (
     <MainWrapper className={activeMode === 'dark' ? 'darkbg mainwrapper' : 'mainwrapper'}>
       <title>Mudras Gestión</title>
@@ -97,10 +96,9 @@ export default function RootLayout({
         className="page-wrapper"
         sx={{
           [theme.breakpoints.up("lg")]: {
-            // Si la sidebar está fija, el contenido se desplaza hacia la derecha
-            // pero sin mover todo el wrapper (evitamos desalinear la caja central).
+            // El wrapper del contenido no se desplaza;
+            // la sidebar fija se integra vía flex a la izquierda.
             ml: 0,
-            pl: isSidebarPinned ? `${SidebarWidth}px` : 0,
           },
         }}
       >

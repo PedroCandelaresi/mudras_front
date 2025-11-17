@@ -78,9 +78,9 @@ const Header = () => {
     minHeight: TopbarHeight,
     paddingTop: 0,
     paddingBottom: 0,
-    // Fondo transparente para que se vea la textura de madera;
-    // el tono marrón oscuro viene del TexturedPanel (accent + tint).
-    background: 'transparent',
+    // Mezcla: textura de madera + degradado marrón semitransparente,
+    // así se ve la veta pero mantiene el tono oscuro.
+    background: 'linear-gradient(135deg, rgba(45,24,16,0.72) 0%, rgba(74,35,24,0.78) 50%, rgba(61,27,15,0.80) 100%)',
   }));
 
   return (
@@ -98,15 +98,15 @@ const Header = () => {
           accent="#2D1810"               // marrón oscuro base (más profundo)
           radius={0}
           contentPadding={0}
-          bgTintPercent={18}
+          bgTintPercent={16}
           bgAlpha={0.98}
           textureUrl="/textures/textura_madera_old.png"
           textureScale={1.05}
-          textureBaseOpacity={0.30}
-          textureBoostOpacity={0.20}
-          textureContrast={1.0}
-          textureBrightness={0.96}
-          tintOpacity={0.55}
+          textureBaseOpacity={0.34}
+          textureBoostOpacity={0.22}
+          textureContrast={1.02}
+          textureBrightness={0.98}
+          tintOpacity={0.40}
           tintMode="soft-light"
           bevelWidth={0}
           bevelIntensity={0}
