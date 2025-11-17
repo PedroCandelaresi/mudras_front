@@ -97,9 +97,10 @@ export default function RootLayout({
         className="page-wrapper"
         sx={{
           [theme.breakpoints.up("lg")]: {
-            // Si la sidebar está fija, el contenido se corre;
-            // en modo overlay ocupa todo el ancho.
-            ml: isSidebarPinned ? `${SidebarWidth}px` : 0,
+            // Si la sidebar está fija, el contenido se desplaza hacia la derecha
+            // pero sin mover todo el wrapper (evitamos desalinear la caja central).
+            ml: 0,
+            pl: isSidebarPinned ? `${SidebarWidth}px` : 0,
           },
         }}
       >

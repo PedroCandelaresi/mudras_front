@@ -1,4 +1,3 @@
-import AppBar from "@mui/material/AppBar";
 import Box from "@mui/material/Box";
 import IconButton from "@mui/material/IconButton";
 import Stack from "@mui/material/Stack";
@@ -15,6 +14,7 @@ import MobileRightSidebar from "./MobileRightSidebar";
 import config from '@/app/context/config'
 import { useContext, useState, useEffect } from "react";
 import { ProductProvider } from '@/app/context/Ecommercecontext/index'
+import { TexturedPanel } from '@/components/ui/TexturedFrame/TexturedPanel';
 
 const Header = () => {
   const lgUp = useMediaQuery((theme) => theme.breakpoints.up("lg"));
@@ -72,22 +72,6 @@ const Header = () => {
   // en modo overlay ocupa todo el ancho.
   const leftOffsetPx = lgUp && isSidebarPinned ? SidebarWidth : 0;
 
-  const AppBarStyled = styled(AppBar)(({ theme }) => ({
-    boxShadow: 'none',
-    background: 'linear-gradient(135deg, #2D1810 0%, #4A2318 50%, #3D1B0F 100%)',
-    justifyContent: 'center',
-    backdropFilter: 'blur(4px)',
-    position: 'fixed',
-    zIndex: 1300,
-    top: 0,
-    left: `${leftOffsetPx}px`,
-    right: 0,
-    width: `calc(100vw - ${leftOffsetPx}px)`,
-    
-    // Sin animaciones complejas: priorizar rendimiento
-    minHeight: TopbarHeight,
-  }));
-
   const ToolbarStyled = styled(Toolbar)(({ theme }) => ({
     width: '100%',
     color: '#FFE4D6',
@@ -98,8 +82,37 @@ const Header = () => {
 
   return (
     <ProductProvider>
-      <AppBarStyled position="sticky" color="default">
-        <ToolbarStyled>
+      <Box
+        sx={{
+          position: 'fixed',
+          top: 0,
+          left: `${leftOffsetPx}px`,
+          right: 0,
+          zIndex: 1300,
+        }}
+      >
+        <TexturedPanel
+          accent="#3B1A0D"               // marrón oscuro base
+          radius={0}
+          contentPadding={0}
+          bgTintPercent={24}
+          bgAlpha={0.98}
+          textureUrl="/textures/textura_madera_old.png"
+          textureScale={1.05}
+          textureBaseOpacity={0.32}
+          textureBoostOpacity={0.24}
+          textureContrast={1.02}
+          textureBrightness={0.98}
+          tintOpacity={0.46}
+          tintMode="soft-light"
+          bevelWidth={0}
+          bevelIntensity={0}
+          glossStrength={0.6}
+          vignetteStrength={0.6}
+          variant="borderless"
+          fullHeight={false}
+        >
+          <ToolbarStyled>
           {/* ------------------------------------------- */}
           {/* Toggle Button Sidebar (izquierda) */}
           {/* ------------------------------------------- */}
@@ -154,8 +167,9 @@ const Header = () => {
             {lgDown ? <MobileRightSidebar /> : null}
             <Profile />
           </Stack>
-        </ToolbarStyled>
-      </AppBarStyled>
+          </ToolbarStyled>
+        </TexturedPanel>
+      </Box>
     </ProductProvider>
 
   );
