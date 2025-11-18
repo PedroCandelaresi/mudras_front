@@ -166,13 +166,18 @@ const ModalDetallesArticulo = ({ open, onClose, articulo, accentColor, stockCont
         accent={COLORS.primary}
         radius={12}
         contentPadding={0}
-        bgTintPercent={0}
-        bgAlpha={1}
-        textureBaseOpacity={0}
-        textureBoostOpacity={0}
-        textureBrightness={1}
-        textureContrast={1}
-        tintOpacity={0}
+        bgTintPercent={12}
+        bgAlpha={0.98}
+        textureScale={1.08}
+        textureBaseOpacity={0.22}
+        textureBoostOpacity={0.18}
+        textureBrightness={1.12}
+        textureContrast={1.03}
+        tintOpacity={0.36}
+        tintMode="soft-light"
+        bevelWidth={10}
+        bevelIntensity={0.9}
+        glossStrength={0.9}
       >
         <Box sx={{ display: 'flex', flexDirection: 'column', maxHeight: `${VH_MAX}vh` }}>
           {/* ===== HEADER ===== */}
@@ -301,7 +306,7 @@ const ModalDetallesArticulo = ({ open, onClose, articulo, accentColor, stockCont
                   p: { xs: 3, md: 4 },
                   borderRadius: 0,
                   backdropFilter: 'none',
-                  background: '#f1f3f5',
+                  background: 'transparent',
                 }}
               >
                 {loading ? (
@@ -320,7 +325,6 @@ const ModalDetallesArticulo = ({ open, onClose, articulo, accentColor, stockCont
                   </Box>
                 ) : (
                   <>
-                    {/* Tarjetas de info rápida */}
                     <Box
                       sx={{
                         display: 'grid',
