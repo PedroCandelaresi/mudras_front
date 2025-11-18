@@ -341,15 +341,14 @@ const ModalDetallesRubro = ({ open, onClose, rubro, accentColor }: ModalDetalles
             }}
           >
             <Box sx={{ position: 'relative', borderRadius: 0, overflow: 'hidden' }}>
-              <WoodBackdrop accent={COLORS.primary} radius={0} inset={0} strength={0.75} texture="wide" />
               <Box
                 sx={{
                   position: 'relative',
                   zIndex: 1,
-                  p: 5,
+                  p: { xs: 3, md: 4 },
                   borderRadius: 0,
-                  backdropFilter: 'saturate(118%) blur(0.4px)',
-                  background: 'rgba(255,255,255,0.84)',
+                  backdropFilter: 'none',
+                  background: '#ffffff',
                 }}
               >
                 <Box
