@@ -67,8 +67,8 @@ const makeColors = (base?: string) => {
 
 /* ======================== Layout ======================== */
 const VH_MAX = 85;
-const HEADER_H = 88;      // Igual al modal de proveedores
-const FOOTER_H = 88;
+const HEADER_H = 60;      // Igual al modal de proveedores
+const FOOTER_H = 60;
 const DIV_H = 3;
 const CONTENT_MAX = `calc(${VH_MAX}vh - ${HEADER_H + FOOTER_H + DIV_H * 2}px)`;
 
@@ -200,7 +200,7 @@ const ModalDetallesArticulo = ({
              ======================================================= */}
           <DialogTitle sx={{ p: 0, m: 0, minHeight: HEADER_H, display: 'flex', alignItems: 'center' }}>
             <Box sx={{ width: '100%', display: 'flex', alignItems: 'center', px: 3, py: 2.25, gap: 2 }}>
-              
+
               {/* Icono redondo */}
               <Box sx={{
                 width: 40,
@@ -222,16 +222,18 @@ const ModalDetallesArticulo = ({
               </Typography>
 
               {/* Cerrar */}
-              <Box sx={{ ml: 'auto', display: 'flex', gap: 1 }}>
+              <Box sx={{ ml: 'auto', display: 'flex', gap: 1, alignItems: 'center' }}>
                 <CrystalSoftButton
                   baseColor={COLORS.primary}
                   onClick={handleClose}
                   sx={{
-                    width: 42,
-                    height: 42,
+                    width: 40,
+                    height: 40,
                     borderRadius: '50%',
                     display: 'grid',
                     placeItems: 'center',
+                    flexShrink: 0,   // <--- evita que se deforme
+                    flexGrow: 0,     // <--- evita stretch
                     p: 0,
                   }}
                 >
@@ -270,7 +272,7 @@ const ModalDetallesArticulo = ({
             }}
           >
             <Box sx={{ p: { xs: 3, md: 4 } }}>
-              
+
               {/* Loading */}
               {loading && <Skeleton variant="rounded" height={320} />}
 
@@ -463,11 +465,11 @@ const ModalDetallesArticulo = ({
 
                         <Typography variant="h6" fontWeight={800} color={COLORS.primary}>
                           {typeof articuloCompleto?.PrecioCompra === 'number' &&
-                           articuloCompleto.PrecioCompra > 0
+                            articuloCompleto.PrecioCompra > 0
                             ? `${Math.round(
-                                ((precioCalculado - articuloCompleto.PrecioCompra) /
-                                  articuloCompleto.PrecioCompra) * 100
-                              )}%`
+                              ((precioCalculado - articuloCompleto.PrecioCompra) /
+                                articuloCompleto.PrecioCompra) * 100
+                            )}%`
                             : '—'}
                         </Typography>
                       </CardContent>
@@ -545,7 +547,7 @@ const ModalDetallesArticulo = ({
                         gap: 1.2,
                       }}
                     >
-                      
+
                       <Box display="flex" alignItems="center" gap={1}>
                         <Icon icon="mdi:information-variant" width={20} height={20} color={COLORS.primary} />
                         <Typography variant="subtitle1" fontWeight={700} color={COLORS.textStrong}>
