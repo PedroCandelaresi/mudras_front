@@ -145,8 +145,8 @@ const ModalDetallesArticulo = ({
     stockActual <= 0
       ? { label: 'Sin stock', color: 'error' as const }
       : stockActual <= stockMinimo
-      ? { label: 'Stock bajo', color: 'warning' as const }
-      : { label: 'Disponible', color: 'success' as const };
+        ? { label: 'Stock bajo', color: 'warning' as const }
+        : { label: 'Disponible', color: 'success' as const };
 
   const tituloHeader =
     (articuloCompleto?.Codigo ? `${articuloCompleto.Codigo} - ` : '') +
@@ -163,10 +163,10 @@ const ModalDetallesArticulo = ({
       PaperProps={{
         sx: {
           borderRadius: 4,
-          bgcolor: 'transparent',
-          overflow: 'hidden',
+          bgcolor: 'transparent !important',
+          backgroundColor: 'transparent !important',
           boxShadow: '0 8px 40px rgba(0,0,0,0.28)',
-          maxHeight: `${VH_MAX}vh`,
+          overflow: 'hidden',
         },
       }}
     >
@@ -198,13 +198,14 @@ const ModalDetallesArticulo = ({
           {/* Contenido visible */}
           <DialogTitle
             sx={{
-              position: 'relative',
-              zIndex: 1,
               p: 0,
               m: 0,
               minHeight: HEADER_H,
               display: 'flex',
               alignItems: 'center',
+              background: 'transparent !important',
+              bgcolor: 'transparent !important',
+              backgroundColor: 'transparent !important',
             }}
           >
             <Box
@@ -587,13 +588,13 @@ const ModalDetallesArticulo = ({
                         color={COLORS.primary}
                       >
                         {typeof articuloCompleto?.PrecioCompra === 'number' &&
-                        articuloCompleto?.PrecioCompra > 0
+                          articuloCompleto?.PrecioCompra > 0
                           ? `${Math.round(
-                              ((precioCalculado -
-                                articuloCompleto.PrecioCompra) /
-                                articuloCompleto.PrecioCompra) *
-                                100
-                            )}%`
+                            ((precioCalculado -
+                              articuloCompleto.PrecioCompra) /
+                              articuloCompleto.PrecioCompra) *
+                            100
+                          )}%`
                           : '—'}
                       </Typography>
                     </CardContent>
@@ -740,10 +741,10 @@ const ModalDetallesArticulo = ({
                         <Typography variant="body1" fontWeight={600}>
                           {articuloCompleto?.FechaModif
                             ? format(
-                                new Date(articuloCompleto.FechaModif),
-                                'dd/MM/yyyy',
-                                { locale: es }
-                              )
+                              new Date(articuloCompleto.FechaModif),
+                              'dd/MM/yyyy',
+                              { locale: es }
+                            )
                             : '—'}
                         </Typography>
                       </Box>
@@ -817,11 +818,12 @@ const ModalDetallesArticulo = ({
           {/* Acciones */}
           <DialogActions
             sx={{
-              position: 'relative',
-              zIndex: 1,
               p: 0,
               m: 0,
               minHeight: FOOTER_H,
+              background: 'transparent !important',
+              bgcolor: 'transparent !important',
+              backgroundColor: 'transparent !important',
               display: 'flex',
               justifyContent: 'flex-end',
               px: 3,
