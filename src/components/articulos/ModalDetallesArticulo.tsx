@@ -199,8 +199,16 @@ const ModalDetallesArticulo = ({
              ================== HEADER METÁLICO =====================
              ======================================================= */}
           <DialogTitle sx={{ p: 0, m: 0, minHeight: HEADER_H, display: 'flex', alignItems: 'center' }}>
-            <Box sx={{ width: '100%', display: 'flex', alignItems: 'center', px: 3, py: 2.25, gap: 2 }}>
-
+            <Box
+              sx={{
+                width: '100%',
+                height: '100%',   // ← clave para respetar HEADER_H exacto
+                display: 'flex',
+                alignItems: 'center',
+                px: 3,
+                gap: 2,
+              }}
+            >
               {/* Icono redondo */}
               <Box sx={{
                 width: 40,
@@ -638,8 +646,17 @@ const ModalDetallesArticulo = ({
              ====================== FOOTER =========================
              ======================================================= */}
           <DialogActions sx={{ p: 0, m: 0, minHeight: FOOTER_H }}>
-            <Box sx={{ width: '100%', display: 'flex', justifyContent: 'flex-end', px: 3, py: 2.25, gap: 1.5 }}>
-              <CrystalSoftButton baseColor={COLORS.primary} onClick={handleClose}>
+            <Box
+              sx={{
+                width: '100%',
+                height: '100%',   // ← clave
+                display: 'flex',
+                justifyContent: 'flex-end',
+                alignItems: 'center',
+                px: 3,
+                gap: 1.5,
+              }}
+            >              <CrystalSoftButton baseColor={COLORS.primary} onClick={handleClose}>
                 Cerrar
               </CrystalSoftButton>
             </Box>
