@@ -190,7 +190,7 @@ const ModalDetallesArticulo = ({ open, onClose, articulo, accentColor, stockCont
                 px: 2,
                 py: 1.5,
                 gap: 1.5,
-                background: `linear-gradient(90deg, ${COLORS.primary} 0%, ${COLORS.primaryHover} 100%)`,
+                background: `transparent`,
                 backgroundImage: `linear-gradient(90deg, ${COLORS.primary} 0%, ${COLORS.primaryHover} 100%), linear-gradient(90deg, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0.02) 50%, rgba(255,255,255,0.08) 100%)`,
                 boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.18), 0 2px 8px rgba(0,0,0,0.12)',
               }}
@@ -674,7 +674,7 @@ const ModalDetallesArticulo = ({ open, onClose, articulo, accentColor, stockCont
               p: 0,
               m: 0,
               minHeight: FOOTER_H,
-              background: `linear-gradient(90deg, ${COLORS.primary} 0%, ${COLORS.primaryHover} 100%)`,
+              background: `transparent`,
               backgroundImage: `linear-gradient(90deg, ${COLORS.primary} 0%, ${COLORS.primaryHover} 100%), linear-gradient(90deg, rgba(255,255,255,0.06) 0%, rgba(255,255,255,0.01) 50%, rgba(255,255,255,0.06) 100%)`,
               boxShadow: 'inset 0 -1px 0 rgba(255,255,255,0.12), 0 -2px 8px rgba(0,0,0,0.06)',
             }}
