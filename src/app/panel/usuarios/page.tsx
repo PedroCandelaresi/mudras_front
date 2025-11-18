@@ -16,8 +16,9 @@ import { CreatePermisoModal, type CrearPermisoForm } from '@/components/permisos
 import { EditPermisoModal, type EditarPermisoForm } from '@/components/permisos/EditPermisoModal';
 import { Icon } from '@iconify/react';
 import { useSearchParams } from 'next/navigation';
-import { TexturedPanel } from '@/components/ui/TexturedFrame/TexturedPanel';
+// TexturedPanel is provided by StylizedTabbedPanel wrapper
 import CrystalButton, { CrystalSoftButton, forceWhiteIconsSX } from '@/components/ui/CrystalButton';
+import StylizedTabbedPanel from '@/components/ui/StylizedTabbedPanel';
 import { DeleteUserDialog } from '@/components/usuarios/DeleteUserDialog';
 import { apiFetch } from '@/lib/api';
 import { marron } from '@/ui/colores';
@@ -80,13 +81,10 @@ export default function Usuarios() {
 
   // Tabs: 0 Mudras (EMPRESA), 1 Clientes (CLIENTE), 2 Roles, 3 Permisos
   const searchParams = useSearchParams();
-  const [tab, setTab] = React.useState(0);
+  const [tab, setTab] = React.useState('0');
   React.useEffect(() => {
     const t = searchParams?.get('tab');
-    if (t != null) {
-      const n = Number(t);
-      if (!Number.isNaN(n) && n >= 0 && n <= 3) setTab(n);
-    }
+    if (t != null && ['0','1','2','3'].includes(t)) setTab(t);
   }, [searchParams]);
 
   const [crearAbierto, setCrearAbierto] = React.useState(false);
@@ -218,61 +216,52 @@ export default function Usuarios() {
 
   return (
     <PageContainer title="Usuarios - Mudras" description="Gestión de usuarios, roles y permisos">
-      <Box sx={createBevelWrapper(activeColor)}>
-        <TexturedPanel
-          accent={activeColor}
-          radius={14}
-          contentPadding={12}
-          bgTintPercent={22}
-          bgAlpha={0.98}
-          tintMode="soft-light"
-          tintOpacity={0.42}
-          textureScale={1.1}
-          textureBaseOpacity={0.18}
-          textureBoostOpacity={0.12}
-          textureContrast={0.92}
-          textureBrightness={1.03}
-          bevelWidth={12}
-          bevelIntensity={1.0}
-          glossStrength={1.0}
-          vignetteStrength={0.9}
-        >
+      <StylizedTabbedPanel
+        tabs={[
+          { key: '0', label: 'Mudras', color: activeColor },
+          { key: '1', label: 'Clientes', color: activeColor },
+          { key: '2', label: 'Roles', color: activeColor },
+          { key: '3', label: 'Permisos', color: activeColor },
+        ]}
+        activeKey={tab}
+        onChange={(k) => setTab(k)}
+      >
           {/* Toolbar con estilo Crystal */}
           <Box sx={{ bgcolor: 'transparent', px: 1, py: 1.5 }}>
             <Box sx={{ display: 'flex', gap: 1 }}>
-              {tab === 0 ? (
-                <CrystalButton baseColor={marron.primary} startIcon={<Icon icon="mdi:account-tie-outline" />} onClick={() => setTab(0)} sx={{ ...forceWhiteIconsSX, minHeight: 40, borderRadius: 1, px: 2 }}>
+              {tab === '0' ? (
+                <CrystalButton baseColor={marron.primary} startIcon={<Icon icon="mdi:account-tie-outline" />} onClick={() => setTab('0')} sx={{ ...forceWhiteIconsSX, minHeight: 40, borderRadius: 1, px: 2 }}>
                   Mudras
                 </CrystalButton>
               ) : (
-                <CrystalSoftButton baseColor={marron.primary} startIcon={<Icon icon="mdi:account-tie-outline" />} onClick={() => setTab(0)} sx={{ ...forceWhiteIconsSX, minHeight: 40, borderRadius: 1, px: 2 }}>
+                <CrystalSoftButton baseColor={marron.primary} startIcon={<Icon icon="mdi:account-tie-outline" />} onClick={() => setTab('0')} sx={{ ...forceWhiteIconsSX, minHeight: 40, borderRadius: 1, px: 2 }}>
                   Mudras
                 </CrystalSoftButton>
               )}
-              {tab === 1 ? (
-                <CrystalButton baseColor={marron.primary} startIcon={<Icon icon="mdi:account" />} onClick={() => setTab(1)} sx={{ ...forceWhiteIconsSX, minHeight: 40, borderRadius: 1, px: 2 }}>
+              {tab === '1' ? (
+                <CrystalButton baseColor={marron.primary} startIcon={<Icon icon="mdi:account" />} onClick={() => setTab('1')} sx={{ ...forceWhiteIconsSX, minHeight: 40, borderRadius: 1, px: 2 }}>
                   Clientes
                 </CrystalButton>
               ) : (
-                <CrystalSoftButton baseColor={marron.primary} startIcon={<Icon icon="mdi:account" />} onClick={() => setTab(1)} sx={{ ...forceWhiteIconsSX, minHeight: 40, borderRadius: 1, px: 2 }}>
+                <CrystalSoftButton baseColor={marron.primary} startIcon={<Icon icon="mdi:account" />} onClick={() => setTab('1')} sx={{ ...forceWhiteIconsSX, minHeight: 40, borderRadius: 1, px: 2 }}>
                   Clientes
                 </CrystalSoftButton>
               )}
-              {tab === 2 ? (
-                <CrystalButton baseColor={marron.primary} startIcon={<Icon icon="mdi:shield-account" />} onClick={() => setTab(2)} sx={{ ...forceWhiteIconsSX, minHeight: 40, borderRadius: 1, px: 2 }}>
+              {tab === '2' ? (
+                <CrystalButton baseColor={marron.primary} startIcon={<Icon icon="mdi:shield-account" />} onClick={() => setTab('2')} sx={{ ...forceWhiteIconsSX, minHeight: 40, borderRadius: 1, px: 2 }}>
                   Roles
                 </CrystalButton>
               ) : (
-                <CrystalSoftButton baseColor={marron.primary} startIcon={<Icon icon="mdi:shield-account" />} onClick={() => setTab(2)} sx={{ ...forceWhiteIconsSX, minHeight: 40, borderRadius: 1, px: 2 }}>
+                <CrystalSoftButton baseColor={marron.primary} startIcon={<Icon icon="mdi:shield-account" />} onClick={() => setTab('2')} sx={{ ...forceWhiteIconsSX, minHeight: 40, borderRadius: 1, px: 2 }}>
                   Roles
                 </CrystalSoftButton>
               )}
-              {tab === 3 ? (
-                <CrystalButton baseColor={marron.primary} startIcon={<Icon icon="mdi:clipboard-text-outline" />} onClick={() => setTab(3)} sx={{ ...forceWhiteIconsSX, minHeight: 40, borderRadius: 1, px: 2 }}>
+              {tab === '3' ? (
+                <CrystalButton baseColor={marron.primary} startIcon={<Icon icon="mdi:clipboard-text-outline" />} onClick={() => setTab('3')} sx={{ ...forceWhiteIconsSX, minHeight: 40, borderRadius: 1, px: 2 }}>
                   Permisos
                 </CrystalButton>
               ) : (
-                <CrystalSoftButton baseColor={marron.primary} startIcon={<Icon icon="mdi:clipboard-text-outline" />} onClick={() => setTab(3)} sx={{ ...forceWhiteIconsSX, minHeight: 40, borderRadius: 1, px: 2 }}>
+                <CrystalSoftButton baseColor={marron.primary} startIcon={<Icon icon="mdi:clipboard-text-outline" />} onClick={() => setTab('3')} sx={{ ...forceWhiteIconsSX, minHeight: 40, borderRadius: 1, px: 2 }}>
                   Permisos
                 </CrystalSoftButton>
               )}
@@ -282,7 +271,7 @@ export default function Usuarios() {
           {/* Contenido principal */}
           <Box sx={{ bgcolor: 'transparent', px: 2, pb: 2, pt: 1.5 }}>
             <Box sx={{ pt: 2 }}>
-              {tab === 0 && (
+              {tab === '0' && (
                 <Box sx={{ borderRadius: 2, bgcolor: baseBg, transition: 'background-color .2s ease' }}>
                   <UserTable
                     onCrear={puedeCrear ? () => setCrearAbierto(true) : undefined}
@@ -295,7 +284,7 @@ export default function Usuarios() {
                 </Box>
               )}
 
-              {tab === 1 && (
+              {tab === '1' && (
                 <Box sx={{ borderRadius: 2, bgcolor: baseBg, transition: 'background-color .2s ease' }}>
                   <UserTable
                     onCrear={undefined}
@@ -308,16 +297,16 @@ export default function Usuarios() {
                 </Box>
               )}
 
-              {tab === 2 && (
+              {tab === '2' && (
                 <RolesTable onAsignarPermisos={abrirAsignacionPermisos} onCrear={() => setCrearRolAbierto(true)} refetchToken={refetchRolesToken} />
               )}
 
-              {tab === 3 && (
+              {tab === '3' && (
                 <PermisosTable onCrear={() => setCrearPermAbierto(true)} onEditar={abrirEditarPermiso} onEliminar={abrirEliminarPermiso} refetchToken={refetchPermsToken} />
               )}
             </Box>
           </Box>
-        </TexturedPanel>
+        </StylizedTabbedPanel>
       
         {/* Modal Usuarios (Mudras) unificado, inspirado en Rubros */}
         <UpsertEmpresaUserModal
@@ -357,7 +346,6 @@ export default function Usuarios() {
             {snackMsg}
           </Alert>
         </Snackbar>
-      </Box>
     </PageContainer>
   );
 }

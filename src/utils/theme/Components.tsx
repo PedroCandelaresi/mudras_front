@@ -363,6 +363,29 @@ const components: any = (theme: Theme) => {
       styleOverrides: {
         root: {
           borderBottom: `1px solid ${theme.palette.divider}`,
+          fontSize: '0.9rem', // aumentar ligeramente las tablas por defecto
+        },
+      },
+    },
+
+    MuiTab: {
+      styleOverrides: {
+        root: {
+          textTransform: 'none',
+          fontSize: '0.95rem',
+          minHeight: 44,
+          paddingLeft: 12,
+          paddingRight: 12,
+        },
+      },
+    },
+    MuiTabs: {
+      styleOverrides: {
+        root: {
+          minHeight: 44,
+        },
+        scroller: {
+          alignItems: 'center',
         },
       },
     },

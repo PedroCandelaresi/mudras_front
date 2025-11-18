@@ -34,7 +34,7 @@ const depositTheme = {
 };
 
 export default function DepositosPage() {
-  const [activeKey, setActiveKey] = useState<string>('');
+  const [activeKey, setActiveKey] = useState<string>('empty');
   const [modalStockOpen, setModalStockOpen] = useState(false);
   const [modalAsignacionOpen, setModalAsignacionOpen] = useState(false);
   const [modalDetallesOpen, setModalDetallesOpen] = useState(false);
@@ -66,7 +66,7 @@ export default function DepositosPage() {
 
   useEffect(() => {
     if (!depositos.length) {
-      setActiveKey('');
+      setActiveKey('empty');
       return;
     }
     if (!activeKey || !depositos.some((p) => String(p.id) === activeKey)) {

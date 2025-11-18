@@ -45,25 +45,25 @@ const typography = {
   button: {
     textTransform: 'capitalize',
     fontWeight: 400,
-    fontSize: '0.6rem',
+    fontSize: '0.9rem',
   },
   body1: {
-    fontSize: '0.6rem',
+    fontSize: '0.95rem',
     fontWeight: 400,
     lineHeight: '0.95rem',
   },
   body2: {
-    fontSize: '0.53rem',
+    fontSize: '0.85rem',
     letterSpacing: '0rem',
     fontWeight: 400,
     lineHeight: '0.8rem',
   },
   subtitle1: {
-    fontSize: '0.6rem',
+    fontSize: '0.85rem',
     fontWeight: 400,
   },
   subtitle2: {
-    fontSize: '0.56rem',
+    fontSize: '0.8rem',
     fontWeight: 400,
   },
 };

@@ -7,9 +7,9 @@ import {
 import { alpha, lighten, darken } from '@mui/material/styles';
 
 import PageContainer from '@/components/container/PageContainer';
-import { TexturedPanel } from '@/components/ui/TexturedFrame/TexturedPanel';
 import { WoodBackdrop } from '@/components/ui/TexturedFrame/WoodBackdrop';
 import CrystalButton, { CrystalSoftButton, forceWhiteIconsSX } from '@/components/ui/CrystalButton';
+import StylizedTabbedPanel from '@/components/ui/StylizedTabbedPanel';
 import { crearConfiguracionBisel, crearEstilosBisel } from '@/components/ui/bevel';
 import { naranjaCaja } from '@/ui/colores';
 
@@ -152,8 +152,7 @@ const activeFieldStyles = {
 export default function CajaRegistradoraPage() {
   const [articulos, setArticulos] = useState<ArticuloCapturado[]>([]);
   const [modalVentaAbierto, setModalVentaAbierto] = useState(false);
-  const [tabValue, setTabValue] = useState(0);
-  const handleTabChange = (_e: React.SyntheticEvent, v: number) => setTabValue(v);
+  const [activeTab, setActiveTab] = useState('caja');
   const [mensaje, setMensaje] = useState<{ tipo: 'success' | 'error' | 'info'; texto: string } | null>(null);
   const [puntoSeleccionado, setPuntoSeleccionado] = useState<PuntoOption | null>(null);
 
@@ -328,51 +327,14 @@ export default function CajaRegistradoraPage() {
 
   return (
     <PageContainer title="Caja - Mudras" description="Caja Registradora">
-      <Box sx={createBevelWrapper(naranjaCaja.primary)}>
-        <TexturedPanel
-          accent={naranjaCaja.primary}
-          radius={14}
-          contentPadding={12}
-          bgTintPercent={22}
-          bgAlpha={0.98}
-          tintMode="soft-light"
-          tintOpacity={0.42}
-          textureScale={1.1}
-          textureBaseOpacity={0.18}
-          textureBoostOpacity={0.12}
-          textureContrast={0.92}
-          textureBrightness={1.03}
-          bevelWidth={12}
-          bevelIntensity={1.0}
-          glossStrength={1.0}
-          vignetteStrength={0.9}
-        >
-          {/* Tabs */}
-          <Box sx={{ bgcolor: 'transparent', px: 1, py: 1.5 }}>
-            <Box sx={{ display: 'flex', gap: 1 }}>
-              {tabValue === 0 ? (
-                <CrystalButton
-                  baseColor={naranjaCaja.primary}
-                  onClick={() => setTabValue(0)}
-                  sx={{ ...forceWhiteIconsSX, minHeight: 40, borderRadius: 1, px: 2 }}
-                >
-                  Caja Registradora
-                </CrystalButton>
-              ) : (
-                <CrystalSoftButton
-                  baseColor={naranjaCaja.primary}
-                  onClick={() => setTabValue(0)}
-                  sx={{ ...forceWhiteIconsSX, minHeight: 40, borderRadius: 1, px: 2 }}
-                >
-                  Caja Registradora
-                </CrystalSoftButton>
-              )}
-            </Box>
-          </Box>
-
-          {/* Contenido con MADERA + BISEL INTERNO */}
-          <Box sx={{ bgcolor: 'transparent', px: 2, pb: 2, pt: 1.5 }}>
-            <Box sx={{ pt: 2 }}>
+      <StylizedTabbedPanel
+        tabs={[{ key: 'caja', label: 'Caja Registradora', color: naranjaCaja.primary }]}
+        activeKey={activeTab}
+        onChange={(k) => setActiveTab(k)}
+      >
+        {/* Contenido con MADERA + BISEL INTERNO */}
+        <Box sx={{ bgcolor: 'transparent', px: 2, pb: 2, pt: 1.5 }}>
+          <Box sx={{ pt: 2 }}>
             <InnerWoodFrame p={3}>
               {/* bloque superior (búsqueda + columna derecha) */}
               <Stack direction={{ xs: 'column', md: 'row' }} spacing={3} alignItems="stretch">
@@ -518,11 +480,9 @@ export default function CajaRegistradoraPage() {
                 />
               </Stack>
             </InnerWoodFrame>
-            </Box>
           </Box>
-        </TexturedPanel>
-
-      </Box>
+        </Box>
+      </StylizedTabbedPanel>
 
       {/* ====== Modal ====== */}
       <ModalConfirmacionVenta
