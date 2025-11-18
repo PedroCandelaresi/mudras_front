@@ -26,7 +26,6 @@ import { es } from 'date-fns/locale';
 import { GET_ARTICULO } from '@/components/articulos/graphql/queries';
 import type { Articulo } from '@/app/interfaces/mudras.types';
 import { TexturedPanel } from '@/components/ui/TexturedFrame/TexturedPanel';
-import { WoodBackdrop } from '@/components/ui/TexturedFrame/WoodBackdrop';
 import CrystalButton, { CrystalSoftButton } from '@/components/ui/CrystalButton';
 import { verde as verdePalette } from '@/ui/colores';
 import { calcularPrecioDesdeArticulo } from '@/utils/precioVenta';
@@ -64,9 +63,9 @@ const makeColors = (base?: string) => {
 
 /* ======================== Layout ======================== */
 const VH_MAX = 85;
-const HEADER_H = 88;
-const FOOTER_H = 88;
-const DIV_H = 3;
+const HEADER_H = 68;
+const FOOTER_H = 68;
+const DIV_H = 2;
 const CONTENT_MAX = `calc(${VH_MAX}vh - ${HEADER_H + FOOTER_H + DIV_H * 2}px)`;
 
 /* ======================== Componente ======================== */
@@ -167,18 +166,18 @@ const ModalDetallesArticulo = ({ open, onClose, articulo, accentColor, stockCont
         accent={COLORS.primary}
         radius={12}
         contentPadding={0}
-        bgTintPercent={12}
+        bgTintPercent={0}
         bgAlpha={1}
-        textureBaseOpacity={0.22}
-        textureBoostOpacity={0.19}
-        textureBrightness={1.12}
-        textureContrast={1.03}
-        tintOpacity={0.38}
+        textureBaseOpacity={0}
+        textureBoostOpacity={0}
+        textureBrightness={1}
+        textureContrast={1}
+        tintOpacity={0}
       >
         <Box sx={{ display: 'flex', flexDirection: 'column', maxHeight: `${VH_MAX}vh` }}>
           {/* ===== HEADER ===== */}
           <DialogTitle sx={{ p: 0, m: 0, minHeight: HEADER_H, display: 'flex', alignItems: 'center' }}>
-            <Box sx={{ width: '100%', display: 'flex', alignItems: 'center', px: 3, py: 2.25, gap: 2 }}>
+            <Box sx={{ width: '100%', display: 'flex', alignItems: 'center', px: 2, py: 1.5, gap: 1.5 }}>
               <Box
                 sx={{
                   width: 40,
@@ -283,15 +282,14 @@ const ModalDetallesArticulo = ({ open, onClose, articulo, accentColor, stockCont
             }}
           >
             <Box sx={{ position: 'relative', borderRadius: 0, overflow: 'hidden' }}>
-              <WoodBackdrop accent={COLORS.primary} radius={0} inset={0} strength={0.7} texture="wide" />
               <Box
                 sx={{
                   position: 'relative',
                   zIndex: 1,
-                  p: 5,
+                  p: { xs: 3, md: 4 },
                   borderRadius: 0,
-                  backdropFilter: 'saturate(118%) blur(0.4px)',
-                  background: 'rgba(255,255,255,0.86)',
+                  backdropFilter: 'none',
+                  background: 'rgba(255,255,255,0.94)',
                 }}
               >
                 {loading ? (
@@ -314,28 +312,29 @@ const ModalDetallesArticulo = ({ open, onClose, articulo, accentColor, stockCont
                     <Box
                       sx={{
                         display: 'grid',
-                        gap: 1.75,
+                        gap: 1,
                         gridTemplateColumns: {
                           xs: 'repeat(2, minmax(0, 1fr))',
-                          md: 'repeat(4, minmax(0, 1fr))',
+                          sm: 'repeat(3, minmax(0, 1fr))',
+                          md: 'repeat(5, minmax(0, 1fr))',
                         },
-                        mb: 3,
+                        mb: 2,
                       }}
                     >
                       <Card
                         sx={{
-                          borderRadius: 2,
-                          border: `1px solid ${alpha(COLORS.primary, 0.18)}`,
-                          background: alpha(COLORS.primary, 0.06),
-                          boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.24)',
+                          borderRadius: 1.5,
+                          border: `1px solid ${alpha(COLORS.primary, 0.14)}`,
+                          background: alpha(COLORS.primary, 0.04),
+                          boxShadow: 'none',
                         }}
                       >
-                        <CardContent sx={{ p: 2, display: 'flex', flexDirection: 'column', gap: 1 }}>
+                        <CardContent sx={{ p: 1.25, display: 'flex', flexDirection: 'column', gap: 0.5 }}>
                           <Box display="flex" alignItems="center" gap={1}>
                             <Box
                               sx={{
-                                width: 24,
-                                height: 24,
+                                width: 22,
+                                height: 22,
                                 borderRadius: '50%',
                                 display: 'grid',
                                 placeItems: 'center',
@@ -348,7 +347,7 @@ const ModalDetallesArticulo = ({ open, onClose, articulo, accentColor, stockCont
                               Código
                             </Typography>
                           </Box>
-                          <Typography variant="h6" fontWeight={700} color={COLORS.primary}>
+                          <Typography variant="subtitle1" fontWeight={700} color={COLORS.primary}>
                             {articuloCompleto?.Codigo || '—'}
                           </Typography>
                         </CardContent>
@@ -356,25 +355,25 @@ const ModalDetallesArticulo = ({ open, onClose, articulo, accentColor, stockCont
 
                       <Card
                         sx={{
-                          borderRadius: 2,
-                          border: `1px solid ${alpha(COLORS.primary, 0.18)}`,
-                          background: alpha(COLORS.primary, 0.05),
-                          boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.22)',
+                          borderRadius: 1.5,
+                          border: `1px solid ${alpha(COLORS.primary, 0.14)}`,
+                          background: alpha(COLORS.primary, 0.03),
+                          boxShadow: 'none',
                         }}
                       >
-                        <CardContent sx={{ p: 2, display: 'flex', flexDirection: 'column', gap: 1 }}>
+                        <CardContent sx={{ p: 1.25, display: 'flex', flexDirection: 'column', gap: 0.5 }}>
                           <Box display="flex" alignItems="center" gap={1}>
                             <Box
                               sx={{
-                                width: 24,
-                                height: 24,
+                                width: 22,
+                                height: 22,
                                 borderRadius: '50%',
                                 display: 'grid',
                                 placeItems: 'center',
                                 bgcolor: alpha(COLORS.primary, 0.16),
                               }}
                             >
-                              <Icon icon="mdi:package-variant-closed" width={15} height={15} color={COLORS.primary} />
+                              <Icon icon="mdi:package-variant-closed" width={14} height={14} color={COLORS.primary} />
                             </Box>
                             <Typography variant="subtitle2" fontWeight={700} color={COLORS.textStrong}>
                               {stockLabelText}
@@ -391,18 +390,18 @@ const ModalDetallesArticulo = ({ open, onClose, articulo, accentColor, stockCont
 
                       <Card
                         sx={{
-                          borderRadius: 2,
-                          border: `1px solid ${alpha(COLORS.primary, 0.18)}`,
-                          background: alpha(COLORS.primary, 0.05),
-                          boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.22)',
+                          borderRadius: 1.5,
+                          border: `1px solid ${alpha(COLORS.primary, 0.14)}`,
+                          background: alpha(COLORS.primary, 0.03),
+                          boxShadow: 'none',
                         }}
                       >
-                        <CardContent sx={{ p: 2, display: 'flex', flexDirection: 'column', gap: 1 }}>
+                        <CardContent sx={{ p: 1.25, display: 'flex', flexDirection: 'column', gap: 0.5 }}>
                           <Box display="flex" alignItems="center" gap={1}>
                             <Box
                               sx={{
-                                width: 24,
-                                height: 24,
+                                width: 22,
+                                height: 22,
                                 borderRadius: '50%',
                                 display: 'grid',
                                 placeItems: 'center',
@@ -415,7 +414,7 @@ const ModalDetallesArticulo = ({ open, onClose, articulo, accentColor, stockCont
                               Precio venta
                             </Typography>
                           </Box>
-                          <Typography variant="h6" fontWeight={800} color={COLORS.primary}>
+                          <Typography variant="subtitle1" fontWeight={800} color={COLORS.primary}>
                             {currency(precioCalculado)}
                           </Typography>
                         </CardContent>
@@ -423,18 +422,18 @@ const ModalDetallesArticulo = ({ open, onClose, articulo, accentColor, stockCont
 
                       <Card
                         sx={{
-                          borderRadius: 2,
-                          border: `1px solid ${alpha(COLORS.primary, 0.18)}`,
-                          background: alpha(COLORS.primary, 0.05),
-                          boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.22)',
+                          borderRadius: 1.5,
+                          border: `1px solid ${alpha(COLORS.primary, 0.14)}`,
+                          background: alpha(COLORS.primary, 0.03),
+                          boxShadow: 'none',
                         }}
                       >
-                        <CardContent sx={{ p: 2, display: 'flex', flexDirection: 'column', gap: 1 }}>
+                        <CardContent sx={{ p: 1.25, display: 'flex', flexDirection: 'column', gap: 0.5 }}>
                           <Box display="flex" alignItems="center" gap={1}>
                             <Box
                               sx={{
-                                width: 24,
-                                height: 24,
+                                width: 22,
+                                height: 22,
                                 borderRadius: '50%',
                                 display: 'grid',
                                 placeItems: 'center',
@@ -447,8 +446,43 @@ const ModalDetallesArticulo = ({ open, onClose, articulo, accentColor, stockCont
                               Precio compra
                             </Typography>
                           </Box>
-                          <Typography variant="h6" fontWeight={800} color={COLORS.primary}>
+                          <Typography variant="subtitle1" fontWeight={800} color={COLORS.primary}>
                             {currency(articuloCompleto?.PrecioCompra)}
+                          </Typography>
+                        </CardContent>
+                      </Card>
+
+                      {/* New card: Porcentaje de ganancia */}
+                      <Card
+                        sx={{
+                          borderRadius: 1.5,
+                          border: `1px solid ${alpha(COLORS.primary, 0.14)}`,
+                          background: alpha(COLORS.primary, 0.03),
+                          boxShadow: 'none',
+                        }}
+                      >
+                        <CardContent sx={{ p: 1.25, display: 'flex', flexDirection: 'column', gap: 0.5 }}>
+                          <Box display="flex" alignItems="center" gap={1}>
+                            <Box
+                              sx={{
+                                width: 22,
+                                height: 22,
+                                borderRadius: '50%',
+                                display: 'grid',
+                                placeItems: 'center',
+                                bgcolor: alpha(COLORS.primary, 0.12),
+                              }}
+                            >
+                              <Icon icon="mdi:percent" width={14} height={14} color={COLORS.primary} />
+                            </Box>
+                            <Typography variant="subtitle2" fontWeight={700} color={COLORS.textStrong}>
+                              % Ganancia
+                            </Typography>
+                          </Box>
+                          <Typography variant="h6" fontWeight={800} color={COLORS.primary}>
+                            {typeof articuloCompleto?.PrecioCompra === 'number' && articuloCompleto?.PrecioCompra > 0
+                              ? `${Math.round(((precioCalculado - articuloCompleto.PrecioCompra) / articuloCompleto.PrecioCompra) * 100)}%`
+                              : '—'}
                           </Typography>
                         </CardContent>
                       </Card>
@@ -562,14 +596,7 @@ const ModalDetallesArticulo = ({ open, onClose, articulo, accentColor, stockCont
                                 : 'No especificado'}
                             </Typography>
                           </Box>
-                          <Box>
-                            <Typography variant="caption" color="text.secondary">
-                              Costo promedio
-                            </Typography>
-                            <Typography variant="body1" fontWeight={600}>
-                              {currency(articuloCompleto?.CostoPromedio)}
-                            </Typography>
-                          </Box>
+                          
                           <Box>
                             <Typography variant="caption" color="text.secondary">
                               Actualizado
@@ -627,7 +654,7 @@ const ModalDetallesArticulo = ({ open, onClose, articulo, accentColor, stockCont
 
           {/* ===== FOOTER ===== */}
           <DialogActions sx={{ p: 0, m: 0, minHeight: FOOTER_H }}>
-            <Box sx={{ width: '100%', display: 'flex', justifyContent: 'flex-end', px: 3, py: 2.25, gap: 1.5 }}>
+            <Box sx={{ width: '100%', display: 'flex', justifyContent: 'flex-end', px: 2, py: 1.5, gap: 1 }}>
               <CrystalSoftButton baseColor={COLORS.primary} onClick={handleClose}>
                 Cerrar
               </CrystalSoftButton>
