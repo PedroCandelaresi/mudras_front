@@ -237,16 +237,32 @@ const ModalDetallesArticulo = ({
                   sx={{
                     width: 40,
                     height: 40,
+                    minWidth: 40,
+                    maxWidth: 40,
+                    minHeight: 40,
+                    maxHeight: 40,
                     borderRadius: '50%',
-                    display: 'grid',
-                    placeItems: 'center',
-                    flexShrink: 0,   // <--- evita que se deforme
-                    flexGrow: 0,     // <--- evita stretch
-                    p: 0,
+                    border: 0,
+                    padding: 0,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+
+                    flexShrink: 0,      // evita estiramiento vertical
+                    flexGrow: 0,        // evita estiramiento horizontal
+                    flexBasis: 'auto',  // evita expansión inesperada
+
+                    '& .MuiButton-startIcon': { margin: 0 },
+                    '& .MuiButton-endIcon': { margin: 0 },
+
+                    // 🔥 ESTE ES EL CLAVE: fuerza shape PERFECTO
+                    lineHeight: 1,
+                    aspectRatio: '1 / 1',
                   }}
                 >
                   <Icon icon="mdi:close" width={20} height={20} color="#fff" />
                 </CrystalSoftButton>
+
               </Box>
             </Box>
           </DialogTitle>
