@@ -306,7 +306,7 @@ const ModalDetallesArticulo = ({ open, onClose, articulo, accentColor, stockCont
                   p: { xs: 3, md: 4 },
                   borderRadius: 0,
                   backdropFilter: 'none',
-                  background: 'transparent',
+                  background: '#ffffff',
                 }}
               >
                 {loading ? (
