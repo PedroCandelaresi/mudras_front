@@ -84,7 +84,6 @@ const ModalDetallesArticulo = ({ open, onClose, articulo, accentColor, stockCont
     fetchPolicy: 'cache-and-network',
   });
 
-  // Estado derivado: artículo completo (fallback con props mínimas)
   const articuloCompleto: Articulo | null = useMemo(() => {
     if (data?.articulo) return data.articulo as Articulo;
     if (articuloId != null && articulo) {
@@ -97,9 +96,11 @@ const ModalDetallesArticulo = ({ open, onClose, articulo, accentColor, stockCont
     return null;
   }, [data?.articulo, articuloId, articulo]);
 
-  const precioCalculado = useMemo(() => calcularPrecioDesdeArticulo(articuloCompleto ?? undefined), [articuloCompleto]);
+  const precioCalculado = useMemo(
+    () => calcularPrecioDesdeArticulo(articuloCompleto ?? undefined),
+    [articuloCompleto]
+  );
 
-  // Refetch al abrir
   useEffect(() => {
     if (open && articuloId != null) {
       void refetch({ id: articuloId });
@@ -111,20 +112,25 @@ const ModalDetallesArticulo = ({ open, onClose, articulo, accentColor, stockCont
     onClose();
   }, [loading, onClose]);
 
-  // ⛔ Nada de hooks debajo de este return
   if (!articuloCompleto && !loading && !error) return null;
 
-  // ===== Datos calculados
+  // ==== Stock & datos ====
   const fallbackStock =
     typeof articuloCompleto?.totalStock === 'number'
       ? Number(articuloCompleto.totalStock)
       : Number(articuloCompleto?.Deposito ?? articuloCompleto?.Stock ?? 0);
+
   const stockActual =
-    typeof stockContext?.value === 'number' ? stockContext.value : fallbackStock;
+    typeof stockContext?.value === 'number'
+      ? stockContext.value
+      : fallbackStock;
+
   const stockLabelText =
     stockContext?.label ??
     (typeof articuloCompleto?.totalStock === 'number' ? 'Stock total' : 'Stock actual');
+
   const stockMinimo = Number(articuloCompleto?.StockMinimo ?? 0);
+
   const stockChip =
     stockActual <= 0
       ? { label: 'Sin stock', color: 'error' as const }
@@ -136,12 +142,10 @@ const ModalDetallesArticulo = ({ open, onClose, articulo, accentColor, stockCont
     (articuloCompleto?.Codigo ? `${articuloCompleto.Codigo} - ` : '') +
     (articuloCompleto?.Descripcion ?? 'Detalle del artículo');
 
-  // Evitamos useCallback aquí para no disparar la regla
   const renderTooltip = (text: string) => (
     <Box sx={{ whiteSpace: 'pre-line', lineHeight: 1.4, maxWidth: 320 }}>{text}</Box>
   );
 
-  // Tooltips chips
   const proveedorNombre = articuloCompleto?.proveedor?.Nombre || 'Sin proveedor';
   const rubroNombre = (articuloCompleto?.Rubro || 'Sin rubro').toString();
   const chipsTooltip = `Proveedor: ${proveedorNombre}\nRubro: ${rubroNombre}`;
@@ -173,15 +177,27 @@ const ModalDetallesArticulo = ({ open, onClose, articulo, accentColor, stockCont
         textureBoostOpacity={0.18}
         textureBrightness={1.12}
         textureContrast={1.03}
-        tintOpacity={0.36}
+        tintOpacity={0.35}
         tintMode="soft-light"
         bevelWidth={10}
         bevelIntensity={0.9}
         glossStrength={0.9}
       >
         <Box sx={{ display: 'flex', flexDirection: 'column', maxHeight: `${VH_MAX}vh` }}>
-          {/* ===== HEADER ===== */}
-          <DialogTitle sx={{ p: 0, m: 0, minHeight: HEADER_H, display: 'flex', alignItems: 'center' }}>
+
+          {/* ===== HEADER ELEGANTE ===== */}
+          <DialogTitle
+            sx={{
+              p: 0,
+              m: 0,
+              minHeight: HEADER_H,
+              display: 'flex',
+              alignItems: 'center',
+              background: 'rgba(255,255,255,0.06)',
+              backdropFilter: 'saturate(140%) blur(2px)',
+              borderBottom: '1px solid rgba(255,255,255,0.15)',
+            }}
+          >
             <Box
               sx={{
                 width: '100%',
@@ -190,9 +206,6 @@ const ModalDetallesArticulo = ({ open, onClose, articulo, accentColor, stockCont
                 px: 2,
                 py: 1.5,
                 gap: 1.5,
-                background: `transparent`,
-                backgroundImage: `linear-gradient(90deg, ${COLORS.primary} 0%, ${COLORS.primaryHover} 100%), linear-gradient(90deg, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0.02) 50%, rgba(255,255,255,0.08) 100%)`,
-                boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.18), 0 2px 8px rgba(0,0,0,0.12)',
               }}
             >
               <Box
@@ -202,26 +215,31 @@ const ModalDetallesArticulo = ({ open, onClose, articulo, accentColor, stockCont
                   borderRadius: '50%',
                   display: 'grid',
                   placeItems: 'center',
-                  background: `linear-gradient(135deg, ${COLORS.primary} 0%, ${COLORS.primaryHover} 100%)`,
-                  boxShadow: 'inset 0 2px 4px rgba(255,255,255,0.3), 0 4px 12px rgba(0,0,0,0.25)',
+                  background: `linear-gradient(135deg, ${COLORS.primary}, ${COLORS.primaryHover})`,
+                  boxShadow: 'inset 0 2px 4px rgba(255,255,255,0.25)',
                   color: '#fff',
                 }}
               >
                 <Icon icon="mdi:cube-outline" width={20} height={20} />
               </Box>
 
-              <Typography variant="h6" fontWeight={700} color="white" sx={{ textShadow: '0 2px 4px rgba(0,0,0,0.8)' }}>
+              <Typography
+                variant="h6"
+                fontWeight={700}
+                color="white"
+                sx={{ textShadow: '0 2px 4px rgba(0,0,0,0.5)' }}
+              >
                 {tituloHeader}
               </Typography>
 
-              <Box sx={{ ml: 'auto', display: 'flex', alignItems: 'center', gap: 1, pr: 1.5 }}>
+              <Box sx={{ ml: 'auto', display: 'flex', alignItems: 'center', gap: 1 }}>
                 <Tooltip arrow placement="top" title={renderTooltip(chipsTooltip)}>
                   <Box sx={{ display: 'flex', gap: 1 }}>
                     <Chip
                       label={articuloCompleto?.Rubro || 'Sin rubro'}
                       size="small"
                       sx={{
-                        bgcolor: 'rgba(0,0,0,0.35)',
+                        bgcolor: 'rgba(0,0,0,0.4)',
                         color: '#fff',
                         border: `1px solid ${COLORS.chipBorder}`,
                         fontWeight: 600,
@@ -230,12 +248,12 @@ const ModalDetallesArticulo = ({ open, onClose, articulo, accentColor, stockCont
                         height: 28,
                       }}
                     />
-                    {articuloCompleto?.proveedor?.Nombre && (
+                    {!!articuloCompleto?.proveedor?.Nombre && (
                       <Chip
                         label={`Proveedor${NBSP}${articuloCompleto.proveedor.Nombre}`}
                         size="small"
                         sx={{
-                          bgcolor: 'rgba(0,0,0,0.35)',
+                          bgcolor: 'rgba(0,0,0,0.4)',
                           color: '#fff',
                           border: `1px solid ${COLORS.chipBorder}`,
                           fontWeight: 600,
@@ -257,13 +275,9 @@ const ModalDetallesArticulo = ({ open, onClose, articulo, accentColor, stockCont
                   width: 40,
                   height: 40,
                   minWidth: 40,
-                  p: 0,
                   borderRadius: '50%',
                   display: 'grid',
                   placeItems: 'center',
-                  transform: 'none !important',
-                  transition: 'none',
-                  '&:hover': { transform: 'none !important' },
                 }}
               >
                 <Icon icon="mdi:close" color="#fff" width={22} height={22} />
@@ -271,20 +285,12 @@ const ModalDetallesArticulo = ({ open, onClose, articulo, accentColor, stockCont
             </Box>
           </DialogTitle>
 
-          {/* Divisor header */}
-            <Divider
+          {/* Divider opcional */}
+          <Divider
             sx={{
               height: DIV_H,
-              border: 0,
-              backgroundImage: `
-                linear-gradient(to bottom, rgba(255,255,255,0.70), rgba(255,255,255,0.70)),
-                linear-gradient(to bottom, rgba(0,0,0,0.22), rgba(0,0,0,0.22)),
-                linear-gradient(90deg, rgba(255,255,255,0.05), ${COLORS.primary}, rgba(255,255,255,0.05))
-              `,
-              backgroundRepeat: 'no-repeat, no-repeat, repeat',
-              backgroundSize: '100% 1px, 100% 1px, 100% 100%',
-              backgroundPosition: 'top left, bottom left, center',
-              flex: '0 0 auto',
+              opacity: 0.25,
+              background: 'rgba(255,255,255,0.25)',
             }}
           />
 
@@ -292,394 +298,381 @@ const ModalDetallesArticulo = ({ open, onClose, articulo, accentColor, stockCont
           <DialogContent
             sx={{
               p: 0,
-              borderRadius: 0,
               overflow: 'auto',
               maxHeight: CONTENT_MAX,
-              flex: '0 1 auto',
             }}
           >
-            <Box sx={{ position: 'relative', borderRadius: 0, overflow: 'hidden' }}>
-              <Box
-                sx={{
-                  position: 'relative',
-                  zIndex: 1,
-                  p: { xs: 3, md: 4 },
-                  borderRadius: 0,
-                  backdropFilter: 'none',
-                  background: '#ffffff',
-                }}
-              >
-                {loading ? (
-                  <Skeleton variant="rounded" height={320} />
-                ) : error ? (
-                  <Box textAlign="center" py={6}>
-                    <Typography color="error" variant="h6" mb={1}>
-                      Error al cargar el artículo
-                    </Typography>
-                    <Typography color="text.secondary" mb={2}>
-                      {error.message}
-                    </Typography>
-                    <CrystalButton baseColor={COLORS.primary} startIcon={<IconRefresh />} onClick={() => refetch()}>
-                      Reintentar
-                    </CrystalButton>
-                  </Box>
-                ) : (
-                  <>
-                    <Box
+            <Box sx={{ position: 'relative', p: { xs: 3, md: 4 } }}>
+              {loading ? (
+                <Skeleton variant="rounded" height={320} />
+              ) : error ? (
+                <Box textAlign="center" py={6}>
+                  <Typography color="error" variant="h6" mb={1}>
+                    Error al cargar el artículo
+                  </Typography>
+                  <Typography color="text.secondary" mb={2}>
+                    {error.message}
+                  </Typography>
+                  <CrystalButton baseColor={COLORS.primary} startIcon={<IconRefresh />} onClick={() => refetch()}>
+                    Reintentar
+                  </CrystalButton>
+                </Box>
+              ) : (
+                <>
+                  {/* TARJETAS */}
+                  <Box
+                    sx={{
+                      display: 'grid',
+                      gap: 1,
+                      gridTemplateColumns: {
+                        xs: 'repeat(2, 1fr)',
+                        sm: 'repeat(3, 1fr)',
+                        md: 'repeat(5, 1fr)',
+                      },
+                      mb: 3,
+                    }}
+                  >
+                    {/* Código */}
+                    <Card
                       sx={{
-                        display: 'grid',
-                        gap: 1,
-                        gridTemplateColumns: {
-                          xs: 'repeat(2, minmax(0, 1fr))',
-                          sm: 'repeat(3, minmax(0, 1fr))',
-                          md: 'repeat(5, minmax(0, 1fr))',
-                        },
-                        mb: 2,
+                        borderRadius: 1.5,
+                        border: `1px solid ${alpha(COLORS.primary, 0.15)}`,
+                        background: alpha(COLORS.primary, 0.06),
                       }}
                     >
-                      <Card
-                        sx={{
-                          borderRadius: 1.5,
-                          border: `1px solid ${alpha(COLORS.primary, 0.14)}`,
-                          background: alpha(COLORS.primary, 0.04),
-                          boxShadow: 'none',
-                        }}
-                      >
-                        <CardContent sx={{ p: 1.25, display: 'flex', flexDirection: 'column', gap: 0.5 }}>
-                          <Box display="flex" alignItems="center" gap={1}>
-                            <Box
-                              sx={{
-                                width: 22,
-                                height: 22,
-                                borderRadius: '50%',
-                                display: 'grid',
-                                placeItems: 'center',
-                                bgcolor: alpha(COLORS.primary, 0.18),
-                              }}
-                            >
-                              <Icon icon="mdi:barcode" width={15} height={15} color={COLORS.primary} />
-                            </Box>
-                            <Typography variant="subtitle2" fontWeight={700} color={COLORS.textStrong}>
-                              Código
-                            </Typography>
-                          </Box>
-                          <Typography variant="subtitle1" fontWeight={700} color={COLORS.primary}>
-                            {articuloCompleto?.Codigo || '—'}
-                          </Typography>
-                        </CardContent>
-                      </Card>
-
-                      <Card
-                        sx={{
-                          borderRadius: 1.5,
-                          border: `1px solid ${alpha(COLORS.primary, 0.14)}`,
-                          background: alpha(COLORS.primary, 0.03),
-                          boxShadow: 'none',
-                        }}
-                      >
-                        <CardContent sx={{ p: 1.25, display: 'flex', flexDirection: 'column', gap: 0.5 }}>
-                          <Box display="flex" alignItems="center" gap={1}>
-                            <Box
-                              sx={{
-                                width: 22,
-                                height: 22,
-                                borderRadius: '50%',
-                                display: 'grid',
-                                placeItems: 'center',
-                                bgcolor: alpha(COLORS.primary, 0.16),
-                              }}
-                            >
-                              <Icon icon="mdi:package-variant-closed" width={14} height={14} color={COLORS.primary} />
-                            </Box>
-                            <Typography variant="subtitle2" fontWeight={700} color={COLORS.textStrong}>
-                              {stockLabelText}
-                            </Typography>
-                          </Box>
-                          <Box display="flex" alignItems="center" gap={1}>
-                            <Typography variant="h6" fontWeight={800} color={COLORS.primary}>
-                              {stockActual}
-                            </Typography>
-                            <Chip size="small" label={stockChip.label} color={stockChip.color} />
-                          </Box>
-                        </CardContent>
-                      </Card>
-
-                      <Card
-                        sx={{
-                          borderRadius: 1.5,
-                          border: `1px solid ${alpha(COLORS.primary, 0.14)}`,
-                          background: alpha(COLORS.primary, 0.03),
-                          boxShadow: 'none',
-                        }}
-                      >
-                        <CardContent sx={{ p: 1.25, display: 'flex', flexDirection: 'column', gap: 0.5 }}>
-                          <Box display="flex" alignItems="center" gap={1}>
-                            <Box
-                              sx={{
-                                width: 22,
-                                height: 22,
-                                borderRadius: '50%',
-                                display: 'grid',
-                                placeItems: 'center',
-                                bgcolor: alpha(COLORS.primary, 0.16),
-                              }}
-                            >
-                              <Icon icon="mdi:cash" width={15} height={15} color={COLORS.primary} />
-                            </Box>
-                            <Typography variant="subtitle2" fontWeight={700} color={COLORS.textStrong}>
-                              Precio venta
-                            </Typography>
-                          </Box>
-                          <Typography variant="subtitle1" fontWeight={800} color={COLORS.primary}>
-                            {currency(precioCalculado)}
-                          </Typography>
-                        </CardContent>
-                      </Card>
-
-                      <Card
-                        sx={{
-                          borderRadius: 1.5,
-                          border: `1px solid ${alpha(COLORS.primary, 0.14)}`,
-                          background: alpha(COLORS.primary, 0.03),
-                          boxShadow: 'none',
-                        }}
-                      >
-                        <CardContent sx={{ p: 1.25, display: 'flex', flexDirection: 'column', gap: 0.5 }}>
-                          <Box display="flex" alignItems="center" gap={1}>
-                            <Box
-                              sx={{
-                                width: 22,
-                                height: 22,
-                                borderRadius: '50%',
-                                display: 'grid',
-                                placeItems: 'center',
-                                bgcolor: alpha(COLORS.primary, 0.16),
-                              }}
-                            >
-                              <Icon icon="mdi:cart-arrow-down" width={15} height={15} color={COLORS.primary} />
-                            </Box>
-                            <Typography variant="subtitle2" fontWeight={700} color={COLORS.textStrong}>
-                              Precio compra
-                            </Typography>
-                          </Box>
-                          <Typography variant="subtitle1" fontWeight={800} color={COLORS.primary}>
-                            {currency(articuloCompleto?.PrecioCompra)}
-                          </Typography>
-                        </CardContent>
-                      </Card>
-
-                      {/* New card: Porcentaje de ganancia */}
-                      <Card
-                        sx={{
-                          borderRadius: 1.5,
-                          border: `1px solid ${alpha(COLORS.primary, 0.14)}`,
-                          background: alpha(COLORS.primary, 0.03),
-                          boxShadow: 'none',
-                        }}
-                      >
-                        <CardContent sx={{ p: 1.25, display: 'flex', flexDirection: 'column', gap: 0.5 }}>
-                          <Box display="flex" alignItems="center" gap={1}>
-                            <Box
-                              sx={{
-                                width: 22,
-                                height: 22,
-                                borderRadius: '50%',
-                                display: 'grid',
-                                placeItems: 'center',
-                                bgcolor: alpha(COLORS.primary, 0.12),
-                              }}
-                            >
-                              <Icon icon="mdi:percent" width={14} height={14} color={COLORS.primary} />
-                            </Box>
-                            <Typography variant="subtitle2" fontWeight={700} color={COLORS.textStrong}>
-                              % Ganancia
-                            </Typography>
-                          </Box>
-                          <Typography variant="h6" fontWeight={800} color={COLORS.primary}>
-                            {typeof articuloCompleto?.PrecioCompra === 'number' && articuloCompleto?.PrecioCompra > 0
-                              ? `${Math.round(((precioCalculado - articuloCompleto.PrecioCompra) / articuloCompleto.PrecioCompra) * 100)}%`
-                              : '—'}
-                          </Typography>
-                        </CardContent>
-                      </Card>
-                    </Box>
-
-                    {/* Bloque detalles (sin Grid) */}
-                    <Box
-                      sx={{
-                        display: 'grid',
-                        gap: 3,
-                        gridTemplateColumns: { xs: '1fr', md: '7fr 5fr' },
-                        alignItems: 'start',
-                      }}
-                    >
-                      {/* Columna izquierda: Información general */}
-                      <Box>
-                        <Box display="flex" flexDirection="column" gap={1.25}>
-                          <Typography variant="h6" fontWeight={700} color={COLORS.textStrong}>
-                            Información general
-                          </Typography>
-                          <Typography variant="body2" color="text.secondary">
-                            Ficha del artículo con categorización, costos y estado de inventario.
-                          </Typography>
-
+                      <CardContent sx={{ p: 1.5 }}>
+                        <Box display="flex" alignItems="center" gap={1}>
                           <Box
                             sx={{
+                              width: 22,
+                              height: 22,
+                              borderRadius: '50%',
                               display: 'grid',
-                              gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, minmax(0, 1fr))' },
-                              gap: 2,
-                              mt: 1,
+                              placeItems: 'center',
+                              bgcolor: alpha(COLORS.primary, 0.2),
                             }}
                           >
-                            <Box>
-                              <Typography variant="caption" color="text.secondary">
-                                Descripción
-                              </Typography>
-                              <Typography variant="body1" fontWeight={600} color={COLORS.textStrong}>
-                                {articuloCompleto?.Descripcion || 'Sin descripción'}
-                              </Typography>
-                            </Box>
-                            <Box>
-                              <Typography variant="caption" color="text.secondary">
-                                Categoría / Rubro
-                              </Typography>
-                              <Typography variant="body1" fontWeight={600}>
-                                {articuloCompleto?.Rubro || 'No asignado'}
-                              </Typography>
-                            </Box>
-                            <Box>
-                              <Typography variant="caption" color="text.secondary">
-                                Unidad
-                              </Typography>
-                              <Typography variant="body1" fontWeight={600}>
-                                {articuloCompleto?.Unidad || 'Unidad'}
-                              </Typography>
-                            </Box>
-                            <Box>
-                              <Typography variant="caption" color="text.secondary">
-                                Proveedor asociado
-                              </Typography>
-                              <Typography variant="body1" fontWeight={600}>
-                                {proveedorNombre}
-                              </Typography>
-                            </Box>
+                            <Icon icon="mdi:barcode" width={15} height={15} color={COLORS.primary} />
                           </Box>
+                          <Typography variant="subtitle2" fontWeight={700} color={COLORS.textStrong}>
+                            Código
+                          </Typography>
                         </Box>
-                      </Box>
+                        <Typography variant="subtitle1" fontWeight={700} color={COLORS.primary}>
+                          {articuloCompleto?.Codigo || '—'}
+                        </Typography>
+                      </CardContent>
+                    </Card>
 
-                      {/* Columna derecha: Datos adicionales */}
+                    {/* Stock */}
+                    <Card
+                      sx={{
+                        borderRadius: 1.5,
+                        border: `1px solid ${alpha(COLORS.primary, 0.15)}`,
+                        background: alpha(COLORS.primary, 0.05),
+                      }}
+                    >
+                      <CardContent sx={{ p: 1.5 }}>
+                        <Box display="flex" alignItems="center" gap={1}>
+                          <Box
+                            sx={{
+                              width: 22,
+                              height: 22,
+                              borderRadius: '50%',
+                              display: 'grid',
+                              placeItems: 'center',
+                              bgcolor: alpha(COLORS.primary, 0.2),
+                            }}
+                          >
+                            <Icon icon="mdi:package-variant-closed" width={14} height={14} color={COLORS.primary} />
+                          </Box>
+                          <Typography variant="subtitle2" fontWeight={700} color={COLORS.textStrong}>
+                            {stockLabelText}
+                          </Typography>
+                        </Box>
+                        <Box display="flex" alignItems="center" gap={1}>
+                          <Typography variant="h6" fontWeight={800} color={COLORS.primary}>
+                            {stockActual}
+                          </Typography>
+                          <Chip size="small" label={stockChip.label} color={stockChip.color} />
+                        </Box>
+                      </CardContent>
+                    </Card>
+
+                    {/* Precio venta */}
+                    <Card
+                      sx={{
+                        borderRadius: 1.5,
+                        border: `1px solid ${alpha(COLORS.primary, 0.15)}`,
+                        background: alpha(COLORS.primary, 0.05),
+                      }}
+                    >
+                      <CardContent sx={{ p: 1.5 }}>
+                        <Box display="flex" alignItems="center" gap={1}>
+                          <Box
+                            sx={{
+                              width: 22,
+                              height: 22,
+                              borderRadius: '50%',
+                              display: 'grid',
+                              placeItems: 'center',
+                              bgcolor: alpha(COLORS.primary, 0.2),
+                            }}
+                          >
+                            <Icon icon="mdi:cash" width={15} height={15} color={COLORS.primary} />
+                          </Box>
+                          <Typography variant="subtitle2" fontWeight={700} color={COLORS.textStrong}>
+                            Precio venta
+                          </Typography>
+                        </Box>
+                        <Typography variant="subtitle1" fontWeight={800} color={COLORS.primary}>
+                          {currency(precioCalculado)}
+                        </Typography>
+                      </CardContent>
+                    </Card>
+
+                    {/* Precio compra */}
+                    <Card
+                      sx={{
+                        borderRadius: 1.5,
+                        border: `1px solid ${alpha(COLORS.primary, 0.15)}`,
+                        background: alpha(COLORS.primary, 0.05),
+                      }}
+                    >
+                      <CardContent sx={{ p: 1.5 }}>
+                        <Box display="flex" alignItems="center" gap={1}>
+                          <Box
+                            sx={{
+                              width: 22,
+                              height: 22,
+                              borderRadius: '50%',
+                              display: 'grid',
+                              placeItems: 'center',
+                              bgcolor: alpha(COLORS.primary, 0.2),
+                            }}
+                          >
+                            <Icon icon="mdi:cart-arrow-down" width={15} height={15} color={COLORS.primary} />
+                          </Box>
+                          <Typography variant="subtitle2" fontWeight={700} color={COLORS.textStrong}>
+                            Precio compra
+                          </Typography>
+                        </Box>
+                        <Typography variant="subtitle1" fontWeight={800} color={COLORS.primary}>
+                          {currency(articuloCompleto?.PrecioCompra)}
+                        </Typography>
+                      </CardContent>
+                    </Card>
+
+                    {/* Ganancia */}
+                    <Card
+                      sx={{
+                        borderRadius: 1.5,
+                        border: `1px solid ${alpha(COLORS.primary, 0.15)}`,
+                        background: alpha(COLORS.primary, 0.05),
+                      }}
+                    >
+                      <CardContent sx={{ p: 1.5 }}>
+                        <Box display="flex" alignItems="center" gap={1}>
+                          <Box
+                            sx={{
+                              width: 22,
+                              height: 22,
+                              borderRadius: '50%',
+                              display: 'grid',
+                              placeItems: 'center',
+                              bgcolor: alpha(COLORS.primary, 0.15),
+                            }}
+                          >
+                            <Icon icon="mdi:percent" width={14} height={14} color={COLORS.primary} />
+                          </Box>
+                          <Typography variant="subtitle2" fontWeight={700} color={COLORS.textStrong}>
+                            % Ganancia
+                          </Typography>
+                        </Box>
+                        <Typography variant="h6" fontWeight={800} color={COLORS.primary}>
+                          {typeof articuloCompleto?.PrecioCompra === 'number' &&
+                          articuloCompleto?.PrecioCompra > 0
+                            ? `${Math.round(
+                                ((precioCalculado - articuloCompleto.PrecioCompra) /
+                                  articuloCompleto.PrecioCompra) *
+                                  100
+                              )}%`
+                            : '—'}
+                        </Typography>
+                      </CardContent>
+                    </Card>
+                  </Box>
+
+                  {/* INFO GENERAL */}
+                  <Box
+                    sx={{
+                      display: 'grid',
+                      gap: 3,
+                      gridTemplateColumns: { xs: '1fr', md: '7fr 5fr' },
+                      alignItems: 'start',
+                    }}
+                  >
+                    {/* COLUMNA IZQUIERDA */}
+                    <Box>
+                      <Typography variant="h6" fontWeight={700} color={COLORS.textStrong}>
+                        Información general
+                      </Typography>
+                      <Typography variant="body2" color="text.secondary">
+                        Ficha del artículo con categorización, costos y estado de inventario.
+                      </Typography>
+
                       <Box
                         sx={{
-                          borderRadius: 2,
-                          border: `1px solid ${alpha(COLORS.primary, 0.26)}`,
-                          background: alpha('#fff', 0.9),
-                          boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.25)',
-                          p: 2.2,
-                          display: 'flex',
-                          flexDirection: 'column',
-                          gap: 1.2,
+                          display: 'grid',
+                          gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)' },
+                          gap: 2,
+                          mt: 1,
                         }}
                       >
-                        <Box display="flex" alignItems="center" gap={1}>
-                          <Icon icon="mdi:information-variant" width={20} height={20} color={COLORS.primary} />
-                          <Typography variant="subtitle1" fontWeight={700} color={COLORS.textStrong}>
-                            Datos adicionales
+                        <Box>
+                          <Typography variant="caption" color="text.secondary">
+                            Descripción
+                          </Typography>
+                          <Typography variant="body1" fontWeight={600} color={COLORS.textStrong}>
+                            {articuloCompleto?.Descripcion || 'Sin descripción'}
                           </Typography>
                         </Box>
 
-                        <Box
-                          sx={{
-                            display: 'grid',
-                            gap: 2,
-                            gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, minmax(0,1fr))' },
-                          }}
-                        >
-                          <Box>
-                            <Typography variant="caption" color="text.secondary">
-                              Stock mínimo
-                            </Typography>
-                            <Typography variant="body1" fontWeight={600}>
-                              {stockMinimo}
-                            </Typography>
-                          </Box>
-                          <Box>
-                            <Typography variant="caption" color="text.secondary">
-                              Alícuota IVA
-                            </Typography>
-                            <Typography variant="body1" fontWeight={600}>
-                              {articuloCompleto?.AlicuotaIva != null
-                                ? `${articuloCompleto.AlicuotaIva}%`
-                                : 'No especificado'}
-                            </Typography>
-                          </Box>
-                          
-                          <Box>
-                            <Typography variant="caption" color="text.secondary">
-                              Actualizado
-                            </Typography>
-                            <Typography variant="body1" fontWeight={600}>
-                              {articuloCompleto?.FechaModif
-                                ? format(new Date(articuloCompleto.FechaModif), 'dd/MM/yyyy', { locale: es })
-                                : '—'}
-                            </Typography>
-                          </Box>
+                        <Box>
+                          <Typography variant="caption" color="text.secondary">
+                            Categoría / Rubro
+                          </Typography>
+                          <Typography variant="body1" fontWeight={600}>
+                            {articuloCompleto?.Rubro || 'No asignado'}
+                          </Typography>
+                        </Box>
+
+                        <Box>
+                          <Typography variant="caption" color="text.secondary">
+                            Unidad
+                          </Typography>
+                          <Typography variant="body1" fontWeight={600}>
+                            {articuloCompleto?.Unidad || 'Unidad'}
+                          </Typography>
+                        </Box>
+
+                        <Box>
+                          <Typography variant="caption" color="text.secondary">
+                            Proveedor asociado
+                          </Typography>
+                          <Typography variant="body1" fontWeight={600}>
+                            {proveedorNombre}
+                          </Typography>
                         </Box>
                       </Box>
                     </Box>
 
-                    {/* Observaciones proveedor (si existen) */}
+                    {/* COLUMNA DERECHA */}
                     <Box
                       sx={{
-                        mt: 3,
                         borderRadius: 2,
-                        border: `1px solid ${alpha(COLORS.primary, 0.18)}`,
-                        background: alpha(COLORS.primary, 0.05),
-                        boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.22)',
+                        border: `1px solid ${alpha(COLORS.primary, 0.25)}`,
+                        background: alpha('#fff', 0.85),
                         p: 2.2,
                       }}
                     >
-                      <Typography variant="subtitle2" fontWeight={700} color={COLORS.textStrong} mb={0.5}>
-                        Observaciones del proveedor
-                      </Typography>
-                      <Typography variant="body2" color="text.secondary">
-                        {articuloCompleto?.proveedor?.Observaciones || 'Sin observaciones'}
-                      </Typography>
+                      <Box display="flex" alignItems="center" gap={1}>
+                        <Icon
+                          icon="mdi:information-variant"
+                          width={20}
+                          height={20}
+                          color={COLORS.primary}
+                        />
+                        <Typography variant="subtitle1" fontWeight={700} color={COLORS.textStrong}>
+                          Datos adicionales
+                        </Typography>
+                      </Box>
+
+                      <Box
+                        sx={{
+                          mt: 2,
+                          display: 'grid',
+                          gap: 2,
+                          gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)' },
+                        }}
+                      >
+                        <Box>
+                          <Typography variant="caption" color="text.secondary">
+                            Stock mínimo
+                          </Typography>
+                          <Typography variant="body1" fontWeight={600}>
+                            {stockMinimo}
+                          </Typography>
+                        </Box>
+
+                        <Box>
+                          <Typography variant="caption" color="text.secondary">
+                            Alícuota IVA
+                          </Typography>
+                          <Typography variant="body1" fontWeight={600}>
+                            {articuloCompleto?.AlicuotaIva != null
+                              ? `${articuloCompleto.AlicuotaIva}%`
+                              : 'No especificado'}
+                          </Typography>
+                        </Box>
+
+                        <Box>
+                          <Typography variant="caption" color="text.secondary">
+                            Actualizado
+                          </Typography>
+                          <Typography variant="body1" fontWeight={600}>
+                            {articuloCompleto?.FechaModif
+                              ? format(new Date(articuloCompleto.FechaModif), 'dd/MM/yyyy', { locale: es })
+                              : '—'}
+                          </Typography>
+                        </Box>
+                      </Box>
                     </Box>
-                  </>
-                )}
-              </Box>
+                  </Box>
+
+                  {/* OBSERVACIONES */}
+                  <Box
+                    sx={{
+                      mt: 3,
+                      borderRadius: 2,
+                      border: `1px solid ${alpha(COLORS.primary, 0.2)}`,
+                      background: alpha(COLORS.primary, 0.06),
+                      p: 2.2,
+                    }}
+                  >
+                    <Typography variant="subtitle2" fontWeight={700} color={COLORS.textStrong} mb={0.5}>
+                      Observaciones del proveedor
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      {articuloCompleto?.proveedor?.Observaciones || 'Sin observaciones'}
+                    </Typography>
+                  </Box>
+                </>
+              )}
             </Box>
           </DialogContent>
 
-          {/* Divisor footer */}
-          <Divider
-            sx={{
-              height: DIV_H,
-              border: 0,
-              backgroundImage: `
-                linear-gradient(to bottom, rgba(0,0,0,0.22), rgba(0,0,0,0.22)),
-                linear-gradient(to bottom, rgba(255,255,255,0.70), rgba(255,255,255,0.70)),
-                linear-gradient(90deg, rgba(255,255,255,0.05), ${COLORS.primary}, rgba(255,255,255,0.05))
-              `,
-              backgroundRepeat: 'no-repeat, no-repeat, repeat',
-              backgroundSize: '100% 1px, 100% 1px, 100% 100%',
-              backgroundPosition: 'top left, bottom left, center',
-              flex: '0 0 auto',
-            }}
-          />
-
-          {/* ===== FOOTER ===== */}
+          {/* ==== FOOTER ELEGANTE ==== */}
           <DialogActions
             sx={{
               p: 0,
               m: 0,
               minHeight: FOOTER_H,
-              background: `transparent`,
-              backgroundImage: `linear-gradient(90deg, ${COLORS.primary} 0%, ${COLORS.primaryHover} 100%), linear-gradient(90deg, rgba(255,255,255,0.06) 0%, rgba(255,255,255,0.01) 50%, rgba(255,255,255,0.06) 100%)`,
-              boxShadow: 'inset 0 -1px 0 rgba(255,255,255,0.12), 0 -2px 8px rgba(0,0,0,0.06)',
+              background: 'rgba(255,255,255,0.06)',
+              backdropFilter: 'saturate(140%) blur(2px)',
+              borderTop: '1px solid rgba(255,255,255,0.15)',
             }}
           >
-            <Box sx={{ width: '100%', display: 'flex', justifyContent: 'flex-end', px: 2, py: 1.5, gap: 1 }}>
+            <Box
+              sx={{
+                width: '100%',
+                display: 'flex',
+                justifyContent: 'flex-end',
+                px: 2,
+                py: 1.5,
+                gap: 1,
+              }}
+            >
               <CrystalSoftButton baseColor={COLORS.primary} onClick={handleClose}>
                 Cerrar
               </CrystalSoftButton>
