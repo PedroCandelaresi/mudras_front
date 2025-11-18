@@ -177,7 +177,19 @@ const ModalDetallesArticulo = ({ open, onClose, articulo, accentColor, stockCont
         <Box sx={{ display: 'flex', flexDirection: 'column', maxHeight: `${VH_MAX}vh` }}>
           {/* ===== HEADER ===== */}
           <DialogTitle sx={{ p: 0, m: 0, minHeight: HEADER_H, display: 'flex', alignItems: 'center' }}>
-            <Box sx={{ width: '100%', display: 'flex', alignItems: 'center', px: 2, py: 1.5, gap: 1.5 }}>
+            <Box
+              sx={{
+                width: '100%',
+                display: 'flex',
+                alignItems: 'center',
+                px: 2,
+                py: 1.5,
+                gap: 1.5,
+                background: `linear-gradient(90deg, ${COLORS.primary} 0%, ${COLORS.primaryHover} 100%)`,
+                backgroundImage: `linear-gradient(90deg, ${COLORS.primary} 0%, ${COLORS.primaryHover} 100%), linear-gradient(90deg, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0.02) 50%, rgba(255,255,255,0.08) 100%)`,
+                boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.18), 0 2px 8px rgba(0,0,0,0.12)',
+              }}
+            >
               <Box
                 sx={{
                   width: 40,
@@ -255,7 +267,7 @@ const ModalDetallesArticulo = ({ open, onClose, articulo, accentColor, stockCont
           </DialogTitle>
 
           {/* Divisor header */}
-          <Divider
+            <Divider
             sx={{
               height: DIV_H,
               border: 0,
@@ -289,7 +301,7 @@ const ModalDetallesArticulo = ({ open, onClose, articulo, accentColor, stockCont
                   p: { xs: 3, md: 4 },
                   borderRadius: 0,
                   backdropFilter: 'none',
-                  background: 'rgba(255,255,255,0.94)',
+                  background: '#f1f3f5',
                 }}
               >
                 {loading ? (
@@ -653,14 +665,20 @@ const ModalDetallesArticulo = ({ open, onClose, articulo, accentColor, stockCont
           />
 
           {/* ===== FOOTER ===== */}
-          <DialogActions sx={{ p: 0, m: 0, minHeight: FOOTER_H }}>
+          <DialogActions
+            sx={{
+              p: 0,
+              m: 0,
+              minHeight: FOOTER_H,
+              background: `linear-gradient(90deg, ${COLORS.primary} 0%, ${COLORS.primaryHover} 100%)`,
+              backgroundImage: `linear-gradient(90deg, ${COLORS.primary} 0%, ${COLORS.primaryHover} 100%), linear-gradient(90deg, rgba(255,255,255,0.06) 0%, rgba(255,255,255,0.01) 50%, rgba(255,255,255,0.06) 100%)`,
+              boxShadow: 'inset 0 -1px 0 rgba(255,255,255,0.12), 0 -2px 8px rgba(0,0,0,0.06)',
+            }}
+          >
             <Box sx={{ width: '100%', display: 'flex', justifyContent: 'flex-end', px: 2, py: 1.5, gap: 1 }}>
               <CrystalSoftButton baseColor={COLORS.primary} onClick={handleClose}>
                 Cerrar
               </CrystalSoftButton>
-              <CrystalButton baseColor={COLORS.primary} onClick={() => {}} disabled>
-                Exportar ficha
-              </CrystalButton>
             </Box>
           </DialogActions>
         </Box>
