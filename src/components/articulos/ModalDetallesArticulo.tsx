@@ -15,26 +15,36 @@ import {
   Tooltip,
   Skeleton,
 } from '@mui/material';
-
 import { alpha, darken } from '@mui/material/styles';
 import { useCallback, useEffect, useMemo } from 'react';
 import { Icon } from '@iconify/react';
 import { IconRefresh } from '@tabler/icons-react';
 import { useQuery } from '@apollo/client/react';
-
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 
 import { GET_ARTICULO } from '@/components/articulos/graphql/queries';
 import type { Articulo } from '@/app/interfaces/mudras.types';
-
 import { TexturedPanel } from '@/components/ui/TexturedFrame/TexturedPanel';
 import CrystalButton, { CrystalSoftButton } from '@/components/ui/CrystalButton';
 import { verde as verdePalette } from '@/ui/colores';
 import { calcularPrecioDesdeArticulo } from '@/utils/precioVenta';
 
-/* ======================== Utils ======================== */
+/* ======================== Props ======================== */
+interface StockContextProps {
+  value?: number;
+  label?: string;
+}
 
+interface ModalDetallesArticuloProps {
+  open: boolean;
+  onClose: () => void;
+  articulo?: Pick<Articulo, 'id' | 'Descripcion' | 'Codigo'> | null;
+  accentColor?: string;
+  stockContext?: StockContextProps;
+}
+
+/* ======================== Utils ======================== */
 const NBSP = '\u00A0';
 const currency = (v?: number | null) =>
   typeof v === 'number'
@@ -46,37 +56,33 @@ const makeColors = (base?: string) => {
   return {
     primary,
     primaryHover: darken(primary, 0.12),
-    textStrong: darken(primary, 0.48),
+    textStrong: darken(primary, 0.5),
     chipBorder: 'rgba(255,255,255,0.35)',
   };
 };
 
-const VH_MAX = 88;
-const HEADER_H = 74;
-const FOOTER_H = 74;
+/* ======================== Layout ======================== */
+const VH_MAX = 85;
+const HEADER_H = 76;
+const FOOTER_H = 76;
+const DIV_H = 2;
+const CONTENT_MAX = `calc(${VH_MAX}vh - ${HEADER_H + FOOTER_H + DIV_H * 2}px)`;
 
-/* ======================================================== */
-
+/* ======================== Componente ======================== */
 const ModalDetallesArticulo = ({
   open,
   onClose,
   articulo,
   accentColor,
   stockContext,
-}: {
-  open: boolean;
-  onClose: () => void;
-  articulo?: Pick<Articulo, 'id' | 'Descripcion' | 'Codigo'> | null;
-  accentColor?: string;
-  stockContext?: { value?: number; label?: string };
-}) => {
+}: ModalDetallesArticuloProps) => {
   const COLORS = useMemo(() => makeColors(accentColor), [accentColor]);
 
   const articuloId = useMemo(() => {
     if (!articulo?.id) return null;
-    const n = Number(articulo.id);
-    return Number.isFinite(n) ? n : null;
-  }, [articulo]);
+    const parsed = Number(articulo.id);
+    return Number.isFinite(parsed) ? parsed : null;
+  }, [articulo?.id]);
 
   const { data, loading, error, refetch } = useQuery<{ articulo: Articulo }>(
     GET_ARTICULO,
@@ -84,21 +90,20 @@ const ModalDetallesArticulo = ({
       variables: { id: articuloId ?? 0 },
       skip: !open || articuloId == null,
       fetchPolicy: 'cache-and-network',
-    },
+    }
   );
 
-  const articuloCompleto = useMemo(() => {
-    if (data?.articulo) return data.articulo;
-
+  const articuloCompleto: Articulo | null = useMemo(() => {
+    if (data?.articulo) return data.articulo as Articulo;
     if (articuloId != null && articulo) {
       return {
         id: articuloId,
-        Codigo: articulo.Codigo,
         Descripcion: articulo.Descripcion,
+        Codigo: articulo.Codigo,
       } as Articulo;
     }
     return null;
-  }, [data, articuloId, articulo]);
+  }, [data?.articulo, articuloId, articulo]);
 
   const precioCalculado = useMemo(
     () => calcularPrecioDesdeArticulo(articuloCompleto ?? undefined),
@@ -106,20 +111,22 @@ const ModalDetallesArticulo = ({
   );
 
   useEffect(() => {
-    if (open && articuloId != null) refetch({ id: articuloId });
+    if (open && articuloId != null) {
+      void refetch({ id: articuloId });
+    }
   }, [open, articuloId, refetch]);
 
   const handleClose = useCallback(() => {
-    if (!loading) onClose();
+    if (loading) return;
+    onClose();
   }, [loading, onClose]);
 
   if (!articuloCompleto && !loading && !error) return null;
 
-  /* ==================== Stock ==================== */
-
+  /* ===== Datos derivados ===== */
   const fallbackStock =
     typeof articuloCompleto?.totalStock === 'number'
-      ? articuloCompleto.totalStock
+      ? Number(articuloCompleto.totalStock)
       : Number(articuloCompleto?.Deposito ?? articuloCompleto?.Stock ?? 0);
 
   const stockActual =
@@ -138,19 +145,14 @@ const ModalDetallesArticulo = ({
     stockActual <= 0
       ? { label: 'Sin stock', color: 'error' as const }
       : stockActual <= stockMinimo
-        ? { label: 'Stock bajo', color: 'warning' as const }
-        : { label: 'Disponible', color: 'success' as const };
+      ? { label: 'Stock bajo', color: 'warning' as const }
+      : { label: 'Disponible', color: 'success' as const };
 
-  const proveedorNombre =
-    articuloCompleto?.proveedor?.Nombre ?? 'Sin proveedor';
-  const rubroNombre = articuloCompleto?.Rubro ?? 'Sin rubro';
+  const tituloHeader =
+    (articuloCompleto?.Codigo ? `${articuloCompleto.Codigo} - ` : '') +
+    (articuloCompleto?.Descripcion ?? 'Detalle del artículo');
 
-  const tituloHeader = `${articuloCompleto?.Codigo ?? ''} - ${articuloCompleto?.Descripcion ?? ''
-    }`;
-
-  const tooltipChips = `Proveedor: ${proveedorNombre}\nRubro: ${rubroNombre}`;
-
-  /* ======================================================== */
+  /* ======================== RENDER ======================== */
 
   return (
     <Dialog
@@ -163,136 +165,127 @@ const ModalDetallesArticulo = ({
           borderRadius: 4,
           bgcolor: 'transparent',
           overflow: 'hidden',
+          boxShadow: '0 8px 40px rgba(0,0,0,0.28)',
           maxHeight: `${VH_MAX}vh`,
         },
       }}
     >
-      {/* =====================================================
-         BLOQUE COMPLETO: HEADER + CONTENIDO + FOOTER
-      ====================================================== */}
-      <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+      <Box sx={{ display: 'flex', flexDirection: 'column', maxHeight: `${VH_MAX}vh` }}>
 
-        {/* =============== HEADER METÁLICO REAL =============== */}
+        {/* ====================== HEADER METÁLICO SUAVE ====================== */}
         <Box sx={{ position: 'relative' }}>
-          <TexturedPanel
-            accent={COLORS.primary}
-            radius={0}
-            contentPadding={0}
-            bgTintPercent={10}
-            bgAlpha={1}
-            textureScale={1.12}
-            textureBaseOpacity={0.22}
-            textureBoostOpacity={0.20}
-            textureBrightness={1.15}
-            textureContrast={1.08}
-            tintOpacity={0.35}
-            glossStrength={1}
-            bevelWidth={10}
-            bevelIntensity={1}
-          />
+          {/* Capa metálica */}
+          <Box sx={{ position: 'absolute', inset: 0, zIndex: 0 }}>
+            <TexturedPanel
+              accent={COLORS.primary}
+              radius={0}
+              contentPadding={0}
+              bgTintPercent={14}
+              bgAlpha={0.98}
+              textureScale={1.08}
+              textureBaseOpacity={0.18}
+              textureBoostOpacity={0.12}
+              textureContrast={1.04}
+              textureBrightness={1.10}
+              tintOpacity={0.28}
+              tintMode="soft-light"
+              bevelWidth={8}
+              bevelIntensity={0.6}
+              glossStrength={0.55}
+            />
+          </Box>
 
+          {/* Contenido visible */}
           <DialogTitle
             sx={{
               position: 'relative',
               zIndex: 1,
+              p: 0,
               m: 0,
-              px: 3,
-              py: 2,
-              height: HEADER_H,
+              minHeight: HEADER_H,
               display: 'flex',
               alignItems: 'center',
-              backdropFilter: 'blur(1.5px)',
             }}
           >
-            {/* Ícono */}
             <Box
               sx={{
-                width: 42,
-                height: 42,
-                borderRadius: '50%',
-                display: 'grid',
-                placeItems: 'center',
-                background: `linear-gradient(135deg, ${COLORS.primary}, ${COLORS.primaryHover})`,
-                boxShadow: 'inset 0 2px 4px rgba(255,255,255,0.25)',
-                color: '#fff',
+                width: '100%',
+                display: 'flex',
+                alignItems: 'center',
+                px: 3,
+                py: 2,
+                gap: 2,
               }}
             >
-              <Icon icon="mdi:cube-outline" width={20} height={20} />
-            </Box>
+              <Box
+                sx={{
+                  width: 42,
+                  height: 42,
+                  borderRadius: '50%',
+                  display: 'grid',
+                  placeItems: 'center',
+                  background: `linear-gradient(135deg, ${COLORS.primary} 0%, ${COLORS.primaryHover} 100%)`,
+                  boxShadow:
+                    'inset 0 2px 4px rgba(255,255,255,0.28), 0 4px 12px rgba(0,0,0,0.20)',
+                  color: '#fff',
+                }}
+              >
+                <Icon icon="mdi:cube-outline" width={20} height={20} />
+              </Box>
 
-            <Typography
-              variant="h6"
-              fontWeight={700}
-              sx={{
-                ml: 2,
-                color: 'white',
-                textShadow: '0 2px 4px rgba(0,0,0,0.55)',
-              }}
-            >
-              {tituloHeader}
-            </Typography>
+              <Typography
+                variant="h6"
+                fontWeight={700}
+                color="#fff"
+                sx={{ textShadow: '0 2px 6px rgba(0,0,0,0.45)' }}
+              >
+                {tituloHeader}
+              </Typography>
 
-            {/* Chips */}
-            <Box sx={{ ml: 'auto', display: 'flex', gap: 1 }}>
-              <Tooltip title={tooltipChips}>
-                <Chip
-                  label={rubroNombre}
-                  size="small"
+              <Box sx={{ ml: 'auto', display: 'flex', gap: 1 }}>
+                <CrystalSoftButton
+                  baseColor={COLORS.primary}
+                  title="Cerrar"
+                  onClick={handleClose}
                   sx={{
-                    bgcolor: 'rgba(0,0,0,0.45)',
-                    color: '#fff',
-                    border: `1px solid ${COLORS.chipBorder}`,
-                    fontWeight: 600,
+                    width: 42,
+                    height: 42,
+                    minWidth: 42,
+                    borderRadius: '50%',
+                    display: 'grid',
+                    placeItems: 'center',
                   }}
-                />
-              </Tooltip>
-
-              {articuloCompleto?.proveedor?.Nombre && (
-                <Chip
-                  label={`Proveedor${NBSP}${proveedorNombre}`}
-                  size="small"
-                  sx={{
-                    bgcolor: 'rgba(0,0,0,0.45)',
-                    color: '#fff',
-                    border: `1px solid ${COLORS.chipBorder}`,
-                    fontWeight: 600,
-                  }}
-                />
-              )}
+                >
+                  <Icon icon="mdi:close" width={20} height={20} color="#fff" />
+                </CrystalSoftButton>
+              </Box>
             </Box>
-
-            <CrystalSoftButton
-              baseColor={COLORS.primary}
-              onClick={handleClose}
-              sx={{
-                ml: 2,
-                width: 42,
-                height: 42,
-                borderRadius: '50%',
-              }}
-            >
-              <Icon icon="mdi:close" width={22} height={22} color="#fff" />
-            </CrystalSoftButton>
           </DialogTitle>
         </Box>
 
-        {/* Divider */}
-        <Divider sx={{ opacity: 0.25, background: 'rgba(255,255,255,0.4)' }} />
+        {/* Línea divisoria */}
+        <Divider
+          sx={{
+            height: DIV_H,
+            border: 0,
+            background: alpha('#000', 0.22),
+            boxShadow: '0 1px rgba(255,255,255,0.4)',
+            flex: '0 0 auto',
+          }}
+        />
 
-        {/* =============== CONTENIDO GRIS SUAVE =============== */}
+        {/* ====================== CONTENIDO PLANO ====================== */}
         <DialogContent
           sx={{
-            flex: 1,
             p: 0,
+            borderRadius: 0,
             overflow: 'auto',
-            background: 'rgba(255,255,255,0.92)', // GRIS SUAVE
-            backdropFilter: 'blur(1px)',
+            maxHeight: CONTENT_MAX,
+            flex: '0 1 auto',
+            background: '#f8fafb',
           }}
         >
-          <Box sx={{ p: { xs: 3, md: 4 } }}>
-            {/* LO TUYO TAL CUAL — TARJETAS, DETALLES, ETC */}
-            {/* ------------------------------------------ */}
-
+          <Box sx={{ position: 'relative', p: { xs: 3, md: 4 } }}>
             {loading ? (
               <Skeleton variant="rounded" height={320} />
             ) : error ? (
@@ -305,21 +298,19 @@ const ModalDetallesArticulo = ({
                 </Typography>
                 <CrystalButton
                   baseColor={COLORS.primary}
-                  onClick={() => refetch()}
                   startIcon={<IconRefresh />}
+                  onClick={() => refetch()}
                 >
                   Reintentar
                 </CrystalButton>
               </Box>
             ) : (
               <>
-                {/* -------------------------
-                    TARJETAS SUPERIORES
-                -------------------------- */}
+                {/* Tarjetas rápidas */}
                 <Box
                   sx={{
                     display: 'grid',
-                    gap: 1.5,
+                    gap: 1,
                     gridTemplateColumns: {
                       xs: 'repeat(2, 1fr)',
                       sm: 'repeat(3, 1fr)',
@@ -332,11 +323,19 @@ const ModalDetallesArticulo = ({
                   <Card
                     sx={{
                       borderRadius: 2,
-                      border: `1px solid ${alpha(COLORS.primary, 0.2)}`,
-                      background: alpha(COLORS.primary, 0.05),
+                      border: `1px solid ${alpha(COLORS.primary, 0.14)}`,
+                      background: alpha(COLORS.primary, 0.04),
+                      boxShadow: 'none',
                     }}
                   >
-                    <CardContent sx={{ p: 1.5 }}>
+                    <CardContent
+                      sx={{
+                        p: 1.5,
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: 0.5,
+                      }}
+                    >
                       <Box display="flex" alignItems="center" gap={1}>
                         <Box
                           sx={{
@@ -348,14 +347,27 @@ const ModalDetallesArticulo = ({
                             bgcolor: alpha(COLORS.primary, 0.18),
                           }}
                         >
-                          <Icon icon="mdi:barcode" width={14} height={14} color={COLORS.primary} />
+                          <Icon
+                            icon="mdi:barcode"
+                            width={14}
+                            height={14}
+                            color={COLORS.primary}
+                          />
                         </Box>
-                        <Typography variant="subtitle2" fontWeight={700} color={COLORS.textStrong}>
+                        <Typography
+                          variant="subtitle2"
+                          fontWeight={700}
+                          color={COLORS.textStrong}
+                        >
                           Código
                         </Typography>
                       </Box>
-                      <Typography variant="subtitle1" fontWeight={700} color={COLORS.primary}>
-                        {articuloCompleto?.Codigo}
+                      <Typography
+                        variant="subtitle1"
+                        fontWeight={700}
+                        color={COLORS.primary}
+                      >
+                        {articuloCompleto?.Codigo || '—'}
                       </Typography>
                     </CardContent>
                   </Card>
@@ -364,11 +376,19 @@ const ModalDetallesArticulo = ({
                   <Card
                     sx={{
                       borderRadius: 2,
-                      border: `1px solid ${alpha(COLORS.primary, 0.2)}`,
-                      background: alpha(COLORS.primary, 0.05),
+                      border: `1px solid ${alpha(COLORS.primary, 0.14)}`,
+                      background: alpha(COLORS.primary, 0.03),
+                      boxShadow: 'none',
                     }}
                   >
-                    <CardContent sx={{ p: 1.5 }}>
+                    <CardContent
+                      sx={{
+                        p: 1.5,
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: 0.5,
+                      }}
+                    >
                       <Box display="flex" alignItems="center" gap={1}>
                         <Box
                           sx={{
@@ -377,33 +397,58 @@ const ModalDetallesArticulo = ({
                             borderRadius: '50%',
                             display: 'grid',
                             placeItems: 'center',
-                            bgcolor: alpha(COLORS.primary, 0.18),
+                            bgcolor: alpha(COLORS.primary, 0.16),
                           }}
                         >
-                          <Icon icon="mdi:package-variant-closed" width={14} height={14} color={COLORS.primary} />
+                          <Icon
+                            icon="mdi:package-variant-closed"
+                            width={14}
+                            height={14}
+                            color={COLORS.primary}
+                          />
                         </Box>
-                        <Typography variant="subtitle2" fontWeight={700} color={COLORS.textStrong}>
+                        <Typography
+                          variant="subtitle2"
+                          fontWeight={700}
+                          color={COLORS.textStrong}
+                        >
                           {stockLabelText}
                         </Typography>
                       </Box>
                       <Box display="flex" alignItems="center" gap={1}>
-                        <Typography variant="h6" fontWeight={800} color={COLORS.primary}>
+                        <Typography
+                          variant="h6"
+                          fontWeight={800}
+                          color={COLORS.primary}
+                        >
                           {stockActual}
                         </Typography>
-                        <Chip size="small" label={stockChip.label} color={stockChip.color} />
+                        <Chip
+                          size="small"
+                          label={stockChip.label}
+                          color={stockChip.color}
+                        />
                       </Box>
                     </CardContent>
                   </Card>
 
-                  {/* Precio venta */}
+                  {/* Precio Venta */}
                   <Card
                     sx={{
                       borderRadius: 2,
-                      border: `1px solid ${alpha(COLORS.primary, 0.2)}`,
-                      background: alpha(COLORS.primary, 0.05),
+                      border: `1px solid ${alpha(COLORS.primary, 0.14)}`,
+                      background: alpha(COLORS.primary, 0.03),
+                      boxShadow: 'none',
                     }}
                   >
-                    <CardContent sx={{ p: 1.5 }}>
+                    <CardContent
+                      sx={{
+                        p: 1.5,
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: 0.5,
+                      }}
+                    >
                       <Box display="flex" alignItems="center" gap={1}>
                         <Box
                           sx={{
@@ -412,30 +457,51 @@ const ModalDetallesArticulo = ({
                             borderRadius: '50%',
                             display: 'grid',
                             placeItems: 'center',
-                            bgcolor: alpha(COLORS.primary, 0.18),
+                            bgcolor: alpha(COLORS.primary, 0.16),
                           }}
                         >
-                          <Icon icon="mdi:cash" width={15} height={15} color={COLORS.primary} />
+                          <Icon
+                            icon="mdi:cash"
+                            width={14}
+                            height={14}
+                            color={COLORS.primary}
+                          />
                         </Box>
-                        <Typography variant="subtitle2" fontWeight={700} color={COLORS.textStrong}>
+                        <Typography
+                          variant="subtitle2"
+                          fontWeight={700}
+                          color={COLORS.textStrong}
+                        >
                           Precio venta
                         </Typography>
                       </Box>
-                      <Typography variant="subtitle1" fontWeight={800} color={COLORS.primary}>
+                      <Typography
+                        variant="subtitle1"
+                        fontWeight={800}
+                        color={COLORS.primary}
+                      >
                         {currency(precioCalculado)}
                       </Typography>
                     </CardContent>
                   </Card>
 
-                  {/* Precio compra */}
+                  {/* Precio Compra */}
                   <Card
                     sx={{
                       borderRadius: 2,
-                      border: `1px solid ${alpha(COLORS.primary, 0.2)}`,
-                      background: alpha(COLORS.primary, 0.05),
+                      border: `1px solid ${alpha(COLORS.primary, 0.14)}`,
+                      background: alpha(COLORS.primary, 0.03),
+                      boxShadow: 'none',
                     }}
                   >
-                    <CardContent sx={{ p: 1.5 }}>
+                    <CardContent
+                      sx={{
+                        p: 1.5,
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: 0.5,
+                      }}
+                    >
                       <Box display="flex" alignItems="center" gap={1}>
                         <Box
                           sx={{
@@ -444,30 +510,51 @@ const ModalDetallesArticulo = ({
                             borderRadius: '50%',
                             display: 'grid',
                             placeItems: 'center',
-                            bgcolor: alpha(COLORS.primary, 0.18),
+                            bgcolor: alpha(COLORS.primary, 0.16),
                           }}
                         >
-                          <Icon icon="mdi:cart-arrow-down" width={15} height={15} color={COLORS.primary} />
+                          <Icon
+                            icon="mdi:cart-arrow-down"
+                            width={14}
+                            height={14}
+                            color={COLORS.primary}
+                          />
                         </Box>
-                        <Typography variant="subtitle2" fontWeight={700} color={COLORS.textStrong}>
+                        <Typography
+                          variant="subtitle2"
+                          fontWeight={700}
+                          color={COLORS.textStrong}
+                        >
                           Precio compra
                         </Typography>
                       </Box>
-                      <Typography variant="subtitle1" fontWeight={800} color={COLORS.primary}>
+                      <Typography
+                        variant="subtitle1"
+                        fontWeight={800}
+                        color={COLORS.primary}
+                      >
                         {currency(articuloCompleto?.PrecioCompra)}
                       </Typography>
                     </CardContent>
                   </Card>
 
-                  {/* Ganancia */}
+                  {/* % Ganancia */}
                   <Card
                     sx={{
                       borderRadius: 2,
-                      border: `1px solid ${alpha(COLORS.primary, 0.2)}`,
-                      background: alpha(COLORS.primary, 0.05),
+                      border: `1px solid ${alpha(COLORS.primary, 0.14)}`,
+                      background: alpha(COLORS.primary, 0.03),
+                      boxShadow: 'none',
                     }}
                   >
-                    <CardContent sx={{ p: 1.5 }}>
+                    <CardContent
+                      sx={{
+                        p: 1.5,
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: 0.5,
+                      }}
+                    >
                       <Box display="flex" alignItems="center" gap={1}>
                         <Box
                           sx={{
@@ -476,55 +563,84 @@ const ModalDetallesArticulo = ({
                             borderRadius: '50%',
                             display: 'grid',
                             placeItems: 'center',
-                            bgcolor: alpha(COLORS.primary, 0.18),
+                            bgcolor: alpha(COLORS.primary, 0.12),
                           }}
                         >
-                          <Icon icon="mdi:percent" width={15} height={15} color={COLORS.primary} />
+                          <Icon
+                            icon="mdi:percent"
+                            width={14}
+                            height={14}
+                            color={COLORS.primary}
+                          />
                         </Box>
-                        <Typography variant="subtitle2" fontWeight={700} color={COLORS.textStrong}>
+                        <Typography
+                          variant="subtitle2"
+                          fontWeight={700}
+                          color={COLORS.textStrong}
+                        >
                           % Ganancia
                         </Typography>
                       </Box>
-                      <Typography variant="h6" fontWeight={800} color={COLORS.primary}>
-                        {articuloCompleto?.PrecioCompra
-                          ? `${Math.round(((precioCalculado - articuloCompleto.PrecioCompra) /
-                            articuloCompleto.PrecioCompra) * 100)}%`
+                      <Typography
+                        variant="h6"
+                        fontWeight={800}
+                        color={COLORS.primary}
+                      >
+                        {typeof articuloCompleto?.PrecioCompra === 'number' &&
+                        articuloCompleto?.PrecioCompra > 0
+                          ? `${Math.round(
+                              ((precioCalculado -
+                                articuloCompleto.PrecioCompra) /
+                                articuloCompleto.PrecioCompra) *
+                                100
+                            )}%`
                           : '—'}
                       </Typography>
                     </CardContent>
                   </Card>
                 </Box>
 
-                {/* INFORMACIÓN GENERAL */}
+                {/* ===== DETALLES ===== */}
                 <Box
                   sx={{
                     display: 'grid',
                     gap: 3,
                     gridTemplateColumns: { xs: '1fr', md: '7fr 5fr' },
+                    alignItems: 'start',
                   }}
                 >
-                  {/* Izquierda */}
+                  {/* Columna izquierda */}
                   <Box>
-                    <Typography variant="h6" fontWeight={700} color={COLORS.textStrong}>
+                    <Typography
+                      variant="h6"
+                      fontWeight={700}
+                      color={COLORS.textStrong}
+                      mb={1}
+                    >
                       Información general
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-                      Ficha del artículo con costos, categorización y stock.
                     </Typography>
 
                     <Box
                       sx={{
                         display: 'grid',
+                        gridTemplateColumns: {
+                          xs: '1fr',
+                          sm: 'repeat(2,1fr)',
+                        },
                         gap: 2,
-                        gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)' },
                       }}
                     >
                       <Box>
                         <Typography variant="caption" color="text.secondary">
                           Descripción
                         </Typography>
-                        <Typography fontWeight={600} color={COLORS.textStrong}>
-                          {articuloCompleto?.Descripcion}
+                        <Typography
+                          variant="body1"
+                          fontWeight={600}
+                          color={COLORS.textStrong}
+                        >
+                          {articuloCompleto?.Descripcion ||
+                            'Sin descripción'}
                         </Typography>
                       </Box>
 
@@ -532,8 +648,8 @@ const ModalDetallesArticulo = ({
                         <Typography variant="caption" color="text.secondary">
                           Categoría / Rubro
                         </Typography>
-                        <Typography fontWeight={600}>
-                          {articuloCompleto?.Rubro ?? 'No asignado'}
+                        <Typography variant="body1" fontWeight={600}>
+                          {articuloCompleto?.Rubro || 'No asignado'}
                         </Typography>
                       </Box>
 
@@ -541,8 +657,8 @@ const ModalDetallesArticulo = ({
                         <Typography variant="caption" color="text.secondary">
                           Unidad
                         </Typography>
-                        <Typography fontWeight={600}>
-                          {articuloCompleto?.Unidad ?? 'Unidad'}
+                        <Typography variant="body1" fontWeight={600}>
+                          {articuloCompleto?.Unidad || 'Unidad'}
                         </Typography>
                       </Box>
 
@@ -550,25 +666,39 @@ const ModalDetallesArticulo = ({
                         <Typography variant="caption" color="text.secondary">
                           Proveedor
                         </Typography>
-                        <Typography fontWeight={600}>
-                          {proveedorNombre}
+                        <Typography variant="body1" fontWeight={600}>
+                          {articuloCompleto?.proveedor?.Nombre ||
+                            'Sin proveedor'}
                         </Typography>
                       </Box>
                     </Box>
                   </Box>
 
-                  {/* Derecha */}
+                  {/* Columna derecha */}
                   <Box
                     sx={{
                       borderRadius: 2,
-                      border: `1px solid ${alpha(COLORS.primary, 0.25)}`,
+                      border: `1px solid ${alpha(COLORS.primary, 0.26)}`,
                       background: alpha('#fff', 0.9),
-                      p: 2.4,
+                      boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.25)',
+                      p: 2.2,
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: 1.2,
                     }}
                   >
                     <Box display="flex" alignItems="center" gap={1}>
-                      <Icon icon="mdi:information-variant" width={20} height={20} color={COLORS.primary} />
-                      <Typography variant="subtitle1" fontWeight={700} color={COLORS.textStrong}>
+                      <Icon
+                        icon="mdi:information-variant"
+                        width={20}
+                        height={20}
+                        color={COLORS.primary}
+                      />
+                      <Typography
+                        variant="subtitle1"
+                        fontWeight={700}
+                        color={COLORS.textStrong}
+                      >
                         Datos adicionales
                       </Typography>
                     </Box>
@@ -577,23 +707,29 @@ const ModalDetallesArticulo = ({
                       sx={{
                         display: 'grid',
                         gap: 2,
-                        gridTemplateColumns: '1fr 1fr',
-                        mt: 2,
+                        gridTemplateColumns: {
+                          xs: '1fr',
+                          sm: 'repeat(2,1fr)',
+                        },
                       }}
                     >
                       <Box>
                         <Typography variant="caption" color="text.secondary">
                           Stock mínimo
                         </Typography>
-                        <Typography fontWeight={600}>{stockMinimo}</Typography>
+                        <Typography variant="body1" fontWeight={600}>
+                          {stockMinimo}
+                        </Typography>
                       </Box>
 
                       <Box>
                         <Typography variant="caption" color="text.secondary">
                           Alícuota IVA
                         </Typography>
-                        <Typography fontWeight={600}>
-                          {`${articuloCompleto?.AlicuotaIva ?? 0}%`}
+                        <Typography variant="body1" fontWeight={600}>
+                          {articuloCompleto?.AlicuotaIva != null
+                            ? `${articuloCompleto.AlicuotaIva}%`
+                            : 'No especificado'}
                         </Typography>
                       </Box>
 
@@ -601,11 +737,13 @@ const ModalDetallesArticulo = ({
                         <Typography variant="caption" color="text.secondary">
                           Actualizado
                         </Typography>
-                        <Typography fontWeight={600}>
+                        <Typography variant="body1" fontWeight={600}>
                           {articuloCompleto?.FechaModif
-                            ? format(new Date(articuloCompleto.FechaModif), 'dd/MM/yyyy', {
-                              locale: es,
-                            })
+                            ? format(
+                                new Date(articuloCompleto.FechaModif),
+                                'dd/MM/yyyy',
+                                { locale: es }
+                              )
                             : '—'}
                         </Typography>
                       </Box>
@@ -618,16 +756,23 @@ const ModalDetallesArticulo = ({
                   sx={{
                     mt: 3,
                     borderRadius: 2,
-                    border: `1px solid ${alpha(COLORS.primary, 0.2)}`,
+                    border: `1px solid ${alpha(COLORS.primary, 0.18)}`,
                     background: alpha(COLORS.primary, 0.05),
+                    boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.22)',
                     p: 2.2,
                   }}
                 >
-                  <Typography variant="subtitle2" fontWeight={700} color={COLORS.textStrong}>
+                  <Typography
+                    variant="subtitle2"
+                    fontWeight={700}
+                    color={COLORS.textStrong}
+                    mb={0.5}
+                  >
                     Observaciones del proveedor
                   </Typography>
                   <Typography variant="body2" color="text.secondary">
-                    {articuloCompleto?.proveedor?.Observaciones || 'Sin observaciones'}
+                    {articuloCompleto?.proveedor?.Observaciones ||
+                      'Sin observaciones'}
                   </Typography>
                 </Box>
               </>
@@ -635,40 +780,62 @@ const ModalDetallesArticulo = ({
           </Box>
         </DialogContent>
 
-        {/* =============== FOOTER METÁLICO REAL =============== */}
-        <Box sx={{ position: 'relative' }}>
-          <TexturedPanel
-            accent={COLORS.primary}
-            radius={0}
-            contentPadding={0}
-            bgTintPercent={10}
-            bgAlpha={1}
-            textureScale={1.12}
-            textureBaseOpacity={0.22}
-            textureBoostOpacity={0.20}
-            textureBrightness={1.15}
-            textureContrast={1.08}
-            tintOpacity={0.35}
-            glossStrength={1}
-            bevelWidth={10}
-            bevelIntensity={1}
-          />
+        {/* Línea divisoria footer */}
+        <Divider
+          sx={{
+            height: DIV_H,
+            border: 0,
+            background: alpha('#000', 0.22),
+            boxShadow: '0 -1px rgba(255,255,255,0.4)',
+            flex: '0 0 auto',
+          }}
+        />
 
+        {/* ====================== FOOTER METÁLICO SUAVE ====================== */}
+        <Box sx={{ position: 'relative' }}>
+          {/* Fondo metálico */}
+          <Box sx={{ position: 'absolute', inset: 0, zIndex: 0 }}>
+            <TexturedPanel
+              accent={COLORS.primary}
+              radius={0}
+              contentPadding={0}
+              bgTintPercent={14}
+              bgAlpha={0.98}
+              textureScale={1.08}
+              textureBaseOpacity={0.18}
+              textureBoostOpacity={0.12}
+              textureContrast={1.04}
+              textureBrightness={1.10}
+              tintOpacity={0.28}
+              tintMode="soft-light"
+              bevelWidth={8}
+              bevelIntensity={0.6}
+              glossStrength={0.55}
+            />
+          </Box>
+
+          {/* Acciones */}
           <DialogActions
             sx={{
               position: 'relative',
               zIndex: 1,
-              height: FOOTER_H,
+              p: 0,
+              m: 0,
+              minHeight: FOOTER_H,
+              display: 'flex',
+              justifyContent: 'flex-end',
               px: 3,
               py: 2,
-              backdropFilter: 'blur(1.5px)',
+              gap: 1.5,
             }}
           >
-            <Box sx={{ ml: 'auto' }}>
-              <CrystalSoftButton baseColor={COLORS.primary} onClick={handleClose}>
-                Cerrar
-              </CrystalSoftButton>
-            </Box>
+            <CrystalSoftButton baseColor={COLORS.primary} onClick={handleClose}>
+              Cerrar
+            </CrystalSoftButton>
+
+            <CrystalButton baseColor={COLORS.primary} disabled>
+              Exportar ficha
+            </CrystalButton>
           </DialogActions>
         </Box>
       </Box>
