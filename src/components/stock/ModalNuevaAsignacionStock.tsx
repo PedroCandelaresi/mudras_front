@@ -141,7 +141,7 @@ export default function ModalNuevaAsignacionStock({ open, onClose, destinoId, on
     setError("");
     await buscarArticulosQuery({
       variables: {
-        proveedorId: proveedorSeleccionado ? Number(proveedorSeleccionado.id) : undefined,
+        proveedorId: proveedorSeleccionado?.id ?? null,
         rubro: rubroSeleccionado.trim() || null,
         busqueda: term || null,
       },
@@ -150,19 +150,8 @@ export default function ModalNuevaAsignacionStock({ open, onClose, destinoId, on
   useEffect(() => {
     if (articulosData?.buscarArticulosParaAsignacion) {
       setArticulos(articulosData.buscarArticulosParaAsignacion as any[]);
-      if (!proveedorSeleccionado) {
-        const provNombre = articulosData.buscarArticulosParaAsignacion[0]?.proveedor;
-        if (provNombre) {
-          const p = proveedores.find((pr) => pr.nombre === provNombre);
-          if (p) setProveedorSeleccionado(p);
-        }
-      }
-      if (!rubroSeleccionado) {
-        const rubroNombre = articulosData.buscarArticulosParaAsignacion[0]?.rubro;
-        if (rubroNombre) setRubroSeleccionado(rubroNombre);
-      }
     }
-  }, [articulosData, proveedorSeleccionado, rubroSeleccionado, proveedores]);
+  }, [articulosData]);
   useEffect(() => {
     if (errorBuscar) setError(errorBuscar.message);
   }, [errorBuscar]);
@@ -172,16 +161,8 @@ export default function ModalNuevaAsignacionStock({ open, onClose, destinoId, on
     if (!proveedorSeleccionado) {
       setArticulos([]);
       setBusqueda("");
-      setRubroSeleccionado('');
     }
   }, [proveedorSeleccionado]);
-
-  // Auto buscar al cambiar proveedor/rubro si hay criterio
-  useEffect(() => {
-    if (!open) return;
-    if (!proveedorSeleccionado) return;
-    void buscarArticulos();
-  }, [open, proveedorSeleccionado, rubroSeleccionado, buscarArticulos]);
 
   const handleBusquedaKeyPress = (event: React.KeyboardEvent) => {
     if (event.key === "Enter") {
