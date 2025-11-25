@@ -67,8 +67,8 @@ const formatPercentage = (value?: number) => {
 
 /* ======================== Layout ======================== */
 const VH_MAX = 85;
-const HEADER_H = 88;
-const FOOTER_H = 88;
+const HEADER_H = 60;
+const FOOTER_H = 60;
 const DIV_H = 3;
 const CONTENT_MAX = `calc(${VH_MAX}vh - ${HEADER_H + FOOTER_H + DIV_H * 2}px)`;
 
@@ -326,9 +326,27 @@ const ModalDetallesProveedor = ({ open, onClose, proveedor, accentColor }: Modal
       >
         <Box sx={{ display: 'flex', flexDirection: 'column', maxHeight: `${VH_MAX}vh` }}>
           {/* ===== HEADER ===== */}
-          <DialogTitle sx={{ p: 0, m: 0, minHeight: HEADER_H, display: 'flex', alignItems: 'center' }}>
-            <Box sx={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'flex-start', px: 3, py: 2.25, gap: 2 }}>
-              <Box sx={{
+<DialogTitle
+  sx={{
+    p: 0,
+    m: 0,
+    height: HEADER_H,
+    minHeight: HEADER_H,
+    display: 'flex',
+    alignItems: 'center',
+  }}
+>
+  <Box
+    sx={{
+      width: '100%',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'flex-start',
+      px: 2,
+      py: 1,
+      gap: 2,
+    }}
+  >        <Box sx={{
                 width: 40, height: 40, borderRadius: '50%',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                 background: `linear-gradient(135deg, ${COLORS.primary} 0%, ${COLORS.primaryHover} 100%)`,
@@ -720,9 +738,26 @@ const ModalDetallesProveedor = ({ open, onClose, proveedor, accentColor }: Modal
           />
 
           {/* ===== FOOTER ===== */}
-          <DialogActions sx={{ p: 0, m: 0, minHeight: FOOTER_H }}>
-            <Box sx={{ width: '100%', display: 'flex', justifyContent: 'flex-end', px: 3, py: 2.25, gap: 1.5 }}>
-              <CrystalSoftButton baseColor={COLORS.primary} onClick={onCerrar}>
+<DialogActions
+  sx={{
+    p: 0,
+    m: 0,
+    height: FOOTER_H,
+    minHeight: FOOTER_H,
+    display: 'flex',
+    alignItems: 'center',
+  }}
+>
+  <Box
+    sx={{
+      width: '100%',
+      display: 'flex',
+      justifyContent: 'flex-end',
+      px: 2,
+      py: 1,
+      gap: 1.5,
+    }}
+  >  <CrystalSoftButton baseColor={COLORS.primary} onClick={onCerrar}>
                 Cerrar
               </CrystalSoftButton>
             </Box>

@@ -37,10 +37,10 @@ export interface RubroConEstadisticas {
 export interface DashboardStatsResponse {
   articulos: Articulo[];
   proveedores: Proveedor[];
-  articulosConStock: Articulo[];
-  articulosStockBajo: Articulo[];
-  articulosSinStock: Articulo[];
-  articulosEnPromocion: Articulo[];
+  articulosConStock?: Articulo[];
+  articulosStockBajo?: Articulo[];
+  articulosSinStock?: Articulo[];
+  articulosEnPromocion?: Articulo[];
 }
 
 export interface BuscarArticulosResponse {

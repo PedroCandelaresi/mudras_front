@@ -57,8 +57,8 @@ const formatCount = (n: number, singular: string, plural?: string) =>
 
 // === Layout (header + footer + divisores) ===
 const VH_MAX = 85;
-const HEADER_H = 88;
-const FOOTER_H = 88;
+const HEADER_H = 60;
+const FOOTER_H = 60;
 const DIV_H = 3;
 const CONTENT_MAX = `calc(${VH_MAX}vh - ${HEADER_H + FOOTER_H + DIV_H * 2}px)`;
 
@@ -98,11 +98,11 @@ const ModalDetallesRubro = ({ open, onClose, rubro, accentColor }: ModalDetalles
     return `${formatter.format(valor)}%`;
   };
 
-  const shouldQuery = Boolean(open && rubroId);
+  const shouldQuery = Boolean(open && rubroId != null);
 
   const { data: proveedoresData, loading: loadingProveedores } =
     useQuery<ProveedoresPorRubroResponse>(GET_PROVEEDORES_POR_RUBRO, {
-      variables: { rubroId },
+      variables: { rubroId: Number(rubroId) },
       skip: !shouldQuery,
       fetchPolicy: 'cache-and-network',
     });
@@ -260,8 +260,27 @@ const ModalDetallesRubro = ({ open, onClose, rubro, accentColor }: ModalDetalles
       >
         <Box sx={{ display: 'flex', flexDirection: 'column', maxHeight: `${VH_MAX}vh` }}>
           {/* ===== HEADER ===== */}
-          <DialogTitle sx={{ p: 0, m: 0, minHeight: HEADER_H, display: 'flex', alignItems: 'center' }}>
-            <Box sx={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'flex-start', px: 3, py: 2.25, gap: 2 }}>
+          <DialogTitle
+            sx={{
+              p: 0,
+              m: 0,
+              height: HEADER_H,
+              minHeight: HEADER_H,
+              display: 'flex',
+              alignItems: 'center',
+            }}
+          >
+            <Box
+              sx={{
+                width: '100%',
+                display: 'flex',
+                alignItems: 'center',
+                px: 2,
+                py: 1,        // <── BAJAR EL PADDING AQUÍ
+                gap: 2,
+              }}
+            >
+
               <Box sx={{
                 width: 40, height: 40, borderRadius: '50%',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -434,10 +453,11 @@ const ModalDetallesRubro = ({ open, onClose, rubro, accentColor }: ModalDetalles
                           }}
                         />
                         {proveedores.map((p) => {
-                          const seleccionado = proveedorSeleccionadoId === p.id;
+                          const nextId = Number(p.id);
+                          const seleccionado = proveedorSeleccionadoId === nextId;
                           return (
                             <Chip
-                              key={p.id}
+                              key={nextId}
                               label={p.nombre}
                               clickable
                               variant={seleccionado ? 'filled' : 'outlined'}
@@ -451,7 +471,6 @@ const ModalDetallesRubro = ({ open, onClose, rubro, accentColor }: ModalDetalles
                                 },
                               }}
                               onClick={() => {
-                                const nextId = Number(p.id);
                                 setProveedorSeleccionadoId((prev) => (prev === nextId ? null : nextId));
                                 setPaginacion((prev) =>
                                   prev.pagina === 0 ? prev : { ...prev, pagina: 0 }
@@ -570,8 +589,13 @@ const ModalDetallesRubro = ({ open, onClose, rubro, accentColor }: ModalDetalles
           />
 
           {/* ===== FOOTER ===== */}
-          <DialogActions sx={{ p: 0, m: 0, minHeight: FOOTER_H }}>
-            <Box sx={{ width: '100%', display: 'flex', justifyContent: 'flex-end', px: 3, py: 2.25, gap: 1.5 }}>
+          <DialogActions   sx={{
+    p: 0,
+    m: 0,
+    height: FOOTER_H,
+    minHeight: FOOTER_H,
+  }}>
+            <Box sx={{ width: '100%', display: 'flex', justifyContent: 'flex-end', px: 2, py: 1, gap: 1.5 }}>
               <CrystalSoftButton baseColor={COLORS.primary} onClick={onCerrar}>
                 Cerrar
               </CrystalSoftButton>

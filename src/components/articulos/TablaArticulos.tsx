@@ -29,7 +29,7 @@ import {
   IconSearch, IconClipboardList, IconRefresh, IconPhone, IconMail,
   IconEdit, IconTrash, IconEye, IconPlus, IconDotsVertical
 } from '@tabler/icons-react';
-import { BUSCAR_ARTICULOS } from '@/components/articulos/graphql/queries';
+import { BUSCAR_ARTICULOS, GET_ESTADISTICAS_ARTICULOS } from '@/components/articulos/graphql/queries';
 import type { Articulo } from '@/app/interfaces/mudras.types';
 import { abrevUnidad, type UnidadMedida } from '@/app/utils/unidades';
 import { crearConfiguracionBisel, crearEstilosBisel } from '@/components/ui/bevel';
@@ -180,11 +180,10 @@ const obtenerPrecioCalculado = (articulo: Articulo) => {
 };
 
 const obtenerStockTotal = (articulo: Articulo) => {
-  if (typeof articulo.totalStock === 'number' && !Number.isNaN(articulo.totalStock)) {
+  if (typeof articulo.totalStock === 'number' && Number.isFinite(articulo.totalStock)) {
     return articulo.totalStock;
   }
-  const fallback = parseFloat(String(articulo.Deposito ?? articulo.Stock ?? 0));
-  return Number.isNaN(fallback) ? 0 : fallback;
+  return 0;
 };
 
 const normalizarIva = (valor?: number | null): number | null => {
@@ -194,6 +193,8 @@ const normalizarIva = (valor?: number | null): number | null => {
   if (num === 0 || num === 10.5 || num === 21) return num;
   return null;
 };
+
+const numberFormatter = new Intl.NumberFormat('es-AR', { maximumFractionDigits: 2 });
 
 /* ======================== Componente ======================== */
 const TablaArticulos: React.FC<ArticulosTableProps> = ({
@@ -231,7 +232,6 @@ const TablaArticulos: React.FC<ArticulosTableProps> = ({
   const [menuAnchor, setMenuAnchor] = useState<null | HTMLElement>(null);
   const [activeCol, setActiveCol] = useState<ColumnDef['key'] | null>(null);
   const [colInput, setColInput] = useState('');
-  const [columnaActiva, setColumnaActiva] = useState<null | ColKey>(null);
   const [filtrosColumna, setFiltrosColumna] = useState<ColFilters>({});
   const [filtroColInput, setFiltroColInput] = useState('');
 
@@ -257,11 +257,12 @@ const TablaArticulos: React.FC<ArticulosTableProps> = ({
     rubro: (controlledFilters?.rubro ?? localFilters.rubro) || undefined,
     pagina: controlledFilters?.pagina ?? page,
     limite: controlledFilters?.limite ?? rowsPerPage,
-    ordenarPor: controlledFilters?.ordenarPor ?? 'Descripcion',
+    ordenarPor: controlledFilters?.ordenarPor ?? 'Codigo',
     direccionOrden: controlledFilters?.direccionOrden ?? 'ASC',
-    soloConStock: estadoSeleccionado === 'con stock' ? true : undefined,
-    soloStockBajo: estadoSeleccionado === 'bajo stock' ? true : undefined,
-    soloSinStock: estadoSeleccionado === 'sin stock' ? true : undefined,
+    // Allow flexible matching because labels may vary (e.g. 'Sin stock', 'Bajo stock', 'STOCK BAJO')
+    soloConStock: (estadoSeleccionado.includes('con') || estadoSeleccionado.includes('disponible')) ? true : undefined,
+    soloStockBajo: (estadoSeleccionado.includes('bajo') || estadoSeleccionado.includes('stock bajo')) ? true : undefined,
+    soloSinStock: estadoSeleccionado.includes('sin') ? true : undefined,
     soloEnPromocion: controlledFilters?.soloEnPromocion,
     rubroId: controlledFilters?.rubroId ?? localFilters.rubroId ?? undefined,
     proveedorId: controlledFilters?.proveedorId ?? localFilters.proveedorId ?? undefined,
@@ -287,7 +288,27 @@ const TablaArticulos: React.FC<ArticulosTableProps> = ({
     fetchPolicy: 'cache-and-network',
   });
 
-  const articulos: Articulo[] = (data?.buscarArticulos?.articulos ?? []).filter((a): a is Articulo => !!a);
+  const { data: statsData } = useQuery<{ estadisticasArticulos?: { totalUnidades?: number } }>(GET_ESTADISTICAS_ARTICULOS, { fetchPolicy: 'cache-first' });
+
+  const articulosRaw: Articulo[] = (data?.buscarArticulos?.articulos ?? []).filter((a): a is Articulo => !!a);
+  const searchTerm = (variablesQuery.filtros.busqueda || '').toString().trim().toLowerCase();
+  const articulos: Articulo[] = useMemo(() => {
+    if (!searchTerm) return [...articulosRaw].sort((a, b) => (a.Codigo || '').localeCompare(b.Codigo || ''));
+
+    const score = (cod?: string) => {
+      const c = (cod || '').toString().toLowerCase();
+      if (!c) return 3;
+      if (c === searchTerm) return 0;
+      if (c.startsWith(searchTerm)) return 1;
+      if (c.includes(searchTerm)) return 2;
+      return 3;
+    };
+
+    return [...articulosRaw]
+      .map((a) => ({ a, s: score(a.Codigo) }))
+      .sort((x, y) => x.s - y.s || (x.a.Codigo || '').localeCompare(y.a.Codigo || ''))
+      .map((x) => x.a);
+  }, [articulosRaw, searchTerm]);
   const total: number = data?.buscarArticulos?.total ?? 0;
   const estadoActual = controlledFilters?.estado ?? localFilters.estado;
 
@@ -570,7 +591,7 @@ const TablaArticulos: React.FC<ArticulosTableProps> = ({
   const toolbar = (
     <SearchToolbar
       title="Artículos"
-      icon={<IconClipboardList size={20} />}
+      icon={<IconClipboardList size={30} />}
       baseColor={verde.primary}
       placeholder="Buscar descripción, código o proveedor…"
       searchValue={globalSearchDraft}
@@ -649,35 +670,34 @@ const TablaArticulos: React.FC<ArticulosTableProps> = ({
       >
         <TableHead>
           <TableRow>
-            {columns.map((column) => (
-              <TableCell
-                key={column.key}
-                align={column.align ?? (column.key === 'acciones' ? 'center' : 'left')}
-                sx={{ width: column.width }}
-              >
-                <Box display="flex" alignItems="center" justifyContent="space-between">
-                  {column.header ?? column.key.toUpperCase()}
+            {columns.map((column) => {
+              const displayedHeader = (column.header === 'STOCK TOTAL' || column.key === 'stock') ? 'Global' : (column.header ?? column.key.toUpperCase());
+              return (
+                <TableCell
+                  key={column.key}
+                  align={column.align ?? (column.key === 'acciones' ? 'center' : 'left')}
+                  sx={{ width: column.width }}
+                >
+                  <Box display="flex" alignItems="center" justifyContent="space-between">
+                    {displayedHeader}
 
-                  {column.filterable && (
-                    <Tooltip title="Filtrar columna">
-                      <IconButton
-                        size="small"
-                        color="inherit"
-                        aria-label={`Filtrar columna ${column.header ?? column.key}`}
-                        aria-haspopup="menu"
-                        onClick={(e) => {
-                          setColumnaActiva(column.key as ColKey);
-                          setFiltroColInput(filtrosColumna[column.key] || '');
-                          setMenuAnchor(e.currentTarget);
-                        }}
-                      >
-                        <IconDotsVertical size={16} />
-                      </IconButton>
-                    </Tooltip>
-                  )}
-                </Box>
-              </TableCell>
-            ))}
+                    {column.key === 'estado' && (
+                      <Tooltip title="Filtrar por estado de stock">
+                        <IconButton
+                          size="small"
+                          color="inherit"
+                          aria-label={`Filtrar estado de stock`}
+                          aria-haspopup="menu"
+                          onClick={abrirMenu('estado')}
+                        >
+                          <IconDotsVertical size={16} />
+                        </IconButton>
+                      </Tooltip>
+                    )}
+                  </Box>
+                </TableCell>
+              );
+            })}
           </TableRow>
         </TableHead>
 
@@ -819,6 +839,16 @@ const TablaArticulos: React.FC<ArticulosTableProps> = ({
     <>
       <WoodSection>
         {showToolbar && toolbar}
+
+        {/* Resumen debajo del subtítulo (similar a TablaStockPuntoVenta) */}
+        <Box px={1} pb={1}>
+          <Typography variant="body1" color="text.secondary">
+            {`${total} artículos • ${numberFormatter.format(
+              statsData?.estadisticasArticulos?.totalUnidades ?? articulos.reduce((acc, it) => acc + Number(obtenerStockTotal(it) || 0), 0)
+            )} unidades`}
+          </Typography>
+        </Box>
+
         {tabla}
         {paginador}
       </WoodSection>
@@ -846,25 +876,30 @@ const TablaArticulos: React.FC<ArticulosTableProps> = ({
           <Box px={1} pb={1}>
             <Stack spacing={1}>
               <Stack direction="row" spacing={1} flexWrap="wrap">
-                {['Sin stock', 'Bajo stock', 'Con stock'].map((op) => (
-                  <Button
-                    key={op}
-                    size="small"
-                    variant={(controlledFilters?.estado ?? localFilters.estado) === op ? 'contained' : 'outlined'}
-                    color="success"
-                    onClick={() => {
-                      if (!controlledFilters) {
-                        setLocalFilters((prev) => ({ ...prev, estado: op as any }));
-                        setPage(0);
-                      }
-                      cerrarMenu();
-                      refetch();
-                    }}
-                    sx={{ textTransform: 'none' }}
-                  >
-                    {op}
-                  </Button>
-                ))}
+                {['Sin stock', 'STOCK BAJO', 'Con stock'].map((op) => {
+                  const key = op;
+                  const isActive = (controlledFilters?.estado ?? localFilters.estado) === op;
+                  const color = op.toLowerCase().includes('sin') ? 'error' : op.toLowerCase().includes('bajo') ? 'warning' : 'success';
+                  return (
+                    <Button
+                      key={key}
+                      size="small"
+                      variant={isActive ? 'contained' : 'outlined'}
+                      color={color as any}
+                      onClick={() => {
+                        if (!controlledFilters) {
+                          setLocalFilters((prev) => ({ ...prev, estado: op as any }));
+                          setPage(0);
+                        }
+                        // Do not call refetch immediately; allow new variables to propagate to useQuery
+                        cerrarMenu();
+                      }}
+                      sx={{ textTransform: 'none' }}
+                    >
+                      {op}
+                    </Button>
+                  );
+                })}
               </Stack>
               <Stack direction="row" justifyContent="space-between">
                 <Button

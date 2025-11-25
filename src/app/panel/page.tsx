@@ -74,7 +74,7 @@ export default function Dashboard() {
     const porRubro = new Map<string, { rubro: string; stock: number; minimo: number }>();
     for (const art of articulos as any[]) {
       const rubro = String(art.Rubro || 'Sin rubro');
-      const stock = parseFloat(String(art.Deposito ?? 0)) || 0;
+      const stock = parseFloat(String(art.totalStock ?? 0)) || 0;
       const minimo = parseFloat(String(art.StockMinimo ?? 0)) || 0;
       const acc = porRubro.get(rubro) || { rubro, stock: 0, minimo: 0 };
       acc.stock += stock;
@@ -89,7 +89,7 @@ export default function Dashboard() {
     // Donut: distribución por estado del stock
     let sin = 0, bajo = 0, ok = 0;
     for (const art of articulos as any[]) {
-      const stock = parseFloat(String(art.Deposito ?? 0)) || 0;
+      const stock = parseFloat(String(art.totalStock ?? 0)) || 0;
       const min = parseFloat(String(art.StockMinimo ?? 0)) || 0;
       if (stock <= 0) sin++;
       else if (min > 0 && stock <= min) bajo++;

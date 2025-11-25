@@ -201,7 +201,9 @@ export default function PuntosVentaPage() {
         <ModalNuevaAsignacionStock
           open={modalAsignacionOpen}
           onClose={handleCerrarAsignacion}
-          puntoVenta={puntoSeleccionado}
+          destinoId={puntoSeleccionado.id}
+          origen="venta"
+          tipoDestinoPreferido="venta"
           onStockAsignado={handleAsignacionCompletada}
         />
       )}

@@ -24,7 +24,7 @@ import { WoodBackdrop } from '@/components/ui/TexturedFrame/WoodBackdrop';
 import type { ArticuloConStockPuntoMudras } from '@/components/puntos-mudras/graphql/queries';
 import type { Articulo } from '@/app/interfaces/mudras.types';
 import { calcularPrecioDesdeArticulo } from '@/utils/precioVenta';
-import { azul } from '@/ui/colores';
+import { azul, verde } from '@/ui/colores';
 import SearchToolbar from '@/components/ui/SearchToolbar';
 
 type TablaStockTheme = {
@@ -405,7 +405,7 @@ const TablaStockPuntoVenta: React.FC<Props> = ({
                           <Tooltip title="Editar stock">
                             <span>
                               <CrystalIconButton
-                                baseColor={buttonColor}
+                                baseColor={verde.primary}
                                 onClick={() => onEditStock(item)}
                                 disabled={!onEditStock}
                               >

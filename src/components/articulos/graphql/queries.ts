@@ -94,6 +94,7 @@ export const GET_ESTADISTICAS_ARTICULOS = gql`
       articulosEnPromocion
       articulosPublicadosEnTienda
       valorTotalStock
+      totalUnidades
     }
   }
 `;

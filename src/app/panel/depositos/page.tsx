@@ -78,6 +78,11 @@ export default function DepositosPage() {
     () => depositos.find((p) => String(p.id) === activeKey) ?? null,
     [depositos, activeKey]
   );
+  const tabValue = useMemo(() => {
+    if (!depositos.length) return 'empty';
+    if (activeKey && depositos.some((p) => String(p.id) === activeKey)) return activeKey;
+    return String(depositos[0].id);
+  }, [depositos, activeKey]);
   const depositoSeleccionadoId = depositoSeleccionado?.id ?? null;
 
   const {
@@ -162,7 +167,7 @@ export default function DepositosPage() {
       <TexturedPanel accent={depositTheme.accent} radius={14} contentPadding={12} bgTintPercent={22} bgAlpha={0.98}>
         <Box sx={{ px: 2, py: 1.5 }}>
           <Tabs
-            value={activeKey}
+            value={tabValue}
             onChange={(_, key) => setActiveKey(String(key))}
             variant="scrollable"
             scrollButtons="auto"
@@ -240,7 +245,9 @@ export default function DepositosPage() {
         <ModalNuevaAsignacionStock
           open={modalAsignacionOpen}
           onClose={handleCerrarAsignacion}
-          puntoVenta={depositoSeleccionado}
+          destinoId={depositoSeleccionado.id}
+          origen="deposito"
+          tipoDestinoPreferido="deposito"
           onStockAsignado={handleAsignacionCompletada}
         />
       )}

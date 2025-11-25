@@ -492,9 +492,9 @@ const TablaArticulos: React.FC<Props> = ({
                   <Typography 
                     variant="body2" 
                     fontWeight={600}
-                    color={(parseFloat(String(articulo.Deposito ?? 0)) <= 0) ? 'error.main' : 'text.primary'}
+                    color={(parseFloat(String(articulo.totalStock ?? 0)) <= 0) ? 'error.main' : 'text.primary'}
                   >
-                    {(parseFloat(String(articulo.Deposito ?? 0)) || 0)} {abrevUnidad(articulo.Unidad as UnidadMedida)}
+                    {(parseFloat(String(articulo.totalStock ?? 0)) || 0)} {abrevUnidad(articulo.Unidad as UnidadMedida)}
                   </Typography>
                 </TableCell>
                 {/* Precio */}
@@ -511,9 +511,9 @@ const TablaArticulos: React.FC<Props> = ({
                 </TableCell>
                 {/* 7) Estado */}
                 <TableCell>
-                  <Chip
-                    label={getStockLabel(parseFloat(String(articulo.Deposito ?? 0)) || 0, articulo.StockMinimo || 0)}
-                    color={getStockColor(parseFloat(String(articulo.Deposito ?? 0)) || 0, articulo.StockMinimo || 0)}
+                <Chip
+                  label={getStockLabel(parseFloat(String(articulo.totalStock ?? 0)) || 0, articulo.StockMinimo || 0)}
+                  color={getStockColor(parseFloat(String(articulo.totalStock ?? 0)) || 0, articulo.StockMinimo || 0)}
                     size="small"
                     variant="filled"
                   />

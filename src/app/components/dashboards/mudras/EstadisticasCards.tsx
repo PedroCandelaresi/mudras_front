@@ -19,19 +19,19 @@ const EstadisticasCards = () => {
   const totalArticulos = data?.articulos?.length || 0;
   
   const articulosConStock = data?.articulos?.filter(art => {
-    const stock = parseFloat(String(art.Deposito || 0));
+    const stock = parseFloat(String(art.totalStock || 0));
     return stock > 0;
   }).length || 0;
   
   const articulosStockBajo = data?.articulos?.filter(art => {
-    const stock = parseFloat(String(art.Deposito || 0));
+    const stock = parseFloat(String(art.totalStock || 0));
     const stockMinimo = parseFloat(String(art.StockMinimo || 0));
     return stock > 0 && stockMinimo > 0 && stock <= stockMinimo;
   }).length || 0;
   
   const articulosSinStock = data?.articulos?.filter(art => {
-    const stock = parseFloat(String(art.Deposito || 0));
-    return stock === 0 || art.Deposito === null || art.Deposito === undefined;
+    const stock = parseFloat(String(art.totalStock || 0));
+    return stock === 0 || art.totalStock === null || art.totalStock === undefined;
   }).length || 0;
   
   const articulosEnPromocion = data?.articulos?.filter(art => {

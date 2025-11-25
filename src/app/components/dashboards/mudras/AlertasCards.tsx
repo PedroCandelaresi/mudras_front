@@ -15,7 +15,7 @@ const AlertasCards = () => {
 
   // Calcular alertas reales usando los datos de la base de datos
   const articulosStockBajo = data?.articulos?.filter(art => {
-    const stock = parseFloat(String(art.Deposito || 0));
+    const stock = parseFloat(String(art.totalStock || 0));
     const stockMinimo = parseFloat(String(art.StockMinimo || 0));
     return stock > 0 && stockMinimo > 0 && stock <= stockMinimo;
   }).length || 0;

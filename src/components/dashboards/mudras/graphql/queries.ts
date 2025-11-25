@@ -4,7 +4,8 @@ export const GET_DASHBOARD_STATS = gql`
   query GetDashboardStats {
     articulos {
       id
-      Deposito
+      totalStock
+      Rubro
       StockMinimo
       EnPromocion
     }
@@ -17,9 +18,10 @@ export const GET_DASHBOARD_STATS = gql`
 export interface DashboardStatsResponse {
   articulos: Array<{
     id: number;
-    Deposito: number;
-    StockMinimo: number;
-    EnPromocion: boolean;
+    totalStock?: number;
+    Rubro?: string;
+    StockMinimo?: number;
+    EnPromocion?: boolean;
   }>;
   proveedores: Array<{ IdProveedor: number }>;
 }

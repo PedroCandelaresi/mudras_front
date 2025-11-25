@@ -198,6 +198,29 @@ export const azulOscuro = {
 
 export type PaletaAzulOscuro = typeof azulOscuro;
 
+// Modal de asignación (elegante negro + dorado)
+export const oroNegro = {
+  headerBg: '#0d0b0a',
+  headerText: '#f7f1e3',
+  headerBorder: '#b88a2d',
+  toolbarBg: '#151210',
+  toolbarBorder: '#c7a64f',
+  borderOuter: '#b88a2d',
+  borderInner: '#d8b157',
+  primary: '#c7a027',        // dorado principal
+  primaryHover: '#b0881f',
+  textStrong: '#0d0b0a',
+  chipBg: '#e7cf8a',
+  chipText: '#3a2a08',
+  rowHover: '#19140f',
+  alternateRow: '#1f1a14',
+  actionHover: '#e7cf8a',
+  dark: '#9c7218',           // dorado profundo para secundarios/cancelar
+  darkHover: '#805d13',
+};
+
+export type PaletaOroNegro = typeof oroNegro;
+
 // Oro blanco / tono champagne suave para la portada del panel
 export const oroBlanco = {
   headerBg: '#6d5c3b',

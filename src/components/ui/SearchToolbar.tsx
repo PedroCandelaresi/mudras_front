@@ -85,7 +85,7 @@ const SearchToolbarInner: React.FC<SearchToolbarProps> = ({
     >
       {title ? (
         <Typography
-          variant="h6"
+          variant="h2"
           fontWeight={700}
           sx={{
             display: 'flex',

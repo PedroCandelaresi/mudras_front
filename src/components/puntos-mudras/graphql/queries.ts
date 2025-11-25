@@ -94,10 +94,7 @@ export const OBTENER_PROVEEDORES_CON_STOCK = gql`
 export const OBTENER_RUBROS_POR_PROVEEDOR = gql`
   query ObtenerRubrosPorProveedor($proveedorId: ID!) {
     obtenerRubrosPorProveedor(proveedorId: $proveedorId) {
-      rubro {
-        id
-        nombre
-      }
+      rubro
     }
   }
 `;
@@ -116,10 +113,7 @@ export const BUSCAR_ARTICULOS_PARA_ASIGNACION = gql`
       stockTotal
       stockAsignado
       stockDisponible
-      rubro {
-        id
-        nombre
-      }
+      rubro
       proveedor
     }
   }

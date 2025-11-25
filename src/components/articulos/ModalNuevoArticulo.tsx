@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState, useCallback } from 'react';
 import {
   Box,
+  Autocomplete,
   Dialog,
   DialogActions,
   DialogContent,
@@ -74,11 +75,12 @@ const INITIAL_STATE: FormState = {
   stockMinimo: '0',
 };
 
-// === Layout similar a ModalEditarRubro ===
-const VH_MAX = 78;
-const HEADER_H = 88;
-const FOOTER_H = 96;
+// Medidas y layout heredados de ModalDetallesArticulo
+const VH_MAX = 85;
+const HEADER_H = 60;
+const FOOTER_H = 60;
 const DIV_H = 3;
+const CONTENT_MAX = `calc(${VH_MAX}vh - ${HEADER_H + FOOTER_H + DIV_H * 2}px)`;
 
 const parseNumericInput = (value: string) => {
   if (!value) return 0;
@@ -125,6 +127,8 @@ const ModalNuevoArticulo = ({ open, onClose, articulo, onSuccess, accentColor }:
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const [iva, setIva] = useState<IvaOption>('21');
+  const [rubroInput, setRubroInput] = useState('');
+  const [proveedorInput, setProveedorInput] = useState('');
   const costo = useMemo(() => parseNumericInput(form.costo), [form.costo]);
   const porcentajeGananciaValor = useMemo(() => parseNumericInput(form.porcentajeGanancia), [form.porcentajeGanancia]);
 
@@ -144,14 +148,33 @@ const ModalNuevoArticulo = ({ open, onClose, articulo, onSuccess, accentColor }:
   );
   const selectedRubro = useMemo(() => {
     const id = Number(form.rubroId);
-    if (!Number.isFinite(id)) return undefined;
-    return rubros.find((r) => r.id === id);
-  }, [form.rubroId, rubros]);
+    if (Number.isFinite(id)) {
+      const byId = rubros.find((r) => r.id === id);
+      if (byId) return byId;
+    }
+    const nombreFallback = (articulo as any)?.rubro?.Rubro || (articulo as any)?.Rubro;
+    if (nombreFallback) {
+      const lower = nombreFallback.toString().toLowerCase();
+      const byName = rubros.find((r) => r.nombre.toLowerCase() === lower);
+      if (byName) return byName;
+    }
+    return undefined;
+  }, [form.rubroId, rubros, articulo]);
+
   const selectedProveedor = useMemo(() => {
     const id = Number(form.idProveedor);
-    if (!Number.isFinite(id)) return undefined;
-    return proveedores.find((p) => p.IdProveedor === id);
-  }, [form.idProveedor, proveedores]);
+    if (Number.isFinite(id)) {
+      const byId = proveedores.find((p) => p.IdProveedor === id);
+      if (byId) return byId;
+    }
+    const nombreFallback = (articulo as any)?.proveedor?.Nombre;
+    if (nombreFallback) {
+      const lower = nombreFallback.toString().toLowerCase();
+      const byName = proveedores.find((p) => (p.Nombre ?? '').toLowerCase() === lower);
+      if (byName) return byName;
+    }
+    return undefined;
+  }, [form.idProveedor, proveedores, articulo]);
 
   const precioCalculado = useMemo(
     () =>
@@ -176,6 +199,8 @@ const ModalNuevoArticulo = ({ open, onClose, articulo, onSuccess, accentColor }:
     if (!open) return;
     setError('');
     setSaving(false);
+    setRubroInput((articulo as any)?.rubro?.Rubro || (articulo as any)?.Rubro || '');
+    setProveedorInput((articulo as any)?.proveedor?.Nombre || '');
     if (!articulo) {
       setForm(INITIAL_STATE);
       setIva('21');
@@ -190,8 +215,18 @@ const ModalNuevoArticulo = ({ open, onClose, articulo, onSuccess, accentColor }:
       codigo: (articulo.Codigo ?? '').toString(),
       costo: costoReferencia ? String(costoReferencia) : '',
       porcentajeGanancia: articulo.PorcentajeGanancia != null ? String(articulo.PorcentajeGanancia) : '0',
-      rubroId: (articulo as any)?.rubro?.Id != null ? String((articulo as any).rubro.Id) : '',
-      idProveedor: articulo.idProveedor != null ? String(articulo.idProveedor) : '',
+      rubroId:
+        (articulo as any)?.rubro?.Id != null
+          ? String((articulo as any).rubro.Id)
+          : (articulo as any)?.rubroId != null
+            ? String((articulo as any).rubroId)
+            : '',
+      idProveedor:
+        articulo.idProveedor != null
+          ? String(articulo.idProveedor)
+          : (articulo as any)?.proveedor?.IdProveedor != null
+            ? String((articulo as any).proveedor.IdProveedor)
+            : '',
       stock: stockActual != null ? String(stockActual) : '0',
       stockMinimo: stockMinimoActual != null ? String(stockMinimoActual) : '0',
     });
@@ -201,7 +236,45 @@ const ModalNuevoArticulo = ({ open, onClose, articulo, onSuccess, accentColor }:
     } else {
       setIva('21');
     }
-  }, [open, articulo]);
+  }, [open, articulo?.id]);
+
+  useEffect(() => {
+    if (!open) return;
+    if (selectedRubro) {
+      const label = `${selectedRubro.nombre}${selectedRubro.codigo ? ` (${selectedRubro.codigo})` : ''}`;
+      if (label && label !== rubroInput) setRubroInput(label);
+    }
+  }, [open, selectedRubro?.id, selectedRubro?.nombre, selectedRubro?.codigo, rubroInput]);
+
+  useEffect(() => {
+    if (!open) return;
+    if (selectedProveedor) {
+      const label = selectedProveedor.Nombre || `Proveedor #${selectedProveedor.IdProveedor}`;
+      if (label && label !== proveedorInput) setProveedorInput(label);
+    }
+  }, [open, selectedProveedor?.IdProveedor, selectedProveedor?.Nombre, proveedorInput]);
+
+  const rubroOptions = useMemo(() => {
+    const min = rubroInput.trim().length >= 1;
+    const filtered = min
+      ? rubros.filter((r) => `${r.nombre} ${r.codigo ?? ''}`.toLowerCase().includes(rubroInput.trim().toLowerCase()))
+      : rubros;
+    const alreadyIn = filtered.some((r) => r.id === selectedRubro?.id);
+    if (selectedRubro && !alreadyIn) return [selectedRubro, ...filtered];
+    if (selectedRubro && !filtered.length) return [selectedRubro];
+    return filtered;
+  }, [rubroInput, rubros, selectedRubro]);
+
+  const proveedorOptions = useMemo(() => {
+    const min = proveedorInput.trim().length >= 1;
+    const filtered = min
+      ? proveedores.filter((p) => `${p.Nombre ?? ''} ${p.IdProveedor}`.toLowerCase().includes(proveedorInput.trim().toLowerCase()))
+      : proveedores;
+    const alreadyIn = filtered.some((p) => p.IdProveedor === selectedProveedor?.IdProveedor);
+    if (selectedProveedor && !alreadyIn) return [selectedProveedor, ...filtered];
+    if (selectedProveedor && !filtered.length) return [selectedProveedor];
+    return filtered;
+  }, [proveedorInput, proveedores, selectedProveedor]);
 
   const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = event.target;
@@ -269,36 +342,89 @@ const ModalNuevoArticulo = ({ open, onClose, articulo, onSuccess, accentColor }:
       open={open}
       onClose={handleClose}
       fullWidth
-      maxWidth="md"
-      PaperProps={{ sx: { borderRadius: 3, boxShadow: '0 8px 32px rgba(0,0,0,0.16)', bgcolor: 'transparent', overflow: 'hidden' } }}
+      maxWidth="lg"
+      PaperProps={{
+        sx: {
+          borderRadius: 4,
+          bgcolor: 'transparent !important',
+          backgroundColor: 'transparent !important',
+          boxShadow: '0 8px 40px rgba(0,0,0,0.28)',
+          overflow: 'hidden',
+          maxHeight: `${VH_MAX}vh`,
+        }
+      }}
     >
-      <TexturedPanel accent={COLORS.primary} radius={12} contentPadding={0}>
-        <DialogTitle sx={{ p: 0, m: 0, minHeight: HEADER_H, display: 'flex', alignItems: 'center' }}>
-          <Box sx={{ width: '100%', display: 'flex', alignItems: 'center', px: 3, py: 2.25, gap: 2 }}>
-            <Box sx={{
-              width: 40, height: 40, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center',
-              background: `linear-gradient(135deg, ${COLORS.primary} 0%, ${COLORS.primaryHover} 100%)`,
-              boxShadow: 'inset 0 2px 4px rgba(255,255,255,0.3), 0 4px 12px rgba(0,0,0,0.25)', color: '#fff'
-            }}>
-              <Icon icon={articulo ? 'mdi:cube-edit-outline' : 'mdi:cube-outline'} width={22} height={22} />
-            </Box>
-            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.25 }}>
-              <Typography variant="h6" fontWeight={700} color="white" sx={{ textShadow: '0 4px 12px rgba(0,0,0,0.88), 0 0 2px rgba(0,0,0,0.72)' }}>
-                {titulo}
-              </Typography>
-              {articulo?.Descripcion && (
-                <Typography variant="subtitle2" color="rgba(255,255,255,0.85)" fontWeight={700} sx={{ textShadow: '0 3px 9px rgba(0,0,0,0.82), 0 0 1px rgba(0,0,0,0.7)' }}>
-                  {articulo.Descripcion}
+      <TexturedPanel
+        accent={COLORS.primary}
+        radius={12}
+        contentPadding={0}
+        bgTintPercent={12}
+        bgAlpha={1}
+        textureBaseOpacity={0.22}
+        textureBoostOpacity={0.19}
+        textureBrightness={1.12}
+        textureContrast={1.03}
+        tintOpacity={0.38}
+      >
+        <Box sx={{ display: 'flex', flexDirection: 'column', maxHeight: `${VH_MAX}vh` }}>
+
+          <DialogTitle sx={{ p: 0, m: 0, minHeight: HEADER_H, display: 'flex', alignItems: 'center' }}>
+            <Box sx={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', px: 3, gap: 2 }}>
+              <Box sx={{
+                width: 40,
+                height: 40,
+                borderRadius: '50%',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                background: `linear-gradient(135deg, ${COLORS.primary} 0%, ${COLORS.primaryHover} 100%)`,
+                boxShadow: 'inset 0 2px 4px rgba(255,255,255,0.3), 0 4px 12px rgba(0,0,0,0.25)',
+                color: '#fff'
+              }}>
+                <Icon icon={articulo ? 'mdi:cube-edit-outline' : 'mdi:cube-outline'} width={22} height={22} />
+              </Box>
+
+              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.25 }}>
+                <Typography variant="h6" fontWeight={700} color="#fff" sx={{ textShadow: '0 2px 4px rgba(0,0,0,0.8)' }}>
+                  {titulo}
                 </Typography>
-              )}
+                {articulo?.Descripcion && (
+                  <Typography variant="subtitle2" color="rgba(255,255,255,0.9)" fontWeight={700} sx={{ textShadow: '0 2px 4px rgba(0,0,0,0.7)' }}>
+                    {articulo.Descripcion}
+                  </Typography>
+                )}
+              </Box>
+
+              <Box sx={{ ml: 'auto', display: 'flex', gap: 1, alignItems: 'center' }}>
+                <CrystalSoftButton
+                  baseColor={COLORS.primary}
+                  onClick={handleClose}
+                  title="Cerrar"
+                  sx={{
+                    width: 40,
+                    height: 40,
+                    minWidth: 40,
+                    maxWidth: 40,
+                    minHeight: 40,
+                    maxHeight: 40,
+                    borderRadius: '50%',
+                    border: 0,
+                    p: 0,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    lineHeight: 1,
+                    aspectRatio: '1 / 1',
+                    '& .MuiButton-startIcon': { margin: 0 },
+                    '& .MuiButton-endIcon': { margin: 0 },
+                  }}
+                >
+                  <Icon icon="mdi:close" color="#fff" width={20} height={20} />
+                </CrystalSoftButton>
+              </Box>
             </Box>
-            <Box sx={{ ml: 'auto' }}>
-              <CrystalSoftButton baseColor={COLORS.primary} onClick={handleClose} title="Cerrar" sx={{ width: 40, height: 40, minWidth: 40, p: 0, borderRadius: '50%', display: 'grid', placeItems: 'center' }}>
-                <Icon icon="mdi:close" color="#fff" width={22} height={22} />
-              </CrystalSoftButton>
-            </Box>
-          </Box>
-        </DialogTitle>
+          </DialogTitle>
+
         <Divider sx={{
           height: DIV_H,
           border: 0,
@@ -309,10 +435,19 @@ const ModalNuevoArticulo = ({ open, onClose, articulo, onSuccess, accentColor }:
           `,
           backgroundRepeat: 'no-repeat, no-repeat, repeat',
           backgroundSize: '100% 1px, 100% 1px, 100% 100%',
-          backgroundPosition: 'top left, bottom left, center'
+          backgroundPosition: 'top left, bottom left, center',
+          flex: '0 0 auto'
         }} />
-        <DialogContent>
-          <Box sx={{ display: 'grid', gap: 1.5, mt: 1 }}>
+
+        <DialogContent
+          sx={{
+            p: 0,
+            overflow: 'auto',
+            maxHeight: CONTENT_MAX,
+            background: '#f8fafb',
+          }}
+        >
+          <Box sx={{ p: { xs: 3, md: 4 }, display: 'grid', gap: 2 }}>
             <TextField
               label="Descripción"
               name="descripcion"
@@ -348,58 +483,85 @@ const ModalNuevoArticulo = ({ open, onClose, articulo, onSuccess, accentColor }:
               }}
             />
             <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)' }, gap: 1.5 }}>
-              <TextField
-                select
-                label="Rubro"
-                name="rubroId"
-                value={form.rubroId}
-                onChange={handleChange}
-                fullWidth
-                placeholder="Seleccione un rubro"
-                disabled={loadingRubros}
-                sx={{
-                  '& .MuiOutlinedInput-root': {
-                    borderRadius: 2,
-                    background: '#ffffff',
-                    '& fieldset': { borderColor: COLORS.inputBorder },
-                    '&:hover fieldset': { borderColor: COLORS.inputBorderHover },
-                    '&.Mui-focused fieldset': { borderColor: COLORS.primary },
-                  },
+              <Autocomplete
+                options={rubroOptions}
+                loading={loadingRubros}
+                value={selectedRubro ?? null}
+                inputValue={rubroInput}
+                onInputChange={(_, val) => {
+                  if (val === rubroInput) return;
+                  setRubroInput(val);
                 }}
-              >
-                <MenuItem value="">Sin rubro</MenuItem>
-                {rubros.map((r) => (
-                  <MenuItem key={r.id} value={String(r.id)}>
-                    {r.nombre} {r.codigo ? `(${r.codigo})` : ''}
-                  </MenuItem>
-                ))}
-              </TextField>
-              <TextField
-                select
-                label="Proveedor"
-                name="idProveedor"
-                value={form.idProveedor}
-                onChange={handleChange}
-                fullWidth
-                placeholder="Seleccione un proveedor"
-                disabled={loadingProveedores}
-                sx={{
-                  '& .MuiOutlinedInput-root': {
-                    borderRadius: 2,
-                    background: '#ffffff',
-                    '& fieldset': { borderColor: COLORS.inputBorder },
-                    '&:hover fieldset': { borderColor: COLORS.inputBorderHover },
-                    '&.Mui-focused fieldset': { borderColor: COLORS.primary },
-                  },
+                onChange={(_, val) => {
+                  setForm((prev) => ({ ...prev, rubroId: val ? String(val.id) : '' }));
+                  setRubroInput(val ? `${val.nombre}${val.codigo ? ` (${val.codigo})` : ''}` : '');
                 }}
-              >
-                <MenuItem value="">Sin proveedor</MenuItem>
-                {proveedores.map((p) => (
-                  <MenuItem key={p.IdProveedor} value={String(p.IdProveedor)}>
-                    {p.Nombre || `Proveedor #${p.IdProveedor}`}
-                  </MenuItem>
-                ))}
-              </TextField>
+                getOptionLabel={(option) => `${option.nombre}${option.codigo ? ` (${option.codigo})` : ''}`}
+                isOptionEqualToValue={(opt, val) => opt.id === val.id}
+                disableClearable={false}
+                fullWidth
+                renderOption={(props, option) => (
+                  <li {...props} key={`rubro-${option.id}`}>
+                    {`${option.nombre}${option.codigo ? ` (${option.codigo})` : ''}`}
+                  </li>
+                )}
+                renderInput={(params) => (
+                  <TextField
+                    {...params}
+                    label="Rubro"
+                    placeholder="Empezá a escribir para buscar"
+                    sx={{
+                      '& .MuiOutlinedInput-root': {
+                        borderRadius: 2,
+                        background: '#ffffff',
+                        '& fieldset': { borderColor: COLORS.inputBorder },
+                        '&:hover fieldset': { borderColor: COLORS.inputBorderHover },
+                        '&.Mui-focused fieldset': { borderColor: COLORS.primary },
+                      },
+                    }}
+                  />
+                )}
+              />
+
+              <Autocomplete
+                options={proveedorOptions}
+                loading={loadingProveedores}
+                value={selectedProveedor ?? null}
+                inputValue={proveedorInput}
+                onInputChange={(_, val) => {
+                  if (val === proveedorInput) return;
+                  setProveedorInput(val);
+                }}
+                onChange={(_, val) => {
+                  setForm((prev) => ({ ...prev, idProveedor: val ? String(val.IdProveedor) : '' }));
+                  setProveedorInput(val ? (val.Nombre || `Proveedor #${val.IdProveedor}`) : '');
+                }}
+                getOptionLabel={(option) => option.Nombre || `Proveedor #${option.IdProveedor}`}
+                isOptionEqualToValue={(opt, val) => opt.IdProveedor === val.IdProveedor}
+                disableClearable={false}
+                fullWidth
+                renderOption={(props, option) => (
+                  <li {...props} key={`prov-${option.IdProveedor}`}>
+                    {option.Nombre || `Proveedor #${option.IdProveedor}`}
+                  </li>
+                )}
+                renderInput={(params) => (
+                  <TextField
+                    {...params}
+                    label="Proveedor"
+                    placeholder="Empezá a escribir para buscar"
+                    sx={{
+                      '& .MuiOutlinedInput-root': {
+                        borderRadius: 2,
+                        background: '#ffffff',
+                        '& fieldset': { borderColor: COLORS.inputBorder },
+                        '&:hover fieldset': { borderColor: COLORS.inputBorderHover },
+                        '&.Mui-focused fieldset': { borderColor: COLORS.primary },
+                      },
+                    }}
+                  />
+                )}
+              />
             </Box>
             <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)' }, gap: 1.5 }}>
               <TextField
@@ -547,10 +709,21 @@ const ModalNuevoArticulo = ({ open, onClose, articulo, onSuccess, accentColor }:
           `,
           backgroundRepeat: 'no-repeat, no-repeat, repeat',
           backgroundSize: '100% 1px, 100% 1px, 100% 100%',
-          backgroundPosition: 'top left, bottom left, center'
+          backgroundPosition: 'top left, bottom left, center',
+          flex: '0 0 auto'
         }} />
         <DialogActions sx={{ p: 0, m: 0, minHeight: FOOTER_H }}>
-          <Box sx={{ width: '100%', display: 'flex', justifyContent: 'flex-end', px: 3, py: 2.5, gap: 1.5 }}>
+          <Box
+            sx={{
+              width: '100%',
+              height: '100%',
+              display: 'flex',
+              justifyContent: 'flex-end',
+              alignItems: 'center',
+              px: 3,
+              gap: 1.5,
+            }}
+          >
             <CrystalSoftButton baseColor={COLORS.primary} onClick={handleClose} disabled={saving}>
               Cancelar
             </CrystalSoftButton>
@@ -559,6 +732,8 @@ const ModalNuevoArticulo = ({ open, onClose, articulo, onSuccess, accentColor }:
             </CrystalButton>
           </Box>
         </DialogActions>
+
+        </Box>
       </TexturedPanel>
     </Dialog>
   );
