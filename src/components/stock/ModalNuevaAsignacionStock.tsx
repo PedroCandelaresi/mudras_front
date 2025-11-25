@@ -222,6 +222,7 @@ export default function ModalNuevaAsignacionStock({ open, onClose, destinoId, on
     setError('');
 
     try {
+      // Procesamos en serie para evitar solapar la actualización del stock por destino.
       for (const asignacion of asignaciones) {
         const articulo = articulos.find(a => a.id === asignacion.articuloId);
         const base = Number(articulo?.stockDisponible ?? 0);
