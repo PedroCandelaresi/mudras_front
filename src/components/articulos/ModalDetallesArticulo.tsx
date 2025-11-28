@@ -273,9 +273,9 @@ const ModalDetallesArticulo = ({
               height: DIV_H,
               border: 0,
               backgroundImage: `
-                linear-gradient(to bottom, rgba(255,255,255,0.70), rgba(255,255,255,0.70)),
-                linear-gradient(to bottom, rgba(0,0,0,0.22), rgba(0,0,0,0.22)),
-                linear-gradient(90deg, rgba(255,255,255,0.05), ${COLORS.primary}, rgba(255,255,255,0.05))
+                linear-gradient(to bottom, ${alpha('#fff', 0.68)}, ${alpha('#fff', 0.68)}),
+                linear-gradient(to bottom, ${alpha(darken(COLORS.primary, 0.5), 0.3)}, ${alpha(darken(COLORS.primary, 0.5), 0.3)}),
+                linear-gradient(90deg, ${alpha(COLORS.primary, 0.12)}, ${COLORS.primary}, ${alpha(COLORS.primary, 0.12)})
               `,
               backgroundRepeat: 'no-repeat, no-repeat, repeat',
               backgroundSize: '100% 1px, 100% 1px, 100% 100%',
@@ -647,9 +647,9 @@ const ModalDetallesArticulo = ({
               height: DIV_H,
               border: 0,
               backgroundImage: `
-                linear-gradient(to bottom, rgba(0,0,0,0.22), rgba(0,0,0,0.22)),
-                linear-gradient(to bottom, rgba(255,255,255,0.70), rgba(255,255,255,0.70)),
-                linear-gradient(90deg, rgba(255,255,255,0.05), ${COLORS.primary}, rgba(255,255,255,0.05))
+                linear-gradient(to bottom, ${alpha(darken(COLORS.primary, 0.5), 0.3)}, ${alpha(darken(COLORS.primary, 0.5), 0.3)}),
+                linear-gradient(to bottom, ${alpha('#fff', 0.68)}, ${alpha('#fff', 0.68)}),
+                linear-gradient(90deg, ${alpha(COLORS.primary, 0.12)}, ${COLORS.primary}, ${alpha(COLORS.primary, 0.12)})
               `,
               backgroundRepeat: 'no-repeat, no-repeat, repeat',
               backgroundSize: '100% 1px, 100% 1px, 100% 100%',

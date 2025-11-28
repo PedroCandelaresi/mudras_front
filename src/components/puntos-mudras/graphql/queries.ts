@@ -100,11 +100,12 @@ export const OBTENER_RUBROS_POR_PROVEEDOR = gql`
 `;
 
 export const BUSCAR_ARTICULOS_PARA_ASIGNACION = gql`
-  query BuscarArticulosParaAsignacion($proveedorId: Int, $rubro: String, $busqueda: String) {
+  query BuscarArticulosParaAsignacion($proveedorId: Int, $rubro: String, $busqueda: String, $destinoId: Int) {
     buscarArticulosParaAsignacion(
       proveedorId: $proveedorId
       rubro: $rubro
       busqueda: $busqueda
+      destinoId: $destinoId
     ) {
       id
       nombre
@@ -113,6 +114,7 @@ export const BUSCAR_ARTICULOS_PARA_ASIGNACION = gql`
       stockTotal
       stockAsignado
       stockDisponible
+      stockEnDestino
       rubro
       proveedor
     }
@@ -192,6 +194,7 @@ export interface ArticuloFiltrado {
   stockTotal: number;
   stockAsignado: number;
   stockDisponible: number;
+  stockEnDestino?: number;
   rubro: string;
   proveedor: string;
 }

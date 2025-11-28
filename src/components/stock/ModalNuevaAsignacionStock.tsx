@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import {
   Dialog,
   DialogTitle,
@@ -26,22 +26,22 @@ import {
   MenuItem,
   Select,
   Checkbox,
+  Divider,
 } from '@mui/material';
 import { Icon } from '@iconify/react';
-import { useLazyQuery, useQuery } from '@apollo/client/react';
+import { useQuery, useLazyQuery } from '@apollo/client/react';
 import {
   OBTENER_PROVEEDORES_CON_STOCK,
-  OBTENER_RUBROS_POR_PROVEEDOR,
   BUSCAR_ARTICULOS_PARA_ASIGNACION,
   OBTENER_PUNTOS_MUDRAS,
   type ObtenerProveedoresConStockResponse,
-  type ObtenerRubrosPorProveedorResponse,
   type BuscarArticulosParaAsignacionResponse,
   type ProveedorBasico,
-  type RubroBasico,
   type ArticuloFiltrado,
   type ObtenerPuntosMudrasResponse,
   type PuntoMudras,
+  OBTENER_RELACIONES_PROVEEDOR_RUBRO,
+  type ObtenerRelacionesProveedorRubroResponse,
 } from '@/components/puntos-mudras/graphql/queries';
 import { TexturedPanel } from '@/components/ui/TexturedFrame/TexturedPanel';
 import CrystalButton, { CrystalSoftButton, CrystalIconButton } from '@/components/ui/CrystalButton';
@@ -65,9 +65,12 @@ interface Props {
 }
 
 export default function ModalNuevaAsignacionStock({ open, onClose, destinoId, onStockAsignado, titulo, tipoDestinoPreferido, articuloPreseleccionado, origen }: Props) {
+  const HEADER_H = 60;
+  const FOOTER_H = 60;
+  const DIV_H = 3;
+
   // Estados para filtros
   const [proveedores, setProveedores] = useState<ProveedorBasico[]>([]);
-  const [rubros, setRubros] = useState<string[]>([]);
   const [proveedorSeleccionado, setProveedorSeleccionado] = useState<ProveedorBasico | null>(null);
   const [rubroSeleccionado, setRubroSeleccionado] = useState<string>('');
   const [busqueda, setBusqueda] = useState('');
@@ -76,38 +79,51 @@ export default function ModalNuevaAsignacionStock({ open, onClose, destinoId, on
   // Estados para artículos y asignaciones
   const [articulos, setArticulos] = useState<ArticuloFiltrado[]>([]);
   const [asignaciones, setAsignaciones] = useState<AsignacionStock[]>([]);
+  const [articulosSnapshot, setArticulosSnapshot] = useState<Record<number, ArticuloFiltrado>>({});
   const [loading, setLoading] = useState(false);
   // (loadingProveedores/loadingRubros provienen de los hooks de Apollo)
   const [error, setError] = useState<string>('');
   const [snack, setSnack] = useState<{ open: boolean; msg: string; sev: 'success'|'error'|'info' }>(() => ({ open: false, msg: '', sev: 'success' }));
   const [confirmOpen, setConfirmOpen] = useState(false);
+  const prevDestino = useRef<number | null>(null);
+
+  const tablaAccent = '#2b4735';
+  const tablaHeaderBg = darken(tablaAccent, 0.12);
+  const tablaHeaderText = alpha('#ffffff', 0.95);
+  const tablaBodyBg = 'rgba(235, 247, 238, 0.58)';
+  const tablaBodyAlt = 'rgba(191, 214, 194, 0.32)';
+  const busquedaActiva = useMemo(() => busqueda.trim().length > 0, [busqueda]);
+  const filtrosProveedorActivos = useMemo(
+    () => !busquedaActiva && (!!proveedorSeleccionado || !!rubroSeleccionado.trim()),
+    [busquedaActiva, proveedorSeleccionado, rubroSeleccionado]
+  );
+  const dividerTop = `
+                linear-gradient(to bottom, ${alpha('#fff', 0.68)}, ${alpha('#fff', 0.68)}),
+                linear-gradient(to bottom, ${alpha(darken(oroNegro.primary, 0.5), 0.3)}, ${alpha(darken(oroNegro.primary, 0.5), 0.3)}),
+                linear-gradient(90deg, ${alpha(oroNegro.primary, 0.12)}, ${oroNegro.primary}, ${alpha(oroNegro.primary, 0.12)})
+              `;
+  const dividerBottom = `
+                linear-gradient(to bottom, ${alpha(darken(oroNegro.primary, 0.5), 0.3)}, ${alpha(darken(oroNegro.primary, 0.5), 0.3)}),
+                linear-gradient(to bottom, ${alpha('#fff', 0.68)}, ${alpha('#fff', 0.68)}),
+                linear-gradient(90deg, ${alpha(oroNegro.primary, 0.12)}, ${oroNegro.primary}, ${alpha(oroNegro.primary, 0.12)})
+              `;
 
   // Cargar proveedores al abrir el modal
   // Apollo: cargar proveedores al abrir
   const { data: proveedoresData, loading: loadingProveedores } = useQuery<ObtenerProveedoresConStockResponse>(OBTENER_PROVEEDORES_CON_STOCK, { skip: !open, fetchPolicy: 'cache-and-network' });
   useEffect(() => {
     if (!open) return;
-    setProveedores(proveedoresData?.obtenerProveedoresConStock ?? []);
+    const normalizados = (proveedoresData?.obtenerProveedoresConStock ?? []).map((p) => ({
+      ...p,
+      id: Number(p.id),
+    }));
+    setProveedores(normalizados);
   }, [open, proveedoresData]);
 
-  // Cargar rubros cuando se selecciona un proveedor
-  const [getRubros, { data: rubrosData, loading: loadingRubros }] = useLazyQuery<ObtenerRubrosPorProveedorResponse>(OBTENER_RUBROS_POR_PROVEEDOR, { fetchPolicy: 'network-only' });
-  useEffect(() => {
-    if (proveedorSeleccionado) {
-      const proveedorId = Number(proveedorSeleccionado.id);
-      getRubros({ variables: { proveedorId } });
-    } else {
-      setRubros([]);
-      setRubroSeleccionado('');
-    }
-  }, [proveedorSeleccionado, getRubros]);
-  useEffect(() => {
-    if (rubrosData?.obtenerRubrosPorProveedor) {
-      const list = rubrosData.obtenerRubrosPorProveedor.map(({ rubro }) => rubro || '');
-      setRubros(list);
-      if (list.length === 1) setRubroSeleccionado(list[0] ?? '');
-    }
-  }, [rubrosData]);
+  const { data: relacionesData, loading: loadingRelaciones } = useQuery<ObtenerRelacionesProveedorRubroResponse>(
+    OBTENER_RELACIONES_PROVEEDOR_RUBRO,
+    { skip: !open, fetchPolicy: 'cache-and-network' }
+  );
 
   const [buscarArticulosQuery, { data: articulosData, loading: buscandoArticulos, error: errorBuscar }] =
     useLazyQuery<BuscarArticulosParaAsignacionResponse>(BUSCAR_ARTICULOS_PARA_ASIGNACION, {
@@ -118,6 +134,46 @@ export default function ModalNuevaAsignacionStock({ open, onClose, destinoId, on
     fetchPolicy: 'cache-and-network',
     skip: !open,
   });
+
+  const relacionesProveedorRubro = useMemo(
+    () => relacionesData?.obtenerRelacionesProveedorRubro ?? [],
+    [relacionesData]
+  );
+
+  const rubrosOpciones = useMemo(() => {
+    if (proveedorSeleccionado) {
+      const rubros = relacionesProveedorRubro
+        .filter((r) => Number(r.proveedorId) === Number(proveedorSeleccionado.id))
+        .map((r) => r.rubroNombre || '')
+        .filter(Boolean);
+      return Array.from(new Set(rubros));
+    }
+    const rubros = relacionesProveedorRubro.map((r) => r.rubroNombre || '').filter(Boolean);
+    return Array.from(new Set(rubros));
+  }, [relacionesProveedorRubro, proveedorSeleccionado]);
+
+  const proveedoresFiltrados = useMemo(() => {
+    if (!rubroSeleccionado) return proveedores;
+    const proveedoresIds = new Set(
+      relacionesProveedorRubro
+        .filter((r) => (r.rubroNombre || '').toLowerCase() === rubroSeleccionado.toLowerCase())
+        .map((r) => Number(r.proveedorId))
+    );
+    return proveedores.filter((p) => proveedoresIds.has(Number(p.id)));
+  }, [proveedores, relacionesProveedorRubro, rubroSeleccionado]);
+
+  useEffect(() => {
+    if (!proveedorSeleccionado) return;
+    if (rubroSeleccionado && !rubrosOpciones.includes(rubroSeleccionado)) {
+      setRubroSeleccionado('');
+    }
+  }, [proveedorSeleccionado, rubrosOpciones, rubroSeleccionado]);
+
+  useEffect(() => {
+    if (proveedorSeleccionado && !proveedoresFiltrados.some((p) => Number(p.id) === Number(proveedorSeleccionado.id))) {
+      setProveedorSeleccionado(null);
+    }
+  }, [proveedorSeleccionado, proveedoresFiltrados]);
   const puntosDisponibles: PuntoMudras[] = useMemo(
     () => (puntosData?.obtenerPuntosMudras ?? []).filter((p) => p.activo),
     [puntosData]
@@ -139,22 +195,82 @@ export default function ModalNuevaAsignacionStock({ open, onClose, destinoId, on
       return;
     }
     setError("");
+    const proveedorIdToSend = busquedaActiva ? null : (proveedorSeleccionado ? Number(proveedorSeleccionado.id) : null);
+    const rubroToSend = busquedaActiva ? null : (rubroSeleccionado.trim() || null);
     await buscarArticulosQuery({
       variables: {
-        proveedorId: proveedorSeleccionado?.id ?? null,
-        rubro: rubroSeleccionado.trim() || null,
+        proveedorId: proveedorIdToSend,
+        rubro: rubroToSend,
         busqueda: term || null,
+        destinoId: destinoSeleccionado ?? null,
       },
     });
-  }, [proveedorSeleccionado, rubroSeleccionado, busqueda, buscarArticulosQuery]);
+  }, [proveedorSeleccionado, rubroSeleccionado, busqueda, destinoSeleccionado, buscarArticulosQuery, busquedaActiva]);
   useEffect(() => {
     if (articulosData?.buscarArticulosParaAsignacion) {
-      setArticulos(articulosData.buscarArticulosParaAsignacion as any[]);
+      const normalizados = (articulosData.buscarArticulosParaAsignacion as any[]).map((a) => ({
+        ...a,
+        id: Number(a.id),
+        stockDisponible: Number(a.stockDisponible ?? 0),
+        stockEnDestino: Number(a.stockEnDestino ?? 0),
+      }));
+      setArticulos(normalizados);
+      setArticulosSnapshot((prev) => {
+        const next = { ...prev };
+        normalizados.forEach((a) => {
+          next[a.id] = { ...a };
+        });
+        return next;
+      });
     }
   }, [articulosData]);
   useEffect(() => {
     if (errorBuscar) setError(errorBuscar.message);
   }, [errorBuscar]);
+
+  const articulosOrdenados = useMemo(() => {
+    const term = busqueda.trim().toLowerCase();
+    const score = (valor?: string | null) => {
+      const v = (valor || '').trim().toLowerCase();
+      if (!v) return 4;
+      if (v === term) return 0;
+      if (v.startsWith(term)) return 1;
+      if (v.includes(term)) return 2;
+      return 3;
+    };
+
+    if (!term) {
+      return [...articulos].sort((a, b) => (a.codigo || '').localeCompare(b.codigo || ''));
+    }
+
+    return [...articulos]
+      .map((a) => {
+        const codeScore = score(a.codigo);
+        const descScore = score(a.nombre);
+        const best = Math.min(codeScore, descScore);
+        const codigoLower = (a.codigo || '').toLowerCase();
+        const exactCode = codigoLower === term;
+        return { a, s: best, exactCode, len: (a.codigo || '').length };
+      })
+      .sort((x, y) =>
+        x.s - y.s ||
+        Number(y.exactCode) - Number(x.exactCode) ||
+        x.len - y.len ||
+        (x.a.codigo || '').localeCompare(y.a.codigo || '')
+      )
+      .map((x) => x.a);
+  }, [articulos, busqueda]);
+
+  const articuloPorId = useMemo(() => {
+    const map = new Map<number, ArticuloFiltrado>();
+    articulos.forEach((a) => map.set(Number(a.id), a));
+    return map;
+  }, [articulos]);
+
+  const getArticuloSnapshot = useCallback(
+    (id: number) => articuloPorId.get(id) || articulosSnapshot[id],
+    [articuloPorId, articulosSnapshot]
+  );
 
   // Limpiar lista de artículos cuando se cambia de proveedor
   useEffect(() => {
@@ -164,15 +280,9 @@ export default function ModalNuevaAsignacionStock({ open, onClose, destinoId, on
     }
   }, [proveedorSeleccionado]);
 
-  const handleBusquedaKeyPress = (event: React.KeyboardEvent) => {
-    if (event.key === "Enter") {
-      event.preventDefault();
-      void buscarArticulos();
-    }
-  };
-
-  const handleAsignarStock = (articuloId: number, cantidad: number) => {
-    if (cantidad <= 0) {
+  const handleAsignarStock = (articuloId: number, cantidad: number, opts?: { allowZero?: boolean }) => {
+    const allowZero = opts?.allowZero ?? false;
+    if (cantidad <= 0 && !allowZero) {
       handleRemoverAsignacion(articuloId);
       return;
     }
@@ -196,10 +306,21 @@ export default function ModalNuevaAsignacionStock({ open, onClose, destinoId, on
     setAsignaciones(prev => prev.filter(a => a.articuloId !== articuloId));
   };
 
+  const limpiarFiltros = () => {
+    setProveedorSeleccionado(null);
+    setRubroSeleccionado('');
+    setBusqueda('');
+    setArticulos([]);
+    setError('');
+  };
+
   const toggleSeleccion = (articulo: ArticuloFiltrado, checked: boolean) => {
     if (checked) {
       const ya = asignaciones.find(a => a.articuloId === articulo.id);
-      if (!ya) setAsignaciones(prev => [...prev, { articuloId: articulo.id, cantidad: 1 }]);
+      if (!ya) {
+        setAsignaciones(prev => [...prev, { articuloId: articulo.id, cantidad: articulo.stockDisponible > 0 ? articulo.stockDisponible : 1 }]);
+        setArticulosSnapshot((prev) => ({ ...prev, [Number(articulo.id)]: { ...articulo } }));
+      }
     } else {
       handleRemoverAsignacion(articulo.id);
     }
@@ -224,8 +345,8 @@ export default function ModalNuevaAsignacionStock({ open, onClose, destinoId, on
     try {
       // Procesamos en serie para evitar solapar la actualización del stock por destino.
       for (const asignacion of asignaciones) {
-        const articulo = articulos.find(a => a.id === asignacion.articuloId);
-        const base = Number(articulo?.stockDisponible ?? 0);
+        const articulo = articulos.find(a => Number(a.id) === Number(asignacion.articuloId));
+        const base = Number(articulo?.stockEnDestino ?? 0);
         const nuevaCantidad = base + asignacion.cantidad;
         const response = await fetch('/api/graphql', {
           method: 'POST',
@@ -240,11 +361,14 @@ export default function ModalNuevaAsignacionStock({ open, onClose, destinoId, on
                 )
               }
             `,
-            variables: { puntoMudrasId: destinoSeleccionado, articuloId: asignacion.articuloId, nuevaCantidad },
+            variables: { puntoMudrasId: destinoSeleccionado, articuloId: Number(asignacion.articuloId), nuevaCantidad },
           }),
         });
         const result = await response.json();
         if (result.errors) throw new Error(result.errors[0].message);
+        if (!result.data?.modificarStockPunto) {
+          throw new Error('No se pudo actualizar el stock de ' + (articulo?.codigo ?? asignacion.articuloId));
+        }
       }
       const destinoNombre = puntosDisponibles.find((p) => p.id === destinoSeleccionado)?.nombre || 'destino';
       setSnack({ open: true, msg: `Stock asignado a ${destinoNombre}`, sev: 'success' });
@@ -313,6 +437,20 @@ export default function ModalNuevaAsignacionStock({ open, onClose, destinoId, on
     if (fallback) setDestinoSeleccionado(fallback.id);
   }, [open, puntosFiltrados, destinoSeleccionado]);
 
+  useEffect(() => {
+    if (!open) return;
+    if (prevDestino.current !== destinoSeleccionado) {
+      prevDestino.current = destinoSeleccionado ?? null;
+      setAsignaciones([]);
+      setArticulos([]);
+      if (destinoSeleccionado && (busquedaActiva || proveedorSeleccionado || rubroSeleccionado)) {
+        void buscarArticulos();
+      }
+    }
+  }, [open, destinoSeleccionado, busquedaActiva, proveedorSeleccionado, rubroSeleccionado, buscarArticulos]);
+
+  // No buscar automáticamente al cambiar destino: esperamos Enter o botón (incluye el Enter del escáner)
+
   return (
     <Dialog
       open={open}
@@ -341,7 +479,7 @@ export default function ModalNuevaAsignacionStock({ open, onClose, destinoId, on
         tintOpacity={0.5}
       >
         <Box sx={{ display: 'flex', flexDirection: 'column', maxHeight: '85vh' }}>
-          <DialogTitle sx={{ p: 0, m: 0, minHeight: 60, display: 'flex', alignItems: 'center' }}>
+          <DialogTitle sx={{ p: 0, m: 0, minHeight: HEADER_H, display: 'flex', alignItems: 'center' }}>
             <Box sx={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', px: 3, gap: 2 }}>
               <Box sx={{
                 width: 40,
@@ -374,7 +512,19 @@ export default function ModalNuevaAsignacionStock({ open, onClose, destinoId, on
             </Box>
           </DialogTitle>
 
-          <DialogContent sx={{ p: 0, overflow: 'auto', maxHeight: 'calc(85vh - 120px)', background: '#f8fafb' }}>
+          <Divider
+            sx={{
+              height: DIV_H,
+              border: 0,
+              backgroundImage: dividerTop,
+              backgroundRepeat: 'no-repeat, no-repeat, repeat',
+              backgroundSize: '100% 1px, 100% 1px, 100% 100%',
+              backgroundPosition: 'top left, bottom left, center',
+              flex: '0 0 auto'
+            }}
+          />
+
+          <DialogContent sx={{ p: 0, overflow: 'auto', maxHeight: `calc(85vh - ${HEADER_H + FOOTER_H + DIV_H * 2}px)`, background: '#f8fafb' }}>
             {error && (
               <Alert severity="error" sx={{ m: 2 }}>
                 {error}
@@ -382,13 +532,14 @@ export default function ModalNuevaAsignacionStock({ open, onClose, destinoId, on
             )}
 
             <Box sx={{ p: { xs: 3, md: 4 }, display: 'grid', gap: 2 }}>
-            <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '3fr auto' }, gap: 1 }}>
+            <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '3fr auto auto' }, gap: 1 }}>
               <TextField
                 fullWidth
                 label="Artículo (escáner)"
                 placeholder="Escaneá código o escribí y Enter"
                 value={busqueda}
                   autoFocus
+                  disabled={filtrosProveedorActivos}
                   onChange={(e) => {
                     const value = e.target.value;
                     setBusqueda(value);
@@ -417,6 +568,13 @@ export default function ModalNuevaAsignacionStock({ open, onClose, destinoId, on
                 >
                   Buscar
                 </CrystalButton>
+                <CrystalSoftButton
+                  baseColor={oroNegro.dark}
+                  onClick={limpiarFiltros}
+                  sx={{ minHeight: 52, px: 2.5, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 0.5 }}
+                >
+                  <Icon icon="mdi:trash-can-outline" width={18} height={18} />
+                </CrystalSoftButton>
               </Box>
 
               <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'repeat(3,1fr)' }, gap: 1.5 }}>
@@ -435,17 +593,26 @@ export default function ModalNuevaAsignacionStock({ open, onClose, destinoId, on
                 />
 
                 <Autocomplete
-                  options={proveedores}
+                  options={proveedoresFiltrados}
                   getOptionLabel={(option) => option.nombre}
                   value={proveedorSeleccionado}
-                  onChange={(_, newValue) => setProveedorSeleccionado(newValue)}
+                  onChange={(_, newValue) => {
+                    setProveedorSeleccionado(newValue);
+                    if (newValue) setBusqueda('');
+                  }}
                   loading={loadingProveedores}
-                  disabled={Boolean(articuloPreseleccionado?.proveedorId)}
+                  disabled={Boolean(articuloPreseleccionado?.proveedorId) || busquedaActiva}
                   renderInput={(params) => (
                     <TextField
                       {...params}
                       label="Proveedor"
-                      placeholder="Buscá proveedor"
+                      placeholder={rubroSeleccionado ? 'Filtrado por rubro' : 'Buscá proveedor'}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault();
+                          void buscarArticulos();
+                        }
+                      }}
                       InputProps={{
                         ...params.InputProps,
                         startAdornment: (
@@ -459,17 +626,26 @@ export default function ModalNuevaAsignacionStock({ open, onClose, destinoId, on
                 />
 
                 <Autocomplete
-                  options={rubros}
+                  options={rubrosOpciones}
                   getOptionLabel={(r) => r || ''}
                   value={rubroSeleccionado || ''}
-                  onChange={(_, val) => setRubroSeleccionado(val ?? '')}
-                  disabled={!proveedorSeleccionado || Boolean(articuloPreseleccionado?.rubro)}
-                  loading={loadingRubros}
+                  onChange={(_, val) => {
+                    setRubroSeleccionado(val ?? '');
+                    if (val) setBusqueda('');
+                  }}
+                  disabled={Boolean(articuloPreseleccionado?.rubro) || busquedaActiva}
+                  loading={loadingRelaciones}
                   renderInput={(params) => (
                     <TextField
                       {...params}
                       label="Rubro"
-                      placeholder={proveedorSeleccionado ? 'Filtrá por rubro' : 'Elegí proveedor primero'}
+                      placeholder={proveedorSeleccionado ? 'Filtrá por rubro' : 'Elegí proveedor o rubro'}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault();
+                          void buscarArticulos();
+                        }
+                      }}
                       InputProps={{
                         ...params.InputProps,
                         startAdornment: (
@@ -489,54 +665,103 @@ export default function ModalNuevaAsignacionStock({ open, onClose, destinoId, on
                 </Box>
               )}
 
-              {articulos.length > 0 && (
-                <TableContainer component={Paper} elevation={1}>
-                  <Table size="small">
+              {articulosOrdenados.length > 0 && (
+                <TableContainer
+                  component={Paper}
+                  elevation={0}
+                  sx={{
+                    borderRadius: 0,
+                    overflow: 'hidden',
+                    border: `1px solid ${alpha(tablaAccent, 0.38)}`,
+                    boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.55)',
+                    bgcolor: 'rgba(235, 247, 238, 0.9)',
+                  }}
+                >
+                  <Table
+                    size="small"
+                    stickyHeader
+                    sx={{
+                      '& thead': {
+                        bgcolor: tablaHeaderBg,
+                      },
+                      '& thead .MuiTableCell-root': {
+                        color: tablaHeaderText,
+                        fontWeight: 800,
+                        borderBottom: `2px solid ${alpha('#fff', 0.16)}`,
+                        fontSize: '0.82rem',
+                        textTransform: 'uppercase',
+                        letterSpacing: 0.4,
+                        bgcolor: tablaHeaderBg,
+                      },
+                      '& .MuiTableHead-root .MuiTableCell-head:not(:last-of-type)': {
+                        borderRight: `3px solid ${alpha(tablaAccent, 0.5)}`,
+                      },
+                      '& tbody .MuiTableCell-root': {
+                        borderBottomColor: alpha(tablaAccent, 0.15),
+                        fontSize: '0.85rem',
+                        bgcolor: tablaBodyBg,
+                      },
+                      '& tbody .MuiTableRow-root:hover': {
+                        backgroundColor: alpha(tablaAccent, 0.08),
+                      },
+                      '& tbody .MuiTableRow-root:nth-of-type(odd) .MuiTableCell-root': {
+                        backgroundColor: tablaBodyBg,
+                      },
+                      '& tbody .MuiTableRow-root:nth-of-type(even) .MuiTableCell-root': {
+                        backgroundColor: tablaBodyAlt,
+                      },
+                      '& .MuiTableRow-root': { minHeight: 62 },
+                      '& .MuiTableCell-root': { px: 1, py: 1.1 },
+                    }}
+                  >
                     <TableHead>
                       <TableRow>
-                        <TableCell>Código</TableCell>
+                        <TableCell padding="checkbox" sx={{ width: 52 }} />
+                        <TableCell sx={{ width: 150 }}>Código</TableCell>
                         <TableCell>Descripción</TableCell>
-                        <TableCell>Rubro</TableCell>
-                        <TableCell align="right">Precio</TableCell>
-                        <TableCell align="right">Stock destino</TableCell>
-                        <TableCell align="right">Asignar</TableCell>
-                        <TableCell align="center">Acciones</TableCell>
+                        <TableCell sx={{ width: 160 }}>Rubro</TableCell>
+                        <TableCell align="right" sx={{ width: 140 }}>Stock destino</TableCell>
+                        <TableCell align="right" sx={{ width: 180 }}>Asignar</TableCell>
                       </TableRow>
                     </TableHead>
                     <TableBody>
-                      {articulos.map((articulo) => {
-                        const cantidadAsignada = getCantidadAsignada(articulo.id);
-                        const seleccionado = cantidadAsignada > 0;
+                      {articulosOrdenados.map((articulo) => {
+                        const asignacion = asignaciones.find((a) => Number(a.articuloId) === Number(articulo.id));
+                        const cantidadAsignada = asignacion?.cantidad ?? 0;
+                        const seleccionado = Boolean(asignacion);
                         return (
                           <TableRow key={articulo.id}>
-                            <TableCell padding="checkbox">
+                            <TableCell padding="checkbox" sx={{ width: 52 }}>
                               <Checkbox
                                 checked={seleccionado}
                                 onChange={(e) => toggleSeleccion(articulo, e.target.checked)}
                               />
                             </TableCell>
-                            <TableCell>{articulo.codigo}</TableCell>
+                            <TableCell sx={{ width: 150, fontFamily: 'monospace', fontWeight: 700 }}>
+                              {articulo.codigo}
+                            </TableCell>
                             <TableCell>{articulo.nombre}</TableCell>
-                            <TableCell>
+                            <TableCell sx={{ width: 160 }}>
                               <Chip size="small" label={(articulo as any)?.rubro || '—'} />
                             </TableCell>
-                            <TableCell align="right">
-                              ${articulo.precio.toFixed(2)}
-                            </TableCell>
-                            <TableCell align="right">
+                            <TableCell align="right" sx={{ width: 140 }}>
                               <Chip
                                 size="small"
-                                label={articulo.stockDisponible}
-                                color={articulo.stockDisponible > 0 ? 'success' : 'error'}
+                                label={articulo.stockEnDestino ?? 0}
+                                color={(articulo.stockEnDestino ?? 0) > 0 ? 'success' : 'default'}
                               />
                             </TableCell>
-                            <TableCell align="right">
+                            <TableCell align="right" sx={{ width: 180 }}>
                               <Box sx={{ display: 'flex', gap: 1, justifyContent: 'flex-end', alignItems: 'center' }}>
                                 <TextField
                                   type="number"
                                   size="small"
-                                  value={cantidadAsignada}
-                                  onChange={(e) => handleAsignarStock(articulo.id, parseInt(e.target.value) || 0)}
+                                  value={cantidadAsignada || ''}
+                                  onChange={(e) => {
+                                    const next = e.target.value;
+                                    const parsed = next === '' ? 0 : parseInt(next, 10) || 0;
+                                    handleAsignarStock(articulo.id, parsed, { allowZero: next === '' });
+                                  }}
                                   inputProps={{
                                     min: 0,
                                     style: { textAlign: 'right' }
@@ -544,21 +769,7 @@ export default function ModalNuevaAsignacionStock({ open, onClose, destinoId, on
                                   sx={{ width: 90 }}
                                   disabled={!seleccionado}
                                 />
-                                <Tooltip title={`Asignar máximo (stock destino ${articulo.stockDisponible})`}>
-                                  <IconButton size="small" onClick={() => handleAsignarStock(articulo.id, articulo.stockDisponible)}>
-                                    <Icon icon="mdi:arrow-collapse-down" />
-                                  </IconButton>
-                                </Tooltip>
                               </Box>
-                            </TableCell>
-                            <TableCell align="center">
-                              {cantidadAsignada > 0 && (
-                                <Tooltip title="Remover asignación">
-                                  <IconButton size="small" color="error" onClick={() => handleRemoverAsignacion(articulo.id)}>
-                                    <Icon icon="mdi:delete" />
-                                  </IconButton>
-                                </Tooltip>
-                              )}
                             </TableCell>
                           </TableRow>
                         );
@@ -573,26 +784,97 @@ export default function ModalNuevaAsignacionStock({ open, onClose, destinoId, on
                   <Typography variant="subtitle2" fontWeight={700} gutterBottom>
                     Resumen de asignaciones
                   </Typography>
-                  <Typography variant="body2">
-                    <strong>Total de artículos:</strong> {asignaciones.length}
+                  <Typography variant="body2" sx={{ mb: 1 }}>
+                    <strong>Total de artículos:</strong> {asignaciones.length} · <strong>Total de unidades:</strong> {totalAsignaciones}
                   </Typography>
-                  <Typography variant="body2">
-                    <strong>Total de unidades:</strong> {totalAsignaciones}
-                  </Typography>
+                  <TableContainer
+                    component={Paper}
+                    elevation={0}
+                    sx={{
+                      borderRadius: 0,
+                      border: `1px solid ${alpha(tablaAccent, 0.38)}`,
+                      overflow: 'hidden',
+                      boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.55)',
+                    }}
+                  >
+                    <Table
+                      size="small"
+                      stickyHeader
+                      sx={{
+                        '& thead': { bgcolor: tablaHeaderBg },
+                        '& thead .MuiTableCell-root': {
+                          bgcolor: tablaHeaderBg,
+                          color: tablaHeaderText,
+                          fontWeight: 800,
+                          borderBottom: `2px solid ${alpha('#fff', 0.16)}`,
+                          fontSize: '0.78rem',
+                          textTransform: 'uppercase',
+                          letterSpacing: 0.3,
+                        },
+                        '& tbody .MuiTableCell-root': {
+                          borderBottomColor: alpha(tablaAccent, 0.15),
+                          fontSize: '0.82rem',
+                        },
+                        '& tbody .MuiTableRow-root:nth-of-type(odd) .MuiTableCell-root': {
+                          bgcolor: tablaBodyBg,
+                        },
+                        '& tbody .MuiTableRow-root:nth-of-type(even) .MuiTableCell-root': {
+                          bgcolor: tablaBodyAlt,
+                        },
+                        '& .MuiTableCell-root': { px: 1, py: 0.7 },
+                      }}
+                    >
+                      <TableHead>
+                        <TableRow>
+                          <TableCell>Código</TableCell>
+                          <TableCell>Descripción</TableCell>
+                          <TableCell align="right">Cantidad</TableCell>
+                        </TableRow>
+                      </TableHead>
+                      <TableBody>
+                        {asignaciones
+                          .map((a) => {
+                            const art = getArticuloSnapshot(Number(a.articuloId));
+                            return {
+                              ...a,
+                              codigo: art?.codigo || '',
+                              nombre: art?.nombre || 'Artículo',
+                            };
+                          })
+                          .sort((a, b) => (a.codigo || '').localeCompare(b.codigo || ''))
+                          .map((row) => (
+                            <TableRow key={row.articuloId}>
+                              <TableCell sx={{ fontFamily: 'monospace', fontWeight: 700 }}>{row.codigo || row.articuloId}</TableCell>
+                              <TableCell>{row.nombre}</TableCell>
+                              <TableCell align="right" sx={{ fontWeight: 700 }}>{row.cantidad}</TableCell>
+                            </TableRow>
+                          ))}
+                      </TableBody>
+                    </Table>
+                  </TableContainer>
                   <Box sx={{ display: 'flex', gap: 1, mt: 1 }}>
-                    <CrystalSoftButton baseColor={azul.primary} onClick={() => setAsignaciones([])}>
+                    <CrystalSoftButton baseColor={oroNegro.dark} onClick={() => setAsignaciones([])}>
                       Limpiar todas
                     </CrystalSoftButton>
-                    <CrystalButton baseColor={verde.primary} onClick={() => setAsignaciones(articulos.filter(a => a.stockDisponible > 0).map(a => ({ articuloId: a.id, cantidad: a.stockDisponible })))}>
-                      Asignar máximo (lote)
-                    </CrystalButton>
                   </Box>
                 </Paper>
               )}
             </Box>
           </DialogContent>
 
-          <DialogActions sx={{ p: 0, m: 0, minHeight: 60 }}>
+          <Divider
+            sx={{
+              height: DIV_H,
+              border: 0,
+              backgroundImage: dividerBottom,
+              backgroundRepeat: 'no-repeat, no-repeat, repeat',
+              backgroundSize: '100% 1px, 100% 1px, 100% 100%',
+              backgroundPosition: 'top left, bottom left, center',
+              flex: '0 0 auto'
+            }}
+          />
+
+          <DialogActions sx={{ p: 0, m: 0, minHeight: FOOTER_H }}>
             <Box sx={{ width: '100%', height: '100%', display: 'flex', justifyContent: 'flex-end', alignItems: 'center', px: 3, gap: 1.5 }}>
               <CrystalSoftButton baseColor={oroNegro.dark} onClick={handleCerrar} disabled={loading}>
                 Cancelar
@@ -605,15 +887,107 @@ export default function ModalNuevaAsignacionStock({ open, onClose, destinoId, on
         </Box>
       </TexturedPanel>
 
-      <Dialog open={confirmOpen} onClose={() => setConfirmOpen(false)}>
-        <DialogTitle>Confirmar asignaciones</DialogTitle>
-        <DialogContent>
-          <Typography variant="body2">Se aplicarán {asignaciones.length} asignaciones por un total de {totalAsignaciones} unidades al destino seleccionado.</Typography>
-        </DialogContent>
-        <DialogActions>
-          <CrystalSoftButton baseColor={azul.primary} onClick={() => setConfirmOpen(false)}>Cancelar</CrystalSoftButton>
-          <CrystalButton baseColor={verde.primary} onClick={aplicarAsignaciones} disabled={loading}>Aplicar</CrystalButton>
-        </DialogActions>
+      <Dialog
+        open={confirmOpen}
+        onClose={() => setConfirmOpen(false)}
+        maxWidth="sm"
+        fullWidth
+        PaperProps={{
+          sx: {
+            borderRadius: 3,
+            bgcolor: 'transparent',
+            boxShadow: '0 10px 40px rgba(0,0,0,0.35)',
+            overflow: 'hidden',
+          },
+        }}
+      >
+        <TexturedPanel
+          accent={oroNegro.primary}
+          radius={12}
+          contentPadding={0}
+          bgTintPercent={16}
+          bgAlpha={1}
+          textureBaseOpacity={0.28}
+          textureBoostOpacity={0.22}
+          textureBrightness={1.08}
+          textureContrast={1.05}
+          tintOpacity={0.42}
+        >
+          <Box sx={{ display: 'flex', flexDirection: 'column' }}>
+            <DialogTitle sx={{ p: 0, m: 0, minHeight: 56, display: 'flex', alignItems: 'center' }}>
+              <Box sx={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', px: 3, gap: 1.5 }}>
+                <Box sx={{
+                  width: 36,
+                  height: 36,
+                  borderRadius: '50%',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  background: `linear-gradient(135deg, ${oroNegro.primary} 0%, ${darken(oroNegro.primary, 0.18)} 100%)`,
+                  boxShadow: 'inset 0 2px 4px rgba(255,255,255,0.3), 0 4px 12px rgba(0,0,0,0.25)',
+                  color: '#fff'
+                }}>
+                  <Icon icon="mdi:check-decagram" width={20} height={20} />
+                </Box>
+                <Typography variant="h6" fontWeight={800} color="#ffda74" sx={{ textShadow: '0 2px 6px rgba(0,0,0,0.9)' }}>
+                  Confirmar asignaciones
+                </Typography>
+              </Box>
+            </DialogTitle>
+
+            <Divider
+              sx={{
+                height: DIV_H,
+                border: 0,
+                backgroundImage: `
+                  linear-gradient(to bottom, ${alpha('#fff', 0.68)}, ${alpha('#fff', 0.68)}),
+                  linear-gradient(to bottom, ${alpha(darken(oroNegro.primary, 0.5), 0.3)}, ${alpha(darken(oroNegro.primary, 0.5), 0.3)}),
+                  linear-gradient(90deg, ${alpha(oroNegro.primary, 0.12)}, ${oroNegro.primary}, ${alpha(oroNegro.primary, 0.12)})
+                `,
+                backgroundRepeat: 'no-repeat, no-repeat, repeat',
+                backgroundSize: '100% 1px, 100% 1px, 100% 100%',
+                backgroundPosition: 'top left, bottom left, center',
+                flex: '0 0 auto'
+              }}
+            />
+
+            <DialogContent sx={{ p: 3, background: '#f8fafb' }}>
+              <Typography variant="body1" fontWeight={700} color={oroNegro.primary} gutterBottom>
+                Vas a aplicar {asignaciones.length} asignaciones ({totalAsignaciones} unidades) al destino seleccionado.
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                Confirmá para actualizar el stock en el punto/deposito elegido.
+              </Typography>
+            </DialogContent>
+
+            <Divider
+              sx={{
+                height: DIV_H,
+                border: 0,
+                backgroundImage: `
+                  linear-gradient(to bottom, ${alpha(darken(oroNegro.primary, 0.5), 0.3)}, ${alpha(darken(oroNegro.primary, 0.5), 0.3)}),
+                  linear-gradient(to bottom, ${alpha('#fff', 0.68)}, ${alpha('#fff', 0.68)}),
+                  linear-gradient(90deg, ${alpha(oroNegro.primary, 0.12)}, ${oroNegro.primary}, ${alpha(oroNegro.primary, 0.12)})
+                `,
+                backgroundRepeat: 'no-repeat, no-repeat, repeat',
+                backgroundSize: '100% 1px, 100% 1px, 100% 100%',
+                backgroundPosition: 'top left, bottom left, center',
+                flex: '0 0 auto'
+              }}
+            />
+
+            <DialogActions sx={{ p: 0, m: 0, minHeight: 60 }}>
+              <Box sx={{ width: '100%', display: 'flex', justifyContent: 'flex-end', alignItems: 'center', px: 3, gap: 1 }}>
+                <CrystalSoftButton baseColor={oroNegro.dark} onClick={() => setConfirmOpen(false)} disabled={loading}>
+                  Volver
+                </CrystalSoftButton>
+                <CrystalButton baseColor={oroNegro.primary} onClick={aplicarAsignaciones} disabled={loading}>
+                  {loading ? 'Aplicando…' : 'Confirmar'}
+                </CrystalButton>
+              </Box>
+            </DialogActions>
+          </Box>
+        </TexturedPanel>
       </Dialog>
 
       <Snackbar open={snack.open} autoHideDuration={2600} onClose={() => setSnack((s) => ({ ...s, open: false }))} anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}>
