@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { useMutation, gql, useQuery } from '@apollo/client';
+import { useMutation, useQuery } from '@apollo/client/react';
+import { gql } from '@apollo/client';
 import {
     Dialog,
     DialogTitle,
@@ -187,7 +188,7 @@ export default function IngresoStockModal({
 
                     {!articuloPreseleccionado ? (
                         <Autocomplete
-                            options={dataArticulos?.buscarArticulosParaAsignacion || []}
+                            options={(dataArticulos as any)?.buscarArticulosParaAsignacion || []}
                             getOptionLabel={(option: any) => `${option.nombre} (${option.codigo})`}
                             loading={loadingArticulos}
                             onInputChange={(_, newInputValue) => setSearchTerm(newInputValue)}

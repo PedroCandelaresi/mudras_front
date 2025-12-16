@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { useMutation, gql } from '@apollo/client';
+import { useMutation } from '@apollo/client/react';
+import { gql } from '@apollo/client';
 import {
     Dialog,
     DialogTitle,
