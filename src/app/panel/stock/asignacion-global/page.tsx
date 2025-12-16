@@ -72,8 +72,8 @@ export default function GlobalStockAssignmentPage() {
         fetchPolicy: 'network-only'
     });
 
-    const puntos = dataPuntos?.obtenerPuntosMudras?.filter((p: any) => p.activo) || [];
-    const articulos = dataMatriz?.obtenerMatrizStock || [];
+    const puntos = (dataPuntos as any)?.obtenerPuntosMudras?.filter((p: any) => p.activo) || [];
+    const articulos = (dataMatriz as any)?.obtenerMatrizStock || [];
 
     const handleOpenTransferencia = (articulo: any, puntoOrigenId?: number) => {
         setSelectedArticle(articulo);
