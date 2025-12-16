@@ -49,6 +49,10 @@ export interface SearchToolbarProps {
    * ¿Deshabilitar botón Buscar? (ej. mientras loading).
    */
   searchDisabled?: boolean;
+  /**
+   * Elementos personalizados adicionales (botones, etc.)
+   */
+  customActions?: React.ReactNode;
 }
 
 const SearchToolbarInner: React.FC<SearchToolbarProps> = ({
@@ -64,6 +68,7 @@ const SearchToolbarInner: React.FC<SearchToolbarProps> = ({
   createLabel = 'Nuevo',
   onCreateClick,
   searchDisabled,
+  customActions,
 }) => {
   const borderColor = alpha(baseColor, 0.35);
   const inputRef = useRef<HTMLInputElement | null>(null);
@@ -101,6 +106,8 @@ const SearchToolbarInner: React.FC<SearchToolbarProps> = ({
       )}
 
       <Box display="flex" alignItems="center" gap={1.5}>
+        {customActions}
+
         {canCreate && onCreateClick && (
           <CrystalButton baseColor={baseColor} onClick={onCreateClick}>
             {createLabel}

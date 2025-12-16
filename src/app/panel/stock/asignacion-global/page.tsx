@@ -1,12 +1,10 @@
 "use client";
 
-import { useState } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useQuery } from '@apollo/client/react';
 import { gql } from '@apollo/client';
 import {
     Box,
-    Card,
-    CardContent,
     Typography,
     Table,
     TableBody,
@@ -14,23 +12,30 @@ import {
     TableContainer,
     TableHead,
     TableRow,
-    Paper,
-    TextField,
-    InputAdornment,
-    Button,
-    Chip,
-    Stack,
-    IconButton,
     Tooltip,
     CircularProgress,
-    Alert
+    Alert,
+    Stack,
+    IconButton,
+    Chip
 } from '@mui/material';
-import { IconSearch, IconArrowsLeftRight, IconPlus, IconRefresh } from '@tabler/icons-react';
+import { alpha, darken } from '@mui/material/styles';
+import { IconArrowsLeftRight, IconPlus, IconRefresh, IconSearch, IconClipboardList } from '@tabler/icons-react';
+
 import PageContainer from '@/components/container/PageContainer';
 import Breadcrumb from '@/app/panel/layout/shared/breadcrumb/Breadcrumb';
-import TransferirStockModal from '@/app/components/stock/TransferirStockModal';
-import IngresoStockModal from '@/app/components/stock/IngresoStockModal';
+import TransferirStockModal from '@/components/stock/TransferirStockModal';
+import IngresoStockModal from '@/components/stock/IngresoStockModal';
 
+// UI Components
+import { TexturedPanel } from '@/components/ui/TexturedFrame/TexturedPanel';
+import { WoodBackdrop } from '@/components/ui/TexturedFrame/WoodBackdrop';
+import CrystalButton, { CrystalIconButton } from '@/components/ui/CrystalButton';
+import SearchToolbar from '@/components/ui/SearchToolbar';
+import { crearConfiguracionBisel, crearEstilosBisel } from '@/components/ui/bevel';
+import { borgoña, verde } from '@/ui/colores';
+
+// GraphQL
 const GET_MATRIZ_STOCK = gql`
   query ObtenerMatrizStock($busqueda: String, $rubro: String, $proveedorId: Int) {
     obtenerMatrizStock(busqueda: $busqueda, rubro: $rubro, proveedorId: $proveedorId) {
@@ -58,6 +63,43 @@ const GET_PUNTOS_MUDRAS = gql`
     }
   }
 `;
+
+// --- Estilos y Configuración Visual (Clonado y adaptado de TablaArticulos) ---
+const PALETTE = borgoña; // Usamos borgoña para logística/stock
+const accentExterior = PALETTE.primary;
+const accentInterior = darken(PALETTE.primary, 0.3);
+const tableBodyBg = 'rgba(247, 234, 234, 0.58)'; // Tono rojizo muy suave
+const tableBodyAlt = 'rgba(226, 198, 198, 0.32)';
+const woodTintExterior = '#d8c6c6';
+const woodTintInterior = '#c6b2b2';
+const headerBg = darken(PALETTE.primary, 0.12);
+
+const biselExteriorConfig = crearConfiguracionBisel(accentExterior, 1.45);
+const estilosBiselExterior = crearEstilosBisel(biselExteriorConfig, { zContenido: 2 });
+
+const WoodSection: React.FC<React.PropsWithChildren> = ({ children }) => (
+    <Box
+        sx={{
+            position: 'relative',
+            borderRadius: 2,
+            overflow: 'hidden',
+            boxShadow: '0 18px 40px rgba(0,0,0,0.12)',
+            background: 'transparent',
+            ...estilosBiselExterior,
+        }}
+    >
+        <WoodBackdrop accent={woodTintExterior} radius={3} inset={0} strength={0.16} texture="tabla" />
+        <Box
+            sx={{
+                position: 'absolute',
+                inset: 0,
+                backgroundColor: alpha('#f7f4f4', 0.78),
+                zIndex: 0,
+            }}
+        />
+        <Box sx={{ position: 'relative', zIndex: 2, p: 2.75 }}>{children}</Box>
+    </Box>
+);
 
 export default function GlobalStockAssignmentPage() {
     const [busqueda, setBusqueda] = useState('');
@@ -98,65 +140,113 @@ export default function GlobalStockAssignmentPage() {
         <PageContainer title="Asignación Global de Stock" description="Gestiona el stock de todos los puntos">
             <Breadcrumb title="Asignación Global" items={[{ to: '/panel', title: 'Inicio' }, { title: 'Stock' }]} />
 
-            <Card>
-                <CardContent>
-                    <Stack direction="row" spacing={2} justifyContent="space-between" alignItems="center" mb={3}>
-                        <TextField
-                            placeholder="Buscar artículo por nombre o código..."
-                            size="small"
-                            value={busqueda}
-                            onChange={(e) => setBusqueda(e.target.value)}
-                            InputProps={{
-                                startAdornment: (
-                                    <InputAdornment position="start">
-                                        <IconSearch size={20} />
-                                    </InputAdornment>
-                                ),
-                            }}
-                            sx={{ width: 300 }}
-                        />
-                        <Stack direction="row" spacing={1}>
-                            <Button
-                                variant="outlined"
-                                startIcon={<IconRefresh />}
+            <WoodSection>
+                <Stack spacing={3}>
+                    {/* Toolbar */}
+                    <SearchToolbar
+                        title="Matriz de Stock"
+                        icon={<IconClipboardList size={30} />}
+                        baseColor={PALETTE.primary}
+                        placeholder="Buscar artículo por nombre o código..."
+                        searchValue={busqueda}
+                        onSearchValueChange={setBusqueda}
+                        onSubmitSearch={() => refetch()}
+                        onClear={() => { setBusqueda(''); refetch(); }}
+                        canCreate={true}
+                        createLabel="Ingreso Rápido"
+                        onCreateClick={() => handleOpenIngreso()}
+                        searchDisabled={loadingMatriz}
+                        customActions={
+                            <CrystalButton
+                                baseColor={PALETTE.primary}
                                 onClick={() => refetch()}
+                                startIcon={<IconRefresh size={18} />}
                             >
                                 Actualizar
-                            </Button>
-                            <Button
-                                variant="contained"
-                                color="primary"
-                                startIcon={<IconPlus />}
-                                onClick={() => handleOpenIngreso()}
-                            >
-                                Ingreso Rápido
-                            </Button>
-                        </Stack>
-                    </Stack>
+                            </CrystalButton>
+                        }
+                    />
 
-                    {error && <Alert severity="error" sx={{ mb: 2 }}>Error al cargar datos: {error.message}</Alert>}
+                    {error && <Alert severity="error">Error al cargar datos: {error.message}</Alert>}
 
                     {loadingMatriz || loadingPuntos ? (
                         <Box display="flex" justifyContent="center" p={5}>
-                            <CircularProgress />
+                            <CircularProgress sx={{ color: PALETTE.primary }} />
                         </Box>
                     ) : (
-                        <TableContainer component={Paper} variant="outlined">
-                            <Table size="small">
+                        <TableContainer
+                            sx={{
+                                position: 'relative',
+                                borderRadius: 0,
+                                border: '1px solid',
+                                borderColor: alpha(accentInterior, 0.38),
+                                bgcolor: 'rgba(255, 250, 242, 0.94)',
+                                backdropFilter: 'saturate(110%) blur(0.85px)',
+                                overflow: 'hidden',
+                                boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.55)',
+                            }}
+                        >
+                            <WoodBackdrop accent={woodTintInterior} radius={0} inset={0} strength={0.12} texture="tabla" />
+                            <Box
+                                sx={{
+                                    position: 'absolute',
+                                    inset: 0,
+                                    backgroundColor: alpha('#fffaf3', 0.82),
+                                    zIndex: 0,
+                                }}
+                            />
+                            <Table
+                                stickyHeader
+                                size="small"
+                                sx={{
+                                    borderRadius: 0,
+                                    position: 'relative',
+                                    zIndex: 2,
+                                    bgcolor: tableBodyBg,
+                                    '& .MuiTableRow-root': { minHeight: 62 },
+                                    '& .MuiTableCell-root': {
+                                        fontSize: '0.85rem', // Fuente un poco más grande para legibilidad
+                                        px: 1,
+                                        py: 1.5, // Más padding vertical
+                                        borderBottomColor: alpha(accentInterior, 0.35),
+                                        bgcolor: 'transparent',
+                                    },
+                                    '& .MuiTableBody-root .MuiTableRow-root:nth-of-type(odd) .MuiTableCell-root': {
+                                        bgcolor: tableBodyBg,
+                                    },
+                                    '& .MuiTableBody-root .MuiTableRow-root:nth-of-type(even) .MuiTableCell-root': {
+                                        bgcolor: tableBodyAlt,
+                                    },
+                                    '& .MuiTableBody-root .MuiTableRow-root.MuiTableRow-hover:hover .MuiTableCell-root': {
+                                        bgcolor: alpha(PALETTE.primary, 0.15),
+                                    },
+                                    '& .MuiTableCell-head': {
+                                        fontSize: '0.80rem',
+                                        fontWeight: 700,
+                                        bgcolor: headerBg,
+                                        color: alpha('#FFFFFF', 0.94),
+                                        boxShadow: 'inset 0 -1px 0 rgba(255,255,255,0.12)',
+                                        textTransform: 'uppercase',
+                                        letterSpacing: 0.4,
+                                    },
+                                    '& .MuiTableHead-root .MuiTableCell-head:not(:last-of-type)': {
+                                        borderRight: `3px solid ${alpha(PALETTE.headerBorder, 0.5)}`,
+                                    },
+                                }}
+                            >
                                 <TableHead>
                                     <TableRow>
                                         <TableCell>Código</TableCell>
                                         <TableCell>Artículo</TableCell>
-                                        <TableCell>Rubro</TableCell>
-                                        <TableCell align="center" sx={{ fontWeight: 'bold', bgcolor: 'action.hover' }}>
-                                            Total
-                                        </TableCell>
+                                        <TableCell align="center">Total Global</TableCell>
                                         {puntos.map((punto: any) => (
                                             <TableCell key={punto.id} align="center">
-                                                {punto.nombre}
-                                                <Typography variant="caption" display="block" color="textSecondary">
-                                                    {punto.tipo === 'deposito' ? '(Depósito)' : '(Venta)'}
-                                                </Typography>
+                                                <Box display="flex" flexDirection="column" alignItems="center">
+                                                    <span>{punto.nombre}</span>
+                                                    <Typography variant="caption" sx={{ opacity: 0.8, fontWeight: 400, textTransform: 'none' }}>
+                                                        {punto.tipo === 'deposito' ? '(Depósito)' : '(Venta)'}
+                                                    </Typography>
+                                                </Box>
                                             </TableCell>
                                         ))}
                                         <TableCell align="center">Acciones</TableCell>
@@ -165,13 +255,26 @@ export default function GlobalStockAssignmentPage() {
                                 <TableBody>
                                     {articulos.map((articulo: any) => (
                                         <TableRow key={articulo.id} hover>
-                                            <TableCell>{articulo.codigo}</TableCell>
-                                            <TableCell sx={{ fontWeight: 500 }}>{articulo.nombre}</TableCell>
                                             <TableCell>
-                                                <Chip label={articulo.rubro || 'Sin Rubro'} size="small" variant="outlined" />
+                                                <Chip
+                                                    label={articulo.codigo ?? 'Sin código'}
+                                                    size="small"
+                                                    sx={{
+                                                        bgcolor: alpha(accentExterior, 0.14),
+                                                        color: darken(PALETTE.primary, 0.35),
+                                                        fontWeight: 600,
+                                                    }}
+                                                />
                                             </TableCell>
-                                            <TableCell align="center" sx={{ fontWeight: 'bold', bgcolor: 'action.hover' }}>
-                                                {articulo.stockTotal}
+                                            <TableCell>
+                                                <Typography variant="body2" fontWeight={700} sx={{ color: darken(PALETTE.primary, 0.2), fontSize: '0.9rem' }}>
+                                                    {articulo.nombre}
+                                                </Typography>
+                                            </TableCell>
+                                            <TableCell align="center">
+                                                <Typography variant="body2" fontWeight={800} color={PALETTE.textStrong} sx={{ fontSize: '0.95rem' }}>
+                                                    {articulo.stockTotal}
+                                                </Typography>
                                             </TableCell>
                                             {puntos.map((punto: any) => {
                                                 const stockPunto = articulo.stockPorPunto.find((s: any) => s.puntoId === punto.id);
@@ -183,26 +286,26 @@ export default function GlobalStockAssignmentPage() {
                                                                 display: 'flex',
                                                                 alignItems: 'center',
                                                                 justifyContent: 'center',
-                                                                cursor: 'pointer',
-                                                                '&:hover .transfer-icon': { opacity: 1 }
+                                                                gap: 1
                                                             }}
                                                         >
                                                             <Typography
                                                                 color={cantidad > 0 ? 'textPrimary' : 'textSecondary'}
-                                                                fontWeight={cantidad > 0 ? 600 : 400}
+                                                                fontWeight={cantidad > 0 ? 700 : 400}
+                                                                sx={{ fontSize: '0.9rem' }}
                                                             >
                                                                 {cantidad}
                                                             </Typography>
                                                             {cantidad > 0 && (
-                                                                <Tooltip title="Transferir desde aquí">
-                                                                    <IconButton
+                                                                <Tooltip title={`Transferir desde ${punto.nombre}`}>
+                                                                    <CrystalIconButton
+                                                                        baseColor={PALETTE.primary}
                                                                         size="small"
-                                                                        className="transfer-icon"
-                                                                        sx={{ opacity: 0, ml: 0.5, p: 0.5 }}
                                                                         onClick={() => handleOpenTransferencia(articulo, punto.id)}
+                                                                        sx={{ width: 28, height: 28, minWidth: 28, minHeight: 28 }}
                                                                     >
-                                                                        <IconArrowsLeftRight size={14} />
-                                                                    </IconButton>
+                                                                        <IconArrowsLeftRight size={16} />
+                                                                    </CrystalIconButton>
                                                                 </Tooltip>
                                                             )}
                                                         </Box>
@@ -210,18 +313,23 @@ export default function GlobalStockAssignmentPage() {
                                                 );
                                             })}
                                             <TableCell align="center">
-                                                <Tooltip title="Transferir Stock">
-                                                    <IconButton size="small" color="primary" onClick={() => handleOpenTransferencia(articulo)}>
-                                                        <IconArrowsLeftRight size={18} />
-                                                    </IconButton>
+                                                <Tooltip title="Transferir Stock (Origen a elección)">
+                                                    <CrystalIconButton
+                                                        baseColor={verde.primary} // Verde para acción positiva
+                                                        onClick={() => handleOpenTransferencia(articulo)}
+                                                    >
+                                                        <IconArrowsLeftRight size={20} />
+                                                    </CrystalIconButton>
                                                 </Tooltip>
                                             </TableCell>
                                         </TableRow>
                                     ))}
                                     {articulos.length === 0 && (
                                         <TableRow>
-                                            <TableCell colSpan={4 + puntos.length + 1} align="center" sx={{ py: 3 }}>
-                                                <Typography color="textSecondary">No se encontraron artículos</Typography>
+                                            <TableCell colSpan={4 + puntos.length} align="center" sx={{ py: 6 }}>
+                                                <Typography variant="body1" color="text.secondary">
+                                                    No se encontraron artículos.
+                                                </Typography>
                                             </TableCell>
                                         </TableRow>
                                     )}
@@ -229,8 +337,8 @@ export default function GlobalStockAssignmentPage() {
                             </Table>
                         </TableContainer>
                     )}
-                </CardContent>
-            </Card>
+                </Stack>
+            </WoodSection>
 
             {/* Modales */}
             <TransferirStockModal
