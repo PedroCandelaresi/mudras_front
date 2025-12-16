@@ -24,7 +24,7 @@ jobs:
             -t mudras_front:latest .
 
       - name: Up FRONT with compose
-        run: docker compose -f /home/mudras/deploy/mudras/docker-compose.yml up -d front
+        run: docker compose -f /home/mudras/deploy/docker-compose.yml up -d front
 
       - name: Prune old images
         run: docker image prune -f
