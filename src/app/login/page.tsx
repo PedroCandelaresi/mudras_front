@@ -4,9 +4,9 @@ import Box from "@mui/material/Box";
 import Grid from "@mui/material/Grid";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
-import AuthLogin from "../auth/auth1/login/AuthLogin";
+import AuthLogin from "../auth/authForms/AuthLogin";
 import Logo from "@/app/components/shared/Logo";
-import PageContainer from "@/app/components/container/PageContainer";
+import PageContainer from "@/components/container/PageContainer";
 
 const Login2 = () => {
   return (
