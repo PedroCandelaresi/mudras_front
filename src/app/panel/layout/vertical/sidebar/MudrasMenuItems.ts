@@ -91,6 +91,12 @@ const MudrasMenuItems: NavGroup[] = [
     icon: IconBoxSeam,
     href: "/panel/depositos",
   },
+  {
+    id: uniqueId(),
+    title: "Asignación Global",
+    icon: IconChartPie,
+    href: "/panel/stock/asignacion-global",
+  },
 
   {
     navlabel: true,
