@@ -14,13 +14,13 @@ import MobileRightSidebar from "./MobileRightSidebar";
 import config from '@/app/context/config'
 import { useContext, useState, useEffect } from "react";
 import { ProductProvider } from '@/app/context/Ecommercecontext/index'
-import { TexturedPanel } from '@/components/ui/TexturedFrame/TexturedPanel';
+import AppBar from "@mui/material/AppBar";
 
 const Header = () => {
   const lgUp = useMediaQuery((theme) => theme.breakpoints.up("lg"));
   const lgDown = useMediaQuery((theme) => theme.breakpoints.down("lg"));
   const TopbarHeight = config.topbarHeight;
-  
+
   // Estado para fecha y hora
   const [currentDateTime, setCurrentDateTime] = useState<Date | null>(null);
   const [isMounted, setIsMounted] = useState(false);
@@ -43,7 +43,7 @@ const Header = () => {
   useEffect(() => {
     setIsMounted(true);
     setCurrentDateTime(new Date());
-    
+
     const timer = setInterval(() => {
       setCurrentDateTime(new Date());
     }, 60000); // Actualizar cada minuto en lugar de cada segundo
@@ -74,48 +74,31 @@ const Header = () => {
 
   const ToolbarStyled = styled(Toolbar)(({ theme }) => ({
     width: '100%',
-    color: '#FFE4D6',
+    color: theme.palette.text.secondary,
     minHeight: TopbarHeight,
     paddingTop: 0,
     paddingBottom: 0,
-    // Mezcla: textura de madera + degradado marrón semitransparente,
-    // así se ve la veta pero mantiene el tono oscuro.
-    background: 'linear-gradient(135deg, rgba(45,24,16,0.72) 0%, rgba(74,35,24,0.78) 50%, rgba(61,27,15,0.80) 100%)',
   }));
 
   return (
     <ProductProvider>
-      <Box
-        sx={{
-          position: 'fixed',
-          top: 0,
-          left: `${leftOffsetPx}px`,
-          right: 0,
+      <AppBar
+        position="fixed"
+        sx={(theme) => ({
+          boxShadow: 'none',
+          background: theme.palette.background.paper,
+          justifyContent: 'center',
+          backdropFilter: 'blur(4px)',
+          [theme.breakpoints.up('lg')]: {
+            minHeight: TopbarHeight,
+          },
+          borderBottom: `1px solid ${theme.palette.divider}`,
           zIndex: 1300,
-        }}
+          width: lgUp && isSidebarPinned ? `calc(100% - ${SidebarWidth}px)` : '100%',
+          transition: 'width 0.3s ease',
+        })}
       >
-        <TexturedPanel
-          accent="#2D1810"               // marrón oscuro base (más profundo)
-          radius={0}
-          contentPadding={0}
-          bgTintPercent={16}
-          bgAlpha={0.98}
-          textureUrl="/textures/textura_madera_old.png"
-          textureScale={1.05}
-          textureBaseOpacity={0.34}
-          textureBoostOpacity={0.22}
-          textureContrast={1.02}
-          textureBrightness={0.98}
-          tintOpacity={0.40}
-          tintMode="soft-light"
-          bevelWidth={0}
-          bevelIntensity={0}
-          glossStrength={0.6}
-          vignetteStrength={0.6}
-          variant="borderless"
-          fullHeight={false}
-        >
-          <ToolbarStyled>
+        <ToolbarStyled>
           {/* ------------------------------------------- */}
           {/* Toggle Button Sidebar (izquierda) */}
           {/* ------------------------------------------- */}
@@ -138,19 +121,20 @@ const Header = () => {
                 setIsMobileSidebar(!isMobileSidebar);
               }
             }}
+            sx={{ color: 'text.secondary' }}
           >
-            <IconMenu2 size="18" />
+            <IconMenu2 size="20" />
           </IconButton>
 
           {/* ------------------------------------------- */}
           {/* Fecha y Hora Central */}
           {/* ------------------------------------------- */}
           <Box flexGrow={1} display="flex" justifyContent="center" alignItems="center">
-            <Typography 
-              variant="body1" 
-              sx={{ 
+            <Typography
+              variant="body1"
+              sx={{
                 fontWeight: 500,
-                color: 'white',
+                color: 'text.secondary',
                 textAlign: 'center',
                 fontSize: { xs: '0.8rem', md: '0.9rem' },
                 display: { xs: 'none', sm: 'block' }
@@ -170,9 +154,8 @@ const Header = () => {
             {lgDown ? <MobileRightSidebar /> : null}
             <Profile />
           </Stack>
-          </ToolbarStyled>
-        </TexturedPanel>
-      </Box>
+        </ToolbarStyled>
+      </AppBar>
     </ProductProvider>
 
   );

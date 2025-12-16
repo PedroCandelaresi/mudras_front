@@ -3,15 +3,15 @@ const LightThemeColors = [
     name: 'MUDRAS_THEME',
     palette: {
       primary: {
-        main: '#FF6B35',
-        light: '#FFF4F0',
-        dark: '#E55A2B',
+        main: '#ed8236',
+        light: '#fce6d7',
+        dark: '#be682b',
         contrastText: '#ffffff',
       },
       secondary: {
-        main: '#8B4513',
-        light: '#F5E6D3',
-        dark: '#7A3E11',
+        main: '#66655f',
+        light: '#e0e0df',
+        dark: '#474742',
         contrastText: '#ffffff',
       },
       error: {

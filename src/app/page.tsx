@@ -1,13 +1,13 @@
 'use client';
 
 import React, { useState } from 'react';
-import { 
-  Box, 
-  Container, 
-  Typography, 
-  Button, 
-  Grid, 
-  Card, 
+import {
+  Box,
+  Container,
+  Typography,
+  Button,
+  Grid,
+  Card,
   CardMedia,
   CardContent,
   Stack,
@@ -19,15 +19,12 @@ import {
   AppBar,
   Toolbar,
   InputBase,
-  Menu,
-  MenuItem
 } from '@mui/material';
 import { motion } from 'framer-motion';
-import { 
-  IconShoppingCart, 
-  IconSearch, 
-  IconUser, 
-  IconMenu2,
+import {
+  IconShoppingCart,
+  IconSearch,
+  IconUser,
   IconHeart,
   IconStar,
   IconTruck,
@@ -39,6 +36,7 @@ import {
 } from '@tabler/icons-react';
 import Link from 'next/link';
 import { CarruselDestacados } from '@/components/tienda/CarruselDestacados';
+import Logo from '@/app/components/shared/Logo';
 
 const categorias = [
   {
@@ -138,43 +136,33 @@ export default function TiendaMudras() {
   return (
     <Box>
       {/* Header E-commerce */}
-      <AppBar 
-        position="static" 
+      <AppBar
+        position="static"
         elevation={0}
-        sx={{ 
-          backgroundColor: alpha(theme.palette.primary.main, 0.95),
-          backdropFilter: 'blur(10px)'
+        sx={{
+          backgroundColor: '#ffffff',
+          borderBottom: `1px solid ${alpha(theme.palette.secondary.main, 0.1)}`
         }}
       >
         <Container maxWidth="lg">
           <Toolbar sx={{ py: 1 }}>
-            <Typography 
-              variant="h5" 
-              fontWeight={700}
-              sx={{ 
-                flexGrow: 1,
-                background: 'linear-gradient(45deg, #FFD700 30%, #FFF 90%)',
-                backgroundClip: 'text',
-                WebkitBackgroundClip: 'text',
-                WebkitTextFillColor: 'transparent',
-              }}
-            >
-              ✨ Mudras
-            </Typography>
-            
+            <Box sx={{ flexGrow: 1 }}>
+              <Logo />
+            </Box>
+
             {/* Barra de búsqueda */}
-            <Box sx={{ 
-              flexGrow: 1, 
-              mx: 4, 
-              display: { xs: 'none', md: 'block' } 
+            <Box sx={{
+              flexGrow: 1,
+              mx: 4,
+              display: { xs: 'none', md: 'block' }
             }}>
-              <Box sx={{ 
+              <Box sx={{
                 position: 'relative',
-                backgroundColor: alpha('#fff', 0.15),
+                backgroundColor: alpha(theme.palette.secondary.light, 0.2),
                 borderRadius: 2,
-                '&:hover': { backgroundColor: alpha('#fff', 0.25) }
+                '&:hover': { backgroundColor: alpha(theme.palette.secondary.light, 0.3) }
               }}>
-                <Box sx={{ 
+                <Box sx={{
                   position: 'absolute',
                   pointerEvents: 'none',
                   display: 'flex',
@@ -183,16 +171,16 @@ export default function TiendaMudras() {
                   height: '100%',
                   width: 50
                 }}>
-                  <IconSearch color="white" />
+                  <IconSearch color={theme.palette.secondary.main} />
                 </Box>
                 <InputBase
                   placeholder="Buscar productos holísticos..."
                   sx={{
-                    color: 'white',
+                    color: 'text.primary',
                     width: '100%',
                     '& .MuiInputBase-input': {
                       padding: '12px 12px 12px 50px',
-                      '&::placeholder': { color: alpha('#fff', 0.7) }
+                      '&::placeholder': { color: 'text.secondary' }
                     }
                   }}
                 />
@@ -201,11 +189,11 @@ export default function TiendaMudras() {
 
             {/* Iconos de navegación */}
             <Stack direction="row" spacing={1}>
-              <IconButton color="inherit">
+              <IconButton sx={{ color: 'text.primary' }}>
                 <IconUser />
               </IconButton>
-              <IconButton 
-                color="inherit"
+              <IconButton
+                sx={{ color: 'text.primary' }}
                 component={Link}
                 href="https://www.instagram.com/mudras_/"
                 target="_blank"
@@ -213,20 +201,23 @@ export default function TiendaMudras() {
               >
                 <IconHeart />
               </IconButton>
-              <IconButton color="inherit">
-                <Badge badgeContent={carritoItems} color="secondary">
+              <IconButton sx={{ color: 'text.primary' }}>
+                <Badge badgeContent={carritoItems} color="primary">
                   <IconShoppingCart />
                 </Badge>
               </IconButton>
-              <Button 
-                variant="outlined" 
-                component={Link} 
+              <Button
+                variant="outlined"
+                component={Link}
                 href="/login"
                 size="small"
-                sx={{ 
-                  color: 'white', 
-                  borderColor: alpha('#fff', 0.5),
-                  '&:hover': { borderColor: 'white' }
+                sx={{
+                  color: 'primary.main',
+                  borderColor: 'primary.main',
+                  '&:hover': {
+                    borderColor: 'primary.dark',
+                    backgroundColor: alpha(theme.palette.primary.main, 0.05)
+                  }
                 }}
               >
                 Iniciar Sesión
@@ -237,9 +228,9 @@ export default function TiendaMudras() {
       </AppBar>
 
       {/* Hero Section - Tienda Holística */}
-      <Box sx={{ 
-        py: { xs: 8, md: 12 }, 
-        background: `linear-gradient(135deg, ${alpha('#4A148C', 0.1)} 0%, ${alpha('#7B1FA2', 0.05)} 50%, ${alpha('#E1BEE7', 0.1)} 100%)`
+      <Box sx={{
+        py: { xs: 8, md: 12 },
+        background: `linear-gradient(135deg, ${alpha(theme.palette.primary.light, 0.2)} 0%, ${alpha('#ffffff', 1)} 100%)`
       }}>
         <Container maxWidth="lg">
           <Grid container spacing={6} alignItems="center">
@@ -249,26 +240,27 @@ export default function TiendaMudras() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.8 }}
               >
-                <Chip 
-                  label="🌟 Productos Holísticos Auténticos" 
-                  color="primary" 
+                <Chip
+                  label="🌟 Productos Holísticos Auténticos"
+                  color="primary"
                   variant="outlined"
                   sx={{ mb: 3 }}
                 />
-                <Typography 
-                  variant="h2" 
-                  fontWeight={900} 
+                <Typography
+                  variant="h2"
+                  fontWeight={900}
                   gutterBottom
-                  sx={{ 
+                  sx={{
                     fontSize: { xs: '2.5rem', md: '3.5rem' },
                     lineHeight: 1.2,
-                    mb: 3
+                    mb: 3,
+                    color: 'secondary.main'
                   }}
                 >
                   Eleva tu{' '}
-                  <Typography 
-                    component="span" 
-                    variant="inherit" 
+                  <Typography
+                    component="span"
+                    variant="inherit"
                     color="primary"
                     sx={{ fontWeight: 'inherit' }}
                   >
@@ -276,25 +268,25 @@ export default function TiendaMudras() {
                   </Typography>{' '}
                   con Mudras
                 </Typography>
-                <Typography 
-                  variant="h6" 
-                  color="text.secondary" 
+                <Typography
+                  variant="h6"
+                  color="text.secondary"
                   sx={{ mb: 4, fontWeight: 300 }}
                 >
-                  Descubre nuestra colección de cristales, aceites esenciales, inciensos y velas aromáticas. 
+                  Descubre nuestra colección de cristales, aceites esenciales, inciensos y velas aromáticas.
                   Productos seleccionados para tu bienestar y armonía espiritual.
                 </Typography>
                 <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
-                  <Button 
-                    variant="contained" 
+                  <Button
+                    variant="contained"
                     size="large"
                     href="#productos"
                     sx={{ px: 4, py: 1.5 }}
                   >
                     Explorar Productos
                   </Button>
-                  <Button 
-                    variant="outlined" 
+                  <Button
+                    variant="outlined"
                     size="large"
                     href="#categorias"
                     sx={{ px: 4, py: 1.5 }}
@@ -314,17 +306,42 @@ export default function TiendaMudras() {
                   sx={{
                     position: 'relative',
                     height: { xs: 300, md: 400 },
-                    background: `radial-gradient(circle, ${alpha('#E1BEE7', 0.3)} 0%, ${alpha('#7B1FA2', 0.1)} 70%)`,
+                    background: `radial-gradient(circle, ${alpha(theme.palette.primary.main, 0.1)} 0%, ${alpha(theme.palette.secondary.main, 0.05)} 70%)`,
                     borderRadius: 3,
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    border: `2px solid ${alpha(theme.palette.primary.main, 0.2)}`,
+                    border: `1px solid ${alpha(theme.palette.primary.main, 0.1)}`,
                     overflow: 'hidden'
                   }}
                 >
                   <Stack alignItems="center" spacing={2}>
-                    <Box sx={{ fontSize: '4rem' }}>🔮✨🌙</Box>
+                    <Box sx={{
+                      width: '120px',
+                      height: '120px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      color: 'primary.main'
+                    }}>
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        viewBox="0 0 198.43 198.43"
+                        width="100%"
+                        height="100%"
+                      >
+                        <path
+                          fill="#ed8236"
+                          fillRule="evenodd"
+                          d="M99.17,61.09c1.58,1.31.05,4.21-3.63,4-11.96-.66-15.17,1.45-15.04,5.58.13,4.04,8.46,9.68,16.84,9.87,7.76.17,15.38-6.51,18.02-4.98,3.31,1.92-11.58,11.72-18.24,11.72-15.11,0-27.49-11.98-27.49-20.01,0-6.04,13.17-7.88,22.16-7.81,2.97.02,6.34.76,7.39,1.63Z"
+                        />
+                        <path
+                          fill="#ed8236"
+                          fillRule="evenodd"
+                          d="M101.06,61.09c-1.58,1.31-.05,4.21,3.63,4,11.96-.66,15.17,1.45,15.04,5.58-.13,4.03-2.62,9.66-9.85,13.9-2.89,1.7-7.22,3.28-12.1,4.06-5.7.91-12.02-1.8-14.88.99-2.73,2.68,10.86,5.09,17.53,5.09,15.11,0,30.18-19.41,30.18-27.45,0-6.04-13.17-7.88-22.16-7.81-2.98.02-6.34.76-7.39,1.63Z"
+                        />
+                      </svg>
+                    </Box>
                     <Typography variant="h5" color="primary" fontWeight={600} textAlign="center">
                       Productos Holísticos
                     </Typography>
@@ -343,14 +360,14 @@ export default function TiendaMudras() {
       <Box id="categorias" sx={{ py: { xs: 8, md: 12 } }}>
         <Container maxWidth="lg">
           <Box textAlign="center" mb={8}>
-            <Typography variant="h3" fontWeight={700} gutterBottom>
+            <Typography variant="h3" fontWeight={700} gutterBottom color="secondary.main">
               Nuestras Categorías
             </Typography>
             <Typography variant="h6" color="text.secondary" fontWeight={300}>
               Explora nuestra selección de productos holísticos cuidadosamente elegidos
             </Typography>
           </Box>
-          
+
           <Grid container spacing={4}>
             {categorias.map((categoria, index) => (
               <Grid size={{ xs: 12, sm: 6, md: 3 }} key={index}>
@@ -360,8 +377,8 @@ export default function TiendaMudras() {
                   transition={{ duration: 0.5, delay: index * 0.1 }}
                   viewport={{ once: true }}
                 >
-                  <Card 
-                    sx={{ 
+                  <Card
+                    sx={{
                       height: '100%',
                       textAlign: 'center',
                       p: 3,
@@ -377,9 +394,9 @@ export default function TiendaMudras() {
                       }
                     }}
                   >
-                    <Box 
+                    <Box
                       className="categoria-icono"
-                      sx={{ 
+                      sx={{
                         color: 'primary.main',
                         mb: 2,
                         display: 'flex',
@@ -395,7 +412,7 @@ export default function TiendaMudras() {
                     <Typography variant="body2" color="text.secondary" paragraph>
                       {categoria.descripcion}
                     </Typography>
-                    <Chip 
+                    <Chip
                       label={`${categoria.productos} productos`}
                       size="small"
                       color="primary"
@@ -410,10 +427,10 @@ export default function TiendaMudras() {
       </Box>
 
       {/* Productos Destacados */}
-      <Box id="productos" sx={{ py: { xs: 8, md: 12 }, backgroundColor: alpha(theme.palette.grey[50], 0.5) }}>
+      <Box id="productos" sx={{ py: { xs: 8, md: 12 }, backgroundColor: alpha(theme.palette.secondary.light, 0.1) }}>
         <Container maxWidth="lg">
           <Box textAlign="center" mb={8}>
-            <Typography variant="h3" fontWeight={700} gutterBottom>
+            <Typography variant="h3" fontWeight={700} gutterBottom color="secondary.main">
               Productos Destacados
             </Typography>
             <Typography variant="h6" color="text.secondary" fontWeight={300}>
@@ -428,7 +445,7 @@ export default function TiendaMudras() {
               onAgregar={() => agregarAlCarrito()}
             />
           </Box>
-          
+
           <Grid container spacing={4}>
             {productosDestacados.map((producto, index) => (
               <Grid size={{ xs: 12, sm: 6, md: 3 }} key={producto.id}>
@@ -438,8 +455,8 @@ export default function TiendaMudras() {
                   transition={{ duration: 0.5, delay: index * 0.1 }}
                   viewport={{ once: true }}
                 >
-                  <Card 
-                    sx={{ 
+                  <Card
+                    sx={{
                       height: '100%',
                       display: 'flex',
                       flexDirection: 'column',
@@ -468,11 +485,11 @@ export default function TiendaMudras() {
                         {producto.categoria === 'Velas' && '🕯️'}
                       </CardMedia>
                       {producto.enOferta && (
-                        <Chip 
+                        <Chip
                           label="OFERTA"
                           color="secondary"
                           size="small"
-                          sx={{ 
+                          sx={{
                             position: 'absolute',
                             top: 8,
                             right: 8,
@@ -481,7 +498,7 @@ export default function TiendaMudras() {
                         />
                       )}
                       <IconButton
-                        sx={{ 
+                        sx={{
                           position: 'absolute',
                           top: 8,
                           left: 8,
@@ -492,7 +509,7 @@ export default function TiendaMudras() {
                         <IconHeart size={20} />
                       </IconButton>
                     </Box>
-                    
+
                     <CardContent sx={{ flexGrow: 1, p: 2 }}>
                       <Typography variant="body2" color="primary" fontWeight={500} gutterBottom>
                         {producto.categoria}
@@ -500,7 +517,7 @@ export default function TiendaMudras() {
                       <Typography variant="h6" fontWeight={600} gutterBottom>
                         {producto.nombre}
                       </Typography>
-                      
+
                       <Stack direction="row" alignItems="center" spacing={1} mb={2}>
                         <IconStar size={16} color="#FFD700" fill="#FFD700" />
                         <Typography variant="body2" color="text.secondary">
@@ -511,8 +528,8 @@ export default function TiendaMudras() {
                       <Stack direction="row" alignItems="center" justifyContent="space-between">
                         <Box>
                           {producto.enOferta && (
-                            <Typography 
-                              variant="body2" 
+                            <Typography
+                              variant="body2"
                               color="text.secondary"
                               sx={{ textDecoration: 'line-through' }}
                             >
@@ -523,8 +540,8 @@ export default function TiendaMudras() {
                             ${producto.precio}
                           </Typography>
                         </Box>
-                        <Button 
-                          variant="contained" 
+                        <Button
+                          variant="contained"
                           size="small"
                           onClick={agregarAlCarrito}
                           startIcon={<IconShoppingCart size={16} />}
@@ -545,14 +562,14 @@ export default function TiendaMudras() {
       <Box sx={{ py: { xs: 8, md: 12 } }}>
         <Container maxWidth="lg">
           <Box textAlign="center" mb={8}>
-            <Typography variant="h3" fontWeight={700} gutterBottom>
+            <Typography variant="h3" fontWeight={700} gutterBottom color="secondary.main">
               ¿Por qué elegir Mudras?
             </Typography>
             <Typography variant="h6" color="text.secondary" fontWeight={300}>
               Comprometidos con tu bienestar y la calidad de nuestros productos
             </Typography>
           </Box>
-          
+
           <Grid container spacing={4}>
             {beneficios.map((beneficio, index) => (
               <Grid size={{ xs: 12, sm: 6, md: 3 }} key={index}>
@@ -563,8 +580,8 @@ export default function TiendaMudras() {
                   viewport={{ once: true }}
                 >
                   <Box textAlign="center">
-                    <Box 
-                      sx={{ 
+                    <Box
+                      sx={{
                         color: 'primary.main',
                         backgroundColor: alpha(theme.palette.primary.main, 0.1),
                         borderRadius: '50%',
@@ -596,9 +613,9 @@ export default function TiendaMudras() {
             <Typography variant="h6" fontWeight={300} paragraph sx={{ opacity: 0.9 }}>
               Suscríbete a nuestro newsletter y recibe consejos holísticos, ofertas especiales y novedades sobre nuestros productos.
             </Typography>
-            <Stack 
-              direction={{ xs: 'column', sm: 'row' }} 
-              spacing={2} 
+            <Stack
+              direction={{ xs: 'column', sm: 'row' }}
+              spacing={2}
               justifyContent="center"
               mt={4}
               maxWidth="400px"
@@ -616,10 +633,10 @@ export default function TiendaMudras() {
                   '&::placeholder': { color: alpha('#fff', 0.7) }
                 }}
               />
-              <Button 
-                variant="contained" 
+              <Button
+                variant="contained"
                 size="large"
-                sx={{ 
+                sx={{
                   backgroundColor: 'white',
                   color: 'primary.main',
                   px: 3,
@@ -636,105 +653,100 @@ export default function TiendaMudras() {
       </Box>
 
       {/* Footer */}
-      <Box sx={{ py: 6, backgroundColor: alpha(theme.palette.grey[900], 0.95), color: 'white' }}>
+      <Box sx={{ py: 6, backgroundColor: 'secondary.main', color: 'white' }}>
         <Container maxWidth="lg">
           <Grid container spacing={4}>
             <Grid size={{ xs: 12, md: 4 }}>
-              <Typography variant="h5" fontWeight={700} gutterBottom sx={{ 
-                background: 'linear-gradient(45deg, #FFD700 30%, #FFF 90%)',
-                backgroundClip: 'text',
-                WebkitBackgroundClip: 'text',
-                WebkitTextFillColor: 'transparent',
-              }}>
-                ✨ Mudras
-              </Typography>
-              <Typography variant="body2" color="grey.400" paragraph>
-                Tu tienda de confianza para productos holísticos auténticos. 
+              <Box mb={2}>
+                <Logo />
+              </Box>
+              <Typography variant="body2" color="grey.300" paragraph>
+                Tu tienda de confianza para productos holísticos auténticos.
                 Cristales, aceites esenciales, inciensos y velas para elevar tu energía.
               </Typography>
               <Stack direction="row" spacing={1}>
-                <IconButton sx={{ color: 'grey.400' }}>📧</IconButton>
-                <IconButton sx={{ color: 'grey.400' }}>📱</IconButton>
-                <IconButton sx={{ color: 'grey.400' }}>🌐</IconButton>
+                <IconButton sx={{ color: 'grey.300' }}>📧</IconButton>
+                <IconButton sx={{ color: 'grey.300' }}>📱</IconButton>
+                <IconButton sx={{ color: 'grey.300' }}>🌐</IconButton>
               </Stack>
             </Grid>
-            
+
             <Grid size={{ xs: 12, sm: 6, md: 2 }}>
               <Typography variant="subtitle1" fontWeight={600} gutterBottom>
                 Categorías
               </Typography>
               <Stack spacing={1}>
-                <Typography variant="body2" color="grey.400" sx={{ cursor: 'pointer', '&:hover': { color: 'white' } }}>
+                <Typography variant="body2" color="grey.300" sx={{ cursor: 'pointer', '&:hover': { color: 'white' } }}>
                   Cristales y Gemas
                 </Typography>
-                <Typography variant="body2" color="grey.400" sx={{ cursor: 'pointer', '&:hover': { color: 'white' } }}>
+                <Typography variant="body2" color="grey.300" sx={{ cursor: 'pointer', '&:hover': { color: 'white' } }}>
                   Aceites Esenciales
                 </Typography>
-                <Typography variant="body2" color="grey.400" sx={{ cursor: 'pointer', '&:hover': { color: 'white' } }}>
+                <Typography variant="body2" color="grey.300" sx={{ cursor: 'pointer', '&:hover': { color: 'white' } }}>
                   Inciensos
                 </Typography>
-                <Typography variant="body2" color="grey.400" sx={{ cursor: 'pointer', '&:hover': { color: 'white' } }}>
+                <Typography variant="body2" color="grey.300" sx={{ cursor: 'pointer', '&:hover': { color: 'white' } }}>
                   Velas Aromáticas
                 </Typography>
               </Stack>
             </Grid>
-            
+
             <Grid size={{ xs: 12, sm: 6, md: 3 }}>
               <Typography variant="subtitle1" fontWeight={600} gutterBottom>
                 Ayuda
               </Typography>
               <Stack spacing={1}>
-                <Typography variant="body2" color="grey.400" sx={{ cursor: 'pointer', '&:hover': { color: 'white' } }}>
+                <Typography variant="body2" color="grey.300" sx={{ cursor: 'pointer', '&:hover': { color: 'white' } }}>
                   Guía de Productos
                 </Typography>
-                <Typography variant="body2" color="grey.400" sx={{ cursor: 'pointer', '&:hover': { color: 'white' } }}>
+                <Typography variant="body2" color="grey.300" sx={{ cursor: 'pointer', '&:hover': { color: 'white' } }}>
                   Envíos y Devoluciones
                 </Typography>
-                <Typography variant="body2" color="grey.400" sx={{ cursor: 'pointer', '&:hover': { color: 'white' } }}>
+                <Typography variant="body2" color="grey.300" sx={{ cursor: 'pointer', '&:hover': { color: 'white' } }}>
                   Preguntas Frecuentes
                 </Typography>
-                <Typography variant="body2" color="grey.400" sx={{ cursor: 'pointer', '&:hover': { color: 'white' } }}>
+                <Typography variant="body2" color="grey.300" sx={{ cursor: 'pointer', '&:hover': { color: 'white' } }}>
                   Contacto
                 </Typography>
               </Stack>
             </Grid>
-            
+
             <Grid size={{ xs: 12, md: 3 }}>
               <Typography variant="subtitle1" fontWeight={600} gutterBottom>
                 Información
               </Typography>
               <Stack spacing={1}>
-                <Typography variant="body2" color="grey.400">
+                <Typography variant="body2" color="grey.300">
                   📍 Dirección de la tienda
                 </Typography>
-                <Typography variant="body2" color="grey.400">
+                <Typography variant="body2" color="grey.300">
                   📞 +54 11 1234-5678
                 </Typography>
-                <Typography variant="body2" color="grey.400">
+                <Typography variant="body2" color="grey.300">
                   ✉️ hola@mudras.com
                 </Typography>
-                <Typography variant="body2" color="grey.400">
+                <Typography variant="body2" color="grey.300">
                   🕒 Lun-Sáb: 10:00-19:00
                 </Typography>
               </Stack>
             </Grid>
           </Grid>
-          
+
           <Box mt={6} pt={4} borderTop={`1px solid ${alpha('#fff', 0.1)}`}>
-            <Stack 
-              direction={{ xs: 'column', sm: 'row' }} 
-              justifyContent="space-between" 
+            <Stack
+              direction={{ xs: 'column', sm: 'row' }}
+              justifyContent="space-between"
               alignItems="center"
               spacing={2}
             >
-              <Typography variant="body2" color="grey.400">
+              <Typography variant="body2" color="grey.300">
                 © 2024 Mudras. Todos los derechos reservados.
               </Typography>
               <Stack direction="row" spacing={3}>
-                <Typography variant="body2" color="grey.400" sx={{ cursor: 'pointer', '&:hover': { color: 'white' } }}>
+                <Typography variant="body2" color="grey.300" sx={{ cursor: 'pointer', '&:hover': { color: 'white' } }}>
                   Términos y Condiciones
                 </Typography>
-                <Typography variant="body2" color="grey.400" sx={{ cursor: 'pointer', '&:hover': { color: 'white' } }}>
+                <Typography variant="body2" color="grey.300" sx={{ cursor: 'pointer', '&:hover': { color: 'white' } }}>
                   Política de Privacidad
                 </Typography>
               </Stack>
