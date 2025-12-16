@@ -1,7 +1,7 @@
 "use client";
 import Link from "next/link";
 import Box from "@mui/material/Box";
-import Grid from "@mui/material/Grid";
+import Grid from "@mui/material/GridLegacy";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 import AuthLogin from "../auth/authForms/AuthLogin";
