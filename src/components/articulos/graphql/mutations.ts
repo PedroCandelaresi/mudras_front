@@ -25,11 +25,4 @@ export const ELIMINAR_ARTICULO = gql`
   }
 `;
 
-export const ACTUALIZAR_STOCK_ARTICULO = gql`
-  ${ARTICULO_FRAGMENT}
-  mutation ActualizarStockArticulo($id: Int!, $nuevoStock: Float!) {
-    actualizarStockArticulo(id: $id, nuevoStock: $nuevoStock) {
-      ...ArticuloFragment
-    }
-  }
-`;
+
