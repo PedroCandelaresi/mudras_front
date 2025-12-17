@@ -96,6 +96,16 @@ export default function DepositosPage() {
     fetchPolicy: 'cache-and-network',
   });
 
+  useEffect(() => {
+    const stockHandler = () => {
+      if (depositoSeleccionadoId) {
+        void refetchStock();
+      }
+    };
+    window.addEventListener('stockGlobalActualizado', stockHandler);
+    return () => window.removeEventListener('stockGlobalActualizado', stockHandler);
+  }, [refetchStock, depositoSeleccionadoId]);
+
   const articulosDelDeposito = depositoSeleccionado ? stockData?.obtenerStockPuntoMudras ?? [] : [];
 
   const handleAbrirModalStock = useCallback((articulo: ArticuloConStockPuntoMudras) => {

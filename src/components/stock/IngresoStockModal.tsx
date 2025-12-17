@@ -149,6 +149,7 @@ export default function IngresoStockModal({
                     }
                 });
                 onClose();
+                window.dispatchEvent(new CustomEvent('stockGlobalActualizado'));
             }
         } catch (err: any) {
             setError(err.message || 'Error al realizar el ajuste');

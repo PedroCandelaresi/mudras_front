@@ -100,6 +100,7 @@ export default function TransferirStockModal({
                 }
             });
             onClose();
+            window.dispatchEvent(new CustomEvent('stockGlobalActualizado'));
         } catch (err: any) {
             setError(err.message || 'Error al realizar la transferencia');
         }

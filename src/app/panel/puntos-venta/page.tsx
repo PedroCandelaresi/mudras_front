@@ -59,6 +59,7 @@ export default function PuntosVentaPage() {
     }
   }, [puntosVenta, activeKey]);
 
+
   const puntoSeleccionado = useMemo(
     () => puntosVenta.find((p) => String(p.id) === activeKey) ?? null,
     [puntosVenta, activeKey]
@@ -76,6 +77,16 @@ export default function PuntosVentaPage() {
     variables: { puntoMudrasId: puntoSeleccionadoId ?? 0 },
     fetchPolicy: 'cache-and-network',
   });
+
+  useEffect(() => {
+    const handler = () => {
+      if (puntoSeleccionadoId) {
+        void refetchStock();
+      }
+    };
+    window.addEventListener('stockGlobalActualizado', handler);
+    return () => window.removeEventListener('stockGlobalActualizado', handler);
+  }, [refetchStock, puntoSeleccionadoId]);
 
   const handleAbrirModalStock = useCallback(
     (articulo: ArticuloConStockPuntoMudras) => {
