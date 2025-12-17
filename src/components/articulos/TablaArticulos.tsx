@@ -384,6 +384,17 @@ const TablaArticulos: React.FC<ArticulosTableProps> = ({
     });
   };
 
+  useEffect(() => {
+    const handleStockUpdate = () => {
+      refetch();
+    };
+
+    window.addEventListener('stockGlobalActualizado', handleStockUpdate);
+    return () => {
+      window.removeEventListener('stockGlobalActualizado', handleStockUpdate);
+    };
+  }, [refetch]);
+
   const ejecutarBusqueda = useCallback(() => {
     const next = (globalSearchDraft ?? '').trim();
     if (controlledFilters) {
@@ -662,10 +673,10 @@ const TablaArticulos: React.FC<ArticulosTableProps> = ({
             textTransform: 'uppercase',
             letterSpacing: 0.4,
           },
-                    // ✅ divisores sutiles entre columnas del header
-                    '& .MuiTableHead-root .MuiTableCell-head:not(:last-of-type)': {
-                      borderRight: `3px solid ${alpha(verde.headerBorder, 0.5)}`,
-                    },
+          // ✅ divisores sutiles entre columnas del header
+          '& .MuiTableHead-root .MuiTableCell-head:not(:last-of-type)': {
+            borderRight: `3px solid ${alpha(verde.headerBorder, 0.5)}`,
+          },
         }}
       >
         <TableHead>
