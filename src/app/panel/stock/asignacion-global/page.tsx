@@ -27,6 +27,8 @@ import Breadcrumb from '@/app/panel/layout/shared/breadcrumb/Breadcrumb';
 import TransferirStockModal from '@/components/stock/TransferirStockModal';
 import IngresoStockModal from '@/components/stock/IngresoStockModal';
 
+import ModalNuevaAsignacionStockOptimizado from '@/components/stock/ModalNuevaAsignacionStockOptimizado';
+
 // UI Components
 import { TexturedPanel } from '@/components/ui/TexturedFrame/TexturedPanel';
 import { WoodBackdrop } from '@/components/ui/TexturedFrame/WoodBackdrop';
@@ -105,6 +107,7 @@ export default function GlobalStockAssignmentPage() {
     const [busqueda, setBusqueda] = useState('');
     const [modalTransferenciaOpen, setModalTransferenciaOpen] = useState(false);
     const [modalIngresoOpen, setModalIngresoOpen] = useState(false);
+    const [modalOptimizadoOpen, setModalOptimizadoOpen] = useState(false);
     const [selectedArticle, setSelectedArticle] = useState<any>(null);
     const [selectedPuntoOrigen, setSelectedPuntoOrigen] = useState<number | null>(null);
 
@@ -131,6 +134,7 @@ export default function GlobalStockAssignmentPage() {
     const handleCloseModals = () => {
         setModalTransferenciaOpen(false);
         setModalIngresoOpen(false);
+        setModalOptimizadoOpen(false);
         setSelectedArticle(null);
         setSelectedPuntoOrigen(null);
         refetch();
@@ -153,8 +157,8 @@ export default function GlobalStockAssignmentPage() {
                         onSubmitSearch={() => refetch()}
                         onClear={() => { setBusqueda(''); refetch(); }}
                         canCreate={true}
-                        createLabel="Ingreso Rápido"
-                        onCreateClick={() => handleOpenIngreso()}
+                        createLabel="Asignación Masiva"
+                        onCreateClick={() => setModalOptimizadoOpen(true)}
                         searchDisabled={loadingMatriz}
                         customActions={
                             <CrystalButton
@@ -354,6 +358,16 @@ export default function GlobalStockAssignmentPage() {
                 onClose={handleCloseModals}
                 articuloPreseleccionado={selectedArticle}
                 puntos={puntos}
+            />
+
+            <ModalNuevaAsignacionStockOptimizado
+                open={modalOptimizadoOpen}
+                onClose={handleCloseModals}
+                puntoVenta={null} // Se selecciona adentro
+                onStockAsignado={() => {
+                    handleCloseModals();
+                    refetch();
+                }}
             />
         </PageContainer>
     );

@@ -1,5 +1,7 @@
 'use client';
 import { useState, useEffect, useCallback } from 'react';
+import { useQuery, useMutation } from '@apollo/client/react';
+import { gql } from '@apollo/client';
 import {
   Dialog,
   DialogTitle,
@@ -26,7 +28,6 @@ import {
   Select,
   MenuItem,
   Autocomplete,
-  Grid
 } from '@mui/material';
 import { Icon } from '@iconify/react';
 import { verde } from '@/ui/colores';
@@ -65,14 +66,32 @@ interface Props {
   onStockAsignado: () => void;
 }
 
-export default function ModalNuevaAsignacionStockOptimizado({ open, onClose, puntoVenta, onStockAsignado }: Props) {
+const GET_PUNTOS_OPTIMIZADO = gql`
+  query ObtenerPuntosOptimizado {
+    obtenerPuntosMudras {
+      id
+      nombre
+      tipo
+      activo
+    }
+  }
+`;
+
+const ASIGNAR_STOCK_MASIVO = gql`
+  mutation AsignarStockMasivo($input: AsignarStockMasivoInput!) {
+    asignarStockMasivo(input: $input)
+  }
+`;
+
+export default function ModalNuevaAsignacionStockOptimizado({ open, onClose, puntoVenta: puntoVentaProp, onStockAsignado }: Props) {
   // Estados para filtros
+  const [puntoDestinoId, setPuntoDestinoId] = useState<number | ''>('');
   const [proveedores, setProveedores] = useState<ProveedorBasico[]>([]);
   const [rubros, setRubros] = useState<RubroBasico[]>([]);
   const [proveedorSeleccionado, setProveedorSeleccionado] = useState<ProveedorBasico | null>(null);
   const [rubroSeleccionado, setRubroSeleccionado] = useState<string>('');
   const [busqueda, setBusqueda] = useState('');
-  
+
   // Estados para artículos y asignaciones
   const [articulos, setArticulos] = useState<ArticuloFiltrado[]>([]);
   const [asignaciones, setAsignaciones] = useState<AsignacionStock[]>([]);
@@ -80,6 +99,16 @@ export default function ModalNuevaAsignacionStockOptimizado({ open, onClose, pun
   const [loadingProveedores, setLoadingProveedores] = useState(false);
   const [loadingRubros, setLoadingRubros] = useState(false);
   const [error, setError] = useState<string>('');
+
+  // Mutation para crear asignación masiva
+  const [asignarStockMasivo] = useMutation(ASIGNAR_STOCK_MASIVO);
+
+  // Query para buscar puntos (optimizado para el selector)
+  const { data: dataPuntos } = useQuery(GET_PUNTOS_OPTIMIZADO, {
+    skip: !open
+  });
+
+  const puntos = (dataPuntos as any)?.obtenerPuntosMudras || [];
 
   // Cargar proveedores al abrir el modal
   useEffect(() => {
@@ -97,6 +126,13 @@ export default function ModalNuevaAsignacionStockOptimizado({ open, onClose, pun
       setRubroSeleccionado('');
     }
   }, [proveedorSeleccionado]);
+
+  // Efecto para setear punto destino si se pasa por props
+  useEffect(() => {
+    if (puntoVentaProp?.id) {
+      setPuntoDestinoId(puntoVentaProp.id);
+    }
+  }, [puntoVentaProp]);
 
   const buscarArticulos = useCallback(async () => {
     if (!proveedorSeleccionado || busqueda.length < 3) {
@@ -164,7 +200,7 @@ export default function ModalNuevaAsignacionStockOptimizado({ open, onClose, pun
   const cargarProveedores = async () => {
     setLoadingProveedores(true);
     setError('');
-    
+
     try {
       const response = await fetch('/api/graphql', {
         method: 'POST',
@@ -185,13 +221,12 @@ export default function ModalNuevaAsignacionStockOptimizado({ open, onClose, pun
       });
 
       const result = await response.json();
-      
+
       if (result.errors) {
         throw new Error(result.errors[0].message);
       }
 
       setProveedores(result.data.obtenerProveedoresConStock || []);
-      console.log(`🏭 Cargados ${result.data.obtenerProveedoresConStock?.length || 0} proveedores`);
     } catch (error) {
       console.error('Error al cargar proveedores:', error);
       setError('Error al cargar la lista de proveedores');
@@ -203,7 +238,7 @@ export default function ModalNuevaAsignacionStockOptimizado({ open, onClose, pun
   const cargarRubrosPorProveedor = async (proveedorId: number) => {
     setLoadingRubros(true);
     setError('');
-    
+
     try {
       const response = await fetch('/api/graphql', {
         method: 'POST',
@@ -223,22 +258,20 @@ export default function ModalNuevaAsignacionStockOptimizado({ open, onClose, pun
       });
 
       const result = await response.json();
-      
+
       if (result.errors) {
         throw new Error(result.errors[0].message);
       }
 
       const rubrosData = result.data.obtenerRubrosPorProveedor || [];
       setRubros(rubrosData);
-      
+
       // Si solo hay un rubro, seleccionarlo automáticamente
       if (rubrosData.length === 1) {
         setRubroSeleccionado(rubrosData[0].rubro);
       } else {
         setRubroSeleccionado('');
       }
-      
-      console.log(`📋 Cargados ${rubrosData.length} rubros para proveedor ${proveedorId}`);
     } catch (error) {
       console.error('Error al cargar rubros:', error);
       setError('Error al cargar los rubros del proveedor');
@@ -257,12 +290,12 @@ export default function ModalNuevaAsignacionStockOptimizado({ open, onClose, pun
     if (cantidad <= 0) return;
 
     const asignacionExistente = asignaciones.find(a => a.articuloId === articuloId);
-    
+
     if (asignacionExistente) {
-      setAsignaciones(prev => 
-        prev.map(a => 
-          a.articuloId === articuloId 
-            ? { ...a, cantidad } 
+      setAsignaciones(prev =>
+        prev.map(a =>
+          a.articuloId === articuloId
+            ? { ...a, cantidad }
             : a
         )
       );
@@ -281,21 +314,31 @@ export default function ModalNuevaAsignacionStockOptimizado({ open, onClose, pun
       return;
     }
 
+    if (!puntoDestinoId) {
+      setError('Debe seleccionar un punto de venta o depósito de destino');
+      return;
+    }
+
     setLoading(true);
     setError('');
 
     try {
-      // Aquí iría la lógica para enviar las asignaciones al backend
-      console.log('🚀 Enviando asignaciones:', asignaciones);
-      
-      // Simular delay
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
+      const input = {
+        puntoMudrasId: Number(puntoDestinoId),
+        asignaciones: asignaciones.map(a => ({
+          articuloId: a.articuloId,
+          cantidad: Number(a.cantidad)
+        })),
+        motivo: 'Asignación Masiva desde Panel Global'
+      };
+
+      await asignarStockMasivo({ variables: { input } });
+
       onStockAsignado();
       handleCerrar();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error al asignar stock:', error);
-      setError('Error al asignar el stock');
+      setError(error.message || 'Error al asignar el stock');
     } finally {
       setLoading(false);
     }
@@ -319,8 +362,8 @@ export default function ModalNuevaAsignacionStockOptimizado({ open, onClose, pun
   const totalAsignaciones = asignaciones.reduce((total, a) => total + a.cantidad, 0);
 
   return (
-    <Dialog 
-      open={open} 
+    <Dialog
+      open={open}
       onClose={handleCerrar}
       maxWidth="lg"
       fullWidth
@@ -332,7 +375,7 @@ export default function ModalNuevaAsignacionStockOptimizado({ open, onClose, pun
         <Box display="flex" alignItems="center" gap={1}>
           <Icon icon="mdi:package-variant-plus" width={24} />
           <Typography variant="h6">
-            Asignar Stock a {puntoVenta?.nombre}
+            Asignar Stock {puntoVentaProp ? `a ${puntoVentaProp.nombre}` : ''}
           </Typography>
         </Box>
       </DialogTitle>
@@ -344,12 +387,34 @@ export default function ModalNuevaAsignacionStockOptimizado({ open, onClose, pun
           </Alert>
         )}
 
+        {/* Selección de Destino */}
+        <Paper elevation={1} sx={{ p: 2, mb: 2, bgcolor: '#f5f5f5' }}>
+          <Typography variant="subtitle2" fontWeight={600} gutterBottom>
+            Destino de la Asignación
+          </Typography>
+          <FormControl fullWidth>
+            <InputLabel>Punto de Venta / Depósito</InputLabel>
+            <Select
+              value={puntoDestinoId}
+              onChange={(e) => setPuntoDestinoId(Number(e.target.value))}
+              label="Punto de Venta / Depósito"
+              startAdornment={<InputAdornment position="start"><Icon icon="mdi:store-marker" /></InputAdornment>}
+            >
+              {puntos.map((p: any) => (
+                <MenuItem key={p.id} value={p.id}>
+                  {p.nombre} ({p.tipo})
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+        </Paper>
+
         {/* Filtros */}
         <Paper elevation={1} sx={{ p: 2, mb: 2 }}>
           <Typography variant="subtitle2" fontWeight={600} gutterBottom>
             Filtros de Búsqueda
           </Typography>
-          
+
           <Box display="flex" gap={2} flexWrap="wrap" mb={3}>
             {/* Proveedor */}
             <Box flex="1 1 250px" minWidth={250}>
@@ -462,8 +527,8 @@ export default function ModalNuevaAsignacionStockOptimizado({ open, onClose, pun
                         ${articulo.precio.toFixed(2)}
                       </TableCell>
                       <TableCell align="right">
-                        <Chip 
-                          size="small" 
+                        <Chip
+                          size="small"
                           label={articulo.stockDisponible}
                           color={articulo.stockDisponible > 0 ? 'success' : 'error'}
                         />
@@ -474,8 +539,8 @@ export default function ModalNuevaAsignacionStockOptimizado({ open, onClose, pun
                           size="small"
                           value={cantidadAsignada}
                           onChange={(e) => handleAsignarStock(articulo.id, parseInt(e.target.value) || 0)}
-                          inputProps={{ 
-                            min: 0, 
+                          inputProps={{
+                            min: 0,
                             max: articulo.stockDisponible,
                             style: { textAlign: 'right' }
                           }}
@@ -485,8 +550,8 @@ export default function ModalNuevaAsignacionStockOptimizado({ open, onClose, pun
                       <TableCell align="center">
                         {cantidadAsignada > 0 && (
                           <Tooltip title="Remover asignación">
-                            <IconButton 
-                              size="small" 
+                            <IconButton
+                              size="small"
                               color="error"
                               onClick={() => handleRemoverAsignacion(articulo.id)}
                             >
@@ -523,8 +588,8 @@ export default function ModalNuevaAsignacionStockOptimizado({ open, onClose, pun
         <Button onClick={handleCerrar} disabled={loading}>
           Cancelar
         </Button>
-        <Button 
-          variant="contained" 
+        <Button
+          variant="contained"
           onClick={handleConfirmarAsignaciones}
           disabled={loading || asignaciones.length === 0}
           startIcon={<Icon icon="mdi:check" />}
