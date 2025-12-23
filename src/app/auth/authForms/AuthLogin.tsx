@@ -45,24 +45,32 @@ const AuthLogin = ({ title, subtitle, subtext }: loginType) => {
   const [mostrarPassword, setMostrarPassword] = React.useState(false);
 
   const onSubmit = async (data: Formulario) => {
+    console.log('[AuthLogin] Submitting form...', data.username);
     try {
       // Si ingresa un email, derivar al login de clientes (OAuth)
       if (/@/.test(data.username)) {
+        console.log('[AuthLogin] Email detected, redirecting to OAuth...');
         const next = encodeURIComponent(siguiente || '/cliente/panel');
         router.replace(`/cliente?next=${next}`);
         return;
       }
+      console.log('[AuthLogin] Sending POST to /api/auth/login');
       const res = await fetch('/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username: data.username, password: data.password }),
       });
+      console.log('[AuthLogin] Fetch response status:', res.status);
       if (!res.ok) {
-        throw new Error(await res.text() || 'Credenciales inválidas');
+        const text = await res.text();
+        console.error('[AuthLogin] Login failed:', text);
+        throw new Error(text || 'Credenciales inválidas');
       }
+      console.log('[AuthLogin] Login successful. Redirecting to:', siguiente);
       // Cookie se setea en el handler; redirigimos
       router.replace(siguiente);
     } catch (e: unknown) {
+      console.error('[AuthLogin] Exception during login:', e);
       // se maneja visualmente con estado local
       setErrorMensaje(e instanceof Error ? e.message : 'Error inesperado');
     }

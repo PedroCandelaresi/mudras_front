@@ -16,7 +16,7 @@ function pickAgent(url: string) {
 }
 
 const INTERNAL_BASE = process.env.INTERNAL_BACKEND_URL;          // p.ej. http://host.docker.internal:4000/api
-const PUBLIC_BASE   = process.env.NEXT_PUBLIC_BACKEND_URL;       // p.ej. https://mudras.nqn.net.ar/api
+const PUBLIC_BASE = process.env.NEXT_PUBLIC_BACKEND_URL;       // p.ej. https://mudras.nqn.net.ar/api
 
 export async function POST(req: NextRequest) {
   const base = INTERNAL_BASE || PUBLIC_BASE;
@@ -27,6 +27,7 @@ export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
 
+    console.log('🚀 [LOGIN] Sending request to:', join(base, '/auth/login'));
     const res = await fetch(join(base, '/auth/login'), {
       method: 'POST',
       headers: {
@@ -39,22 +40,28 @@ export async function POST(req: NextRequest) {
       agent: pickAgent(base),
     });
 
+    console.log('🚀 [LOGIN] Backend response status:', res.status);
+
     if (!res.ok) {
       const text = await res.text();
+      console.error('❌ [LOGIN] Backend error:', text);
       return new NextResponse(text || 'Credenciales inválidas', {
         status: res.status,
       });
     }
 
     const contentType = res.headers.get('content-type') || '';
+    console.log('🚀 [LOGIN] Response content-type:', contentType);
     if (!/application\/json/i.test(contentType)) {
       const text = await res.text();
+      console.error('❌ [LOGIN] Non-JSON response:', text);
       return new NextResponse(text || 'Respuesta no JSON del backend', {
         status: 502,
       });
     }
 
     const data = await res.json();
+    console.log('🚀 [LOGIN] Backend data received. Tokens present?', !!data.accessToken);
     const accessToken: string | undefined = data.accessToken;
     const refreshToken: string | undefined = data.refreshToken;
 
