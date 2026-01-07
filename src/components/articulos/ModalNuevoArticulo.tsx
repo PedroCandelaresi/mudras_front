@@ -268,6 +268,7 @@ const ModalNuevoArticulo = ({ open, onClose, articulo, onSuccess, accentColor }:
     } else {
       setIva('21');
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, articulo?.id]);
 
   useEffect(() => {
@@ -276,6 +277,7 @@ const ModalNuevoArticulo = ({ open, onClose, articulo, onSuccess, accentColor }:
       const label = `${selectedRubro.nombre}${selectedRubro.codigo ? ` (${selectedRubro.codigo})` : ''}`;
       if (label && label !== rubroInput) setRubroInput(label);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, selectedRubro?.id, selectedRubro?.nombre, selectedRubro?.codigo, rubroInput]);
 
   useEffect(() => {
@@ -284,6 +286,7 @@ const ModalNuevoArticulo = ({ open, onClose, articulo, onSuccess, accentColor }:
       const label = selectedProveedor.Nombre || `Proveedor #${selectedProveedor.IdProveedor}`;
       if (label && label !== proveedorInput) setProveedorInput(label);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, selectedProveedor?.IdProveedor, selectedProveedor?.Nombre, proveedorInput]);
 
   const rubroOptions = useMemo(() => {
@@ -541,6 +544,7 @@ const ModalNuevoArticulo = ({ open, onClose, articulo, onSuccess, accentColor }:
               <Box sx={{ gridColumn: { xs: '1 / -1', sm: '1 / -1' }, display: 'flex', alignItems: 'center', gap: 2 }}>
                 {form.imagenUrl ? (
                   <Box sx={{ position: 'relative', width: 80, height: 80, borderRadius: 2, overflow: 'hidden', border: '1px solid #ddd' }}>
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img src={form.imagenUrl.startsWith('http') ? form.imagenUrl : `http://localhost:4000${form.imagenUrl}`} alt="Preview" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                   </Box>
                 ) : (
