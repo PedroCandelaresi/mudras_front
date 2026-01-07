@@ -11,7 +11,8 @@ import {
   TextField,
   Typography,
   Divider,
-  Button
+  Button,
+  CircularProgress
 } from '@mui/material';
 import { alpha, darken } from '@mui/material/styles';
 import { useMutation, useQuery } from '@apollo/client/react';
@@ -818,43 +819,42 @@ const ModalNuevoArticulo = ({ open, onClose, articulo, onSuccess, accentColor }:
               )}
             </Box>
           </DialogContent>
-        </Box>
-      </DialogContent>
-      <Divider sx={{
-        height: DIV_H,
-        border: 0,
-        backgroundImage: `
+
+          <Divider sx={{
+            height: DIV_H,
+            border: 0,
+            backgroundImage: `
             linear-gradient(to bottom, rgba(0,0,0,0.22), rgba(0,0,0,0.22)),
             linear-gradient(to bottom, rgba(255,255,255,0.70), rgba(255,255,255,0.70)),
             linear-gradient(90deg, rgba(255,255,255,0.05), ${COLORS.primary}, rgba(255,255,255,0.05))
           `,
-        backgroundRepeat: 'no-repeat, no-repeat, repeat',
-        backgroundSize: '100% 1px, 100% 1px, 100% 100%',
-        backgroundPosition: 'top left, bottom left, center',
-        flex: '0 0 auto'
-      }} />
+            backgroundRepeat: 'no-repeat, no-repeat, repeat',
+            backgroundSize: '100% 1px, 100% 1px, 100% 100%',
+            backgroundPosition: 'top left, bottom left, center',
+            flex: '0 0 auto'
+          }} />
 
-      <DialogActions sx={{ p: 2, background: '#f8fafb' }}>
-        <Button onClick={handleClose} disabled={saving} sx={{ color: COLORS.textStrong }}>
-          Cancelar
-        </Button>
-        <CrystalButton
-          baseColor={COLORS.primary}
-          onClick={handleSave}
-          disabled={!botonHabilitado}
-          startIcon={saving ? <CircularProgress size={16} color="inherit" /> : <Icon icon="mdi:content-save" />}
-          sx={{ px: 4 }}
-        >
-          {saving ? 'Guardando...' : 'Guardar'}
-        </CrystalButton>
-      </DialogActions>
-    </Box>
+          <DialogActions sx={{ p: 2, background: '#f8fafb' }}>
+            <Button onClick={handleClose} disabled={saving} sx={{ color: COLORS.textStrong }}>
+              Cancelar
+            </Button>
+            <CrystalButton
+              baseColor={COLORS.primary}
+              onClick={handleSave}
+              disabled={!botonHabilitado}
+              startIcon={saving ? <CircularProgress size={16} color="inherit" /> : <Icon icon="mdi:content-save" />}
+              sx={{ px: 4 }}
+            >
+              {saving ? 'Guardando...' : 'Guardar'}
+            </CrystalButton>
+          </DialogActions>
+        </Box>
       </TexturedPanel >
-  <ModalSubirImagen
-    open={modalUploadOpen}
-    onClose={() => setModalUploadOpen(false)}
-    onUploadSuccess={(url) => setForm(prev => ({ ...prev, imagenUrl: url }))}
-  />
+      <ModalSubirImagen
+        open={modalUploadOpen}
+        onClose={() => setModalUploadOpen(false)}
+        onUploadSuccess={(url) => setForm(prev => ({ ...prev, imagenUrl: url }))}
+      />
     </Dialog >
   );
 };
