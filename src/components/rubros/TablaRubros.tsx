@@ -524,7 +524,7 @@ const TablaRubros: React.FC<Props> = ({ onNuevoRubro, puedeCrear = true }) => {
       </Stack>
     </Box>
   );
-/* ======================== Loading / Error ======================== */
+  /* ======================== Loading / Error ======================== */
   if (loading) {
     return (
       <WoodSection>
@@ -541,19 +541,22 @@ const TablaRubros: React.FC<Props> = ({ onNuevoRubro, puedeCrear = true }) => {
   if (error) {
     return (
       <WoodSection>
-        <Typography color="error" variant="h6" mb={2}>
-          Error al cargar proveedores
-        </Typography>
-        <Typography color="text.secondary" mb={2}>
-          {error.message}
-        </Typography>
-        <CrystalButton
-          baseColor={azul.primary}
-          startIcon={<IconRefresh />}
-          onClick={() => refetch()}
-        >
-          Reintentar
-        </CrystalButton>
+        {toolbar}
+        <Box sx={{ p: 4, textAlign: 'center' }}>
+          <Typography color="error" variant="h6" mb={2}>
+            Error al cargar rubros
+          </Typography>
+          <Typography color="text.secondary" mb={2}>
+            {error.message}
+          </Typography>
+          <CrystalButton
+            baseColor={azul.primary}
+            startIcon={<IconRefresh />}
+            onClick={() => refetch()}
+          >
+            Reintentar
+          </CrystalButton>
+        </Box>
       </WoodSection>
     );
   }

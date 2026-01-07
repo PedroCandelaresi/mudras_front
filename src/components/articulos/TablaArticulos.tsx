@@ -847,15 +847,18 @@ const TablaArticulos: React.FC<ArticulosTableProps> = ({
   if (error) {
     return (
       <WoodSection>
-        <Typography color="error" variant="h6" mb={1}>
-          Error al cargar artículos
-        </Typography>
-        <Typography color="text.secondary" mb={2}>
-          {error.message}
-        </Typography>
-        <CrystalButton baseColor={accentExterior} startIcon={<IconRefresh />} onClick={() => refetch()}>
-          Reintentar
-        </CrystalButton>
+        {showToolbar && toolbar}
+        <Box sx={{ p: 4, textAlign: 'center' }}>
+          <Typography color="error" variant="h6" mb={1}>
+            Error al cargar artículos
+          </Typography>
+          <Typography color="text.secondary" mb={2}>
+            {error.message}
+          </Typography>
+          <CrystalButton baseColor={accentExterior} startIcon={<IconRefresh />} onClick={() => refetch()}>
+            Reintentar
+          </CrystalButton>
+        </Box>
       </WoodSection>
     );
   }
