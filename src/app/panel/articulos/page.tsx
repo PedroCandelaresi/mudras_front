@@ -50,6 +50,7 @@ export default function ArticulosPage() {
               setModalNuevoOpen(true);
             }}
             columns={[
+              { key: 'imagen', header: 'Img', width: 60 },
               { key: 'descripcion', header: 'Descripción', filterable: true, width: '40%' },
               { key: 'codigo', header: 'Código', filterable: true, width: 140 },
               { key: 'stock', header: 'Stock total', width: 140 },

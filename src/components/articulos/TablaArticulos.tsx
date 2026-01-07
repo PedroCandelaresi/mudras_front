@@ -29,6 +29,7 @@ import {
   IconSearch, IconClipboardList, IconRefresh, IconPhone, IconMail,
   IconEdit, IconTrash, IconEye, IconPlus, IconDotsVertical
 } from '@tabler/icons-react';
+import { Icon } from '@iconify/react';
 import { BUSCAR_ARTICULOS, GET_ESTADISTICAS_ARTICULOS } from '@/components/articulos/graphql/queries';
 import type { Articulo } from '@/app/interfaces/mudras.types';
 import { abrevUnidad, type UnidadMedida } from '@/app/utils/unidades';
@@ -44,6 +45,7 @@ import SearchToolbar from '@/components/ui/SearchToolbar';
 /* ======================== Tipos de columnas ======================== */
 type ArticuloColumnKey =
   | 'descripcion'
+  | 'imagen'
   | 'codigo'
   | 'marca'
   | 'rubro'
@@ -488,6 +490,15 @@ const TablaArticulos: React.FC<ArticulosTableProps> = ({
         <Typography variant="body2" fontWeight={700} sx={{ color: darken(militaryGreen, 0.2) }}>
           {a.Descripcion || '-'}
         </Typography>
+      </Box>
+    ),
+    imagen: (a) => (
+      <Box sx={{ width: 40, height: 40, borderRadius: 1, overflow: 'hidden', border: '1px solid #ddd', bgcolor: '#fff' }}>
+        {a.ImagenUrl ? (
+          <img src={a.ImagenUrl.startsWith('http') ? a.ImagenUrl : `http://localhost:4000${a.ImagenUrl}`} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+        ) : (
+          <Icon icon="mdi:image-off-outline" color="#ccc" width={20} style={{ margin: 10 }} />
+        )}
       </Box>
     ),
     codigo: (a) => (

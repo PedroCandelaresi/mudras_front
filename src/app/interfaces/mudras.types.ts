@@ -11,6 +11,7 @@ export interface Articulo {
   StockMinimo?: number;
   Stock?: number;
   totalStock?: number;
+  ImagenUrl?: string;
   AlicuotaIva?: number;
   Deposito?: number;
   FechaCompra?: Date;

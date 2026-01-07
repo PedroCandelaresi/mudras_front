@@ -11,6 +11,7 @@ import {
   TextField,
   Typography,
   Divider,
+  Button
 } from '@mui/material';
 import { alpha, darken } from '@mui/material/styles';
 import { useMutation, useQuery } from '@apollo/client/react';
@@ -19,6 +20,7 @@ import type { Articulo } from '@/app/interfaces/mudras.types';
 import { TexturedPanel } from '@/components/ui/TexturedFrame/TexturedPanel';
 import CrystalButton, { CrystalSoftButton } from '@/components/ui/CrystalButton';
 import { CREAR_ARTICULO, ACTUALIZAR_ARTICULO } from '@/components/articulos/graphql/mutations';
+import ModalSubirImagen from './ModalSubirImagen';
 import { verde as verdePalette } from '@/ui/colores';
 import { GET_RUBROS } from '@/components/rubros/graphql/queries';
 import { GET_PROVEEDORES } from '@/components/proveedores/graphql/queries';
@@ -31,6 +33,7 @@ import { MODIFICAR_STOCK_PUNTO } from '@/components/puntos-mudras/graphql/mutati
 type FormState = {
   descripcion: string;
   codigo: string;
+  imagenUrl: string; // Nuevo
   costo: string;
   porcentajeGanancia: string;
   rubroId: string; // soportado por ID
@@ -46,7 +49,7 @@ interface ModalNuevoArticuloProps {
   articulo?: (
     Pick<
       Articulo,
-      'id' | 'Descripcion' | 'Codigo' | 'PrecioVenta' | 'PrecioCompra' | 'PorcentajeGanancia' | 'AlicuotaIva' | 'StockMinimo' | 'Stock' | 'totalStock'
+      'id' | 'Descripcion' | 'Codigo' | 'PrecioVenta' | 'PrecioCompra' | 'PorcentajeGanancia' | 'AlicuotaIva' | 'StockMinimo' | 'Stock' | 'totalStock' | 'ImagenUrl'
     > & {
       rubro?: any;
       idProveedor?: number;
@@ -70,6 +73,7 @@ const makeColors = (base?: string) => {
 const INITIAL_STATE: FormState = {
   descripcion: '',
   codigo: '',
+  imagenUrl: '',
   costo: '',
   porcentajeGanancia: '0',
   rubroId: '',
@@ -128,6 +132,7 @@ const ModalNuevoArticulo = ({ open, onClose, articulo, onSuccess, accentColor }:
   const COLORS = useMemo(() => makeColors(accentColor), [accentColor]);
 
   const [form, setForm] = useState<FormState>(INITIAL_STATE);
+  const [modalUploadOpen, setModalUploadOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const [iva, setIva] = useState<IvaOption>('21');
@@ -237,6 +242,7 @@ const ModalNuevoArticulo = ({ open, onClose, articulo, onSuccess, accentColor }:
     setForm({
       descripcion: (articulo.Descripcion ?? '').toString(),
       codigo: (articulo.Codigo ?? '').toString(),
+      imagenUrl: (articulo.ImagenUrl ?? '').toString(),
       costo: costoReferencia ? String(costoReferencia) : '',
       porcentajeGanancia: articulo.PorcentajeGanancia != null ? String(articulo.PorcentajeGanancia) : '0',
       rubroId:
@@ -335,6 +341,7 @@ const ModalNuevoArticulo = ({ open, onClose, articulo, onSuccess, accentColor }:
       const common = {
         Codigo: form.codigo.trim(),
         Descripcion: form.descripcion.trim(),
+        ImagenUrl: form.imagenUrl,
         precioVenta: precioVentaCalculado,
         ...(shouldSendPrecioCompra ? { PrecioCompra: costo } : {}),
         PorcentajeGanancia: porcentajeGananciaValor,
@@ -529,6 +536,27 @@ const ModalNuevoArticulo = ({ open, onClose, articulo, onSuccess, accentColor }:
                   },
                 }}
               />
+
+              <Box sx={{ gridColumn: { xs: '1 / -1', sm: '1 / -1' }, display: 'flex', alignItems: 'center', gap: 2 }}>
+                {form.imagenUrl ? (
+                  <Box sx={{ position: 'relative', width: 80, height: 80, borderRadius: 2, overflow: 'hidden', border: '1px solid #ddd' }}>
+                    <img src={form.imagenUrl.startsWith('http') ? form.imagenUrl : `http://localhost:4000${form.imagenUrl}`} alt="Preview" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  </Box>
+                ) : (
+                  <Box sx={{ width: 80, height: 80, borderRadius: 2, bgcolor: '#eee', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <Icon icon="mdi:image-off-outline" color="#aaa" width={24} />
+                  </Box>
+                )}
+                <Button
+                  variant="outlined"
+                  onClick={() => setModalUploadOpen(true)}
+                  startIcon={<Icon icon="mdi:camera" />}
+                  sx={{ borderRadius: 2, textTransform: 'none' }}
+                >
+                  {form.imagenUrl ? 'Cambiar Imagen' : 'Agregar Imagen'}
+                </Button>
+              </Box>
+
               <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)' }, gap: 1.5 }}>
                 <Autocomplete
                   options={rubroOptions}
@@ -790,43 +818,44 @@ const ModalNuevoArticulo = ({ open, onClose, articulo, onSuccess, accentColor }:
               )}
             </Box>
           </DialogContent>
-          <Divider sx={{
-            height: DIV_H,
-            border: 0,
-            backgroundImage: `
+        </Box>
+      </DialogContent>
+      <Divider sx={{
+        height: DIV_H,
+        border: 0,
+        backgroundImage: `
             linear-gradient(to bottom, rgba(0,0,0,0.22), rgba(0,0,0,0.22)),
             linear-gradient(to bottom, rgba(255,255,255,0.70), rgba(255,255,255,0.70)),
             linear-gradient(90deg, rgba(255,255,255,0.05), ${COLORS.primary}, rgba(255,255,255,0.05))
           `,
-            backgroundRepeat: 'no-repeat, no-repeat, repeat',
-            backgroundSize: '100% 1px, 100% 1px, 100% 100%',
-            backgroundPosition: 'top left, bottom left, center',
-            flex: '0 0 auto'
-          }} />
-          <DialogActions sx={{ p: 0, m: 0, minHeight: FOOTER_H }}>
-            <Box
-              sx={{
-                width: '100%',
-                height: '100%',
-                display: 'flex',
-                justifyContent: 'flex-end',
-                alignItems: 'center',
-                px: 3,
-                gap: 1.5,
-              }}
-            >
-              <CrystalSoftButton baseColor={COLORS.primary} onClick={handleClose} disabled={saving}>
-                Cancelar
-              </CrystalSoftButton>
-              <CrystalButton baseColor={COLORS.primary} onClick={handleSave} disabled={!botonHabilitado}>
-                {saving ? 'Guardando…' : editando ? 'Actualizar Artículo' : 'Crear Artículo'}
-              </CrystalButton>
-            </Box>
-          </DialogActions>
+        backgroundRepeat: 'no-repeat, no-repeat, repeat',
+        backgroundSize: '100% 1px, 100% 1px, 100% 100%',
+        backgroundPosition: 'top left, bottom left, center',
+        flex: '0 0 auto'
+      }} />
 
-        </Box>
-      </TexturedPanel>
-    </Dialog>
+      <DialogActions sx={{ p: 2, background: '#f8fafb' }}>
+        <Button onClick={handleClose} disabled={saving} sx={{ color: COLORS.textStrong }}>
+          Cancelar
+        </Button>
+        <CrystalButton
+          baseColor={COLORS.primary}
+          onClick={handleSave}
+          disabled={!botonHabilitado}
+          startIcon={saving ? <CircularProgress size={16} color="inherit" /> : <Icon icon="mdi:content-save" />}
+          sx={{ px: 4 }}
+        >
+          {saving ? 'Guardando...' : 'Guardar'}
+        </CrystalButton>
+      </DialogActions>
+    </Box>
+      </TexturedPanel >
+  <ModalSubirImagen
+    open={modalUploadOpen}
+    onClose={() => setModalUploadOpen(false)}
+    onUploadSuccess={(url) => setForm(prev => ({ ...prev, imagenUrl: url }))}
+  />
+    </Dialog >
   );
 };
 
