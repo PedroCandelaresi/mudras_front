@@ -17,7 +17,7 @@ jobs:
         run: ls -l /home/mudras/env/front/.env
 
       - name: Build FRONT image (with secret)
-        working-directory: /home/mudras/front/actions-runner/_work/mudras_front/mudras_front
+        working-directory: /home/mudras/frontend/actions-runner/_work/mudras_front/mudras_front
         run: |
           docker build \
             --secret id=front_env,src=/home/mudras/env/front/.env \
