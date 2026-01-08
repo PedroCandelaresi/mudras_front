@@ -545,7 +545,20 @@ const ModalNuevoArticulo = ({ open, onClose, articulo, onSuccess, accentColor }:
                 {form.imagenUrl ? (
                   <Box sx={{ position: 'relative', width: 80, height: 80, borderRadius: 2, overflow: 'hidden', border: '1px solid #ddd' }}>
                     {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={form.imagenUrl.startsWith('http') ? form.imagenUrl : `http://localhost:4000${form.imagenUrl}`} alt="Preview" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                    <img
+                      src={(() => {
+                        const url = form.imagenUrl;
+                        if (!url) return '';
+                        if (url.startsWith('http') || url.startsWith('data:')) return url;
+                        const baseUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:4000';
+                        return `${baseUrl}${url.startsWith('/') ? '' : '/'}${url}`;
+                      })()}
+                      alt="Preview"
+                      style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                      onError={(e) => {
+                        e.currentTarget.style.display = 'none'; // Ocultar si falla
+                      }}
+                    />
                   </Box>
                 ) : (
                   <Box sx={{ width: 80, height: 80, borderRadius: 2, bgcolor: '#eee', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -735,19 +748,20 @@ const ModalNuevoArticulo = ({ open, onClose, articulo, onSuccess, accentColor }:
               </Typography>
               <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)' }, gap: 1.5 }}>
                 <TextField
-                  label="Stock total (referencia)"
+                  label="Stock total / Inicial"
                   name="stock"
                   value={form.stock}
                   onChange={handleChange}
                   type="number"
                   fullWidth
-                  disabled={true} // Deshabilitamos el stock global
-                  helperText="Stock global (legacy)"
+                  // Si se quiere bloquear en edición, usar: disabled={editando}
+                  // El usuario pidió ingresar cantidad inicial, así que lo habilitamos.
+                  helperText="Stock global inicial"
                   inputProps={{ min: 0, step: 0.01 }}
                   sx={{
                     '& .MuiOutlinedInput-root': {
                       borderRadius: 2,
-                      background: '#f0f0f0',
+                      background: '#ffffff',
                       '& fieldset': { borderColor: COLORS.inputBorder },
                       '&:hover fieldset': { borderColor: COLORS.inputBorderHover },
                       '&.Mui-focused fieldset': { borderColor: COLORS.primary },
@@ -779,41 +793,49 @@ const ModalNuevoArticulo = ({ open, onClose, articulo, onSuccess, accentColor }:
                 <Typography variant="subtitle2" color={COLORS.textStrong} sx={{ mb: 1 }}>
                   Asignación de Stock por Sucursal/Depósito
                 </Typography>
-                <Box sx={{
-                  display: 'grid',
-                  gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)', md: 'repeat(3, 1fr)' },
-                  gap: 1.5
-                }}>
-                  {puntosMudras.map((punto: any) => (
-                    <TextField
-                      key={punto.id}
-                      label={punto.nombre}
-                      value={form.stockPorPunto[punto.id] || ''}
-                      onChange={(e) => {
-                        const val = e.target.value;
-                        setForm(prev => ({
-                          ...prev,
-                          stockPorPunto: {
-                            ...prev.stockPorPunto,
-                            [punto.id]: val
+
+                {(!puntosMudras || puntosMudras.length === 0) ? (
+                  <Typography variant="body2" color="text.secondary" sx={{ fontStyle: 'italic' }}>
+                    {/* Si dataPuntos es undefined, quizás sigue cargando o falló. */}
+                    No hay puntos de venta/depósitos disponibles para asignar stock.
+                  </Typography>
+                ) : (
+                  <Box sx={{
+                    display: 'grid',
+                    gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)', md: 'repeat(3, 1fr)' },
+                    gap: 1.5
+                  }}>
+                    {puntosMudras.map((punto: any) => (
+                      <TextField
+                        key={punto.id}
+                        label={punto.nombre}
+                        value={form.stockPorPunto[punto.id] || ''}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          setForm(prev => ({
+                            ...prev,
+                            stockPorPunto: {
+                              ...prev.stockPorPunto,
+                              [punto.id]: val
+                            }
+                          }));
+                        }}
+                        type="number"
+                        size="small"
+                        placeholder="0"
+                        InputLabelProps={{ shrink: true }}
+                        fullWidth
+                        sx={{
+                          '& .MuiOutlinedInput-root': {
+                            borderRadius: 2,
+                            background: '#ffffff',
+                            '& fieldset': { borderColor: COLORS.inputBorder },
                           }
-                        }));
-                      }}
-                      type="number"
-                      size="small"
-                      placeholder="0"
-                      InputLabelProps={{ shrink: true }}
-                      fullWidth
-                      sx={{
-                        '& .MuiOutlinedInput-root': {
-                          borderRadius: 2,
-                          background: '#ffffff',
-                          '& fieldset': { borderColor: COLORS.inputBorder },
-                        }
-                      }}
-                    />
-                  ))}
-                </Box>
+                        }}
+                      />
+                    ))}
+                  </Box>
+                )}
               </Box>
 
               {error && (
