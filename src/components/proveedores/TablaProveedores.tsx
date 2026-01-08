@@ -252,39 +252,6 @@ const TablaProveedores = forwardRef<TablaProveedoresHandle, Props>(({
 
   /* ======================== Loading / Error ======================== */
 
-  if (loading) {
-    return (
-      <WoodSection>
-        {/* Skeleton de toolbar */}
-        <Box sx={{ px: 1, py: 1, mb: 2 }}>
-          <Skeleton variant="rounded" height={44} sx={{ borderRadius: 2 }} />
-        </Box>
-        {/* Skeleton de tabla */}
-        <Skeleton variant="rounded" height={360} sx={{ borderRadius: 2 }} />
-      </WoodSection>
-    );
-  }
-
-  if (error) {
-    return (
-      <WoodSection>
-        <Typography color="error" variant="h6" mb={2}>
-          Error al cargar proveedores
-        </Typography>
-        <Typography color="text.secondary" mb={2}>
-          {error.message}
-        </Typography>
-        <CrystalButton
-          baseColor={azul.primary}
-          startIcon={<IconRefresh />}
-          onClick={() => refetch()}
-        >
-          Reintentar
-        </CrystalButton>
-      </WoodSection>
-    );
-  }
-
   /* ======================== Toolbar ======================== */
   const toolbar = (
     <SearchToolbar
@@ -301,6 +268,44 @@ const TablaProveedores = forwardRef<TablaProveedoresHandle, Props>(({
       onCreateClick={handleNuevoProveedor}
     />
   );
+
+  if (loading) {
+    return (
+      <WoodSection>
+        {/* Skeleton de toolbar */}
+        <Box sx={{ px: 1, py: 1, mb: 2 }}>
+          <Skeleton variant="rounded" height={44} sx={{ borderRadius: 2 }} />
+        </Box>
+        {/* Skeleton de tabla */}
+        <Skeleton variant="rounded" height={360} sx={{ borderRadius: 2 }} />
+      </WoodSection>
+    );
+  }
+
+  if (error) {
+    return (
+      <WoodSection>
+        {toolbar}
+        <Box sx={{ p: 4, textAlign: 'center' }}>
+          <Typography color="error" variant="h6" mb={2}>
+            Error al cargar proveedores
+          </Typography>
+          <Typography color="text.secondary" mb={2}>
+            {error.message}
+          </Typography>
+          <CrystalButton
+            baseColor={azul.primary}
+            startIcon={<IconRefresh />}
+            onClick={() => refetch()}
+          >
+            Reintentar
+          </CrystalButton>
+        </Box>
+      </WoodSection>
+    );
+  }
+
+  /* ======================== Components (Tabla) ======================== */
 
   /* ======================== Tabla ======================== */
   const tabla = (
@@ -359,10 +364,10 @@ const TablaProveedores = forwardRef<TablaProveedoresHandle, Props>(({
             textTransform: 'uppercase',
             letterSpacing: 0.4,
           },
-                    // ✅ divisores sutiles entre columnas del header
-                    '& .MuiTableHead-root .MuiTableCell-head:not(:last-of-type)': {
-                      borderRight: `3px solid ${alpha(azul.headerBorder, 0.5)}`,
-                    },
+          // ✅ divisores sutiles entre columnas del header
+          '& .MuiTableHead-root .MuiTableCell-head:not(:last-of-type)': {
+            borderRight: `3px solid ${alpha(azul.headerBorder, 0.5)}`,
+          },
         }}
       >
         <TableHead>

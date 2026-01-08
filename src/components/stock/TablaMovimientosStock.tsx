@@ -585,15 +585,18 @@ const TablaMovimientosStock = () => {
   if (error) {
     return (
       <WoodSection>
-        <Typography color="error" variant="h6" mb={1}>
-          Error al cargar movimientos de stock
-        </Typography>
-        <Typography color="text.secondary" mb={2}>
-          {error.message}
-        </Typography>
-        <CrystalButton baseColor={accentExterior} startIcon={<IconRefresh />} onClick={() => refetch()}>
-          Reintentar
-        </CrystalButton>
+        {toolbar}
+        <Box sx={{ p: 4, textAlign: 'center' }}>
+          <Typography color="error" variant="h6" mb={1}>
+            Error al cargar movimientos de stock
+          </Typography>
+          <Typography color="text.secondary" mb={2}>
+            {error.message}
+          </Typography>
+          <CrystalButton baseColor={accentExterior} startIcon={<IconRefresh />} onClick={() => refetch()}>
+            Reintentar
+          </CrystalButton>
+        </Box>
       </WoodSection>
     );
   }

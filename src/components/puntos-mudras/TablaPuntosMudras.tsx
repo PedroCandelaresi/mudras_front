@@ -56,7 +56,7 @@ export default function TablaPuntosMudras({ tipo, onEditarPunto, onVerInventario
   const [eliminando, setEliminando] = useState(false);
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(50);
-  const [snack, setSnack] = useState<{ open: boolean; msg: string; sev: 'success'|'error'|'info' }>({ open: false, msg: '', sev: 'success' });
+  const [snack, setSnack] = useState<{ open: boolean; msg: string; sev: 'success' | 'error' | 'info' }>({ open: false, msg: '', sev: 'success' });
 
   // Query para obtener puntos desde el backend
   const { data, loading, error, refetch } = useQuery<ObtenerPuntosMudrasResponse>(OBTENER_PUNTOS_MUDRAS);
@@ -70,7 +70,7 @@ export default function TablaPuntosMudras({ tipo, onEditarPunto, onVerInventario
       if (puntoSeleccionado && onEliminado) onEliminado(puntoSeleccionado);
       // Feedback interno si no hay manejador externo
       if (!onEliminado && puntoSeleccionado) {
-        setSnack({ open: true, msg: `${puntoSeleccionado.tipo === 'venta' ? 'Punto' : 'Depósito'} eliminado: ${puntoSeleccionado.nombre}` , sev: 'success' });
+        setSnack({ open: true, msg: `${puntoSeleccionado.tipo === 'venta' ? 'Punto' : 'Depósito'} eliminado: ${puntoSeleccionado.nombre}`, sev: 'success' });
       }
       setPuntoSeleccionado(null);
       refetch();
@@ -93,8 +93,8 @@ export default function TablaPuntosMudras({ tipo, onEditarPunto, onVerInventario
   const puntosFiltrados = puntos.filter(punto => {
     if (!busqueda) return true;
     return punto.nombre.toLowerCase().includes(busqueda.toLowerCase()) ||
-           punto.direccion?.toLowerCase().includes(busqueda.toLowerCase()) ||
-           punto.telefono?.toLowerCase().includes(busqueda.toLowerCase());
+      punto.direccion?.toLowerCase().includes(busqueda.toLowerCase()) ||
+      punto.telefono?.toLowerCase().includes(busqueda.toLowerCase());
   });
 
   const totalPaginas = Math.ceil(puntosFiltrados.length / rowsPerPage);
@@ -103,7 +103,7 @@ export default function TablaPuntosMudras({ tipo, onEditarPunto, onVerInventario
   const generarNumerosPaginas = () => {
     const paginas = [];
     const maxVisible = 7; // Máximo de páginas visibles
-    
+
     if (totalPaginas <= maxVisible) {
       // Si hay pocas páginas, mostrar todas
       for (let i = 1; i <= totalPaginas; i++) {
@@ -136,7 +136,7 @@ export default function TablaPuntosMudras({ tipo, onEditarPunto, onVerInventario
         paginas.push(totalPaginas);
       }
     }
-    
+
     return paginas;
   };
 
@@ -184,7 +184,7 @@ export default function TablaPuntosMudras({ tipo, onEditarPunto, onVerInventario
 
   const handleConfirmarEliminacion = () => {
     console.log('🗑️ [ELIMINACION] Abriendo modal para punto:', puntoSeleccionado);
-    
+
     // Verificar si es el único punto de su tipo
     const puntosDelMismoTipo = puntos.filter(p => p.tipo === tipo);
     if (puntosDelMismoTipo.length <= 1) {
@@ -193,7 +193,7 @@ export default function TablaPuntosMudras({ tipo, onEditarPunto, onVerInventario
       setPuntoSeleccionado(null);
       return;
     }
-    
+
     setModalEliminarAbierto(true);
     // NO limpiar puntoSeleccionado aquí - lo necesitamos para el modal
     setMenuAnchor(null); // Solo cerrar el menú
@@ -239,23 +239,66 @@ export default function TablaPuntosMudras({ tipo, onEditarPunto, onVerInventario
 
   const paleta = getPaletaColores();
 
+  const toolbar = (
+    <Box
+      sx={{
+        px: 1,
+        py: 1,
+        bgcolor: paleta.toolbarBg,
+        border: '1px solid',
+        borderColor: paleta.toolbarBorder,
+        borderRadius: 1,
+        mb: 2,
+      }}
+    >
+      <SearchToolbar
+        title={tipo === 'venta' ? 'Puntos de Venta' : 'Depósitos'}
+        icon={
+          tipo === 'venta'
+            ? <Store style={{ marginRight: 8, verticalAlign: 'middle' }} />
+            : <Warehouse style={{ marginRight: 8, verticalAlign: 'middle' }} />
+        }
+        baseColor={paleta.primary}
+        placeholder={`Buscar ${tipo === 'venta' ? 'puntos de venta' : 'depósitos'}...`}
+        searchValue={busqueda}
+        onSearchValueChange={setBusqueda}
+        onSubmitSearch={() => {
+          setPage(0);
+          void refetch();
+        }}
+        onClear={() => {
+          setBusqueda('');
+          setPage(0);
+          void refetch();
+        }}
+        canCreate={Boolean(onNuevoPunto)}
+        createLabel={tipo === 'venta' ? 'Nuevo Punto de Venta' : 'Nuevo Depósito'}
+        onCreateClick={onNuevoPunto}
+        searchDisabled={loading}
+      />
+    </Box>
+  );
+
   if (error) {
     return (
-      <Paper sx={{ p: 3, textAlign: 'center' }}>
-        <Typography color="error" variant="h6" mb={2}>
-          Error al cargar {tipo === 'venta' ? 'puntos de venta' : 'depósitos'}
-        </Typography>
-        <Typography color="text.secondary" mb={2}>
-          {error.message}
-        </Typography>
-        <Button 
-          variant="contained" 
-          color="warning"
-          startIcon={<IconRefresh />}
-          onClick={() => refetch()}
-        >
-          Reintentar
-        </Button>
+      <Paper elevation={0} variant="outlined" sx={{ p: 3, borderColor: paleta.borderOuter, borderRadius: 2, bgcolor: 'background.paper' }}>
+        {toolbar}
+        <Box sx={{ p: 3, textAlign: 'center' }}>
+          <Typography color="error" variant="h6" mb={2}>
+            Error al cargar {tipo === 'venta' ? 'puntos de venta' : 'depósitos'}
+          </Typography>
+          <Typography color="text.secondary" mb={2}>
+            {error.message}
+          </Typography>
+          <Button
+            variant="contained"
+            color="warning"
+            startIcon={<IconRefresh />}
+            onClick={() => refetch()}
+          >
+            Reintentar
+          </Button>
+        </Box>
       </Paper>
     );
   }
@@ -269,17 +312,17 @@ export default function TablaPuntosMudras({ tipo, onEditarPunto, onVerInventario
         <TableContainer>
           <Table>
             <TableBody>
-            {Array.from({ length: 5 }).map((_, index) => (
-              <TableRow key={index}>
-                <TableCell><Skeleton variant="text" /></TableCell>
-                <TableCell><Skeleton variant="text" /></TableCell>
-                <TableCell><Skeleton variant="text" /></TableCell>
-                <TableCell><Skeleton variant="text" /></TableCell>
-                <TableCell><Skeleton variant="text" /></TableCell>
-                <TableCell><Skeleton variant="text" /></TableCell>
-                <TableCell><Skeleton variant="rectangular" width={40} height={40} /></TableCell>
-              </TableRow>
-            ))}
+              {Array.from({ length: 5 }).map((_, index) => (
+                <TableRow key={index}>
+                  <TableCell><Skeleton variant="text" /></TableCell>
+                  <TableCell><Skeleton variant="text" /></TableCell>
+                  <TableCell><Skeleton variant="text" /></TableCell>
+                  <TableCell><Skeleton variant="text" /></TableCell>
+                  <TableCell><Skeleton variant="text" /></TableCell>
+                  <TableCell><Skeleton variant="text" /></TableCell>
+                  <TableCell><Skeleton variant="rectangular" width={40} height={40} /></TableCell>
+                </TableRow>
+              ))}
             </TableBody>
           </Table>
         </TableContainer>
@@ -289,43 +332,7 @@ export default function TablaPuntosMudras({ tipo, onEditarPunto, onVerInventario
 
   return (
     <Paper elevation={0} variant="outlined" sx={{ p: 3, borderColor: paleta.borderOuter, borderRadius: 2, bgcolor: 'background.paper' }}>
-      <Box
-        sx={{
-          px: 1,
-          py: 1,
-          bgcolor: paleta.toolbarBg,
-          border: '1px solid',
-          borderColor: paleta.toolbarBorder,
-          borderRadius: 1,
-          mb: 2,
-        }}
-      >
-        <SearchToolbar
-          title={tipo === 'venta' ? 'Puntos de Venta' : 'Depósitos'}
-          icon={
-            tipo === 'venta'
-              ? <Store style={{ marginRight: 8, verticalAlign: 'middle' }} />
-              : <Warehouse style={{ marginRight: 8, verticalAlign: 'middle' }} />
-          }
-          baseColor={paleta.primary}
-          placeholder={`Buscar ${tipo === 'venta' ? 'puntos de venta' : 'depósitos'}...`}
-          searchValue={busqueda}
-          onSearchValueChange={setBusqueda}
-          onSubmitSearch={() => {
-            setPage(0);
-            void refetch();
-          }}
-          onClear={() => {
-            setBusqueda('');
-            setPage(0);
-            void refetch();
-          }}
-          canCreate={Boolean(onNuevoPunto)}
-          createLabel={tipo === 'venta' ? 'Nuevo Punto de Venta' : 'Nuevo Depósito'}
-          onCreateClick={onNuevoPunto}
-          searchDisabled={loading}
-        />
-      </Box>
+      {toolbar}
 
       <TableContainer sx={{ borderRadius: 2, border: '1px solid', borderColor: paleta.borderInner, bgcolor: 'background.paper' }}>
         <Table stickyHeader size={'small'} sx={{ '& .MuiTableCell-head': { bgcolor: paleta.headerBg, color: paleta.headerText } }}>
@@ -366,20 +373,20 @@ export default function TablaPuntosMudras({ tipo, onEditarPunto, onVerInventario
           </TableHead>
           <TableBody sx={{ '& .MuiTableCell-root': { py: 1 } }}>
             {puntosFiltrados.map((punto, idx) => (
-              <TableRow 
+              <TableRow
                 key={punto.id}
-                sx={{ 
+                sx={{
                   bgcolor: idx % 2 === 1 ? 'grey.50' : 'inherit',
                   '&:hover': { bgcolor: paleta.rowHover }
                 }}
               >
                 <TableCell sx={{ width: { xs: '30%', sm: '25%', md: '25%' } }}>
                   <Box display="flex" alignItems="center" gap={1}>
-                    <Chip 
+                    <Chip
                       icon={getIconByTipo(punto.tipo)}
                       label={punto.tipo === 'venta' ? 'Venta' : 'Depósito'}
                       size="small"
-                      sx={{ 
+                      sx={{
                         bgcolor: paleta.chipBg,
                         color: paleta.chipText,
                         fontWeight: 500
@@ -424,8 +431,8 @@ export default function TablaPuntosMudras({ tipo, onEditarPunto, onVerInventario
                 <TableCell>
                   <Box display="flex" justifyContent="center" gap={1}>
                     <Tooltip title="Ver detalles">
-                      <IconButton 
-                        size="small" 
+                      <IconButton
+                        size="small"
                         color="info"
                         onClick={() => console.log('Ver punto:', punto)}
                         sx={{ p: 0.75 }}
@@ -434,8 +441,8 @@ export default function TablaPuntosMudras({ tipo, onEditarPunto, onVerInventario
                       </IconButton>
                     </Tooltip>
                     <Tooltip title="Editar punto">
-                      <IconButton 
-                        size="small" 
+                      <IconButton
+                        size="small"
                         color="success"
                         onClick={() => {
                           setPuntoSeleccionado(punto);
@@ -448,8 +455,8 @@ export default function TablaPuntosMudras({ tipo, onEditarPunto, onVerInventario
                     </Tooltip>
                     {onVerInventario && (
                       <Tooltip title="Ver inventario">
-                        <IconButton 
-                          size="small" 
+                        <IconButton
+                          size="small"
                           color="primary"
                           onClick={() => {
                             setPuntoSeleccionado(punto);
@@ -463,8 +470,8 @@ export default function TablaPuntosMudras({ tipo, onEditarPunto, onVerInventario
                     )}
                     <Tooltip title={puntos.filter(p => p.tipo === tipo).length <= 1 ? `No se puede eliminar el único ${tipo === 'venta' ? 'punto de venta' : 'depósito'}` : "Eliminar punto"}>
                       <span>
-                        <IconButton 
-                          size="small" 
+                        <IconButton
+                          size="small"
                           color="error"
                           disabled={puntos.filter(p => p.tipo === tipo).length <= 1}
                           onClick={() => {
@@ -505,12 +512,12 @@ export default function TablaPuntosMudras({ tipo, onEditarPunto, onVerInventario
             ))}
           </TextField>
         </Box>
-        
+
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
           <Typography variant="body2" color="text.secondary">
             {`${page * rowsPerPage + 1}-${Math.min((page + 1) * rowsPerPage, puntosFiltrados.length)} de ${puntosFiltrados.length}`}
           </Typography>
-          
+
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
             {generarNumerosPaginas().map((numeroPagina, index) => (
               <Box key={index}>
@@ -544,7 +551,7 @@ export default function TablaPuntosMudras({ tipo, onEditarPunto, onVerInventario
               </Box>
             ))}
           </Box>
-          
+
           <Box sx={{ display: 'flex', alignItems: 'center' }}>
             <IconButton
               size="small"

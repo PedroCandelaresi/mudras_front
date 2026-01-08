@@ -141,38 +141,61 @@ export function UserTable({ onCrear, onEditar, onRoles, onEliminar, refetchToken
     setColumnaActiva(null);
   };
 
+  const toolbar = (
+    <Box
+      sx={{
+        px: 1,
+        py: 1,
+        bgcolor: marron.toolbarBg,
+        border: '1px solid',
+        borderColor: marron.toolbarBorder,
+        borderRadius: 1,
+        marginTop: 0,
+      }}
+    >
+      <SearchToolbar
+        title="Usuarios"
+        baseColor={marron.primary}
+        placeholder="Buscar usuarios..."
+        searchValue={filtroInput}
+        onSearchValueChange={setFiltroInput}
+        onSubmitSearch={() => { setFiltro(filtroInput); setPagina(0); }}
+        onClear={() => { limpiarFiltros(); setPagina(0); }}
+        canCreate={Boolean(onCrear)}
+        createLabel="Nuevo Usuario"
+        onCreateClick={onCrear}
+        searchDisabled={loading}
+      />
+      {loading && (
+        <Box display="flex" justifyContent="flex-end" mt={0.5}>
+          <CircularProgress size={20} />
+        </Box>
+      )}
+    </Box>
+  );
+
+  if (error) {
+    return (
+      <Paper elevation={0} sx={{ p: 3, border: 'none', boxShadow: 'none', borderRadius: 2, bgcolor: 'background.paper' }}>
+        {toolbar}
+        <Box sx={{ p: 4, textAlign: 'center' }}>
+          <Typography color="error" variant="h6" mb={2}>
+            Error al cargar usuarios
+          </Typography>
+          <Typography color="text.secondary" mb={2}>
+            {error.message}
+          </Typography>
+          <Button variant="outlined" onClick={() => refetch(filtrosVariables)}>
+            Reintentar
+          </Button>
+        </Box>
+      </Paper>
+    );
+  }
+
   return (
     <Paper elevation={0} sx={{ p: 3, border: 'none', boxShadow: 'none', borderRadius: 2, bgcolor: 'background.paper' }}>
-      {/* Toolbar superior unificada con SearchToolbar */}
-      <Box
-        sx={{
-          px: 1,
-          py: 1,
-          bgcolor: marron.toolbarBg,
-          border: '1px solid',
-          borderColor: marron.toolbarBorder,
-          borderRadius: 1,
-        }}
-      >
-        <SearchToolbar
-          title="Usuarios"
-          baseColor={marron.primary}
-          placeholder="Buscar usuarios..."
-          searchValue={filtroInput}
-          onSearchValueChange={setFiltroInput}
-          onSubmitSearch={() => { setFiltro(filtroInput); setPagina(0); }}
-          onClear={() => { limpiarFiltros(); setPagina(0); }}
-          canCreate={Boolean(onCrear)}
-          createLabel="Nuevo Usuario"
-          onCreateClick={onCrear}
-          searchDisabled={loading}
-        />
-        {loading && (
-          <Box display="flex" justifyContent="flex-end" mt={0.5}>
-            <CircularProgress size={20} />
-          </Box>
-        )}
-      </Box>
+      {toolbar}
 
       <TableContainer sx={{ borderRadius: 2, border: '1px solid', borderColor: marron.borderInner, bgcolor: 'background.paper', mt: 2 }}>
         <Table stickyHeader size="small" sx={{ '& .MuiTableCell-head': { bgcolor: marron.headerBg, color: marron.headerText } }}>

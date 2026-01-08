@@ -47,8 +47,8 @@ const ModalSubirImagen: React.FC<ModalSubirImagenProps> = ({ open, onClose, onUp
             const formData = new FormData();
             formData.append('file', file);
 
-            // Adjust URL if needed based on environment
-            const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
+            // Use relative path to go through Nginx proxy
+            const apiUrl = '/api';
             const response = await fetch(`${apiUrl}/upload/articulos`, {
                 method: 'POST',
                 body: formData,
@@ -117,7 +117,10 @@ const ModalSubirImagen: React.FC<ModalSubirImagenProps> = ({ open, onClose, onUp
                         }}
                     >
                         {preview ? (
-                            <img src={preview} alt="Preview" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+                            <>
+                                {/* eslint-disable-next-line @next/next/no-img-element */}
+                                <img src={preview} alt="Preview" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+                            </>
                         ) : (
                             <>
                                 <Icon icon="mdi:cloud-upload-outline" width={48} height={48} color="#999" />

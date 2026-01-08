@@ -495,7 +495,10 @@ const TablaArticulos: React.FC<ArticulosTableProps> = ({
     imagen: (a) => (
       <Box sx={{ width: 40, height: 40, borderRadius: 1, overflow: 'hidden', border: '1px solid #ddd', bgcolor: '#fff' }}>
         {a.ImagenUrl ? (
-          <img src={a.ImagenUrl.startsWith('http') ? a.ImagenUrl : `http://localhost:4000${a.ImagenUrl}`} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+          <>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={a.ImagenUrl.startsWith('http') ? a.ImagenUrl : `http://localhost:4000${a.ImagenUrl}`} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+          </>
         ) : (
           <Icon icon="mdi:image-off-outline" color="#ccc" width={20} style={{ margin: 10 }} />
         )}
@@ -844,15 +847,18 @@ const TablaArticulos: React.FC<ArticulosTableProps> = ({
   if (error) {
     return (
       <WoodSection>
-        <Typography color="error" variant="h6" mb={1}>
-          Error al cargar artículos
-        </Typography>
-        <Typography color="text.secondary" mb={2}>
-          {error.message}
-        </Typography>
-        <CrystalButton baseColor={accentExterior} startIcon={<IconRefresh />} onClick={() => refetch()}>
-          Reintentar
-        </CrystalButton>
+        {showToolbar && toolbar}
+        <Box sx={{ p: 4, textAlign: 'center' }}>
+          <Typography color="error" variant="h6" mb={1}>
+            Error al cargar artículos
+          </Typography>
+          <Typography color="text.secondary" mb={2}>
+            {error.message}
+          </Typography>
+          <CrystalButton baseColor={accentExterior} startIcon={<IconRefresh />} onClick={() => refetch()}>
+            Reintentar
+          </CrystalButton>
+        </Box>
       </WoodSection>
     );
   }
