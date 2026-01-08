@@ -4,6 +4,7 @@ export const ARTICULO_FRAGMENT = gql`
   fragment ArticuloFragment on Articulo {
     id
     Codigo
+    ImagenUrl
     Rubro
     Descripcion
     Marca

@@ -34,6 +34,7 @@ import {
   IconArrowUp,
   IconArrowDown,
 } from '@tabler/icons-react';
+import { Icon } from '@iconify/react';
 
 import { GET_MOVIMIENTOS_STOCK, GET_ARTICULOS } from '@/components/articulos/graphql/queries';
 import { Stock } from '@/app/interfaces/mudras.types';
@@ -132,16 +133,22 @@ const TablaMovimientosStock = () => {
   }, [dataArticulos?.articulos]);
 
   const mapaDescripcionPorCodigo = useMemo(() => {
-    const mapa = new Map<string, string>();
+    const mapa = new Map<string, { descripcion: string, imagen: string | null }>();
     for (const articulo of articulos) {
-      if (articulo?.Codigo) mapa.set(String(articulo.Codigo), articulo?.Descripcion ?? '');
+      if (articulo?.Codigo) {
+        mapa.set(String(articulo.Codigo), {
+          descripcion: articulo?.Descripcion ?? '',
+          imagen: articulo?.ImagenUrl ?? null
+        });
+      }
     }
     return mapa;
   }, [articulos]);
 
   // Filtrado (general + por columna)
   const movimientosFiltrados = movimientos.filter((movimiento) => {
-    const desc = mapaDescripcionPorCodigo.get(String(movimiento?.Codigo ?? ''))?.toLowerCase() ?? '';
+    const info = mapaDescripcionPorCodigo.get(String(movimiento?.Codigo ?? ''));
+    const desc = (info?.descripcion ?? '').toLowerCase();
     const usuarioTxt = String(movimiento?.Usuario ?? '').toLowerCase();
     const q = filtro.toLowerCase();
 
@@ -298,6 +305,7 @@ const TablaMovimientosStock = () => {
         <TableHead>
           <TableRow>
             <TableCell>Fecha</TableCell>
+            <TableCell>Img</TableCell>
             <TableCell>Código</TableCell>
 
             {/* Descripción con filtro en header */}
@@ -351,7 +359,9 @@ const TablaMovimientosStock = () => {
             </TableRow>
           ) : (
             movimientosPaginados.map((mov) => {
-              const desc = mapaDescripcionPorCodigo.get(String(mov.Codigo ?? '')) || '—';
+              const info = mapaDescripcionPorCodigo.get(String(mov.Codigo ?? ''));
+              const desc = info?.descripcion || '—';
+              const imagenUrl = info?.imagen;
               const tipo = getTipoMovimiento(mov.Stock ?? 0, mov.StockAnterior ?? 0);
               const diferencia = getDiferencia(mov.Stock ?? 0, mov.StockAnterior ?? 0);
               const esEntrada = tipo === 'entrada';
@@ -377,6 +387,18 @@ const TablaMovimientosStock = () => {
                     <Typography variant="body2" fontWeight={600}>
                       {formatearFechaHora(mov.Fecha)}
                     </Typography>
+                  </TableCell>
+
+                  <TableCell>
+                    <Box sx={{ width: 36, height: 36, borderRadius: 1, overflow: 'hidden', border: '1px solid #eee', bgcolor: '#fff' }}>
+                      {imagenUrl ? (
+                        <img src={imagenUrl.startsWith('http') ? imagenUrl : `http://localhost:4000${imagenUrl}`} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                      ) : (
+                        <Box sx={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                          <Icon icon="mdi:image-off-outline" color="#ccc" width={20} style={{ opacity: 0.5 }} />
+                        </Box>
+                      )}
+                    </Box>
                   </TableCell>
 
                   <TableCell>

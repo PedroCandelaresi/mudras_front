@@ -20,7 +20,7 @@ import { MODIFICAR_STOCK_PUNTO, TRANSFERIR_STOCK_PUNTO } from '@/components/punt
 import CrystalButton, { CrystalSoftButton } from '@/components/ui/CrystalButton';
 import { verde } from '@/ui/colores';
 
-type Props = { open: boolean; onClose: () => void; punto: { id: number; nombre: string; tipo: 'venta'|'deposito' } | null };
+type Props = { open: boolean; onClose: () => void; punto: { id: number; nombre: string; tipo: 'venta' | 'deposito' } | null };
 
 type ArticuloInventario = ArticuloConStockPuntoMudras & { stockMinimo?: number | null };
 
@@ -36,7 +36,7 @@ const ModalInventarioPunto: React.FC<Props> = ({ open, onClose, punto }) => {
 
   const [ajustes, setAjustes] = useState<Record<number, string>>({});
   const [transferencias, setTransferencias] = useState<Record<number, string>>({});
-  const [snack, setSnack] = useState<{ open: boolean; msg: string; sev: 'success'|'error'|'info' }>(() => ({ open: false, msg: '', sev: 'success' }));
+  const [snack, setSnack] = useState<{ open: boolean; msg: string; sev: 'success' | 'error' | 'info' }>(() => ({ open: false, msg: '', sev: 'success' }));
 
   useEffect(() => {
     if (!open) { setAjustes({}); setTransferencias({}); setDestinoId(''); }
@@ -84,6 +84,7 @@ const ModalInventarioPunto: React.FC<Props> = ({ open, onClose, punto }) => {
             <Table size="small" stickyHeader>
               <TableHead>
                 <TableRow>
+                  <TableCell>Img</TableCell>
                   <TableCell>Código</TableCell>
                   <TableCell>Descripción</TableCell>
                   <TableCell align="right">Stock</TableCell>
@@ -94,12 +95,23 @@ const ModalInventarioPunto: React.FC<Props> = ({ open, onClose, punto }) => {
               <TableBody>
                 {items.map((a) => (
                   <TableRow key={a.id} hover>
+                    <TableCell>
+                      <Box sx={{ width: 36, height: 36, borderRadius: 1, overflow: 'hidden', border: '1px solid #eee', bgcolor: '#fff' }}>
+                        {a.articulo?.ImagenUrl ? (
+                          <img src={a.articulo.ImagenUrl.startsWith('http') ? a.articulo.ImagenUrl : `http://localhost:4000${a.articulo.ImagenUrl}`} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                        ) : (
+                          <Box sx={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                            <img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCI+PHBhdGggZmlsbD0iI2NjYyIgZD0iTTIxIDE5VjVjMC0xLjEtOS0yLTItMkg1Yy0xLjEgMC0yIC45LTIgMnYxNGMwIDEuMS45IDIgMiAyaDE0YzEuMSAwIDItLjkgMi0yem0tOS01LjU1bC0yLjgzIDIuODJMMTYgMjFoLTRsLTUtN2w1LTd6bS05IDMuNTVMMTAuMTcgMTNsLTItMmwtMyAzdi00bC0yIDJ6Ii8+PC9zdmc+" alt="" style={{ width: 20, opacity: 0.5 }} />
+                          </Box>
+                        )}
+                      </Box>
+                    </TableCell>
                     <TableCell>{a.codigo}</TableCell>
                     <TableCell>{a.nombre}</TableCell>
                     <TableCell align="right">
                       <Tooltip title={<Box sx={{ p: .5 }}>
-                        <Typography variant="caption">Disponible en punto: {a.stockAsignado}</Typography><br/>
-                        <Typography variant="caption">Total artículo: {a.stockTotal ?? '—'}</Typography><br/>
+                        <Typography variant="caption">Disponible en punto: {a.stockAsignado}</Typography><br />
+                        <Typography variant="caption">Total artículo: {a.stockTotal ?? '—'}</Typography><br />
                         <Typography variant="caption">Stock mínimo punto: {a.stockMinimo ?? '—'}</Typography>
                       </Box>}>
                         <span>{a.stockAsignado}</span>
