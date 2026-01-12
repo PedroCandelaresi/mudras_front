@@ -25,7 +25,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends ca-certificates
 
 COPY package*.json ./
 # ✅ opcional: --ignore-scripts para reducir supply-chain en runtime
-RUN npm ci --omit=dev --ignore-scripts && npm cache clean --force
+RUN npm ci --omit=dev --ignore-scripts --legacy-peer-deps && npm cache clean --force
 
 # Copiar artefactos como usuario node (en node image ya existe user node uid 1000)
 COPY --from=build --chown=node:node /app/.next ./.next
