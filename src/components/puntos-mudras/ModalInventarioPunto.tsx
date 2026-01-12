@@ -98,7 +98,15 @@ const ModalInventarioPunto: React.FC<Props> = ({ open, onClose, punto }) => {
                     <TableCell>
                       <Box sx={{ width: 36, height: 36, borderRadius: 1, overflow: 'hidden', border: '1px solid #eee', bgcolor: '#fff' }}>
                         {a.articulo?.ImagenUrl ? (
-                          <img src={a.articulo.ImagenUrl.startsWith('http') ? a.articulo.ImagenUrl : `http://localhost:4000${a.articulo.ImagenUrl}`} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                          <img
+                            src={
+                              a.articulo.ImagenUrl.startsWith('http') || a.articulo.ImagenUrl.startsWith('data:')
+                                ? a.articulo.ImagenUrl
+                                : `${process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:4000'}${a.articulo.ImagenUrl.startsWith('/') ? '' : '/'}${a.articulo.ImagenUrl}`
+                            }
+                            alt={a.nombre}
+                            style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                          />
                         ) : (
                           <Box sx={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                             <img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCI+PHBhdGggZmlsbD0iI2NjYyIgZD0iTTIxIDE5VjVjMC0xLjEtOS0yLTItMkg1Yy0xLjEgMC0yIC45LTIgMnYxNGMwIDEuMS45IDIgMiAyaDE0YzEuMSAwIDItLjkgMi0yem0tOS01LjU1bC0yLjgzIDIuODJMMTYgMjFoLTRsLTUtN2w1LTd6bS05IDMuNTVMMTAuMTcgMTNsLTItMmwtMyAzdi00bC0yIDJ6Ii8+PC9zdmc+" alt="" style={{ width: 20, opacity: 0.5 }} />

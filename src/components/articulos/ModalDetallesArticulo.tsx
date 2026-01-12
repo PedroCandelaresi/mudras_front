@@ -488,12 +488,8 @@ const ModalDetallesArticulo = ({
                         </Box>
 
                         <Typography variant="h6" fontWeight={800} color={COLORS.primary}>
-                          {typeof articuloCompleto?.PrecioCompra === 'number' &&
-                            articuloCompleto.PrecioCompra > 0
-                            ? `${Math.round(
-                              ((precioCalculado - articuloCompleto.PrecioCompra) /
-                                articuloCompleto.PrecioCompra) * 100
-                            )}%`
+                          {articuloCompleto?.PorcentajeGanancia != null
+                            ? `${articuloCompleto.PorcentajeGanancia}%`
                             : '—'}
                         </Typography>
                       </CardContent>
@@ -518,6 +514,33 @@ const ModalDetallesArticulo = ({
                       <Typography variant="h6" fontWeight={700} color={COLORS.textStrong} mb={1}>
                         Información general
                       </Typography>
+
+
+                      {/* IMAGEN GRANDE */}
+                      {articuloCompleto?.ImagenUrl && (
+                        <Box
+                          sx={{
+                            mb: 2,
+                            borderRadius: 2,
+                            overflow: 'hidden',
+                            border: `1px solid ${alpha(COLORS.primary, 0.15)}`,
+                            display: 'flex',
+                            justifyContent: 'center',
+                            bgcolor: '#fff',
+                            p: 1
+                          }}
+                        >
+                          <img
+                            src={
+                              articuloCompleto.ImagenUrl.startsWith('http') || articuloCompleto.ImagenUrl.startsWith('data:')
+                                ? articuloCompleto.ImagenUrl
+                                : `${process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:4000'}${articuloCompleto.ImagenUrl.startsWith('/') ? '' : '/'}${articuloCompleto.ImagenUrl}`
+                            }
+                            alt={articuloCompleto.Descripcion}
+                            style={{ maxWidth: '100%', maxHeight: 300, objectFit: 'contain' }}
+                          />
+                        </Box>
+                      )}
 
                       <Box
                         sx={{

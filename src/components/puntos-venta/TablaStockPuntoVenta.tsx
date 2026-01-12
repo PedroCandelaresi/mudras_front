@@ -313,7 +313,7 @@ const TablaStockPuntoVenta: React.FC<Props> = ({
       >
         <TableHead>
           <TableRow>
-            {(['Código', 'Descripción', 'Precio', 'Stock del punto', 'Rubro', ...(showActions ? ['Acciones'] : [])] as const).map((header) => (
+            {(['Imagen', 'Código', 'Descripción', 'Precio', 'Stock del punto', 'Rubro', ...(showActions ? ['Acciones'] : [])] as const).map((header) => (
               <TableCell key={header}>{header}</TableCell>
             ))}
           </TableRow>
@@ -344,6 +344,43 @@ const TablaStockPuntoVenta: React.FC<Props> = ({
 
               return (
                 <TableRow key={item.id} hover>
+                  <TableCell>
+                    {item.articulo?.ImagenUrl ? (
+                      <Box
+                        sx={{
+                          width: 40,
+                          height: 40,
+                          borderRadius: 1,
+                          overflow: 'hidden',
+                          border: `1px solid ${alpha(accentExterior, 0.2)}`,
+                        }}
+                      >
+                        <img
+                          src={
+                            item.articulo.ImagenUrl.startsWith('http') || item.articulo.ImagenUrl.startsWith('data:')
+                              ? item.articulo.ImagenUrl
+                              : `${process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:4000'}${item.articulo.ImagenUrl.startsWith('/') ? '' : '/'}${item.articulo.ImagenUrl}`
+                          }
+                          alt={item.nombre}
+                          style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                        />
+                      </Box>
+                    ) : (
+                      <Box
+                        sx={{
+                          width: 40,
+                          height: 40,
+                          borderRadius: 1,
+                          bgcolor: alpha(accentExterior, 0.1),
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                        }}
+                      >
+                        <IconClipboardList size={20} color={alpha(accentExterior, 0.5)} />
+                      </Box>
+                    )}
+                  </TableCell>
                   <TableCell>
                     <Chip
                       label={item.codigo ?? 'Sin código'}
