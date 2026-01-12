@@ -67,7 +67,8 @@ const AuthLogin = ({ title, subtitle, subtext }: loginType) => {
         throw new Error(text || 'Credenciales inválidas');
       }
       console.log('[AuthLogin] Login successful. Redirecting to:', siguiente);
-      // Cookie se setea en el handler; redirigimos
+      // Cookie se setea en el handler; refrescamos ruta para que middleware lo detecte y redirigimos
+      router.refresh();
       router.replace(siguiente);
     } catch (e: unknown) {
       console.error('[AuthLogin] Exception during login:', e);
