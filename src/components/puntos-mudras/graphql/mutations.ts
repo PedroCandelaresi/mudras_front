@@ -110,3 +110,9 @@ export interface EliminarPuntoMudrasResponse {
 export interface ModificarStockPuntoResponse {
   modificarStockPunto: boolean;
 }
+
+export const ASIGNAR_STOCK_MASIVO = gql`
+  mutation AsignarStockMasivo($input: AsignarStockMasivoInput!) {
+    asignarStockMasivo(input: $input)
+  }
+`;

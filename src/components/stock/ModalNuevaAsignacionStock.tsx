@@ -29,7 +29,7 @@ import {
   Divider,
 } from '@mui/material';
 import { Icon } from '@iconify/react';
-import { useQuery, useLazyQuery } from '@apollo/client/react';
+import { useQuery, useLazyQuery, useMutation } from '@apollo/client/react';
 import {
   OBTENER_PROVEEDORES_CON_STOCK,
   BUSCAR_ARTICULOS_PARA_ASIGNACION,
@@ -43,6 +43,7 @@ import {
   OBTENER_RELACIONES_PROVEEDOR_RUBRO,
   type ObtenerRelacionesProveedorRubroResponse,
 } from '@/components/puntos-mudras/graphql/queries';
+import { ASIGNAR_STOCK_MASIVO } from '@/components/puntos-mudras/graphql/mutations';
 import { TexturedPanel } from '@/components/ui/TexturedFrame/TexturedPanel';
 import CrystalButton, { CrystalSoftButton, CrystalIconButton } from '@/components/ui/CrystalButton';
 import { verde, azul, oroNegro } from '@/ui/colores';
@@ -75,7 +76,7 @@ export default function ModalNuevaAsignacionStock({ open, onClose, destinoId, on
   const [rubroSeleccionado, setRubroSeleccionado] = useState<string>('');
   const [busqueda, setBusqueda] = useState('');
   const [destinoSeleccionado, setDestinoSeleccionado] = useState<number | null>(destinoId ?? null);
-  
+
   // Estados para artículos y asignaciones
   const [articulos, setArticulos] = useState<ArticuloFiltrado[]>([]);
   const [asignaciones, setAsignaciones] = useState<AsignacionStock[]>([]);
@@ -83,7 +84,7 @@ export default function ModalNuevaAsignacionStock({ open, onClose, destinoId, on
   const [loading, setLoading] = useState(false);
   // (loadingProveedores/loadingRubros provienen de los hooks de Apollo)
   const [error, setError] = useState<string>('');
-  const [snack, setSnack] = useState<{ open: boolean; msg: string; sev: 'success'|'error'|'info' }>(() => ({ open: false, msg: '', sev: 'success' }));
+  const [snack, setSnack] = useState<{ open: boolean; msg: string; sev: 'success' | 'error' | 'info' }>(() => ({ open: false, msg: '', sev: 'success' }));
   const [confirmOpen, setConfirmOpen] = useState(false);
   const prevDestino = useRef<number | null>(null);
 
@@ -288,12 +289,12 @@ export default function ModalNuevaAsignacionStock({ open, onClose, destinoId, on
     }
 
     const asignacionExistente = asignaciones.find(a => a.articuloId === articuloId);
-    
+
     if (asignacionExistente) {
-      setAsignaciones(prev => 
-        prev.map(a => 
-          a.articuloId === articuloId 
-            ? { ...a, cantidad } 
+      setAsignaciones(prev =>
+        prev.map(a =>
+          a.articuloId === articuloId
+            ? { ...a, cantidad }
             : a
         )
       );
@@ -338,38 +339,33 @@ export default function ModalNuevaAsignacionStock({ open, onClose, destinoId, on
     setConfirmOpen(true);
   };
 
+  const [asignarMasivoMutation] = useMutation<{ asignarStockMasivo: boolean }>(ASIGNAR_STOCK_MASIVO);
+
   const aplicarAsignaciones = async () => {
     setLoading(true);
     setError('');
 
     try {
-      // Procesamos en serie para evitar solapar la actualización del stock por destino.
-      for (const asignacion of asignaciones) {
-        const articulo = articulos.find(a => Number(a.id) === Number(asignacion.articuloId));
-        const base = Number(articulo?.stockEnDestino ?? 0);
-        const nuevaCantidad = base + asignacion.cantidad;
-        const response = await fetch('/api/graphql', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            query: `
-              mutation ModificarStockPunto($puntoMudrasId: Int!, $articuloId: Int!, $nuevaCantidad: Float!) {
-                modificarStockPunto(
-                  puntoMudrasId: $puntoMudrasId,
-                  articuloId: $articuloId,
-                  nuevaCantidad: $nuevaCantidad
-                )
-              }
-            `,
-            variables: { puntoMudrasId: destinoSeleccionado, articuloId: Number(asignacion.articuloId), nuevaCantidad },
-          }),
-        });
-        const result = await response.json();
-        if (result.errors) throw new Error(result.errors[0].message);
-        if (!result.data?.modificarStockPunto) {
-          throw new Error('No se pudo actualizar el stock de ' + (articulo?.codigo ?? asignacion.articuloId));
-        }
+      if (!destinoSeleccionado) throw new Error('No hay destino seleccionado');
+
+      // Prepare payload for bulk assignment
+      const payload = {
+        puntoMudrasId: destinoSeleccionado,
+        asignaciones: asignaciones.map(a => ({
+          articuloId: Number(a.articuloId),
+          cantidad: Number(a.cantidad)
+        })),
+        motivo: 'Asignación masiva desde panel'
+      };
+
+      const { data } = await asignarMasivoMutation({
+        variables: { input: payload }
+      });
+
+      if (!data?.asignarStockMasivo) {
+        throw new Error('La operación no retornó éxito');
       }
+
       const destinoNombre = puntosDisponibles.find((p) => p.id === destinoSeleccionado)?.nombre || 'destino';
       setSnack({ open: true, msg: `Stock asignado a ${destinoNombre}`, sev: 'success' });
       onStockAsignado();
@@ -532,12 +528,12 @@ export default function ModalNuevaAsignacionStock({ open, onClose, destinoId, on
             )}
 
             <Box sx={{ p: { xs: 3, md: 4 }, display: 'grid', gap: 2 }}>
-            <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '3fr auto auto' }, gap: 1 }}>
-              <TextField
-                fullWidth
-                label="Artículo (escáner)"
-                placeholder="Escaneá código o escribí y Enter"
-                value={busqueda}
+              <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '3fr auto auto' }, gap: 1 }}>
+                <TextField
+                  fullWidth
+                  label="Artículo (escáner)"
+                  placeholder="Escaneá código o escribí y Enter"
+                  value={busqueda}
                   autoFocus
                   disabled={filtrosProveedorActivos}
                   onChange={(e) => {
