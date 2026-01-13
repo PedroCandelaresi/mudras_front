@@ -133,11 +133,11 @@ function union(a: any[], b: any[]) {
 const RubrosTransferList = ({ allRubros, selectedRubrosIds, onChange, colors }: any) => {
   const [checked, setChecked] = useState<number[]>([]);
 
-  const left = allRubros.filter((r: any) => !selectedRubrosIds.includes(Number(r.Id)));
-  const right = allRubros.filter((r: any) => selectedRubrosIds.includes(Number(r.Id)));
+  const left = allRubros.filter((r: any) => !selectedRubrosIds.includes(Number(r.id)));
+  const right = allRubros.filter((r: any) => selectedRubrosIds.includes(Number(r.id)));
 
-  const leftChecked = intersection(checked, left.map((r: any) => r.Id));
-  const rightChecked = intersection(checked, right.map((r: any) => r.Id));
+  const leftChecked = intersection(checked, left.map((r: any) => r.id));
+  const rightChecked = intersection(checked, right.map((r: any) => r.id));
 
   const [filterLeft, setFilterLeft] = useState('');
 
@@ -155,14 +155,14 @@ const RubrosTransferList = ({ allRubros, selectedRubrosIds, onChange, colors }: 
   };
 
   const handleCheckedRight = () => {
-    const newSelected = right.map((r: any) => Number(r.Id)).concat(leftChecked);
+    const newSelected = right.map((r: any) => Number(r.id)).concat(leftChecked);
     onChange(newSelected);
     setChecked(not(checked, leftChecked));
   };
 
   const handleCheckedLeft = () => {
     const rightCheckedIds = rightChecked;
-    const newSelected = right.filter((r: any) => !rightCheckedIds.includes(r.Id)).map((r: any) => Number(r.Id));
+    const newSelected = right.filter((r: any) => !rightCheckedIds.includes(r.id)).map((r: any) => Number(r.id));
     onChange(newSelected);
     setChecked(not(checked, rightChecked));
   };
@@ -188,19 +188,19 @@ const RubrosTransferList = ({ allRubros, selectedRubrosIds, onChange, colors }: 
         role="list"
         sx={{ flex: 1, overflow: 'auto' }}
       >
-        {items.filter((item: any) => !filterValue || item.Rubro.toLowerCase().includes(filterValue.toLowerCase())).map((value: any) => {
-          const labelId = `transfer-list-all-item-${value.Id}-label`;
+        {items.filter((item: any) => !filterValue || item.nombre.toLowerCase().includes(filterValue.toLowerCase())).map((value: any) => {
+          const labelId = `transfer-list-all-item-${value.id}-label`;
 
           return (
             <ListItem
-              key={value.Id}
+              key={value.id}
               role="listitem"
-              onClick={handleToggle(Number(value.Id))}
+              onClick={handleToggle(Number(value.id))}
               sx={{ cursor: 'pointer' }}
             >
               <ListItemIcon>
                 <Checkbox
-                  checked={checked.indexOf(Number(value.Id)) !== -1}
+                  checked={checked.indexOf(Number(value.id)) !== -1}
                   tabIndex={-1}
                   disableRipple
                   inputProps={{
@@ -208,7 +208,7 @@ const RubrosTransferList = ({ allRubros, selectedRubrosIds, onChange, colors }: 
                   }}
                 />
               </ListItemIcon>
-              <ListItemText id={labelId} primary={value.Rubro} />
+              <ListItemText id={labelId} primary={value.nombre} />
             </ListItem>
           );
         })}

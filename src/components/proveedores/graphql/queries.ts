@@ -65,6 +65,10 @@ export const GET_PROVEEDOR = gql`
       PorcentajeRecargoProveedor
       PorcentajeDescuentoProveedor
       rubroId
+      rubros {
+        Id
+        Rubro
+      }
       rubro {
         Id
         Rubro
