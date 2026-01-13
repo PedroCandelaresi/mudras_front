@@ -22,7 +22,7 @@ import {
   Paper
 } from '@mui/material';
 import { alpha, darken } from '@mui/material/styles';
-import { useMutation, useQuery } from '@apollo/client/react';
+import { useMutation, useQuery, useApolloClient } from '@apollo/client/react';
 
 import type { Articulo } from '@/app/interfaces/mudras.types';
 import { TexturedPanel } from '@/components/ui/TexturedFrame/TexturedPanel';
@@ -35,7 +35,7 @@ import { GET_PROVEEDORES } from '@/components/proveedores/graphql/queries';
 import MenuItem from '@mui/material/MenuItem';
 import { Icon } from '@iconify/react';
 import { calcularPrecioVenta, obtenerCostoReferencia } from '@/utils/precioVenta';
-import { OBTENER_PUNTOS_MUDRAS, OBTENER_STOCK_PUNTO_MUDRAS } from '@/components/puntos-mudras/graphql/queries';
+import { OBTENER_PUNTOS_MUDRAS, OBTENER_STOCK_PUNTO_MUDRAS, BUSCAR_ARTICULOS_PARA_ASIGNACION } from '@/components/puntos-mudras/graphql/queries';
 import { MODIFICAR_STOCK_PUNTO } from '@/components/puntos-mudras/graphql/mutations';
 
 type FormState = {
@@ -143,6 +143,8 @@ const ModalNuevoArticulo = ({ open, onClose, articulo, onSuccess, accentColor }:
   const [modalUploadOpen, setModalUploadOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
+  const [loadingStock, setLoadingStock] = useState(false);
+  const client = useApolloClient();
   const [iva, setIva] = useState<IvaOption>('21');
   const [rubroInput, setRubroInput] = useState('');
   const [proveedorInput, setProveedorInput] = useState('');
@@ -275,8 +277,64 @@ const ModalNuevoArticulo = ({ open, onClose, articulo, onSuccess, accentColor }:
     } else {
       setIva('21');
     }
+
+    // Cargar stock por punto si es edición
+    if (articulo.id && puntosMudras.length > 0) {
+      setLoadingStock(true);
+      const buscarStockEnPuntos = async () => {
+        try {
+          const promises = puntosMudras.map(async (punto: any) => {
+            // Usamos BUSCAR_ARTICULOS_PARA_ASIGNACION filtrando por punto y buscando por código o nombre
+            // Esto es más eficiente que traer todo el stock del punto
+            const busqueda = articulo.Codigo || articulo.Descripcion;
+            if (!busqueda) return null;
+
+            const { data } = await client.query<any>({
+              query: BUSCAR_ARTICULOS_PARA_ASIGNACION,
+              variables: {
+                destinoId: Number(punto.id),
+                busqueda: busqueda.toString(),
+                rubro: '',
+                proveedorId: null
+              },
+              fetchPolicy: 'network-only' // Para asegurar dato fresco
+            });
+
+            const encontrados = data?.buscarArticulosParaAsignacion || [];
+            // Buscamos el artículo exacto por ID
+            const match = encontrados.find((a: any) => Number(a.id) === Number(articulo.id));
+
+            if (match) {
+              return { puntoId: punto.id, cantidad: match.stockEnDestino ?? 0 };
+            }
+            return null;
+          });
+
+          const results = await Promise.all(promises);
+
+          const nuevoStockPorPunto: Record<string, string> = {};
+          results.forEach(res => {
+            if (res) {
+              nuevoStockPorPunto[res.puntoId] = String(res.cantidad);
+            }
+          });
+
+          setForm(prev => ({
+            ...prev,
+            stockPorPunto: { ...prev.stockPorPunto, ...nuevoStockPorPunto }
+          }));
+
+        } catch (err) {
+          console.error("Error cargando stock por punto:", err);
+        } finally {
+          setLoadingStock(false);
+        }
+      };
+      buscarStockEnPuntos();
+    }
+
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open, articulo?.id]);
+  }, [open, articulo?.id, puntosMudras]); // Agregamos puntosMudras a la dependencia
 
   useEffect(() => {
     if (!open) return;
@@ -821,6 +879,10 @@ const ModalNuevoArticulo = ({ open, onClose, articulo, onSuccess, accentColor }:
                   <Typography variant="body2" color="text.secondary" sx={{ fontStyle: 'italic' }}>
                     No hay puntos de venta/depósitos disponibles para asignar stock.
                   </Typography>
+                ) : loadingStock ? (
+                  <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}>
+                    <CircularProgress size={24} />
+                  </Box>
                 ) : (
                   <TableContainer component={Paper} elevation={0} sx={{ border: `1px solid ${COLORS.inputBorder}`, borderRadius: 2 }}>
                     <Table size="small">

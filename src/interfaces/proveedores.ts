@@ -18,10 +18,13 @@ export interface Proveedor {
   rubroId?: number;
   rubro?: {
     Id: number;
-    Rubro?: string;
     PorcentajeRecargo?: number;
     PorcentajeDescuento?: number;
   } | null;
+  rubros?: {
+    Id: number;
+    Rubro: string;
+  }[];
   PorcentajeRecargoProveedor?: number;
   PorcentajeDescuentoProveedor?: number;
   Saldo?: number;
@@ -74,6 +77,7 @@ export interface CreateProveedorInput {
   Saldo?: number;
   Pais?: string;
   Fax?: string;
+  rubrosIds?: number[];
 }
 
 export interface UpdateProveedorInput extends CreateProveedorInput {

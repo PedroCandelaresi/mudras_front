@@ -25,6 +25,10 @@ export const GET_PROVEEDORES = gql`
       Pais
       Fax
       FechaModif
+      rubros {
+        Id
+        Rubro
+      }
     }
   }
 `;

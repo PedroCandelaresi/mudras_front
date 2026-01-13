@@ -14,12 +14,19 @@ import {
   InputLabel,
   Select,
   MenuItem,
+  List,
+  ListItem,
+  ListItemIcon,
+  ListItemText,
+  Checkbox,
+  Button,
+  Grid,
 } from '@mui/material';
 import type { SelectChangeEvent } from '@mui/material/Select';
 import { alpha, darken } from '@mui/material/styles';
 import { useState, useEffect, useMemo, useCallback, ChangeEvent } from 'react';
 import { Icon } from '@iconify/react';
-import { useMutation } from '@apollo/client/react';
+import { useMutation, useQuery } from '@apollo/client/react';
 
 import { TexturedPanel } from '@/components/ui/TexturedFrame/TexturedPanel';
 import { WoodBackdrop } from '@/components/ui/TexturedFrame/WoodBackdrop';
@@ -27,6 +34,7 @@ import CrystalButton, { CrystalIconButton, CrystalSoftButton } from '@/component
 import { azul } from '@/ui/colores';
 import { CREAR_PROVEEDOR, ACTUALIZAR_PROVEEDOR } from '@/components/proveedores/graphql/mutations';
 import { GET_PROVEEDORES } from '@/components/proveedores/graphql/queries';
+import { GET_RUBROS } from '@/components/rubros/graphql/queries';
 import { Proveedor, CreateProveedorInput, UpdateProveedorInput } from '@/interfaces/proveedores';
 
 interface ModalEditarProveedorProps {
@@ -56,6 +64,7 @@ interface FormData {
   Fax: string;
   PorcentajeRecargoProveedor: string;
   PorcentajeDescuentoProveedor: string;
+  rubrosIds: number[];
 }
 
 const VH_MAX = 78;
@@ -103,9 +112,138 @@ const createEmptyFormData = (): FormData => ({
   Fax: '',
   PorcentajeRecargoProveedor: '',
   PorcentajeDescuentoProveedor: '',
+  rubrosIds: [],
 });
 
 const UPPERCASE_FIELDS = new Set<keyof FormData>(['Nombre', 'Contacto', 'Direccion', 'Localidad', 'Provincia', 'Pais']);
+
+// Helper functions for intersection and difference
+function not(a: any[], b: any[]) {
+  return a.filter((value) => b.indexOf(value) === -1);
+}
+
+function intersection(a: any[], b: any[]) {
+  return a.filter((value) => b.indexOf(value) !== -1);
+}
+
+function union(a: any[], b: any[]) {
+  return [...a, ...not(b, a)];
+}
+
+const RubrosTransferList = ({ allRubros, selectedRubrosIds, onChange, colors }: any) => {
+  const [checked, setChecked] = useState<number[]>([]);
+
+  const left = allRubros.filter((r: any) => !selectedRubrosIds.includes(Number(r.Id)));
+  const right = allRubros.filter((r: any) => selectedRubrosIds.includes(Number(r.Id)));
+
+  const leftChecked = intersection(checked, left.map((r: any) => r.Id));
+  const rightChecked = intersection(checked, right.map((r: any) => r.Id));
+
+  const [filterLeft, setFilterLeft] = useState('');
+
+  const handleToggle = (value: number) => () => {
+    const currentIndex = checked.indexOf(value);
+    const newChecked = [...checked];
+
+    if (currentIndex === -1) {
+      newChecked.push(value);
+    } else {
+      newChecked.splice(currentIndex, 1);
+    }
+
+    setChecked(newChecked);
+  };
+
+  const handleCheckedRight = () => {
+    const newSelected = right.map((r: any) => Number(r.Id)).concat(leftChecked);
+    onChange(newSelected);
+    setChecked(not(checked, leftChecked));
+  };
+
+  const handleCheckedLeft = () => {
+    const rightCheckedIds = rightChecked;
+    const newSelected = right.filter((r: any) => !rightCheckedIds.includes(r.Id)).map((r: any) => Number(r.Id));
+    onChange(newSelected);
+    setChecked(not(checked, rightChecked));
+  };
+
+  const customList = (title: React.ReactNode, items: readonly any[], filterValue: string, setFilterValue: (v: string) => void) => (
+    <Box sx={{ border: `1px solid ${colors.inputBorder}`, borderRadius: 2, overflow: 'hidden', height: 300, display: 'flex', flexDirection: 'column' }}>
+      <Box sx={{ p: 1, borderBottom: `1px solid ${colors.inputBorder}`, bgcolor: alpha(colors.primary, 0.05) }}>
+        <Typography variant="subtitle2" align="center" fontWeight={600} gutterBottom>{title}</Typography>
+        <TextField
+          size="small"
+          placeholder="Filtrar..."
+          fullWidth
+          value={filterValue}
+          onChange={(e) => setFilterValue(e.target.value)}
+          sx={{
+            '& .MuiOutlinedInput-root': { bgcolor: 'white' }
+          }}
+        />
+      </Box>
+      <List
+        dense
+        component="div"
+        role="list"
+        sx={{ flex: 1, overflow: 'auto' }}
+      >
+        {items.filter((item: any) => !filterValue || item.Rubro.toLowerCase().includes(filterValue.toLowerCase())).map((value: any) => {
+          const labelId = `transfer-list-all-item-${value.Id}-label`;
+
+          return (
+            <ListItem
+              key={value.Id}
+              role="listitem"
+              onClick={handleToggle(Number(value.Id))}
+              sx={{ cursor: 'pointer' }}
+            >
+              <ListItemIcon>
+                <Checkbox
+                  checked={checked.indexOf(Number(value.Id)) !== -1}
+                  tabIndex={-1}
+                  disableRipple
+                  inputProps={{
+                    'aria-labelledby': labelId,
+                  }}
+                />
+              </ListItemIcon>
+              <ListItemText id={labelId} primary={value.Rubro} />
+            </ListItem>
+          );
+        })}
+        <ListItem />
+      </List>
+    </Box>
+  );
+
+  return (
+    <Box display="flex" justifyContent="center" alignItems="center" gap={2}>
+      <Box flex={1}>{customList('Disponibles', left, filterLeft, setFilterLeft)}</Box>
+      <Box display="flex" flexDirection="column" gap={1}>
+        <Button
+          variant="outlined"
+          size="small"
+          onClick={handleCheckedRight}
+          disabled={leftChecked.length === 0}
+          aria-label="move selected right"
+        >
+          &gt;
+        </Button>
+        <Button
+          variant="outlined"
+          size="small"
+          onClick={handleCheckedLeft}
+          disabled={rightChecked.length === 0}
+          aria-label="move selected left"
+        >
+          &lt;
+        </Button>
+      </Box>
+      <Box flex={1}>{customList('Asignados', right, '', () => { })}</Box>
+    </Box>
+  );
+}
 
 const ModalEditarProveedor = ({ open, onClose, proveedor, onProveedorGuardado }: ModalEditarProveedorProps) => {
   const COLORS = useMemo(() => makeColors(azul.primary), []);
@@ -113,6 +251,9 @@ const ModalEditarProveedor = ({ open, onClose, proveedor, onProveedorGuardado }:
   const [error, setError] = useState('');
   const [validationErrors, setValidationErrors] = useState<string[]>([]);
   const [saving, setSaving] = useState(false);
+
+  const { data: rubrosData, loading: loadingRubros } = useQuery<{ obtenerRubros: any[] }>(GET_RUBROS);
+  const allRubros = useMemo(() => rubrosData?.obtenerRubros || [], [rubrosData]);
 
   const [crearProveedor] = useMutation(CREAR_PROVEEDOR);
   const [actualizarProveedor] = useMutation(ACTUALIZAR_PROVEEDOR);
@@ -133,6 +274,7 @@ const ModalEditarProveedor = ({ open, onClose, proveedor, onProveedorGuardado }:
     }
 
     if (proveedor) {
+      const rubrosAsignados = proveedor.rubros ? proveedor.rubros.map((r: any) => Number(r.Id)) : [];
       setFormData({
         Codigo: proveedor.Codigo?.toString() ?? '',
         Nombre: proveedor.Nombre ?? '',
@@ -157,6 +299,7 @@ const ModalEditarProveedor = ({ open, onClose, proveedor, onProveedorGuardado }:
           proveedor.PorcentajeDescuentoProveedor != null
             ? proveedor.PorcentajeDescuentoProveedor.toString()
             : '',
+        rubrosIds: rubrosAsignados,
       });
     } else {
       setFormData(createEmptyFormData());
@@ -319,6 +462,7 @@ const ModalEditarProveedor = ({ open, onClose, proveedor, onProveedorGuardado }:
           formData.PorcentajeRecargoProveedor !== '' ? parseFloat(formData.PorcentajeRecargoProveedor) : undefined,
         PorcentajeDescuentoProveedor:
           formData.PorcentajeDescuentoProveedor !== '' ? parseFloat(formData.PorcentajeDescuentoProveedor) : undefined,
+        rubrosIds: formData.rubrosIds,
       };
 
       if (esEdicion && proveedor && parsedProveedorId != null) {
@@ -786,6 +930,23 @@ const ModalEditarProveedor = ({ open, onClose, proveedor, onProveedorGuardado }:
                   />
                 </Box>
 
+                <Box>
+                  <Typography variant="h6" fontWeight={700} color={COLORS.textStrong} gutterBottom>
+                    Rubros Asociados
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    Seleccioná los rubros que comercializa este proveedor.
+                  </Typography>
+                  <RubrosTransferList
+                    allRubros={allRubros}
+                    selectedRubrosIds={formData.rubrosIds || []}
+                    onChange={(newIds: any) => {
+                      setFormData((prev: any) => ({ ...prev, rubrosIds: newIds }));
+                    }}
+                    colors={COLORS}
+                  />
+                </Box>
+
                 <Box display="flex" flexDirection={{ xs: 'column', md: 'row' }} gap={2.5}>
                   <TextField
                     label="Código postal"
@@ -824,6 +985,8 @@ const ModalEditarProveedor = ({ open, onClose, proveedor, onProveedorGuardado }:
                     )}
                   </Box>
                 )}
+
+
               </Box>
             </Box>
           </DialogContent>
@@ -876,9 +1039,9 @@ const ModalEditarProveedor = ({ open, onClose, proveedor, onProveedorGuardado }:
               </CrystalButton>
             </Box>
           </DialogActions>
-        </Box>
-      </TexturedPanel>
-    </Dialog>
+        </Box >
+      </TexturedPanel >
+    </Dialog >
   );
 };
 
