@@ -12,7 +12,14 @@ import {
   Typography,
   Divider,
   Button,
-  CircularProgress
+  CircularProgress,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Paper
 } from '@mui/material';
 import { alpha, darken } from '@mui/material/styles';
 import { useMutation, useQuery } from '@apollo/client/react';
@@ -788,53 +795,104 @@ const ModalNuevoArticulo = ({ open, onClose, articulo, onSuccess, accentColor }:
                 />
               </Box>
 
-              {/* Asignación por Puntos Mudras */}
-              <Box sx={{ mt: 2 }}>
-                <Typography variant="subtitle2" color={COLORS.textStrong} sx={{ mb: 1 }}>
-                  Asignación de Stock por Sucursal/Depósito
-                </Typography>
+              <Box sx={{ mt: 3 }}>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+                  <Typography variant="subtitle2" color={COLORS.textStrong}>
+                    Distribución de Stock
+                  </Typography>
+                  <Box sx={{ display: 'flex', gap: 2 }}>
+                    <Typography variant="caption" color="text.secondary">
+                      Global: <strong>{form.stock || 0}</strong>
+                    </Typography>
+                    <Typography variant="caption" color={
+                      (Object.values(form.stockPorPunto).reduce((acc, curr) => acc + (parseFloat(curr) || 0), 0) > (parseFloat(form.stock) || 0))
+                        ? 'error.main'
+                        : 'success.main'
+                    }>
+                      Asignado: <strong>{Object.values(form.stockPorPunto).reduce((acc, curr) => acc + (parseFloat(curr) || 0), 0)}</strong>
+                    </Typography>
+                    <Typography variant="caption" color="text.secondary">
+                      Restante: <strong>{Math.max(0, (parseFloat(form.stock) || 0) - Object.values(form.stockPorPunto).reduce((acc, curr) => acc + (parseFloat(curr) || 0), 0))}</strong>
+                    </Typography>
+                  </Box>
+                </Box>
 
                 {(!puntosMudras || puntosMudras.length === 0) ? (
                   <Typography variant="body2" color="text.secondary" sx={{ fontStyle: 'italic' }}>
-                    {/* Si dataPuntos es undefined, quizás sigue cargando o falló. */}
                     No hay puntos de venta/depósitos disponibles para asignar stock.
                   </Typography>
                 ) : (
-                  <Box sx={{
-                    display: 'grid',
-                    gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)', md: 'repeat(3, 1fr)' },
-                    gap: 1.5
-                  }}>
-                    {puntosMudras.map((punto: any) => (
-                      <TextField
-                        key={punto.id}
-                        label={punto.nombre}
-                        value={form.stockPorPunto[punto.id] || ''}
-                        onChange={(e) => {
-                          const val = e.target.value;
-                          setForm(prev => ({
-                            ...prev,
-                            stockPorPunto: {
-                              ...prev.stockPorPunto,
-                              [punto.id]: val
-                            }
-                          }));
-                        }}
-                        type="number"
-                        size="small"
-                        placeholder="0"
-                        InputLabelProps={{ shrink: true }}
-                        fullWidth
-                        sx={{
-                          '& .MuiOutlinedInput-root': {
-                            borderRadius: 2,
-                            background: '#ffffff',
-                            '& fieldset': { borderColor: COLORS.inputBorder },
-                          }
-                        }}
-                      />
-                    ))}
-                  </Box>
+                  <TableContainer component={Paper} elevation={0} sx={{ border: `1px solid ${COLORS.inputBorder}`, borderRadius: 2 }}>
+                    <Table size="small">
+                      <TableHead sx={{ bgcolor: alpha(COLORS.primary, 0.05) }}>
+                        <TableRow>
+                          <TableCell sx={{ fontWeight: 600, color: COLORS.textStrong }}>Punto / Depósito</TableCell>
+                          <TableCell align="right" sx={{ fontWeight: 600, color: COLORS.textStrong, width: 150 }}>Cantidad Asignada</TableCell>
+                        </TableRow>
+                      </TableHead>
+                      <TableBody>
+                        {puntosMudras.map((punto: any) => {
+                          const stockGlobal = parseFloat(form.stock) || 0;
+                          const asignadoTotal = Object.entries(form.stockPorPunto).reduce((acc, [id, val]) => acc + (parseFloat(val) || 0), 0);
+                          const asignadoEstePunto = parseFloat(form.stockPorPunto[punto.id] || '0');
+                          const restanteGlobal = Math.max(0, stockGlobal - (asignadoTotal - asignadoEstePunto));
+
+                          return (
+                            <TableRow key={punto.id} sx={{ '&:last-child td, &:last-child th': { border: 0 } }}>
+                              <TableCell component="th" scope="row">
+                                <Typography variant="body2" color="text.primary">
+                                  {punto.nombre}
+                                </Typography>
+                                {punto.esDeposito && (
+                                  <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
+                                    (Depósito)
+                                  </Typography>
+                                )}
+                              </TableCell>
+                              <TableCell align="right">
+                                <TextField
+                                  value={form.stockPorPunto[punto.id] || ''}
+                                  onChange={(e) => {
+                                    const valStr = e.target.value;
+                                    const val = parseFloat(valStr);
+
+                                    // Validación: No permitir ingresar más de lo restante
+                                    if (!isNaN(val) && val > restanteGlobal) {
+                                      // Opcional: Permitir pero mostrar error, o bloquear.
+                                      // El usuario dijo "luego me debe permitir repartir ese stock maximo solamente"
+                                      // Implementación: Bloquear si excede.
+                                      return;
+                                    }
+
+                                    setForm(prev => ({
+                                      ...prev,
+                                      stockPorPunto: {
+                                        ...prev.stockPorPunto,
+                                        [punto.id]: valStr
+                                      }
+                                    }));
+                                  }}
+                                  type="number"
+                                  size="small"
+                                  placeholder="0"
+                                  inputProps={{ min: 0, max: restanteGlobal }} // Ayuda visual
+                                  InputProps={{
+                                    sx: {
+                                      borderRadius: 1,
+                                      '& input': { textAlign: 'right', py: 0.5 }
+                                    }
+                                  }}
+                                  disabled={stockGlobal <= 0} // Deshabilitar si no hay stock global
+                                  sx={{ width: '100%' }}
+                                />
+                              </TableCell>
+                            </TableRow>
+                          );
+                        })}
+                      </TableBody>
+                      {/* Fila de resumen si se desea, por ahora el header tiene los totales */}
+                    </Table>
+                  </TableContainer>
                 )}
               </Box>
 
