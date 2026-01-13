@@ -131,119 +131,122 @@ function union(a: any[], b: any[]) {
 }
 
 const RubrosTransferList = ({ allRubros, selectedRubrosIds, onChange, colors }: any) => {
-  const [checked, setChecked] = useState<number[]>([]);
-
   const left = allRubros.filter((r: any) => !selectedRubrosIds.includes(Number(r.id)));
   const right = allRubros.filter((r: any) => selectedRubrosIds.includes(Number(r.id)));
 
-  const leftChecked = intersection(checked, left.map((r: any) => r.id));
-  const rightChecked = intersection(checked, right.map((r: any) => r.id));
-
   const [filterLeft, setFilterLeft] = useState('');
+  const [filterRight, setFilterRight] = useState('');
 
-  const handleToggle = (value: number) => () => {
-    const currentIndex = checked.indexOf(value);
-    const newChecked = [...checked];
-
-    if (currentIndex === -1) {
-      newChecked.push(value);
-    } else {
-      newChecked.splice(currentIndex, 1);
-    }
-
-    setChecked(newChecked);
-  };
-
-  const handleCheckedRight = () => {
-    const newSelected = right.map((r: any) => Number(r.id)).concat(leftChecked);
+  const handleMoveRight = (id: number) => {
+    const newSelected = [...selectedRubrosIds, Number(id)];
     onChange(newSelected);
-    setChecked(not(checked, leftChecked));
   };
 
-  const handleCheckedLeft = () => {
-    const rightCheckedIds = rightChecked;
-    const newSelected = right.filter((r: any) => !rightCheckedIds.includes(r.id)).map((r: any) => Number(r.id));
+  const handleMoveLeft = (id: number) => {
+    const newSelected = selectedRubrosIds.filter((sid: number) => sid !== Number(id));
     onChange(newSelected);
-    setChecked(not(checked, rightChecked));
   };
 
-  const customList = (title: React.ReactNode, items: readonly any[], filterValue: string, setFilterValue: (v: string) => void) => (
-    <Box sx={{ border: `1px solid ${colors.inputBorder}`, borderRadius: 2, overflow: 'hidden', height: 300, display: 'flex', flexDirection: 'column' }}>
-      <Box sx={{ p: 1, borderBottom: `1px solid ${colors.inputBorder}`, bgcolor: alpha(colors.primary, 0.05) }}>
-        <Typography variant="subtitle2" align="center" fontWeight={600} gutterBottom>{title}</Typography>
+  const customList = (title: string, items: any[], filterValue: string, setFilterValue: (v: string) => void, onChipClick: (id: number) => void, isAssigned: boolean) => (
+    <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', height: '100%', minHeight: 250 }}>
+      {/* Header */}
+      <Box sx={{
+        p: 1.5,
+        border: `1px solid ${colors.inputBorder}`,
+        borderBottom: 0,
+        borderRadius: '8px 8px 0 0',
+        bgcolor: alpha(colors.primary, 0.04),
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 1
+      }}>
+        <Typography variant="subtitle2" fontWeight={700} color={colors.textStrong} align="center">
+          {title} ({items.length})
+        </Typography>
         <TextField
           size="small"
-          placeholder="Filtrar..."
+          placeholder={`Buscar en ${title.toLowerCase()}...`}
           fullWidth
           value={filterValue}
           onChange={(e) => setFilterValue(e.target.value)}
           sx={{
-            '& .MuiOutlinedInput-root': { bgcolor: 'white' }
+            '& .MuiOutlinedInput-root': { bgcolor: 'white', borderRadius: 1.5 },
+            '& .MuiOutlinedInput-input': { py: 0.8, fontSize: '0.875rem' }
           }}
         />
       </Box>
-      <List
-        dense
-        component="div"
-        role="list"
-        sx={{ flex: 1, overflow: 'auto' }}
-      >
-        {items.filter((item: any) => !filterValue || item.nombre.toLowerCase().includes(filterValue.toLowerCase())).map((value: any) => {
-          const labelId = `transfer-list-all-item-${value.id}-label`;
 
-          return (
-            <ListItem
-              key={value.id}
-              role="listitem"
-              onClick={handleToggle(Number(value.id))}
-              sx={{ cursor: 'pointer' }}
-            >
-              <ListItemIcon>
-                <Checkbox
-                  checked={checked.indexOf(Number(value.id)) !== -1}
-                  tabIndex={-1}
-                  disableRipple
-                  inputProps={{
-                    'aria-labelledby': labelId,
-                  }}
-                />
-              </ListItemIcon>
-              <ListItemText id={labelId} primary={value.nombre} />
-            </ListItem>
-          );
-        })}
-        <ListItem />
-      </List>
+      {/* Content Area */}
+      <Box sx={{
+        flex: 1,
+        border: `1px solid ${colors.inputBorder}`,
+        borderRadius: '0 0 8px 8px',
+        p: 1.5,
+        bgcolor: '#fff',
+        overflowY: 'auto',
+        maxHeight: 250,
+        display: 'flex',
+        flexWrap: 'wrap',
+        alignContent: 'flex-start',
+        gap: 0.75,
+        boxShadow: 'inset 0 1px 4px rgba(0,0,0,0.03)'
+      }}>
+        {items
+          .filter((item: any) => !filterValue || item.nombre.toLowerCase().includes(filterValue.toLowerCase()))
+          .map((item: any) => (
+            <Chip
+              key={item.id}
+              label={item.nombre}
+              onClick={() => onChipClick(Number(item.id))}
+              size="small"
+              icon={isAssigned ? <Icon icon="mdi:close-circle" width={16} /> : <Icon icon="mdi:plus-circle" width={16} />}
+              sx={{
+                fontWeight: 500,
+                cursor: 'pointer',
+                bgcolor: isAssigned ? alpha(colors.primary, 0.12) : '#f3f4f6',
+                color: isAssigned ? colors.primary : '#374151',
+                border: `1px solid ${isAssigned ? alpha(colors.primary, 0.25) : '#e5e7eb'}`,
+                transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+                '&:hover': {
+                  bgcolor: isAssigned ? alpha(colors.primary, 0.22) : '#e5e7eb',
+                  transform: 'translateY(-1px)',
+                  boxShadow: '0 2px 4px rgba(0,0,0,0.08)'
+                },
+                '& .MuiChip-icon': {
+                  color: 'inherit',
+                  ml: '4px',
+                  mr: '-4px',
+                  order: 1 // Icon on the right
+                },
+                '& .MuiChip-label': {
+                  pl: 1.25,
+                  pr: 1
+                }
+              }}
+            />
+          ))}
+        {items.length === 0 && (
+          <Box width="100%" display="flex" justifyContent="center" py={4} color="text.disabled">
+            <Typography variant="caption" fontStyle="italic">Sin rubros</Typography>
+          </Box>
+        )}
+      </Box>
     </Box>
   );
 
   return (
-    <Box display="flex" justifyContent="center" alignItems="center" gap={2}>
-      <Box flex={1}>{customList('Disponibles', left, filterLeft, setFilterLeft)}</Box>
-      <Box display="flex" flexDirection="column" gap={1}>
-        <Button
-          variant="outlined"
-          size="small"
-          onClick={handleCheckedRight}
-          disabled={leftChecked.length === 0}
-          aria-label="move selected right"
-        >
-          &gt;
-        </Button>
-        <Button
-          variant="outlined"
-          size="small"
-          onClick={handleCheckedLeft}
-          disabled={rightChecked.length === 0}
-          aria-label="move selected left"
-        >
-          &lt;
-        </Button>
+    <Box display="flex" flexDirection={{ xs: 'column', md: 'row' }} gap={3} width="100%">
+      {customList('Disponibles', left, filterLeft, setFilterLeft, handleMoveRight, false)}
+
+      {/* Visual Separator for Desktop */}
+      <Box sx={{ display: { xs: 'none', md: 'flex' }, alignItems: 'center', color: colors.inputBorder }}>
+        <Icon icon="mdi:chevron-double-right" width={24} style={{ opacity: 0.4 }} />
       </Box>
-      <Box flex={1}>{customList('Asignados', right, '', () => { })}</Box>
+
+      {customList('Asignados', right, filterRight, setFilterRight, handleMoveLeft, true)}
     </Box>
   );
-}
+};
 
 const ModalEditarProveedor = ({ open, onClose, proveedor, onProveedorGuardado }: ModalEditarProveedorProps) => {
   const COLORS = useMemo(() => makeColors(azul.primary), []);
