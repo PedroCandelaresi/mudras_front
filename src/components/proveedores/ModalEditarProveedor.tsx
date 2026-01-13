@@ -732,14 +732,6 @@ const ModalEditarProveedor = ({ open, onClose, proveedor, onProveedorGuardado }:
                     disabled={saving}
                     sx={fieldSx}
                   />
-                  <TextField
-                    label="Rubro"
-                    value={formData.Rubro}
-                    onChange={handleInputChange('Rubro')}
-                    fullWidth
-                    disabled={saving}
-                    sx={fieldSx}
-                  />
                 </Box>
 
                 <Box>
@@ -930,22 +922,7 @@ const ModalEditarProveedor = ({ open, onClose, proveedor, onProveedorGuardado }:
                   />
                 </Box>
 
-                <Box>
-                  <Typography variant="h6" fontWeight={700} color={COLORS.textStrong} gutterBottom>
-                    Rubros Asociados
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    Seleccioná los rubros que comercializa este proveedor.
-                  </Typography>
-                  <RubrosTransferList
-                    allRubros={allRubros}
-                    selectedRubrosIds={formData.rubrosIds || []}
-                    onChange={(newIds: any) => {
-                      setFormData((prev: any) => ({ ...prev, rubrosIds: newIds }));
-                    }}
-                    colors={COLORS}
-                  />
-                </Box>
+
 
                 <Box display="flex" flexDirection={{ xs: 'column', md: 'row' }} gap={2.5}>
                   <TextField
@@ -964,6 +941,23 @@ const ModalEditarProveedor = ({ open, onClose, proveedor, onProveedorGuardado }:
                     fullWidth
                     disabled={saving}
                     sx={fieldSx}
+                  />
+                </Box>
+
+                <Box>
+                  <Typography variant="h6" fontWeight={700} color={COLORS.textStrong} gutterBottom>
+                    Rubros Asociados
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    Seleccioná los rubros que comercializa este proveedor.
+                  </Typography>
+                  <RubrosTransferList
+                    allRubros={allRubros}
+                    selectedRubrosIds={formData.rubrosIds || []}
+                    onChange={(newIds: any) => {
+                      setFormData((prev: any) => ({ ...prev, rubrosIds: newIds }));
+                    }}
+                    colors={COLORS}
                   />
                 </Box>
 
