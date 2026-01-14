@@ -82,15 +82,15 @@ const TIPO_IVA_OPTIONS = [
 ] as const;
 
 const makeColors = (base?: string) => {
-  const primary = '#2c3e50'; // Serious dark blue/grey
-  const secondary = '#34495e';
+  const primary = '#b5a5ca'; // Color 5
+  const secondary = '#dabb90'; // Color 2
   return {
     primary,
     secondary,
-    primaryHover: '#1a252f',
+    primaryHover: darken(primary, 0.1),
     textStrong: '#2c3e50',
     inputBorder: '#bdc3c7',
-    inputBorderHover: '#7f8c8d',
+    inputBorderHover: secondary,
     background: '#f8f9fa',
     paper: '#ffffff',
     chipBorder: '#bdc3c7' // Compatibility with RubrosTransferList
