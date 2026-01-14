@@ -406,6 +406,30 @@ const ModalEditarProveedor = ({ open, onClose, proveedor, onProveedorGuardado }:
     [error, validationErrors],
   );
 
+  const handleCuitChange = useCallback((event: ChangeEvent<HTMLInputElement>) => {
+    let value = event.target.value.replace(/\D/g, ''); // Remove non-digits
+
+    // Limit to 11 digits
+    if (value.length > 11) value = value.slice(0, 11);
+
+    // Format as XX-XXXXXXXX-X
+    let formatted = value;
+    if (value.length > 2) {
+      formatted = `${value.slice(0, 2)}-${value.slice(2)}`;
+    }
+    if (value.length > 10) {
+      formatted = `${formatted.slice(0, 13)}-${value.slice(10)}`;
+    }
+
+    setFormData((prev) => ({
+      ...prev,
+      CUIT: formatted,
+    }));
+
+    if (error) setError('');
+    if (validationErrors.length > 0) setValidationErrors([]);
+  }, [error, validationErrors]);
+
   const validarFormulario = useCallback(() => {
     const errores: string[] = [];
 
@@ -425,9 +449,10 @@ const ModalEditarProveedor = ({ open, onClose, proveedor, onProveedorGuardado }:
       errores.push('El código postal debe tener 4 dígitos.');
     }
 
-    if (formData.Codigo && Number.isNaN(Number(formData.Codigo))) {
-      errores.push('El código debe ser un número válido.');
-    }
+    // Codigo is now a string, so strict number validation is removed.
+    // However, we can still check if it's not empty if that was required, 
+    // but the original code only checked isNaN if it existed.
+    // if (formData.Codigo && ...) { ... }  <-- REMOVED
 
     if (formData.TipoIva && Number.isNaN(Number(formData.TipoIva))) {
       errores.push('El tipo de IVA debe ser un número válido.');
@@ -463,7 +488,7 @@ const ModalEditarProveedor = ({ open, onClose, proveedor, onProveedorGuardado }:
       setError('');
 
       const proveedorData: CreateProveedorInput | UpdateProveedorInput = {
-        Codigo: formData.Codigo ? parseInt(formData.Codigo, 10) : undefined,
+        Codigo: formData.Codigo ? formData.Codigo.trim() : undefined,
         Nombre: formData.Nombre.trim() || undefined,
         Contacto: formData.Contacto.trim() || undefined,
         Direccion: formData.Direccion.trim() || undefined,
@@ -549,6 +574,7 @@ const ModalEditarProveedor = ({ open, onClose, proveedor, onProveedorGuardado }:
           bgcolor: '#ffffff',
           maxHeight: `${VH_MAX}vh`,
         },
+        square: true, // Force square borders on the Paper component
       }}
     >
       <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%', maxHeight: `${VH_MAX}vh` }}>
@@ -561,7 +587,8 @@ const ModalEditarProveedor = ({ open, onClose, proveedor, onProveedorGuardado }:
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
-          borderBottom: `4px solid ${COLORS.secondary}`
+          borderBottom: `4px solid ${COLORS.secondary}`,
+          borderRadius: 0, // Explicitly enforce square corners
         }}>
           <Box display="flex" alignItems="center" gap={2}>
             <Icon icon={esEdicion ? 'mdi:pencil' : 'mdi:plus'} width={24} height={24} />
@@ -605,6 +632,7 @@ const ModalEditarProveedor = ({ open, onClose, proveedor, onProveedorGuardado }:
                       disabled={saving}
                       sx={fieldSx}
                       InputProps={{ readOnly: esEdicion }}
+                    // Removed type="number" or input props restrictions if any were present implicitly
                     />
                   </Box>
                   <Box width={{ xs: '100%', md: 'calc(75% - 16px)' }}>
@@ -765,7 +793,7 @@ const ModalEditarProveedor = ({ open, onClose, proveedor, onProveedorGuardado }:
                     <TextField
                       label="CUIT"
                       value={formData.CUIT}
-                      onChange={handleInputChange('CUIT')}
+                      onChange={handleCuitChange}
                       fullWidth
                       disabled={saving}
                       sx={fieldSx}
@@ -869,7 +897,8 @@ const ModalEditarProveedor = ({ open, onClose, proveedor, onProveedorGuardado }:
         </DialogContent>
 
         {/* Footer - Generic & Modern */}
-        <DialogActions sx={{ p: 2, bgcolor: '#f1f2f6', borderTop: '1px solid #e0e0e0', gap: 2 }}>
+        {/* Footer - Generic & Modern */}
+        <DialogActions sx={{ p: 2, bgcolor: '#f1f2f6', borderTop: '1px solid #e0e0e0', gap: 2, borderRadius: 0 }}>
           <Button
             onClick={handleClose}
             disabled={saving}

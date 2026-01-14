@@ -1,6 +1,6 @@
 export interface Proveedor {
   IdProveedor: number;
-  Codigo?: number;
+  Codigo?: string;
   Nombre?: string;
   Contacto?: string;
   Direccion?: string;
@@ -57,7 +57,7 @@ export interface CuentaCorriente {
 }
 
 export interface CreateProveedorInput {
-  Codigo?: number;
+  Codigo?: string;
   Nombre?: string;
   Contacto?: string;
   Direccion?: string;
