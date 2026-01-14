@@ -530,7 +530,7 @@ const ModalEditarProveedor = ({ open, onClose, proveedor, onProveedorGuardado }:
       PaperProps={{
         elevation: 4,
         sx: {
-          borderRadius: 1, // Square aesthetic
+          borderRadius: 0, // Zero border radius for strict square aesthetic
           bgcolor: '#ffffff',
           maxHeight: `${VH_MAX}vh`,
         },
@@ -854,11 +854,24 @@ const ModalEditarProveedor = ({ open, onClose, proveedor, onProveedorGuardado }:
         </DialogContent>
 
         {/* Footer - Generic & Modern */}
-        <DialogActions sx={{ p: 2, bgcolor: '#f1f2f6', borderTop: '1px solid #e0e0e0' }}>
+        <DialogActions sx={{ p: 2, bgcolor: '#f1f2f6', borderTop: '1px solid #e0e0e0', gap: 2 }}>
           <Button
             onClick={handleClose}
             disabled={saving}
-            sx={{ color: '#546e7a', fontWeight: 600 }}
+            variant="outlined"
+            sx={{
+              flex: 1, // Equal width
+              color: '#546e7a',
+              borderColor: '#b0bec5',
+              fontWeight: 600,
+              borderRadius: 0, // Sharp corners
+              textTransform: 'none',
+              py: 1,
+              '&:hover': {
+                borderColor: '#78909c',
+                bgcolor: '#eceff1'
+              }
+            }}
           >
             Cancelar
           </Button>
@@ -868,13 +881,13 @@ const ModalEditarProveedor = ({ open, onClose, proveedor, onProveedorGuardado }:
             variant="contained"
             disableElevation
             sx={{
+              flex: 1, // Equal width
               bgcolor: COLORS.primary,
               '&:hover': { bgcolor: COLORS.primaryHover },
-              px: 4,
               py: 1,
               textTransform: 'none',
               fontWeight: 600,
-              borderRadius: 0.5
+              borderRadius: 0 // Sharp corners
             }}
           >
             {saving ? 'Guardando...' : 'Guardar Datos'}
