@@ -82,8 +82,8 @@ const TIPO_IVA_OPTIONS = [
 ] as const;
 
 const makeColors = (base?: string) => {
-  const primary = '#b5a5ca'; // Color 5
-  const secondary = '#dabb90'; // Color 2
+  const primary = '#b5a5ca'; // New Primary (Lavender)
+  const secondary = '#546e7a'; // Reverted to a neutral grey/blue for balance, or keep widely compatible
   return {
     primary,
     secondary,
@@ -913,7 +913,8 @@ const ModalEditarProveedor = ({ open, onClose, proveedor, onProveedorGuardado }:
               py: 1,
               '&:hover': {
                 borderColor: '#78909c',
-                bgcolor: '#eceff1'
+                bgcolor: '#eceff1',
+                color: '#546e7a' // Explicitly force color to avoid white text issue
               }
             }}
           >
