@@ -31,9 +31,11 @@ import { useMutation, useQuery } from '@apollo/client/react';
 
 import { azul } from '@/ui/colores';
 import { CREAR_PROVEEDOR, ACTUALIZAR_PROVEEDOR } from '@/components/proveedores/graphql/mutations';
-import { GET_PROVEEDORES } from '@/components/proveedores/graphql/queries';
+import { GET_PROVEEDORES, GET_PROVEEDOR } from '@/components/proveedores/graphql/queries';
 import { GET_RUBROS } from '@/components/rubros/graphql/queries';
 import { Proveedor, CreateProveedorInput, UpdateProveedorInput } from '@/interfaces/proveedores';
+
+// ... (previous imports)
 
 interface ModalEditarProveedorProps {
   open: boolean;
@@ -261,6 +263,19 @@ const ModalEditarProveedor = ({ open, onClose, proveedor, onProveedorGuardado }:
   const { data: rubrosData, loading: loadingRubros } = useQuery<{ obtenerRubros: any[] }>(GET_RUBROS);
   const allRubros = useMemo(() => rubrosData?.obtenerRubros || [], [rubrosData]);
 
+  // Fetch fresh provider data when modal is open and we have an ID
+  const { data: freshProveedorData, loading: loadingProveedor } = useQuery<{ proveedor: Proveedor }>(GET_PROVEEDOR, {
+    variables: { id: proveedor?.IdProveedor ? Number(proveedor.IdProveedor) : 0 },
+    skip: !open || !proveedor?.IdProveedor,
+    fetchPolicy: 'network-only' // Ensure we get the latest state from backend
+  });
+
+  const datosProveedor = useMemo(() => {
+    if (!proveedor) return null;
+    // Prefer fetched data if available, otherwise fallback to prop
+    return freshProveedorData?.proveedor || proveedor;
+  }, [proveedor, freshProveedorData]);
+
   const [crearProveedor] = useMutation(CREAR_PROVEEDOR);
   const [actualizarProveedor] = useMutation(ACTUALIZAR_PROVEEDOR);
 
@@ -279,34 +294,34 @@ const ModalEditarProveedor = ({ open, onClose, proveedor, onProveedorGuardado }:
       return;
     }
 
-    if (proveedor) {
+    if (datosProveedor) {
       // Fix: Check both casing possibilities for rubro ID
-      const rubrosAsignados = proveedor.rubros
-        ? proveedor.rubros.map((r: any) => Number(r.id || r.Id))
+      const rubrosAsignados = datosProveedor.rubros
+        ? datosProveedor.rubros.map((r: any) => Number(r.id || r.Id))
         : [];
       setFormData({
-        Codigo: proveedor.Codigo?.toString() ?? '',
-        Nombre: proveedor.Nombre ?? '',
-        Contacto: proveedor.Contacto ?? '',
-        Direccion: proveedor.Direccion ?? '',
-        Localidad: proveedor.Localidad ?? '',
-        Provincia: proveedor.Provincia ?? '',
-        CP: proveedor.CP ?? '',
-        Telefono: proveedor.Telefono ?? '',
-        Celular: proveedor.Celular ?? '',
-        TipoIva: proveedor.TipoIva != null ? proveedor.TipoIva.toString() : '',
-        CUIT: proveedor.CUIT ?? '',
-        Observaciones: proveedor.Observaciones ?? '',
-        Web: proveedor.Web ?? '',
-        Mail: proveedor.Mail ?? '',
-        Rubro: proveedor.Rubro ?? '',
-        Pais: proveedor.Pais ?? '',
-        Fax: proveedor.Fax ?? '',
+        Codigo: datosProveedor.Codigo?.toString() ?? '',
+        Nombre: datosProveedor.Nombre ?? '',
+        Contacto: datosProveedor.Contacto ?? '',
+        Direccion: datosProveedor.Direccion ?? '',
+        Localidad: datosProveedor.Localidad ?? '',
+        Provincia: datosProveedor.Provincia ?? '',
+        CP: datosProveedor.CP ?? '',
+        Telefono: datosProveedor.Telefono ?? '',
+        Celular: datosProveedor.Celular ?? '',
+        TipoIva: datosProveedor.TipoIva != null ? datosProveedor.TipoIva.toString() : '',
+        CUIT: datosProveedor.CUIT ?? '',
+        Observaciones: datosProveedor.Observaciones ?? '',
+        Web: datosProveedor.Web ?? '',
+        Mail: datosProveedor.Mail ?? '',
+        Rubro: datosProveedor.Rubro ?? '',
+        Pais: datosProveedor.Pais ?? '',
+        Fax: datosProveedor.Fax ?? '',
         PorcentajeRecargoProveedor:
-          proveedor.PorcentajeRecargoProveedor != null ? proveedor.PorcentajeRecargoProveedor.toString() : '',
+          datosProveedor.PorcentajeRecargoProveedor != null ? datosProveedor.PorcentajeRecargoProveedor.toString() : '',
         PorcentajeDescuentoProveedor:
-          proveedor.PorcentajeDescuentoProveedor != null
-            ? proveedor.PorcentajeDescuentoProveedor.toString()
+          datosProveedor.PorcentajeDescuentoProveedor != null
+            ? datosProveedor.PorcentajeDescuentoProveedor.toString()
             : '',
         rubrosIds: rubrosAsignados,
       });
@@ -317,7 +332,7 @@ const ModalEditarProveedor = ({ open, onClose, proveedor, onProveedorGuardado }:
     setError('');
     setValidationErrors([]);
     setSaving(false);
-  }, [open, proveedor]);
+  }, [open, datosProveedor]);
 
   const resetFormData = useCallback(() => {
     setFormData(createEmptyFormData());
