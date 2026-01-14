@@ -188,7 +188,7 @@ export const ProductProvider: React.FC<{ children: React.ReactNode }> = ({ child
     // Function to add an item to the cart
     const addToCart = async (productId: number | string) => {
         try {
-            await cartMutate(postFetcher('/api/eCommerce/carts', { productId }));
+            // await cartMutate(postFetcher('/api/eCommerce/carts', { productId }));
             localStorage.setItem("cartItems", JSON.stringify(cartItems));
         } catch (error) {
             console.error('Error adding product to cart:', error);
@@ -197,17 +197,17 @@ export const ProductProvider: React.FC<{ children: React.ReactNode }> = ({ child
 
     // Function to remove an item from the cart
     const removeFromCart = async (id: number | string) => {
-        await cartMutate(deleteFetcher('/api/eCommerce/carts', { id, action: "Increment" }));
+        // await cartMutate(deleteFetcher('/api/eCommerce/carts', { id, action: "Increment" }));
     };
 
     // Function to increment quantity of a product in the cart
     const incrementQuantity = async (id: number | string) => {
-        await cartMutate(putFetcher('/api/eCommerce/carts', { id, action: "Increment" }));
+        // await cartMutate(putFetcher('/api/eCommerce/carts', { id, action: "Increment" }));
     };
 
     // Function to decrement quantity of a product in the cart
     const decrementQuantity = async (id: number | string) => {
-        await cartMutate(putFetcher('/api/eCommerce/carts', { id, action: "Decrement" }));
+        // await cartMutate(putFetcher('/api/eCommerce/carts', { id, action: "Decrement" }));
     };
 
     // Function to delete a product
