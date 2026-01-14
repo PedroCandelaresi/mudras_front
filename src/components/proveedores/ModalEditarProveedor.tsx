@@ -134,8 +134,8 @@ function union(a: any[], b: any[]) {
 }
 
 const RubrosTransferList = ({ allRubros, selectedRubrosIds, onChange, colors }: any) => {
-  const left = allRubros.filter((r: any) => !selectedRubrosIds.includes(Number(r.id)));
-  const right = allRubros.filter((r: any) => selectedRubrosIds.includes(Number(r.id)));
+  const left = allRubros.filter((r: any) => !selectedRubrosIds.includes(Number(r.id || r.Id)));
+  const right = allRubros.filter((r: any) => selectedRubrosIds.includes(Number(r.id || r.Id)));
 
   const [filterLeft, setFilterLeft] = useState('');
   const [filterRight, setFilterRight] = useState('');
@@ -157,7 +157,7 @@ const RubrosTransferList = ({ allRubros, selectedRubrosIds, onChange, colors }: 
         p: 1.5,
         border: `1px solid ${colors.inputBorder}`,
         borderBottom: 0,
-        borderRadius: '8px 8px 0 0',
+        borderRadius: 0, // Sharp corners
         bgcolor: alpha(colors.primary, 0.04),
         display: 'flex',
         flexDirection: 'column',
@@ -173,7 +173,7 @@ const RubrosTransferList = ({ allRubros, selectedRubrosIds, onChange, colors }: 
           value={filterValue}
           onChange={(e) => setFilterValue(e.target.value)}
           sx={{
-            '& .MuiOutlinedInput-root': { bgcolor: 'white', borderRadius: 1.5 },
+            '& .MuiOutlinedInput-root': { bgcolor: 'white', borderRadius: 0 }, // Sharp corners
             '& .MuiOutlinedInput-input': { py: 0.8, fontSize: '0.875rem' }
           }}
         />
@@ -183,7 +183,7 @@ const RubrosTransferList = ({ allRubros, selectedRubrosIds, onChange, colors }: 
       <Box sx={{
         flex: 1,
         border: `1px solid ${colors.inputBorder}`,
-        borderRadius: '0 0 8px 8px',
+        borderRadius: 0, // Sharp corners
         p: 1.5,
         bgcolor: '#fff',
         overflowY: 'auto',
@@ -199,8 +199,8 @@ const RubrosTransferList = ({ allRubros, selectedRubrosIds, onChange, colors }: 
           .map((item: any) => (
             <Chip
               key={item.id}
-              label={item.nombre}
-              onClick={() => onChipClick(Number(item.id))}
+              label={item.nombre || item.Rubro}
+              onClick={() => onChipClick(Number(item.id || item.Id))}
               size="small"
               icon={isAssigned ? <Icon icon="mdi:close-circle" width={16} /> : <Icon icon="mdi:plus-circle" width={16} />}
               sx={{
@@ -334,7 +334,7 @@ const ModalEditarProveedor = ({ open, onClose, proveedor, onProveedorGuardado }:
   const fieldSx = useMemo(
     () => ({
       '& .MuiOutlinedInput-root': {
-        borderRadius: 1, // Square aesthetic
+        borderRadius: 0, // Square aesthetic
         backgroundColor: '#fff',
         '& fieldset': { borderColor: COLORS.inputBorder },
         '&:hover fieldset': { borderColor: COLORS.inputBorderHover },
@@ -351,7 +351,7 @@ const ModalEditarProveedor = ({ open, onClose, proveedor, onProveedorGuardado }:
 
   const selectSx = useMemo(
     () => ({
-      borderRadius: 1, // Square aesthetic
+      borderRadius: 0, // Square aesthetic
       backgroundColor: '#fff',
       '& .MuiOutlinedInput-notchedOutline': { borderColor: COLORS.inputBorder },
       '&:hover .MuiOutlinedInput-notchedOutline': { borderColor: COLORS.inputBorderHover },

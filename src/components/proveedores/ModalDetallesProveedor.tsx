@@ -104,7 +104,7 @@ const ReadOnlyField = ({ label, value }: { label: string, value: string | number
     InputProps={{ readOnly: true }}
     sx={{
       '& .MuiOutlinedInput-root': {
-        borderRadius: 1,
+        borderRadius: 0, // Sharp corners
         backgroundColor: '#fff',
         '& fieldset': { borderColor: '#e0e0e0' },
       },
@@ -152,21 +152,14 @@ const ModalDetallesProveedor = ({ open, onClose, proveedor, accentColor }: Modal
     });
 
   const rubrosRelacionados = useMemo(() => {
-    const mapa = new Map<string, { cantidad: number | null; rubroId: number | null }>();
-    (rubrosData?.rubrosPorProveedor ?? []).forEach((item) => {
-      const nombre = (item.rubroNombre ?? '').trim() || 'Sin rubro';
-      const cantidad = item.cantidadArticulos != null ? Number(item.cantidadArticulos) : null;
-      const rubroId = item.rubroId != null ? Number(item.rubroId) : null;
-      if (!mapa.has(nombre)) {
-        mapa.set(nombre, { cantidad, rubroId });
-      }
-    });
-    return Array.from(mapa.entries()).map(([nombre, meta]) => ({
-      nombre,
-      cantidad: meta.cantidad,
-      rubroId: meta.rubroId,
+    // Use rubros directly from the provider object instead of a separate query
+    const rubros = proveedorCompleto?.rubros || [];
+    return rubros.map((r: any) => ({
+      nombre: r.Rubro || r.nombre || 'Sin nombre',
+      cantidad: null, // We don't have article count in this view, simpler display
+      rubroId: r.Id || r.id
     }));
-  }, [rubrosData]);
+  }, [proveedorCompleto?.rubros]);
 
   const cantidadRubros = rubrosRelacionados.length;
   const rubrosTooltipTitle = loadingRubros
@@ -334,7 +327,7 @@ const ModalDetallesProveedor = ({ open, onClose, proveedor, accentColor }: Modal
       fullWidth
       PaperProps={{
         sx: {
-          borderRadius: 1,
+          borderRadius: 0, // Sharp corners
           bgcolor: '#ffffff',
           maxHeight: `${VH_MAX}vh`,
         }
@@ -372,7 +365,7 @@ const ModalDetallesProveedor = ({ open, onClose, proveedor, accentColor }: Modal
               <Typography variant="subtitle2" fontWeight={700} color={COLORS.secondary} sx={{ mb: 2, textTransform: 'uppercase', letterSpacing: 1 }}>
                 Datos Generales
               </Typography>
-              <Paper variant="outlined" sx={{ p: 3, borderRadius: 1, borderColor: '#e0e0e0' }}>
+              <Paper variant="outlined" sx={{ p: 3, borderRadius: 0, borderColor: '#e0e0e0' }}>
                 <Box display="flex" flexWrap="wrap" gap={2}>
                   <Box width={{ xs: '100%', md: '25%' }}>
                     <ReadOnlyField label="Código" value={proveedorCompleto?.Codigo} />
@@ -392,7 +385,7 @@ const ModalDetallesProveedor = ({ open, onClose, proveedor, accentColor }: Modal
               <Typography variant="subtitle2" fontWeight={700} color={COLORS.secondary} sx={{ mb: 2, textTransform: 'uppercase', letterSpacing: 1 }}>
                 Información de Contacto
               </Typography>
-              <Paper variant="outlined" sx={{ p: 3, borderRadius: 1, borderColor: '#e0e0e0' }}>
+              <Paper variant="outlined" sx={{ p: 3, borderRadius: 0, borderColor: '#e0e0e0' }}>
                 <Box display="flex" flexWrap="wrap" gap={2}>
                   <Box width={{ xs: '100%', md: 'calc(50% - 8px)' }}>
                     <ReadOnlyField label="Teléfono" value={proveedorCompleto?.Telefono} />
@@ -418,7 +411,7 @@ const ModalDetallesProveedor = ({ open, onClose, proveedor, accentColor }: Modal
               <Typography variant="subtitle2" fontWeight={700} color={COLORS.secondary} sx={{ mb: 2, textTransform: 'uppercase', letterSpacing: 1 }}>
                 Ubicación
               </Typography>
-              <Paper variant="outlined" sx={{ p: 3, borderRadius: 1, borderColor: '#e0e0e0' }}>
+              <Paper variant="outlined" sx={{ p: 3, borderRadius: 0, borderColor: '#e0e0e0' }}>
                 <Box display="flex" flexWrap="wrap" gap={2}>
                   <Box width="100%">
                     <ReadOnlyField label="Dirección" value={proveedorCompleto?.Direccion} />
@@ -444,7 +437,7 @@ const ModalDetallesProveedor = ({ open, onClose, proveedor, accentColor }: Modal
               <Typography variant="subtitle2" fontWeight={700} color={COLORS.secondary} sx={{ mb: 2, textTransform: 'uppercase', letterSpacing: 1 }}>
                 Datos Fiscales
               </Typography>
-              <Paper variant="outlined" sx={{ p: 3, borderRadius: 1, borderColor: '#e0e0e0' }}>
+              <Paper variant="outlined" sx={{ p: 3, borderRadius: 0, borderColor: '#e0e0e0' }}>
                 <Box display="flex" flexWrap="wrap" gap={2}>
                   <Box width={{ xs: '100%', md: 'calc(50% - 8px)' }}>
                     <ReadOnlyField label="CUIT" value={proveedorCompleto?.CUIT} />
@@ -464,7 +457,7 @@ const ModalDetallesProveedor = ({ open, onClose, proveedor, accentColor }: Modal
               <Typography variant="subtitle2" fontWeight={700} color={COLORS.secondary} sx={{ mb: 2, textTransform: 'uppercase', letterSpacing: 1 }}>
                 Comercial y Rubros
               </Typography>
-              <Paper variant="outlined" sx={{ p: 3, borderRadius: 1, borderColor: '#e0e0e0' }}>
+              <Paper variant="outlined" sx={{ p: 3, borderRadius: 0, borderColor: '#e0e0e0' }}>
                 <Box display="flex" flexWrap="wrap" gap={2}>
                   <Box width={{ xs: '100%', md: 'calc(50% - 8px)' }}>
                     <ReadOnlyField label="Recargo Proveedor (%)" value={proveedorCompleto?.PorcentajeRecargoProveedor} />
@@ -488,7 +481,7 @@ const ModalDetallesProveedor = ({ open, onClose, proveedor, accentColor }: Modal
                             key={nombre}
                             label={`${nombre} (${cantidad || 0})`}
                             variant="outlined"
-                            sx={{ borderRadius: 1, borderColor: COLORS.inputBorder, color: COLORS.textStrong, fontWeight: 500 }}
+                            sx={{ borderRadius: 0, borderColor: COLORS.inputBorder, color: COLORS.textStrong, fontWeight: 500 }}
                           />
                         ))}
                       </Box>
@@ -505,7 +498,7 @@ const ModalDetallesProveedor = ({ open, onClose, proveedor, accentColor }: Modal
               <Box
                 sx={{
                   border: '1px solid #e0e0e0',
-                  borderRadius: 1,
+                  borderRadius: 0, // Sharp corners
                   background: '#fff',
                   px: 3,
                   py: 2.25,
@@ -541,7 +534,7 @@ const ModalDetallesProveedor = ({ open, onClose, proveedor, accentColor }: Modal
                     ),
                     sx: {
                       '& .MuiOutlinedInput-root': {
-                        borderRadius: 1,
+                        borderRadius: 0, // Sharp corners
                         backgroundColor: '#fff',
                         '& fieldset': { borderColor: '#e0e0e0' },
                         '&:hover fieldset': { borderColor: '#bdc3c7' },
@@ -593,7 +586,7 @@ const ModalDetallesProveedor = ({ open, onClose, proveedor, accentColor }: Modal
               py: 1,
               textTransform: 'none',
               fontWeight: 600,
-              borderRadius: 0.5
+              borderRadius: 0 // Sharp corners
             }}
           >
             Cerrar
