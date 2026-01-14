@@ -11,17 +11,14 @@ import {
   TextField,
   InputAdornment,
   Divider,
-  Card,
-  CardContent,
-  Tooltip,
+  IconButton,
+  Paper,
+  Button,
 } from '@mui/material';
 import { alpha, darken } from '@mui/material/styles';
 import { useState, useEffect, useMemo, useCallback, type ComponentProps } from 'react';
 import { Icon } from '@iconify/react';
 import { azul, verde, marron as marronPalette } from '@/ui/colores';
-import { WoodBackdrop } from '@/components/ui/TexturedFrame/WoodBackdrop';
-import { TexturedPanel } from '@/components/ui/TexturedFrame/TexturedPanel';
-import { CrystalSoftButton } from '@/components/ui/CrystalButton';
 import { TablaArticulos } from '@/components/articulos';
 import { useQuery } from '@apollo/client/react';
 import { GET_PROVEEDOR, RUBROS_POR_PROVEEDOR } from '@/components/proveedores/graphql/queries';
@@ -74,14 +71,47 @@ const CONTENT_MAX = `calc(${VH_MAX}vh - ${HEADER_H + FOOTER_H + DIV_H * 2}px)`;
 
 /* ======================== Paleta ======================== */
 const makeColors = (base?: string) => {
-  const primary = base || azul.primary;
+  const primary = '#2c3e50'; // Serious dark blue/grey
+  const secondary = '#34495e';
   return {
     primary,
-    primaryHover: darken(primary, 0.12),
-    textStrong: darken(primary, 0.5),
-    chipBorder: 'rgba(255,255,255,0.35)',
+    secondary,
+    primaryHover: '#1a252f',
+    textStrong: '#2c3e50',
+    inputBorder: '#bdc3c7',
+    inputBorderHover: '#7f8c8d',
+    background: '#f8f9fa',
+    paper: '#ffffff',
+    chipBorder: '#bdc3c7'
   };
 };
+
+const TIPO_IVA_OPTIONS = [
+  { value: '1', label: 'Responsable Inscripto' },
+  { value: '2', label: 'Monotributo' },
+  { value: '3', label: 'Exento' },
+  { value: '4', label: 'Consumidor Final' },
+  { value: '5', label: 'Responsable No Inscripto' },
+] as const;
+
+// Helper component for ReadOnly Fields
+const ReadOnlyField = ({ label, value }: { label: string, value: string | number | undefined | null }) => (
+  <TextField
+    label={label}
+    value={value ?? ''}
+    fullWidth
+    variant="outlined"
+    InputProps={{ readOnly: true }}
+    sx={{
+      '& .MuiOutlinedInput-root': {
+        borderRadius: 1,
+        backgroundColor: '#fff',
+        '& fieldset': { borderColor: '#e0e0e0' },
+      },
+      '& .MuiInputLabel-root': { color: '#546e7a' }
+    }}
+  />
+);
 
 const ModalDetallesProveedor = ({ open, onClose, proveedor, accentColor }: ModalDetallesProveedorProps) => {
   const COLORS = useMemo(() => makeColors(accentColor), [accentColor]);
@@ -145,10 +175,10 @@ const ModalDetallesProveedor = ({ open, onClose, proveedor, accentColor }: Modal
       ? 'No pudimos obtener los rubros asociados.'
       : cantidadRubros > 0
         ? rubrosRelacionados
-            .map(({ nombre, cantidad }) =>
-              cantidad != null ? `• ${nombre} (${cantidad} artículos)` : `• ${nombre}`,
-            )
-            .join('\n')
+          .map(({ nombre, cantidad }) =>
+            cantidad != null ? `• ${nombre} (${cantidad} artículos)` : `• ${nombre}`,
+          )
+          .join('\n')
         : 'Este proveedor aún no está asociado a rubros.';
 
   const rubroFiltroId = rubroFiltro?.id ?? null;
@@ -300,470 +330,276 @@ const ModalDetallesProveedor = ({ open, onClose, proveedor, accentColor }: Modal
     <Dialog
       open={open}
       onClose={onClose}
-      maxWidth="md"
+      maxWidth="lg"
       fullWidth
       PaperProps={{
         sx: {
-          borderRadius: 3,
-          boxShadow: '0 8px 32px rgba(0,0,0,0.12)',
-          bgcolor: 'transparent',
-          overflow: 'hidden',
+          borderRadius: 1,
+          bgcolor: '#ffffff',
           maxHeight: `${VH_MAX}vh`,
         }
       }}
     >
-      <TexturedPanel
-        accent={COLORS.primary}
-        radius={12}
-        contentPadding={0}
-        bgTintPercent={12}
-        bgAlpha={1}
-        textureBaseOpacity={0.22}
-        textureBoostOpacity={0.19}
-        textureBrightness={1.12}
-        textureContrast={1.03}
-        tintOpacity={0.38}
-      >
-        <Box sx={{ display: 'flex', flexDirection: 'column', maxHeight: `${VH_MAX}vh` }}>
-          {/* ===== HEADER ===== */}
-<DialogTitle
-  sx={{
-    p: 0,
-    m: 0,
-    height: HEADER_H,
-    minHeight: HEADER_H,
-    display: 'flex',
-    alignItems: 'center',
-  }}
->
-  <Box
-    sx={{
-      width: '100%',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'flex-start',
-      px: 2,
-      py: 1,
-      gap: 2,
-    }}
-  >        <Box sx={{
-                width: 40, height: 40, borderRadius: '50%',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                background: `linear-gradient(135deg, ${COLORS.primary} 0%, ${COLORS.primaryHover} 100%)`,
-                boxShadow: 'inset 0 2px 4px rgba(255,255,255,0.3), 0 4px 12px rgba(0,0,0,0.25)',
-                color: '#fff'
-              }}>
-                <Icon icon="mdi:account-outline" width={22} height={22} />
-              </Box>
-
-              <Typography variant="h6" fontWeight={700} color="white" sx={{ textShadow: '0 2px 4px rgba(0,0,0,0.8)' }}>
-                {headerTitle}
+      <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+        {/* Header */}
+        <Box sx={{
+          p: 3,
+          bgcolor: COLORS.primary,
+          color: 'white',
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          borderBottom: `4px solid ${COLORS.secondary}`
+        }}>
+          <Box display="flex" alignItems="center" gap={2}>
+            <Icon icon="mdi:card-account-details-outline" width={24} height={24} />
+            <Box>
+              <Typography variant="h6" fontWeight={600} letterSpacing={0.5}>
+                {headerTitle.toUpperCase()}
               </Typography>
-
-              <Box sx={{ ml: 'auto', display: 'flex', alignItems: 'center', gap: 1, pr: 1.5 }}>
-                {Boolean(proveedorCompleto?.CUIT) && (
-                  <Chip
-                    label={`CUIT${NBSP}${proveedorCompleto?.CUIT}`}
-                    size="small"
-                    sx={{ bgcolor: 'rgba(0,0,0,0.35)', color: '#fff', border: `1px solid ${COLORS.chipBorder}`, fontWeight: 600, px: 1.5, py: 0.5, height: 28 }}
-                  />
-                )}
-                <Chip
-                  label={formatCount(totalArticulosProveedor, 'artículo', 'artículos')}
-                  size="small"
-                  sx={{ bgcolor: 'rgba(0,0,0,0.35)', color: '#fff', border: `1px solid ${COLORS.chipBorder}`, fontWeight: 600, px: 1.5, py: 0.5, height: 28 }}
-                />
-              </Box>
-
-              <CrystalSoftButton
-                baseColor={COLORS.primary}
-                onClick={onCerrar}
-                title="Cerrar"
-                sx={{
-                  width: 40, height: 40, minWidth: 40,
-                  p: 0, borderRadius: '50%',
-                  display: 'grid', placeItems: 'center',
-                  transform: 'none !important', transition: 'none',
-                  '&:hover': { transform: 'none !important' },
-                }}
-              >
-                <Icon icon="mdi:close" color="#fff" width={22} height={22} />
-              </CrystalSoftButton>
             </Box>
-          </DialogTitle>
+          </Box>
+          <IconButton onClick={onCerrar} size="small" sx={{ color: 'white', '&:hover': { bgcolor: 'rgba(255,255,255,0.1)' } }}>
+            <Icon icon="mdi:close" width={24} />
+          </IconButton>
+        </Box>
 
-          {/* Divisor header */}
-          <Divider
-            sx={{
-              height: DIV_H,
-              border: 0,
-              backgroundImage: `
-                linear-gradient(to bottom, rgba(255,255,255,0.70), rgba(255,255,255,0.70)),
-                linear-gradient(to bottom, rgba(0,0,0,0.22), rgba(0,0,0,0.22)),
-                linear-gradient(90deg, rgba(255,255,255,0.05), ${COLORS.primary}, rgba(255,255,255,0.05))
-              `,
-              backgroundRepeat: 'no-repeat, no-repeat, repeat',
-              backgroundSize: '100% 1px, 100% 1px, 100% 100%',
-              backgroundPosition: 'top left, bottom left, center',
-              flex: '0 0 auto'
-            }}
-          />
+        <DialogContent sx={{ p: 4, bgcolor: '#f8f9fa' }}>
+          <Box display="flex" flexDirection="column" gap={3}>
 
-          {/* ===== CONTENIDO ===== */}
-          <DialogContent
-            sx={{
-              p: 0,
-              borderRadius: 0,
-              overflow: 'auto',
-              maxHeight: CONTENT_MAX,
-              flex: '0 1 auto'
-            }}
-          >
-            <Box sx={{ position: 'relative', borderRadius: 0, overflow: 'hidden' }}>
-              <Box
-                sx={{
-                  position: 'relative',
-                  zIndex: 1,
-                  p: { xs: 3, md: 4 },
-                  borderRadius: 0,
-                  backdropFilter: 'none',
-                  background: '#ffffff',
-                }}
-              >
-                {/* Tarjetas de info rápida */}
-                <Box
-                  sx={{
-                    display: 'grid',
-                    gap: 1.75,
-                    gridTemplateColumns: {
-                      xs: 'repeat(2, minmax(0, 1fr))',
-                      md: 'repeat(4, minmax(0, 1fr))',
-                    },
-                    mb: 3,
-                  }}
-                >
-                  <Tooltip placement="top" arrow title={renderTooltip(contactoTooltipTitle)}>
-                    <Card
-                      sx={{
-                        borderRadius: 2,
-                        border: `1px solid ${alpha(COLORS.primary, 0.18)}`,
-                        background: alpha(COLORS.primary, 0.06),
-                        boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.24)',
-                      }}
-                    >
-                      <CardContent sx={{ p: 2, display: 'flex', flexDirection: 'column', gap: 1 }}>
-                        <Box display="flex" alignItems="center" gap={1}>
-                          <Box
-                            sx={{
-                              width: 24,
-                              height: 24,
-                              borderRadius: '50%',
-                              display: 'grid',
-                              placeItems: 'center',
-                              bgcolor: alpha(COLORS.primary, 0.18),
-                            }}
-                          >
-                            <Icon icon="mdi:account" width={15} height={15} color={COLORS.primary} />
-                          </Box>
-                          <Typography variant="subtitle2" fontWeight={700} color={COLORS.textStrong}>
-                            Contacto
-                          </Typography>
-                        </Box>
-                        <Typography variant="h6" fontWeight={700} color={COLORS.primary}>
-                          {proveedorCompleto?.Contacto || proveedorCompleto?.Nombre || '—'}
-                        </Typography>
-                      </CardContent>
-                    </Card>
-                  </Tooltip>
-
-                  <Tooltip placement="top" arrow title={renderTooltip(rubrosTooltipTitle)}>
-                    <Card
-                      sx={{
-                        borderRadius: 2,
-                        border: `1px solid ${alpha(COLORS.primary, 0.18)}`,
-                        background: alpha(COLORS.primary, 0.05),
-                        boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.22)',
-                      }}
-                    >
-                      <CardContent sx={{ p: 2, display: 'flex', flexDirection: 'column', gap: 1 }}>
-                        <Box display="flex" alignItems="center" gap={1}>
-                          <Box
-                            sx={{
-                              width: 24,
-                              height: 24,
-                              borderRadius: '50%',
-                              display: 'grid',
-                              placeItems: 'center',
-                              bgcolor: alpha(COLORS.primary, 0.16),
-                            }}
-                          >
-                            <Icon icon="mdi:layers" width={15} height={15} color={COLORS.primary} />
-                          </Box>
-                          <Typography variant="subtitle2" fontWeight={700} color={COLORS.textStrong}>
-                            Rubros asociados
-                          </Typography>
-                        </Box>
-                        <Typography variant="h6" fontWeight={800} color={COLORS.primary}>
-                          {loadingRubros ? '…' : errorRubros ? '—' : formatCount(cantidadRubros, 'rubro')}
-                        </Typography>
-                      </CardContent>
-                    </Card>
-                  </Tooltip>
-
-                  <Tooltip placement="top" arrow title={renderTooltip(recargoTooltipTitle)}>
-                    <Card
-                      sx={{
-                        borderRadius: 2,
-                        border: `1px solid ${alpha(COLORS.primary, 0.18)}`,
-                        background: alpha(COLORS.primary, 0.05),
-                        boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.22)',
-                      }}
-                    >
-                      <CardContent sx={{ p: 2, display: 'flex', flexDirection: 'column', gap: 1 }}>
-                        <Box display="flex" alignItems="center" gap={1}>
-                          <Box
-                            sx={{
-                              width: 24,
-                              height: 24,
-                              borderRadius: '50%',
-                              display: 'grid',
-                              placeItems: 'center',
-                              bgcolor: alpha(COLORS.primary, 0.16),
-                            }}
-                          >
-                            <Icon icon="mdi:trending-up" width={15} height={15} color={COLORS.primary} />
-                          </Box>
-                          <Typography variant="subtitle2" fontWeight={700} color={COLORS.textStrong}>
-                            Recargo por proveedor
-                          </Typography>
-                        </Box>
-                        <Typography variant="h6" fontWeight={800} color={COLORS.primary}>
-                          {formatPercentage(porcentajeRecargoProveedor)}
-                        </Typography>
-                      </CardContent>
-                    </Card>
-                  </Tooltip>
-
-                  <Tooltip placement="top" arrow title={renderTooltip(descuentoTooltipTitle)}>
-                    <Card
-                      sx={{
-                        borderRadius: 2,
-                        border: `1px solid ${alpha(COLORS.primary, 0.18)}`,
-                        background: alpha(COLORS.primary, 0.05),
-                        boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.22)',
-                      }}
-                    >
-                      <CardContent sx={{ p: 2, display: 'flex', flexDirection: 'column', gap: 1 }}>
-                        <Box display="flex" alignItems="center" gap={1}>
-                          <Box
-                            sx={{
-                              width: 24,
-                              height: 24,
-                              borderRadius: '50%',
-                              display: 'grid',
-                              placeItems: 'center',
-                              bgcolor: alpha(COLORS.primary, 0.16),
-                            }}
-                          >
-                            <Icon icon="mdi:trending-down" width={15} height={15} color={COLORS.primary} />
-                          </Box>
-                          <Typography variant="subtitle2" fontWeight={700} color={COLORS.textStrong}>
-                            Descuento por proveedor
-                          </Typography>
-                        </Box>
-                        <Typography variant="h6" fontWeight={800} color={COLORS.primary}>
-                          {formatPercentage(porcentajeDescuentoProveedor)}
-                        </Typography>
-                      </CardContent>
-                    </Card>
-                  </Tooltip>
-                </Box>
-
-                {cantidadRubros > 0 && (
-                  <Box mt={2.5} display="flex" flexDirection="column" gap={1.25}>
-                    <Typography variant="subtitle2" fontWeight={700} color={COLORS.textStrong}>
-                      Rubros del proveedor
-                    </Typography>
-                    <Box display="flex" flexWrap="wrap" gap={1} mb={2}>
-                      <Chip
-                        key="rubro-todos"
-                        label="Todos"
-                        clickable
-                        variant={!rubroFiltro ? 'filled' : 'outlined'}
-                        sx={{
-                          fontWeight: 600,
-                          bgcolor: !rubroFiltro ? marronPalette.primary : 'transparent',
-                          color: !rubroFiltro ? '#fff' : marronPalette.primary,
-                          borderColor: marronPalette.primary,
-                          '&:hover': {
-                            bgcolor: !rubroFiltro
-                              ? marronPalette.primaryHover
-                              : alpha(marronPalette.primary, 0.08),
-                          },
-                        }}
-                        onClick={() => handleSeleccionarRubro()}
-                      />
-                      {rubrosRelacionados.map(({ nombre, cantidad, rubroId }) => {
-                        const isActive =
-                          rubroFiltroId != null
-                            ? rubroId != null && rubroFiltroId === rubroId
-                            : rubroFiltroNombre != null && rubroFiltroNombre === nombre;
-                        const label = cantidad != null ? `${nombre} (${cantidad})` : nombre;
-                        return (
-                          <Chip
-                            key={`${rubroId ?? nombre}`}
-                            label={label}
-                            clickable
-                            variant={isActive ? 'filled' : 'outlined'}
-                            sx={{
-                              fontWeight: 600,
-                              bgcolor: isActive ? marronPalette.primary : 'transparent',
-                              color: isActive ? '#fff' : marronPalette.primary,
-                              borderColor: marronPalette.primary,
-                              '&:hover': {
-                                bgcolor: isActive
-                                  ? marronPalette.primaryHover
-                                  : alpha(marronPalette.primary, 0.08),
-                              },
-                            }}
-                            onClick={() =>
-                              handleSeleccionarRubro({ rubroId: rubroId ?? null, nombre })
-                            }
-                          />
-                        );
-                      })}
-                    </Box>
+            {/* General Info */}
+            <Box>
+              <Typography variant="subtitle2" fontWeight={700} color={COLORS.secondary} sx={{ mb: 2, textTransform: 'uppercase', letterSpacing: 1 }}>
+                Datos Generales
+              </Typography>
+              <Paper variant="outlined" sx={{ p: 3, borderRadius: 1, borderColor: '#e0e0e0' }}>
+                <Box display="flex" flexWrap="wrap" gap={2}>
+                  <Box width={{ xs: '100%', md: '25%' }}>
+                    <ReadOnlyField label="Código" value={proveedorCompleto?.Codigo} />
                   </Box>
-                )}
+                  <Box width={{ xs: '100%', md: '70%', flexGrow: 1 }}>
+                    <ReadOnlyField label="Razón Social / Nombre" value={proveedorCompleto?.Nombre} />
+                  </Box>
+                  <Box width={{ xs: '100%', md: '100%' }}>
+                    <ReadOnlyField label="Persona de Contacto" value={proveedorCompleto?.Contacto} />
+                  </Box>
+                </Box>
+              </Paper>
+            </Box>
 
-                {/* Toolbar tabla */}
-                <Box
-                  sx={{
-                    border: `1px solid ${alpha(COLORS.primary, 0.18)}`,
-                    borderRadius: 2,
-                    background: alpha(COLORS.primary, 0.05),
-                    boxShadow: '0 8px 24px rgba(0,0,0,0.06)',
-                    px: 3,
-                    py: 2.25,
-                    mb: 2.5,
-                  }}
-                >
-                  <Box
-                    display="flex"
-                    justifyContent="space-between"
-                    alignItems="center"
-                    sx={{ gap: 2, flexWrap: 'wrap' }}
-                  >
-                    <Typography variant="h6" fontWeight={700} color={COLORS.textStrong}>
-                      Artículos del proveedor
-                    </Typography>
-                    <TextField
-                      placeholder="Buscar artículos…"
-                      value={filtroInput}
-                      onChange={(e) => setFiltroInput(e.target.value)}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter') {
-                          const termino = filtroInput.trim();
-                          setBusquedaPersonalizada(termino);
-                          setPaginacion((prev) => (prev.pagina === 0 ? prev : { ...prev, pagina: 0 }));
-                        }
-                      }}
-                      size="small"
-                      sx={{ minWidth: { xs: '100%', sm: 240, md: 280 } }}
-                      InputProps={{
-                        startAdornment: (
-                          <InputAdornment position="start">
-                            <Icon icon="mdi:magnify" color={COLORS.primary} />
-                          </InputAdornment>
-                        ),
-                        sx: {
-                          '& .MuiOutlinedInput-root': {
-                            color: COLORS.textStrong,
-                            borderRadius: 2,
-                            background: '#fff',
-                            '& fieldset': { borderColor: alpha(COLORS.primary, 0.28) },
-                            '&:hover fieldset': { borderColor: alpha(COLORS.primary, 0.42) },
-                            '&.Mui-focused fieldset': { borderColor: COLORS.primary },
-                          },
-                        },
-                      }}
+            {/* Contact Info */}
+            <Box>
+              <Typography variant="subtitle2" fontWeight={700} color={COLORS.secondary} sx={{ mb: 2, textTransform: 'uppercase', letterSpacing: 1 }}>
+                Información de Contacto
+              </Typography>
+              <Paper variant="outlined" sx={{ p: 3, borderRadius: 1, borderColor: '#e0e0e0' }}>
+                <Box display="flex" flexWrap="wrap" gap={2}>
+                  <Box width={{ xs: '100%', md: 'calc(50% - 8px)' }}>
+                    <ReadOnlyField label="Teléfono" value={proveedorCompleto?.Telefono} />
+                  </Box>
+                  <Box width={{ xs: '100%', md: 'calc(50% - 8px)' }}>
+                    <ReadOnlyField label="Celular" value={proveedorCompleto?.Celular} />
+                  </Box>
+                  <Box width={{ xs: '100%', md: 'calc(50% - 8px)' }}>
+                    <ReadOnlyField label="Email" value={proveedorCompleto?.Mail} />
+                  </Box>
+                  <Box width={{ xs: '100%', md: 'calc(50% - 8px)' }}>
+                    <ReadOnlyField label="Sitio Web" value={proveedorCompleto?.Web} />
+                  </Box>
+                  <Box width={{ xs: '100%', md: 'calc(50% - 8px)' }}>
+                    <ReadOnlyField label="Fax" value={proveedorCompleto?.Fax} />
+                  </Box>
+                </Box>
+              </Paper>
+            </Box>
+
+            {/* Location */}
+            <Box>
+              <Typography variant="subtitle2" fontWeight={700} color={COLORS.secondary} sx={{ mb: 2, textTransform: 'uppercase', letterSpacing: 1 }}>
+                Ubicación
+              </Typography>
+              <Paper variant="outlined" sx={{ p: 3, borderRadius: 1, borderColor: '#e0e0e0' }}>
+                <Box display="flex" flexWrap="wrap" gap={2}>
+                  <Box width="100%">
+                    <ReadOnlyField label="Dirección" value={proveedorCompleto?.Direccion} />
+                  </Box>
+                  <Box width={{ xs: '100%', md: 'calc(33% - 11px)' }}>
+                    <ReadOnlyField label="Localidad" value={proveedorCompleto?.Localidad} />
+                  </Box>
+                  <Box width={{ xs: '100%', md: 'calc(33% - 11px)' }}>
+                    <ReadOnlyField label="Provincia" value={proveedorCompleto?.Provincia} />
+                  </Box>
+                  <Box width={{ xs: '100%', md: 'calc(33% - 11px)' }}>
+                    <ReadOnlyField label="Código Postal" value={proveedorCompleto?.CP} />
+                  </Box>
+                  <Box width={{ xs: '100%', md: 'calc(50% - 8px)' }}>
+                    <ReadOnlyField label="País" value={proveedorCompleto?.Pais} />
+                  </Box>
+                </Box>
+              </Paper>
+            </Box>
+
+            {/* Fiscal Data */}
+            <Box>
+              <Typography variant="subtitle2" fontWeight={700} color={COLORS.secondary} sx={{ mb: 2, textTransform: 'uppercase', letterSpacing: 1 }}>
+                Datos Fiscales
+              </Typography>
+              <Paper variant="outlined" sx={{ p: 3, borderRadius: 1, borderColor: '#e0e0e0' }}>
+                <Box display="flex" flexWrap="wrap" gap={2}>
+                  <Box width={{ xs: '100%', md: 'calc(50% - 8px)' }}>
+                    <ReadOnlyField label="CUIT" value={proveedorCompleto?.CUIT} />
+                  </Box>
+                  <Box width={{ xs: '100%', md: 'calc(50% - 8px)' }}>
+                    <ReadOnlyField
+                      label="Tipo IVA"
+                      value={TIPO_IVA_OPTIONS.find(o => o.value === proveedorCompleto?.TipoIva?.toString())?.label || proveedorCompleto?.TipoIva}
                     />
                   </Box>
                 </Box>
+              </Paper>
+            </Box>
 
-                {/* Tabla de artículos — usando el mismo componente genérico */}
-                <Box mt={2}>
-                  <TablaArticulos
-                    key={`${proveedorId ?? 'prov'}-${rubroFiltro?.id ?? rubroFiltro?.nombre ?? 'all'}-${reloadKey}`}
-                    columns={columnasTabla}
-                    showToolbar={false}
-                    allowCreate={false}
-                    rowsPerPageOptions={PAGINAS_OPCIONES}
-                    defaultPageSize={limite}
-                    controlledFilters={filtrosControlados}
-                    onFiltersChange={handleTablaFiltersChange}
-                    onDataLoaded={handleTablaDataLoaded}
-                    dense
-                  />
-                  {errorArticulos && (
-                    <Typography variant="body2" color="error" mt={1}>
-                      Error al cargar artículos: {errorArticulos.message}
+            {/* Commercial & Rubros */}
+            <Box>
+              <Typography variant="subtitle2" fontWeight={700} color={COLORS.secondary} sx={{ mb: 2, textTransform: 'uppercase', letterSpacing: 1 }}>
+                Comercial y Rubros
+              </Typography>
+              <Paper variant="outlined" sx={{ p: 3, borderRadius: 1, borderColor: '#e0e0e0' }}>
+                <Box display="flex" flexWrap="wrap" gap={2}>
+                  <Box width={{ xs: '100%', md: 'calc(50% - 8px)' }}>
+                    <ReadOnlyField label="Recargo Proveedor (%)" value={proveedorCompleto?.PorcentajeRecargoProveedor} />
+                  </Box>
+                  <Box width={{ xs: '100%', md: 'calc(50% - 8px)' }}>
+                    <ReadOnlyField label="Descuento Proveedor (%)" value={proveedorCompleto?.PorcentajeDescuentoProveedor} />
+                  </Box>
+                  <Box width="100%">
+                    <ReadOnlyField label="Observaciones" value={proveedorCompleto?.Observaciones} />
+                  </Box>
+
+                  <Box width="100%" mt={1}>
+                    <Typography variant="subtitle2" gutterBottom sx={{ color: '#546e7a', fontWeight: 600 }}>
+                      Rubros Asociados
                     </Typography>
-                  )}
-                  {loadingArticulos && (
-                    <Typography variant="body2" color="text.secondary" mt={1}>
-                      Cargando artículos…
-                    </Typography>
-                  )}
+                    <Divider sx={{ mb: 2 }} />
+                    {rubrosRelacionados.length > 0 ? (
+                      <Box display="flex" flexWrap="wrap" gap={1}>
+                        {rubrosRelacionados.map(({ nombre, cantidad }) => (
+                          <Chip
+                            key={nombre}
+                            label={`${nombre} (${cantidad || 0})`}
+                            variant="outlined"
+                            sx={{ borderRadius: 1, borderColor: COLORS.inputBorder, color: COLORS.textStrong, fontWeight: 500 }}
+                          />
+                        ))}
+                      </Box>
+                    ) : (
+                      <Typography variant="body2" color="text.secondary">No hay rubros asociados.</Typography>
+                    )}
+                  </Box>
                 </Box>
+              </Paper>
+            </Box>
+
+            {/* Articles Table */}
+            <Box>
+              <Box
+                sx={{
+                  border: '1px solid #e0e0e0',
+                  borderRadius: 1,
+                  background: '#fff',
+                  px: 3,
+                  py: 2.25,
+                  mb: 2.5,
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  flexWrap: 'wrap',
+                  gap: 2
+                }}
+              >
+                <Typography variant="h6" fontWeight={700} color={COLORS.textStrong}>
+                  Artículos del proveedor
+                </Typography>
+                <TextField
+                  placeholder="Buscar artículos…"
+                  value={filtroInput}
+                  onChange={(e) => setFiltroInput(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      const termino = filtroInput.trim();
+                      setBusquedaPersonalizada(termino);
+                      setPaginacion((prev) => (prev.pagina === 0 ? prev : { ...prev, pagina: 0 }));
+                    }
+                  }}
+                  size="small"
+                  sx={{ minWidth: { xs: '100%', sm: 240, md: 280 } }}
+                  InputProps={{
+                    startAdornment: (
+                      <InputAdornment position="start">
+                        <Icon icon="mdi:magnify" color={COLORS.primary} />
+                      </InputAdornment>
+                    ),
+                    sx: {
+                      '& .MuiOutlinedInput-root': {
+                        borderRadius: 1,
+                        backgroundColor: '#fff',
+                        '& fieldset': { borderColor: '#e0e0e0' },
+                        '&:hover fieldset': { borderColor: '#bdc3c7' },
+                        '&.Mui-focused fieldset': { borderColor: COLORS.primary },
+                      },
+                    },
+                  }}
+                />
+              </Box>
+
+              <Box mt={2}>
+                <TablaArticulos
+                  key={`${proveedorId ?? 'prov'}-${rubroFiltro?.id ?? rubroFiltro?.nombre ?? 'all'}-${reloadKey}`}
+                  columns={columnasTabla}
+                  showToolbar={false}
+                  allowCreate={false}
+                  rowsPerPageOptions={PAGINAS_OPCIONES}
+                  defaultPageSize={limite}
+                  controlledFilters={filtrosControlados}
+                  onFiltersChange={handleTablaFiltersChange}
+                  onDataLoaded={handleTablaDataLoaded}
+                  dense
+                />
+                {errorArticulos && (
+                  <Typography variant="body2" color="error" mt={1}>
+                    Error al cargar artículos: {errorArticulos.message}
+                  </Typography>
+                )}
+                {loadingArticulos && (
+                  <Typography variant="body2" color="text.secondary" mt={1}>
+                    Cargando artículos…
+                  </Typography>
+                )}
               </Box>
             </Box>
-          </DialogContent>
 
-          {/* Divisor footer */}
-          <Divider
+          </Box>
+        </DialogContent>
+
+        <DialogActions sx={{ p: 2, bgcolor: '#f1f2f6', borderTop: '1px solid #e0e0e0' }}>
+          <Button
+            onClick={onCerrar}
+            variant="contained"
+            disableElevation
             sx={{
-              height: DIV_H,
-              border: 0,
-              backgroundImage: `
-                linear-gradient(to bottom, rgba(0,0,0,0.22), rgba(0,0,0,0.22)),
-                linear-gradient(to bottom, rgba(255,255,255,0.70), rgba(255,255,255,0.70)),
-                linear-gradient(90deg, rgba(255,255,255,0.05), ${COLORS.primary}, rgba(255,255,255,0.05))
-              `,
-              backgroundRepeat: 'no-repeat, no-repeat, repeat',
-              backgroundSize: '100% 1px, 100% 1px, 100% 100%',
-              backgroundPosition: 'top left, bottom left, center',
-              flex: '0 0 auto'
+              bgcolor: COLORS.primary,
+              '&:hover': { bgcolor: COLORS.primaryHover },
+              px: 4,
+              py: 1,
+              textTransform: 'none',
+              fontWeight: 600,
+              borderRadius: 0.5
             }}
-          />
-
-          {/* ===== FOOTER ===== */}
-<DialogActions
-  sx={{
-    p: 0,
-    m: 0,
-    height: FOOTER_H,
-    minHeight: FOOTER_H,
-    display: 'flex',
-    alignItems: 'center',
-  }}
->
-  <Box
-    sx={{
-      width: '100%',
-      display: 'flex',
-      justifyContent: 'flex-end',
-      px: 2,
-      py: 1,
-      gap: 1.5,
-    }}
-  >  <CrystalSoftButton baseColor={COLORS.primary} onClick={onCerrar}>
-                Cerrar
-              </CrystalSoftButton>
-            </Box>
-          </DialogActions>
-        </Box>
-      </TexturedPanel>
+          >
+            Cerrar
+          </Button>
+        </DialogActions>
+      </Box>
     </Dialog>
   );
 };

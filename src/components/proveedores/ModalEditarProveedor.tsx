@@ -20,17 +20,15 @@ import {
   ListItemText,
   Checkbox,
   Button,
-  Grid,
+  IconButton,
+  Paper,
 } from '@mui/material';
 import type { SelectChangeEvent } from '@mui/material/Select';
-import { alpha, darken } from '@mui/material/styles';
+import { alpha, darken, lighten } from '@mui/material/styles';
 import { useState, useEffect, useMemo, useCallback, ChangeEvent } from 'react';
 import { Icon } from '@iconify/react';
 import { useMutation, useQuery } from '@apollo/client/react';
 
-import { TexturedPanel } from '@/components/ui/TexturedFrame/TexturedPanel';
-import { WoodBackdrop } from '@/components/ui/TexturedFrame/WoodBackdrop';
-import CrystalButton, { CrystalIconButton, CrystalSoftButton } from '@/components/ui/CrystalButton';
 import { azul } from '@/ui/colores';
 import { CREAR_PROVEEDOR, ACTUALIZAR_PROVEEDOR } from '@/components/proveedores/graphql/mutations';
 import { GET_PROVEEDORES } from '@/components/proveedores/graphql/queries';
@@ -82,13 +80,18 @@ const TIPO_IVA_OPTIONS = [
 ] as const;
 
 const makeColors = (base?: string) => {
-  const primary = base || azul.primary || '#1565c0';
+  const primary = '#2c3e50'; // Serious dark blue/grey
+  const secondary = '#34495e';
   return {
     primary,
-    primaryHover: darken(primary, 0.12),
-    textStrong: darken(primary, 0.35),
-    inputBorder: alpha(primary, 0.28),
-    inputBorderHover: alpha(primary, 0.42),
+    secondary,
+    primaryHover: '#1a252f',
+    textStrong: '#2c3e50',
+    inputBorder: '#bdc3c7',
+    inputBorderHover: '#7f8c8d',
+    background: '#f8f9fa',
+    paper: '#ffffff',
+    chipBorder: '#bdc3c7' // Compatibility with RubrosTransferList
   };
 };
 
@@ -277,7 +280,10 @@ const ModalEditarProveedor = ({ open, onClose, proveedor, onProveedorGuardado }:
     }
 
     if (proveedor) {
-      const rubrosAsignados = proveedor.rubros ? proveedor.rubros.map((r: any) => Number(r.Id)) : [];
+      // Fix: Check both casing possibilities for rubro ID
+      const rubrosAsignados = proveedor.rubros
+        ? proveedor.rubros.map((r: any) => Number(r.id || r.Id))
+        : [];
       setFormData({
         Codigo: proveedor.Codigo?.toString() ?? '',
         Nombre: proveedor.Nombre ?? '',
@@ -328,32 +334,30 @@ const ModalEditarProveedor = ({ open, onClose, proveedor, onProveedorGuardado }:
   const fieldSx = useMemo(
     () => ({
       '& .MuiOutlinedInput-root': {
-        borderRadius: 2,
-        background: '#ffffff',
+        borderRadius: 1, // Square aesthetic
+        backgroundColor: '#fff',
         '& fieldset': { borderColor: COLORS.inputBorder },
         '&:hover fieldset': { borderColor: COLORS.inputBorderHover },
-        '&.Mui-focused fieldset': { borderColor: COLORS.primary },
+        '&.Mui-focused fieldset': { borderColor: COLORS.primary, borderWidth: 2 },
       },
+      '& .MuiInputLabel-root': { color: '#546e7a' },
       '& .MuiInputLabel-root.Mui-focused': {
         color: COLORS.primary,
+        fontWeight: 600
       },
     }),
-    [COLORS.inputBorder, COLORS.inputBorderHover, COLORS.primary],
+    [COLORS],
   );
 
   const selectSx = useMemo(
     () => ({
-      borderRadius: 2,
-      background: '#ffffff',
+      borderRadius: 1, // Square aesthetic
+      backgroundColor: '#fff',
       '& .MuiOutlinedInput-notchedOutline': { borderColor: COLORS.inputBorder },
       '&:hover .MuiOutlinedInput-notchedOutline': { borderColor: COLORS.inputBorderHover },
-      '&.Mui-focused .MuiOutlinedInput-notchedOutline': { borderColor: COLORS.primary },
-      '& .MuiSelect-select': {
-        borderRadius: 2,
-        background: '#ffffff',
-      },
+      '&.Mui-focused .MuiOutlinedInput-notchedOutline': { borderColor: COLORS.primary, borderWidth: 2 },
     }),
-    [COLORS.inputBorder, COLORS.inputBorderHover, COLORS.primary],
+    [COLORS],
   );
 
   const handleInputChange = useCallback(
@@ -524,521 +528,360 @@ const ModalEditarProveedor = ({ open, onClose, proveedor, onProveedorGuardado }:
       maxWidth="md"
       fullWidth
       PaperProps={{
+        elevation: 4,
         sx: {
-          borderRadius: 3,
-          boxShadow: '0 8px 32px rgba(0,0,0,0.16)',
-          bgcolor: 'transparent',
-          overflow: 'hidden',
+          borderRadius: 1, // Square aesthetic
+          bgcolor: '#ffffff',
           maxHeight: `${VH_MAX}vh`,
         },
       }}
     >
-      <TexturedPanel
-        accent={COLORS.primary}
-        radius={12}
-        contentPadding={0}
-        bgTintPercent={12}
-        bgAlpha={1}
-        textureBaseOpacity={0.22}
-        textureBoostOpacity={0.19}
-        textureBrightness={1.12}
-        textureContrast={1.03}
-        tintOpacity={0.4}
-      >
-        <Box sx={{ display: 'flex', flexDirection: 'column', maxHeight: `${VH_MAX}vh` }}>
-          <DialogTitle sx={{ p: 0, m: 0, minHeight: HEADER_H, display: 'flex', alignItems: 'center' }}>
-            <Box sx={{ width: '100%', display: 'flex', alignItems: 'center', px: 3, py: 2.25, gap: 2 }}>
-              <Box
-                sx={{
-                  width: 40,
-                  height: 40,
-                  borderRadius: '50%',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  background: `linear-gradient(135deg, ${COLORS.primary} 0%, ${COLORS.primaryHover} 100%)`,
-                  boxShadow: 'inset 0 2px 4px rgba(255,255,255,0.3), 0 4px 12px rgba(0,0,0,0.25)',
-                  color: '#fff',
-                }}
-              >
-                <Icon icon={esEdicion ? 'mdi:account-tie' : 'mdi:account-plus-outline'} width={22} height={22} />
-              </Box>
-
-              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.25 }}>
-                <Typography
-                  variant="h6"
-                  fontWeight={700}
-                  color="white"
-                  sx={{ textShadow: '0 4px 12px rgba(0,0,0,0.88), 0 0 2px rgba(0,0,0,0.72)' }}
-                >
-                  {titulo}
+      <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%', maxHeight: `${VH_MAX}vh` }}>
+        {/* Header - Serious & Modern */}
+        <Box sx={{
+          bgcolor: COLORS.primary,
+          color: '#ffffff',
+          px: 3,
+          py: 2,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          borderBottom: `4px solid ${COLORS.secondary}`
+        }}>
+          <Box display="flex" alignItems="center" gap={2}>
+            <Icon icon={esEdicion ? 'mdi:pencil' : 'mdi:plus'} width={24} height={24} />
+            <Box>
+              <Typography variant="h6" fontWeight={600} letterSpacing={0.5}>
+                {titulo.toUpperCase()}
+              </Typography>
+              {esEdicion && proveedor?.Nombre && (
+                <Typography variant="caption" sx={{ opacity: 0.8, letterSpacing: 0.5 }}>
+                  {proveedor.Nombre}
                 </Typography>
-                {esEdicion && (
-                  <Typography
-                    variant="subtitle2"
-                    color="rgba(255,255,255,0.85)"
-                    fontWeight={700}
-                    sx={{ textShadow: '0 3px 9px rgba(0,0,0,0.82), 0 0 1px rgba(0,0,0,0.7)' }}
-                  >
-                    {proveedor?.Nombre ?? 'Proveedor sin nombre'}
-                  </Typography>
-                )}
-              </Box>
-
-              <Box sx={{ ml: 'auto', display: 'flex', alignItems: 'center', gap: 1.25 }}>
-                {esEdicion && (
-                  <>
-                    {typeof proveedor?.Codigo === 'number' && (
-                      <Chip
-                        label={`Código ${proveedor.Codigo}`}
-                        size="small"
-                        sx={{
-                          bgcolor: 'rgba(0,0,0,0.35)',
-                          color: '#fff',
-                          border: '1px solid rgba(255,255,255,0.32)',
-                          fontWeight: 600,
-                          px: 1.5,
-                          height: 28,
-                        }}
-                      />
-                    )}
-                    {proveedor?.Rubro && (
-                      <Chip
-                        label={proveedor.Rubro}
-                        size="small"
-                        sx={{
-                          bgcolor: 'rgba(0,0,0,0.35)',
-                          color: '#fff',
-                          border: '1px solid rgba(255,255,255,0.32)',
-                          fontWeight: 600,
-                          px: 1.5,
-                          height: 28,
-                        }}
-                      />
-                    )}
-                    {headerTipoIvaLabel && (
-                      <Chip
-                        label={headerTipoIvaLabel}
-                        size="small"
-                        sx={{
-                          bgcolor: 'rgba(0,0,0,0.35)',
-                          color: '#fff',
-                          border: '1px solid rgba(255,255,255,0.32)',
-                          fontWeight: 600,
-                          px: 1.5,
-                          height: 28,
-                        }}
-                      />
-                    )}
-                  </>
-                )}
-                <CrystalIconButton
-                  baseColor={COLORS.primary}
-                  onClick={handleClose}
-                  sx={{
-                    minWidth: 40,
-                    height: 40,
-                    borderRadius: '50%',
-                    background: 'rgba(0,0,0,0.28)',
-                    color: '#fff',
-                    '&:hover': { background: 'rgba(0,0,0,0.4)' },
-                  }}
-                >
-                  <Icon icon="mdi:close" width={20} height={20} />
-                </CrystalIconButton>
-              </Box>
+              )}
             </Box>
-          </DialogTitle>
+          </Box>
+          <IconButton onClick={handleClose} size="small" sx={{ color: 'white', '&:hover': { bgcolor: 'rgba(255,255,255,0.1)' } }}>
+            <Icon icon="mdi:close" width={24} />
+          </IconButton>
+        </Box>
 
-          <Divider
-            sx={{
-              height: DIV_H,
-              border: 0,
-              backgroundImage: `
-                linear-gradient(to bottom, rgba(255,255,255,0.70), rgba(255,255,255,0.70)),
-                linear-gradient(to bottom, rgba(0,0,0,0.22), rgba(0,0,0,0.22)),
-                linear-gradient(90deg, rgba(255,255,255,0.05), ${COLORS.primary}, rgba(255,255,255,0.05))
-              `,
-              backgroundRepeat: 'no-repeat, no-repeat, repeat',
-              backgroundSize: '100% 1px, 100% 1px, 100% 100%',
-              backgroundPosition: 'top left, bottom left, center',
-              flex: '0 0 auto',
-            }}
-          />
+        <DialogContent
+          dividers
+          sx={{
+            p: 4,
+            bgcolor: '#f8f9fa'
+          }}
+        >
+          <Box p={3} bgcolor="#f8f9fa">
+            {/* General Data Section */}
+            <Box>
+              <Typography variant="subtitle2" fontWeight={700} color={COLORS.secondary} sx={{ mb: 2, textTransform: 'uppercase', letterSpacing: 1 }}>
+                Datos Generales
+              </Typography>
+              <Paper variant="outlined" sx={{ p: 3, borderRadius: 1, borderColor: '#e0e0e0' }}>
+                <Box display="flex" flexWrap="wrap" gap={2}>
+                  <Box width={{ xs: '100%', md: '25%' }}>
+                    <TextField
+                      label="Código"
+                      value={formData.Codigo}
+                      onChange={handleInputChange('Codigo')}
+                      fullWidth
+                      disabled={saving}
+                      sx={fieldSx}
+                      InputProps={{ readOnly: esEdicion }}
+                    />
+                  </Box>
+                  <Box width={{ xs: '100%', md: 'calc(75% - 16px)' }}>
+                    <TextField
+                      label="Razón Social / Nombre"
+                      value={formData.Nombre}
+                      onChange={handleInputChange('Nombre')}
+                      fullWidth
+                      required
+                      disabled={saving}
+                      sx={fieldSx}
+                    />
+                  </Box>
+                  <Box width={{ xs: '100%', md: '50%' }}>
+                    <TextField
+                      label="Persona de Contacto"
+                      value={formData.Contacto}
+                      onChange={handleInputChange('Contacto')}
+                      fullWidth
+                      disabled={saving}
+                      sx={fieldSx}
+                    />
+                  </Box>
+                </Box>
+              </Paper>
+            </Box>
+            {/* Contact Info Section */}
+            <Box mt={3}>
+              <Typography variant="subtitle2" fontWeight={700} color={COLORS.secondary} sx={{ mb: 2, textTransform: 'uppercase', letterSpacing: 1 }}>
+                Información de Contacto
+              </Typography>
+              <Paper variant="outlined" sx={{ p: 3, borderRadius: 1, borderColor: '#e0e0e0' }}>
+                <Box display="flex" flexWrap="wrap" gap={2}>
+                  <Box width={{ xs: '100%', md: 'calc(50% - 8px)' }}>
+                    <TextField
+                      label="Teléfono"
+                      value={formData.Telefono}
+                      onChange={handleInputChange('Telefono')}
+                      fullWidth
+                      disabled={saving}
+                      sx={fieldSx}
+                    />
+                  </Box>
+                  <Box width={{ xs: '100%', md: 'calc(50% - 8px)' }}>
+                    <TextField
+                      label="Celular"
+                      value={formData.Celular}
+                      onChange={handleInputChange('Celular')}
+                      fullWidth
+                      disabled={saving}
+                      sx={fieldSx}
+                    />
+                  </Box>
+                  <Box width={{ xs: '100%', md: 'calc(50% - 8px)' }}>
+                    <TextField
+                      label="Email"
+                      value={formData.Mail}
+                      onChange={handleInputChange('Mail')}
+                      type="email"
+                      fullWidth
+                      disabled={saving}
+                      sx={fieldSx}
+                    />
+                  </Box>
+                  <Box width={{ xs: '100%', md: 'calc(50% - 8px)' }}>
+                    <TextField
+                      label="Sitio Web"
+                      value={formData.Web}
+                      onChange={handleInputChange('Web')}
+                      fullWidth
+                      disabled={saving}
+                      sx={fieldSx}
+                    />
+                  </Box>
+                  <Box width={{ xs: '100%', md: 'calc(50% - 8px)' }}>
+                    <TextField
+                      label="Fax"
+                      value={formData.Fax}
+                      onChange={handleInputChange('Fax')}
+                      fullWidth
+                      disabled={saving}
+                      sx={fieldSx}
+                    />
+                  </Box>
+                </Box>
+              </Paper>
+            </Box>
 
-          <DialogContent
+            {/* Location Section */}
+            <Box mt={3}>
+              <Typography variant="subtitle2" fontWeight={700} color={COLORS.secondary} sx={{ mb: 2, textTransform: 'uppercase', letterSpacing: 1 }}>
+                Ubicación
+              </Typography>
+              <Paper variant="outlined" sx={{ p: 3, borderRadius: 1, borderColor: '#e0e0e0' }}>
+                <Box display="flex" flexWrap="wrap" gap={2}>
+                  <Box width="100%">
+                    <TextField
+                      label="Dirección"
+                      value={formData.Direccion}
+                      onChange={handleInputChange('Direccion')}
+                      fullWidth
+                      disabled={saving}
+                      sx={fieldSx}
+                    />
+                  </Box>
+                  <Box width={{ xs: '100%', md: 'calc(33.33% - 11px)' }}>
+                    <TextField
+                      label="Localidad"
+                      value={formData.Localidad}
+                      onChange={handleInputChange('Localidad')}
+                      fullWidth
+                      disabled={saving}
+                      sx={fieldSx}
+                    />
+                  </Box>
+                  <Box width={{ xs: '100%', md: 'calc(33.33% - 11px)' }}>
+                    <TextField
+                      label="Provincia"
+                      value={formData.Provincia}
+                      onChange={handleInputChange('Provincia')}
+                      fullWidth
+                      disabled={saving}
+                      sx={fieldSx}
+                    />
+                  </Box>
+                  <Box width={{ xs: '100%', md: 'calc(33.33% - 11px)' }}>
+                    <TextField
+                      label="Código Postal"
+                      value={formData.CP}
+                      onChange={handleInputChange('CP')}
+                      fullWidth
+                      disabled={saving}
+                      sx={fieldSx}
+                    />
+                  </Box>
+                  <Box width={{ xs: '100%', md: 'calc(50% - 8px)' }}>
+                    <TextField
+                      label="País"
+                      value={formData.Pais}
+                      onChange={handleInputChange('Pais')}
+                      fullWidth
+                      disabled={saving}
+                      sx={fieldSx}
+                    />
+                  </Box>
+                </Box>
+              </Paper>
+            </Box>
+
+            {/* Fiscal Data Section */}
+            <Box mt={3}>
+              <Typography variant="subtitle2" fontWeight={700} color={COLORS.secondary} sx={{ mb: 2, textTransform: 'uppercase', letterSpacing: 1 }}>
+                Datos Fiscales
+              </Typography>
+              <Paper variant="outlined" sx={{ p: 3, borderRadius: 1, borderColor: '#e0e0e0' }}>
+                <Box display="flex" flexWrap="wrap" gap={2}>
+                  <Box width={{ xs: '100%', md: 'calc(50% - 8px)' }}>
+                    <TextField
+                      label="CUIT"
+                      value={formData.CUIT}
+                      onChange={handleInputChange('CUIT')}
+                      fullWidth
+                      disabled={saving}
+                      sx={fieldSx}
+                      placeholder="XX-XXXXXXXX-X"
+                    />
+                  </Box>
+                  <Box width={{ xs: '100%', md: 'calc(50% - 8px)' }}>
+                    <FormControl fullWidth disabled={saving}>
+                      <InputLabel sx={{ color: '#546e7a', '&.Mui-focused': { color: COLORS.primary } }}>Tipo IVA</InputLabel>
+                      <Select
+                        value={formData.TipoIva}
+                        onChange={handleTipoIvaChange}
+                        label="Tipo IVA"
+                        sx={selectSx}
+                      >
+                        {TIPO_IVA_OPTIONS.map((option) => (
+                          <MenuItem key={option.value} value={option.value}>
+                            {option.label}
+                          </MenuItem>
+                        ))}
+                      </Select>
+                    </FormControl>
+                  </Box>
+                </Box>
+              </Paper>
+            </Box>
+
+            {/* Commercial & Rubros Section */}
+            <Box mt={3}>
+              <Typography variant="subtitle2" fontWeight={700} color={COLORS.secondary} sx={{ mb: 2, textTransform: 'uppercase', letterSpacing: 1 }}>
+                Comercial y Rubros
+              </Typography>
+              <Paper variant="outlined" sx={{ p: 3, borderRadius: 1, borderColor: '#e0e0e0' }}>
+                <Box display="flex" flexWrap="wrap" gap={2}>
+                  <Box width={{ xs: '100%', md: 'calc(50% - 8px)' }}>
+                    <TextField
+                      label="Recargo Proveedor (%)"
+                      value={formData.PorcentajeRecargoProveedor}
+                      onChange={handleInputChange('PorcentajeRecargoProveedor')}
+                      type="number"
+                      fullWidth
+                      disabled={saving}
+                      sx={fieldSx}
+                    />
+                  </Box>
+                  <Box width={{ xs: '100%', md: 'calc(50% - 8px)' }}>
+                    <TextField
+                      label="Descuento Proveedor (%)"
+                      value={formData.PorcentajeDescuentoProveedor}
+                      onChange={handleInputChange('PorcentajeDescuentoProveedor')}
+                      type="number"
+                      fullWidth
+                      disabled={saving}
+                      sx={fieldSx}
+                    />
+                  </Box>
+                  <Box width="100%">
+                    <TextField
+                      label="Observaciones"
+                      value={formData.Observaciones}
+                      onChange={handleInputChange('Observaciones')}
+                      multiline
+                      rows={3}
+                      fullWidth
+                      disabled={saving}
+                      sx={fieldSx}
+                    />
+                  </Box>
+                  <Box width="100%">
+                    <Typography variant="subtitle2" gutterBottom sx={{ color: '#546e7a', fontWeight: 600 }}>
+                      Rubros Asociados
+                    </Typography>
+                    <Divider sx={{ mb: 2 }} />
+                    <RubrosTransferList
+                      allRubros={allRubros}
+                      selectedRubrosIds={formData.rubrosIds || []}
+                      onChange={(newIds: any) => {
+                        setFormData((prev: any) => ({ ...prev, rubrosIds: newIds }));
+                      }}
+                      colors={COLORS}
+                    />
+                  </Box>
+                </Box>
+              </Paper>
+            </Box>
+
+            {/* Error Messages */}
+            {(error || validationErrors.length > 0) && (
+              <Box mt={2}>
+                <Paper sx={{ p: 2, bgcolor: '#ffebee', border: '1px solid #ffcdd2', borderRadius: 1 }}>
+                  {error && (
+                    <Typography color="error" variant="body2" fontWeight={600}>{error}</Typography>
+                  )}
+                  {validationErrors.map((err, i) => (
+                    <Typography key={i} color="error" variant="body2">• {err}</Typography>
+                  ))}
+                </Paper>
+              </Box>
+            )}
+          </Box>
+        </DialogContent>
+
+        {/* Footer - Generic & Modern */}
+        <DialogActions sx={{ p: 2, bgcolor: '#f1f2f6', borderTop: '1px solid #e0e0e0' }}>
+          <Button
+            onClick={handleClose}
+            disabled={saving}
+            sx={{ color: '#546e7a', fontWeight: 600 }}
+          >
+            Cancelar
+          </Button>
+          <Button
+            onClick={handleSubmit}
+            disabled={!botonHabilitado || saving}
+            variant="contained"
+            disableElevation
             sx={{
-              p: 0,
-              borderRadius: 0,
-              overflow: 'auto',
-              maxHeight: CONTENT_MAX,
-              flex: '0 1 auto',
+              bgcolor: COLORS.primary,
+              '&:hover': { bgcolor: COLORS.primaryHover },
+              px: 4,
+              py: 1,
+              textTransform: 'none',
+              fontWeight: 600,
+              borderRadius: 0.5
             }}
           >
-            <Box sx={{ position: 'relative', borderRadius: 0, overflow: 'hidden' }}>
-              <WoodBackdrop accent={COLORS.primary} radius={0} inset={0} strength={0.55} texture="wide" />
-              <Box
-                component="form"
-                onSubmit={(event) => {
-                  event.preventDefault();
-                  handleSubmit();
-                }}
-                sx={{
-                  position: 'relative',
-                  zIndex: 1,
-                  p: 3,
-                  borderRadius: 0,
-                  backdropFilter: 'saturate(118%) blur(0.4px)',
-                  background: 'rgba(255,255,255,0.84)',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  gap: 3,
-                }}
-              >
-                <Box>
-                  <Typography variant="h6" fontWeight={700} color={COLORS.textStrong} gutterBottom>
-                    Datos generales
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    Completá la información principal del proveedor. Podés actualizarla cuando quieras.
-                  </Typography>
-                </Box>
-
-                <Box display="flex" flexDirection={{ xs: 'column', md: 'row' }} gap={2.5}>
-                  <TextField
-                    label="Código"
-                    value={formData.Codigo}
-                    onChange={handleInputChange('Codigo')}
-                    type="number"
-                    helperText="Código interno único"
-                    fullWidth
-                    disabled={saving}
-                    sx={fieldSx}
-                  />
-                  <TextField
-                    label="Nombre del proveedor"
-                    value={formData.Nombre}
-                    onChange={handleInputChange('Nombre')}
-                    required
-                    fullWidth
-                    disabled={saving}
-                    sx={fieldSx}
-                  />
-                </Box>
-
-                <Box display="flex" flexDirection={{ xs: 'column', md: 'row' }} gap={2.5}>
-                  <TextField
-                    label="Contacto"
-                    value={formData.Contacto}
-                    onChange={handleInputChange('Contacto')}
-                    fullWidth
-                    disabled={saving}
-                    sx={fieldSx}
-                  />
-                </Box>
-
-                <Box>
-                  <Typography variant="h6" fontWeight={700} color={COLORS.textStrong} gutterBottom>
-                    Información de contacto
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    Datos para ubicar y comunicarse con el proveedor.
-                  </Typography>
-                </Box>
-
-                <Box display="flex" flexDirection={{ xs: 'column', md: 'row' }} gap={2.5}>
-                  <TextField
-                    label="Teléfono"
-                    value={formData.Telefono}
-                    onChange={handleInputChange('Telefono')}
-                    fullWidth
-                    disabled={saving}
-                    sx={fieldSx}
-                  />
-                  <TextField
-                    label="Celular"
-                    value={formData.Celular}
-                    onChange={handleInputChange('Celular')}
-                    fullWidth
-                    disabled={saving}
-                    sx={fieldSx}
-                  />
-                </Box>
-
-                <Box display="flex" flexDirection={{ xs: 'column', md: 'row' }} gap={2.5}>
-                  <TextField
-                    label="Email"
-                    value={formData.Mail}
-                    onChange={handleInputChange('Mail')}
-                    type="email"
-                    fullWidth
-                    disabled={saving}
-                    sx={fieldSx}
-                  />
-                  <TextField
-                    label="Sitio web"
-                    value={formData.Web}
-                    onChange={handleInputChange('Web')}
-                    fullWidth
-                    disabled={saving}
-                    sx={fieldSx}
-                  />
-                </Box>
-
-                <Box display="flex" flexDirection={{ xs: 'column', md: 'row' }} gap={2.5}>
-                  <TextField
-                    label="Fax"
-                    value={formData.Fax}
-                    onChange={handleInputChange('Fax')}
-                    fullWidth
-                    disabled={saving}
-                    sx={fieldSx}
-                  />
-                  <TextField
-                    label="Observaciones"
-                    value={formData.Observaciones}
-                    onChange={handleInputChange('Observaciones')}
-                    fullWidth
-                    disabled={saving}
-                    multiline
-                    minRows={2}
-                    sx={fieldSx}
-                  />
-                </Box>
-
-                <Box>
-                  <Typography variant="h6" fontWeight={700} color={COLORS.textStrong} gutterBottom>
-                    Información fiscal
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    Ajustá los datos impositivos y financieros si es necesario.
-                  </Typography>
-                </Box>
-
-                <Box display="flex" flexDirection={{ xs: 'column', md: 'row' }} gap={2.5}>
-                  <TextField
-                    label="CUIT"
-                    value={formData.CUIT}
-                    onChange={handleInputChange('CUIT')}
-                    placeholder="XX-XXXXXXXX-X"
-                    helperText="Formato requerido: XX-XXXXXXXX-X"
-                    fullWidth
-                    disabled={saving}
-                    sx={fieldSx}
-                  />
-                  <FormControl fullWidth disabled={saving} sx={{ '& .MuiInputLabel-root.Mui-focused': { color: COLORS.primary } }}>
-                    <InputLabel>Tipo IVA</InputLabel>
-                    <Select
-                      label="Tipo IVA"
-                      value={formData.TipoIva}
-                      onChange={handleTipoIvaChange}
-                      sx={selectSx}
-                    >
-                      {TIPO_IVA_OPTIONS.map((tipo) => (
-                        <MenuItem key={tipo.value} value={tipo.value}>
-                          {tipo.label}
-                        </MenuItem>
-                      ))}
-                    </Select>
-                    {tipoIvaHelperLabel && (
-                      <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5, ml: 1 }}>
-                        Seleccionado: {tipoIvaHelperLabel}
-                      </Typography>
-                    )}
-                  </FormControl>
-                </Box>
-
-                <Box>
-                  <Typography variant="h6" fontWeight={700} color={COLORS.textStrong} gutterBottom>
-                    Ajustes comerciales
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    Configurá los ajustes porcentuales que se aplicarán en los precios asociados a este proveedor.
-                  </Typography>
-                </Box>
-
-                <Box
-                  sx={{
-                    display: 'grid',
-                    gridTemplateColumns: { xs: '1fr', md: 'repeat(2, minmax(0, 1fr))' },
-                    gap: 2.5,
-                  }}
-                >
-                  <TextField
-                    label="Recargo del proveedor (%)"
-                    value={formData.PorcentajeRecargoProveedor}
-                    onChange={handleInputChange('PorcentajeRecargoProveedor')}
-                    type="number"
-                    fullWidth
-                    disabled={saving}
-                    inputProps={{ step: 0.01, min: -100, max: 100 }}
-                    helperText="Se suma al precio base en las ventas relacionadas"
-                    sx={fieldSx}
-                  />
-                  <TextField
-                    label="Descuento del proveedor (%)"
-                    value={formData.PorcentajeDescuentoProveedor}
-                    onChange={handleInputChange('PorcentajeDescuentoProveedor')}
-                    type="number"
-                    fullWidth
-                    disabled={saving}
-                    inputProps={{ step: 0.01, min: -100, max: 100 }}
-                    helperText="Se aplica después de los recargos configurados"
-                    sx={fieldSx}
-                  />
-                </Box>
-
-                <Box>
-                  <Typography variant="h6" fontWeight={700} color={COLORS.textStrong} gutterBottom>
-                    Ubicación
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    Indicá la dirección para pedidos y facturación.
-                  </Typography>
-                </Box>
-
-                <TextField
-                  label="Dirección"
-                  value={formData.Direccion}
-                  onChange={handleInputChange('Direccion')}
-                  fullWidth
-                  disabled={saving}
-                  sx={fieldSx}
-                />
-
-                <Box display="flex" flexDirection={{ xs: 'column', md: 'row' }} gap={2.5}>
-                  <TextField
-                    label="Localidad"
-                    value={formData.Localidad}
-                    onChange={handleInputChange('Localidad')}
-                    fullWidth
-                    disabled={saving}
-                    sx={fieldSx}
-                  />
-                  <TextField
-                    label="Provincia"
-                    value={formData.Provincia}
-                    onChange={handleInputChange('Provincia')}
-                    fullWidth
-                    disabled={saving}
-                    sx={fieldSx}
-                  />
-                </Box>
-
-
-
-                <Box display="flex" flexDirection={{ xs: 'column', md: 'row' }} gap={2.5}>
-                  <TextField
-                    label="Código postal"
-                    value={formData.CP}
-                    onChange={handleInputChange('CP')}
-                    helperText="4 dígitos"
-                    fullWidth
-                    disabled={saving}
-                    sx={fieldSx}
-                  />
-                  <TextField
-                    label="País"
-                    value={formData.Pais}
-                    onChange={handleInputChange('Pais')}
-                    fullWidth
-                    disabled={saving}
-                    sx={fieldSx}
-                  />
-                </Box>
-
-                <Box>
-                  <Typography variant="h6" fontWeight={700} color={COLORS.textStrong} gutterBottom>
-                    Rubros Asociados
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    Seleccioná los rubros que comercializa este proveedor.
-                  </Typography>
-                  <RubrosTransferList
-                    allRubros={allRubros}
-                    selectedRubrosIds={formData.rubrosIds || []}
-                    onChange={(newIds: any) => {
-                      setFormData((prev: any) => ({ ...prev, rubrosIds: newIds }));
-                    }}
-                    colors={COLORS}
-                  />
-                </Box>
-
-                {(error || validationErrors.length > 0) && (
-                  <Box display="flex" flexDirection="column" gap={1.25}>
-                    {error && (
-                      <Typography variant="body2" color="error" fontWeight={600}>
-                        {error}
-                      </Typography>
-                    )}
-                    {validationErrors.length > 0 && (
-                      <Box display="flex" flexDirection="column" gap={0.5}>
-                        {validationErrors.map((err) => (
-                          <Typography key={err} variant="body2" color="error">
-                            • {err}
-                          </Typography>
-                        ))}
-                      </Box>
-                    )}
-                  </Box>
-                )}
-
-
-              </Box>
-            </Box>
-          </DialogContent>
-
-          <Divider
-            sx={{
-              height: DIV_H,
-              border: 0,
-              backgroundImage: `
-                linear-gradient(to bottom, rgba(0,0,0,0.22), rgba(0,0,0,0.22)),
-                linear-gradient(to bottom, rgba(255,255,255,0.70), rgba(255,255,255,0.70)),
-                linear-gradient(90deg, rgba(255,255,255,0.05), ${COLORS.primary}, rgba(255,255,255,0.05))
-              `,
-              backgroundRepeat: 'no-repeat, no-repeat, repeat',
-              backgroundSize: '100% 1px, 100% 1px, 100% 100%',
-              backgroundPosition: 'top left, bottom left, center',
-              flex: '0 0 auto',
-            }}
-          />
-
-          <DialogActions sx={{ p: 0, m: 0, minHeight: FOOTER_H }}>
-            <Box sx={{ width: '100%', display: 'flex', justifyContent: 'flex-end', px: 3, py: 2.5, gap: 1.5 }}>
-              <CrystalSoftButton
-                baseColor={COLORS.primary}
-                onClick={handleClose}
-                disabled={saving}
-                sx={{
-                  minHeight: 44,
-                  px: 3,
-                  fontWeight: 600,
-                }}
-              >
-                Cancelar
-              </CrystalSoftButton>
-              <CrystalButton
-                baseColor={COLORS.primary}
-                onClick={handleSubmit}
-                disabled={!botonHabilitado}
-                sx={{
-                  minHeight: 44,
-                  px: 3,
-                  fontWeight: 700,
-                  '&:disabled': {
-                    opacity: 0.55,
-                    boxShadow: 'none',
-                  },
-                }}
-              >
-                {saving ? 'Guardando…' : esEdicion ? 'Actualizar Proveedor' : 'Crear Proveedor'}
-              </CrystalButton>
-            </Box>
-          </DialogActions>
-        </Box >
-      </TexturedPanel >
-    </Dialog >
+            {saving ? 'Guardando...' : 'Guardar Datos'}
+          </Button>
+        </DialogActions>
+      </Box>
+    </Dialog>
   );
 };
 
