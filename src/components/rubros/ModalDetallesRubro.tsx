@@ -7,13 +7,10 @@ import {
 import { alpha, darken } from '@mui/material/styles';
 import { useState, useEffect, useMemo, useCallback, type ComponentProps } from 'react';
 import { Icon } from '@iconify/react';
-import { azul, verde } from '@/ui/colores';
-import { marron } from '@/components/rubros/colores-marron';
+import { azul } from '@/ui/colores';
 import { useMutation, useQuery } from '@apollo/client/react';
 import { GET_PROVEEDORES_POR_RUBRO } from '@/components/rubros/graphql/queries';
 import type { ProveedoresPorRubroResponse } from '@/interfaces/rubros';
-import { WoodBackdrop } from '@/components/ui/TexturedFrame/WoodBackdrop';
-import { TexturedPanel } from '@/components/ui/TexturedFrame/TexturedPanel';
 import { CrystalSoftButton } from '@/components/ui/CrystalButton';
 import { TablaArticulos } from '@/components/articulos';
 import { ModalEliminarArticuloRubro } from '@/components/rubros/ModalEliminarArticuloRubro';
@@ -64,16 +61,17 @@ const CONTENT_MAX = `calc(${VH_MAX}vh - ${HEADER_H + FOOTER_H + DIV_H * 2}px)`;
 
 // Derivar paleta desde el color de rubro
 const makeColors = (base?: string) => {
-  const primary = base || marron.primary || '#5D4037';
+  const primary = azul.primary; // Blue
+  const secondary = azul.headerBorder;
   return {
     primary,
+    secondary,
     primaryHover: darken(primary, 0.12),
-    textStrong: darken(primary, 0.5),
-    chipBorder: 'rgba(255,255,255,0.35)',
+    textStrong: azul.textStrong,
+    chipBorder: azul.borderInner,
+    background: '#f8f9fa',
   };
 };
-
-const ARTICULOS_COLORS = verde;
 
 const ModalDetallesRubro = ({ open, onClose, rubro, accentColor }: ModalDetallesRubroProps) => {
   const COLORS = useMemo(() => makeColors(accentColor), [accentColor]);
@@ -237,372 +235,250 @@ const ModalDetallesRubro = ({ open, onClose, rubro, accentColor }: ModalDetalles
       maxWidth="md"
       fullWidth
       PaperProps={{
+        elevation: 4,
         sx: {
-          borderRadius: 3,
-          boxShadow: '0 8px 32px rgba(0,0,0,0.12)',
-          bgcolor: 'transparent',
-          overflow: 'hidden',
+          borderRadius: 0, // Zero border radius for strict square aesthetic (like ModalEditarProveedor)
+          bgcolor: '#ffffff',
           maxHeight: `${VH_MAX}vh`,
-        }
+        },
+        square: true, // Force square borders
       }}
     >
-      <TexturedPanel
-        accent={COLORS.primary}
-        radius={12}
-        contentPadding={0}
-        bgTintPercent={12}
-        bgAlpha={1}
-        textureBaseOpacity={0.22}
-        textureBoostOpacity={0.19}
-        textureBrightness={1.12}
-        textureContrast={1.03}
-        tintOpacity={0.38}
-      >
-        <Box sx={{ display: 'flex', flexDirection: 'column', maxHeight: `${VH_MAX}vh` }}>
-          {/* ===== HEADER ===== */}
-          <DialogTitle
+      <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%', maxHeight: `${VH_MAX}vh` }}>
+
+        {/* ===== HEADER ===== */}
+        <Box sx={{
+          bgcolor: COLORS.primary,
+          color: '#ffffff',
+          px: 3,
+          py: 2,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          borderBottom: `4px solid ${COLORS.secondary}`,
+          borderRadius: 0,
+        }}>
+          <Box display="flex" alignItems="center" gap={2}>
+            <Icon icon="mdi:tag-multiple" width={24} height={24} />
+            <Box>
+              <Typography variant="h6" fontWeight={600} letterSpacing={0.5}>
+                {rubroNombre.toUpperCase()}
+              </Typography>
+              <Box display="flex" alignItems="center" gap={1} mt={0.5}>
+                {!!rubroCodigo && (
+                  <Typography variant="caption" sx={{ opacity: 0.8, letterSpacing: 0.5 }}>
+                    CÓD: {rubroCodigo}
+                  </Typography>
+                )}
+                {!!rubroCodigo && <Typography variant="caption" sx={{ opacity: 0.6 }}>|</Typography>}
+                <Typography variant="caption" sx={{ opacity: 0.8, letterSpacing: 0.5 }}>
+                  {formatCount(totalArticulosRubro, 'ARTÍCULO', 'ARTÍCULOS')}
+                </Typography>
+              </Box>
+            </Box>
+          </Box>
+          <CrystalSoftButton
+            baseColor="rgba(255,255,255,0.2)"
+            onClick={onCerrar}
+            title="Cerrar"
             sx={{
-              p: 0,
-              m: 0,
-              height: HEADER_H,
-              minHeight: HEADER_H,
-              display: 'flex',
-              alignItems: 'center',
+              width: 32, height: 32, minWidth: 32,
+              p: 0, borderRadius: 0,
+              display: 'grid', placeItems: 'center',
+              '&:hover': { bgcolor: 'rgba(255,255,255,0.3)' },
             }}
           >
+            <Icon icon="mdi:close" color="#fff" width={20} height={20} />
+          </CrystalSoftButton>
+        </Box>
+
+        {/* ===== CONTENIDO ===== */}
+        <DialogContent
+          sx={{
+            p: 3,
+            bgcolor: '#ffffff',
+            overflowY: 'auto',
+          }}
+        >
+          {/* Tarjetas de Recargo/Descuento */}
+          <Box display="flex" flexDirection={{ xs: 'column', sm: 'row' }} gap={2} mb={3}>
             <Box
               sx={{
-                width: '100%',
-                display: 'flex',
-                alignItems: 'center',
-                px: 2,
-                py: 1,        // <── BAJAR EL PADDING AQUÍ
-                gap: 2,
+                flex: 1,
+                p: 2,
+                border: `1px solid ${COLORS.chipBorder}`,
+                bgcolor: alpha(COLORS.primary, 0.05),
+                borderRadius: 0, // Square
               }}
             >
-
-              <Box sx={{
-                width: 40, height: 40, borderRadius: '50%',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                background: `linear-gradient(135deg, ${COLORS.primary} 0%, ${COLORS.primaryHover} 100%)`,
-                boxShadow: 'inset 0 2px 4px rgba(255,255,255,0.3), 0 4px 12px rgba(0,0,0,0.25)',
-                color: '#fff'
-              }}>
-                <Icon icon="mdi:tag-outline" width={22} height={22} />
-              </Box>
-
-              <Typography variant="h6" fontWeight={700} color="white" sx={{ textShadow: '0 2px 4px rgba(0,0,0,0.8)' }}>
-                {rubroNombre}
+              <Typography variant="subtitle2" fontWeight={700} color={COLORS.textStrong} sx={{ textTransform: 'uppercase', letterSpacing: 0.5 }}>
+                Recargo
               </Typography>
-
-              <Box sx={{ ml: 'auto', display: 'flex', alignItems: 'center', gap: 1, pr: 1.5 }}>
-                {!!rubroCodigo && (
-                  <Chip
-                    label={`Código${NBSP}${rubroCodigo}`}
-                    size="small"
-                    sx={{ bgcolor: 'rgba(0,0,0,0.35)', color: '#fff', border: `1px solid ${COLORS.chipBorder}`, fontWeight: 600, px: 1.5, py: 0.5, height: 28 }}
-                  />
-                )}
-                <Chip
-                  label={formatCount(totalArticulosRubro, 'artículo', 'artículos')}
-                  size="small"
-                  sx={{ bgcolor: 'rgba(0,0,0,0.35)', color: '#fff', border: `1px solid ${COLORS.chipBorder}`, fontWeight: 600, px: 1.5, py: 0.5, height: 28 }}
-                />
-                <Chip
-                  label={formatCount(proveedores.length, 'proveedor', 'proveedores')}
-                  size="small"
-                  sx={{ bgcolor: 'rgba(0,0,0,0.35)', color: '#fff', border: `1px solid ${COLORS.chipBorder}`, fontWeight: 600, px: 1.5, py: 0.5, height: 28 }}
-                />
-              </Box>
-
-              <CrystalSoftButton
-                baseColor={COLORS.primary}
-                onClick={onCerrar}
-                title="Cerrar"
-                sx={{
-                  width: 40, height: 40, minWidth: 40,
-                  p: 0, borderRadius: '50%',
-                  display: 'grid', placeItems: 'center',
-                  transform: 'none !important', transition: 'none',
-                  '&:hover': { transform: 'none !important' },
-                }}
-              >
-                <Icon icon="mdi:close" color="#fff" width={22} height={22} />
-              </CrystalSoftButton>
+              <Typography variant="h4" fontWeight={700} color={COLORS.primary} mt={1}>
+                {formatPorcentaje(porcentajeRecargo)}
+              </Typography>
             </Box>
-          </DialogTitle>
 
-          {/* Divisor header (claro arriba / oscuro abajo) */}
-          <Divider
-            sx={{
-              height: DIV_H,
-              border: 0,
-              backgroundImage: `
-                linear-gradient(to bottom, rgba(255,255,255,0.70), rgba(255,255,255,0.70)),
-                linear-gradient(to bottom, rgba(0,0,0,0.22), rgba(0,0,0,0.22)),
-                linear-gradient(90deg, rgba(255,255,255,0.05), ${COLORS.primary}, rgba(255,255,255,0.05))
-              `,
-              backgroundRepeat: 'no-repeat, no-repeat, repeat',
-              backgroundSize: '100% 1px, 100% 1px, 100% 100%',
-              backgroundPosition: 'top left, bottom left, center',
-              flex: '0 0 auto'
-            }}
-          />
+            <Box
+              sx={{
+                flex: 1,
+                p: 2,
+                border: `1px solid ${COLORS.chipBorder}`,
+                bgcolor: alpha(COLORS.primary, 0.05),
+                borderRadius: 0, // Square
+              }}
+            >
+              <Typography variant="subtitle2" fontWeight={700} color={COLORS.textStrong} sx={{ textTransform: 'uppercase', letterSpacing: 0.5 }}>
+                Descuento
+              </Typography>
+              <Typography variant="h4" fontWeight={700} color={COLORS.primary} mt={1}>
+                {formatPorcentaje(porcentajeDescuento)}
+              </Typography>
+            </Box>
+          </Box>
 
-          {/* ===== CONTENIDO ===== */}
-          <DialogContent
+          {/* Proveedores */}
+          <Box mb={3}>
+            <Typography variant="subtitle2" fontWeight={700} color={COLORS.secondary} sx={{ mb: 2, textTransform: 'uppercase', letterSpacing: 1 }}>
+              Proveedores Asociados
+            </Typography>
+            <Box display="flex" flexWrap="wrap" gap={1}>
+              {loadingProveedores ? (
+                <Typography variant="body2" color="text.secondary">Cargando...</Typography>
+              ) : proveedores.length ? (
+                <>
+                  <Chip
+                    key="todos"
+                    label="TODOS"
+                    clickable
+                    variant={proveedorSeleccionadoId === null ? 'filled' : 'outlined'}
+                    onClick={() => {
+                      setProveedorSeleccionadoId(null);
+                      setPaginacion((prev) => (prev.pagina === 0 ? prev : { ...prev, pagina: 0 }));
+                    }}
+                    sx={{
+                      borderRadius: 0, fontWeight: 600,
+                      bgcolor: proveedorSeleccionadoId === null ? COLORS.primary : 'transparent',
+                      color: proveedorSeleccionadoId === null ? '#fff' : COLORS.primary,
+                      borderColor: COLORS.primary,
+                      '&:hover': { bgcolor: proveedorSeleccionadoId === null ? COLORS.primaryHover : alpha(COLORS.primary, 0.1) }
+                    }}
+                  />
+                  {proveedores.map((p) => {
+                    const nextId = Number(p.id);
+                    const seleccionado = proveedorSeleccionadoId === nextId;
+                    return (
+                      <Chip
+                        key={nextId}
+                        label={p.nombre.toUpperCase()}
+                        clickable
+                        variant={seleccionado ? 'filled' : 'outlined'}
+                        onClick={() => {
+                          setProveedorSeleccionadoId((prev) => (prev === nextId ? null : nextId));
+                          setPaginacion((prev) => (prev.pagina === 0 ? prev : { ...prev, pagina: 0 }));
+                        }}
+                        sx={{
+                          borderRadius: 0, fontWeight: 600,
+                          bgcolor: seleccionado ? COLORS.primary : 'transparent',
+                          color: seleccionado ? '#fff' : COLORS.primary,
+                          borderColor: COLORS.primary,
+                          '&:hover': { bgcolor: seleccionado ? COLORS.primaryHover : alpha(COLORS.primary, 0.1) }
+                        }}
+                      />
+                    );
+                  })}
+                </>
+              ) : (
+                <Typography variant="body2" color="text.secondary" fontStyle="italic">
+                  Sin proveedores asociados.
+                </Typography>
+              )}
+            </Box>
+          </Box>
+
+          {/* Toolbar y Tabla */}
+          <Box mb={2} display="flex" justifyContent="space-between" alignItems="center" flexWrap="wrap" gap={2}>
+            <Typography variant="subtitle2" fontWeight={700} color={COLORS.secondary} sx={{ textTransform: 'uppercase', letterSpacing: 1 }}>
+              Artículos ({totalArticulos})
+            </Typography>
+            <TextField
+              placeholder="Buscar artículos..."
+              value={filtroInput}
+              onChange={(e) => setFiltroInput(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  const termino = filtroInput.trim();
+                  setBusquedaPersonalizada(termino);
+                  setPaginacion((prev) => (prev.pagina === 0 ? prev : { ...prev, pagina: 0 }));
+                }
+              }}
+              size="small"
+              sx={{
+                '& .MuiOutlinedInput-root': {
+                  borderRadius: 0,
+                  bgcolor: '#fff',
+                  '& fieldset': { borderColor: COLORS.chipBorder },
+                  '&.Mui-focused fieldset': { borderColor: COLORS.primary, borderWidth: 2 },
+                }
+              }}
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <Icon icon="mdi:magnify" color={COLORS.secondary} />
+                  </InputAdornment>
+                ),
+              }}
+            />
+          </Box>
+
+          <Box>
+            <TablaArticulos
+              key={`${rubroId ?? 'rubro'}-${proveedorSeleccionadoId ?? 'todos'}-${reloadKey}`}
+              columns={columnasTabla}
+              showToolbar={false}
+              allowCreate={false}
+              rowsPerPageOptions={PAGINAS_OPCIONES}
+              defaultPageSize={limite}
+              controlledFilters={filtrosControlados}
+              onFiltersChange={handleTablaFiltersChange}
+              onDataLoaded={handleTablaDataLoaded}
+              dense
+            />
+            {errorArticulos && (
+              <Typography variant="body2" color="error" mt={1}>
+                Error: {errorArticulos.message}
+              </Typography>
+            )}
+            {loadingArticulos && (
+              <Typography variant="body2" color="text.secondary" mt={1}>
+                Cargando...
+              </Typography>
+            )}
+          </Box>
+
+        </DialogContent>
+
+        {/* ===== FOOTER ===== */}
+        <DialogActions sx={{ p: 2, bgcolor: '#f1f2f6', borderTop: '1px solid #e0e0e0', gap: 2, borderRadius: 0 }}>
+          <Box flex={1} />
+          <CrystalSoftButton
+            baseColor={COLORS.secondary}
+            onClick={onCerrar}
             sx={{
-              p: 0,
               borderRadius: 0,
-              overflow: 'auto',
-              maxHeight: CONTENT_MAX,
-              flex: '0 1 auto'
+              color: '#fff',
+              px: 3,
+              fontWeight: 600,
+              '&:hover': { bgcolor: darken(COLORS.secondary, 0.2) }
             }}
           >
-            <Box sx={{ position: 'relative', borderRadius: 0, overflow: 'hidden' }}>
-              <Box
-                sx={{
-                  position: 'relative',
-                  zIndex: 1,
-                  p: { xs: 3, md: 4 },
-                  borderRadius: 0,
-                  backdropFilter: 'none',
-                  background: '#ffffff',
-                }}
-              >
-                <Box
-                  display="flex"
-                  flexDirection={{ xs: 'column', sm: 'row' }}
-                  gap={2}
-                  mb={3}
-                >
-                  <Box
-                    sx={{
-                      flex: 1,
-                      minWidth: 0,
-                      p: 2.25,
-                      borderRadius: 2,
-                      border: `1px solid ${alpha(COLORS.primary, 0.22)}`,
-                      background: alpha(COLORS.primary, 0.08),
-                      boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.28)',
-                    }}
-                  >
-                    <Typography variant="subtitle2" fontWeight={600} color={COLORS.textStrong} gutterBottom>
-                      Recargo por rubro
-                    </Typography>
-                    <Typography variant="h5" fontWeight={800} color={COLORS.primary}>
-                      {formatPorcentaje(porcentajeRecargo)}
-                    </Typography>
-                    <Typography variant="caption" color="text.secondary">
-                      Se suma al precio base de los artículos pertenecientes al rubro.
-                    </Typography>
-                  </Box>
+            Cerrar
+          </CrystalSoftButton>
+        </DialogActions>
 
-                  <Box
-                    sx={{
-                      flex: 1,
-                      minWidth: 0,
-                      p: 2.25,
-                      borderRadius: 2,
-                      border: `1px solid ${alpha(COLORS.primary, 0.18)}`,
-                      background: alpha(COLORS.primary, 0.05),
-                      boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.22)',
-                    }}
-                  >
-                    <Typography variant="subtitle2" fontWeight={600} color={COLORS.textStrong} gutterBottom>
-                      Descuento por rubro
-                    </Typography>
-                    <Typography variant="h5" fontWeight={800} color={COLORS.primary}>
-                      {formatPorcentaje(porcentajeDescuento)}
-                    </Typography>
-                    <Typography variant="caption" color="text.secondary">
-                      Utilizado para promociones o acuerdos comerciales específicos.
-                    </Typography>
-                  </Box>
-                </Box>
+      </Box>
 
-                {/* Proveedores */}
-                <Box mb={2}>
-                  <Typography variant="h6" fontWeight={700} mb={1} color={COLORS.textStrong}>
-                    Proveedores Asociados
-                  </Typography>
-                  <Box display="flex" flexWrap="wrap" gap={1} mb={2}>
-                    {loadingProveedores ? (
-                      <Typography variant="body2" color="text.secondary">Cargando proveedores…</Typography>
-                    ) : proveedores.length ? (
-                      <>
-                        <Chip
-                          key="todos"
-                          label="Todos"
-                          clickable
-                          variant={proveedorSeleccionadoId === null ? 'filled' : 'outlined'}
-                          sx={{
-                            fontWeight: 600,
-                            bgcolor: proveedorSeleccionadoId === null ? azul.primary : 'transparent',
-                            color: proveedorSeleccionadoId === null ? '#fff' : azul.primary,
-                            borderColor: azul.primary,
-                            '&:hover': {
-                              bgcolor: proveedorSeleccionadoId === null ? azul.primaryHover : alpha(azul.primary, 0.08),
-                            },
-                          }}
-                          onClick={() => {
-                            setProveedorSeleccionadoId(null);
-                            setPaginacion((prev) =>
-                              prev.pagina === 0 ? prev : { ...prev, pagina: 0 }
-                            );
-                          }}
-                        />
-                        {proveedores.map((p) => {
-                          const nextId = Number(p.id);
-                          const seleccionado = proveedorSeleccionadoId === nextId;
-                          return (
-                            <Chip
-                              key={nextId}
-                              label={p.nombre}
-                              clickable
-                              variant={seleccionado ? 'filled' : 'outlined'}
-                              sx={{
-                                fontWeight: 600,
-                                bgcolor: seleccionado ? azul.primary : 'transparent',
-                                color: seleccionado ? '#fff' : azul.primary,
-                                borderColor: azul.primary,
-                                '&:hover': {
-                                  bgcolor: seleccionado ? azul.primaryHover : alpha(azul.primary, 0.08),
-                                },
-                              }}
-                              onClick={() => {
-                                setProveedorSeleccionadoId((prev) => (prev === nextId ? null : nextId));
-                                setPaginacion((prev) =>
-                                  prev.pagina === 0 ? prev : { ...prev, pagina: 0 }
-                                );
-                              }}
-                            />
-                          );
-                        })}
-                      </>
-                    ) : (
-                      <Typography variant="body2" color="text.secondary">
-                        No hay proveedores asociados
-                      </Typography>
-                    )}
-                  </Box>
-                </Box>
-
-                {/* Toolbar tabla */}
-                <Box
-                  sx={{
-                    border: `1px solid ${alpha(COLORS.primary, 0.18)}`,
-                    borderRadius: 2,
-                    background: alpha(COLORS.primary, 0.05),
-                    boxShadow: '0 8px 24px rgba(0,0,0,0.06)',
-                    px: 3,
-                    py: 2.25,
-                    mb: 2.5,
-                  }}
-                >
-                  <Box
-                    display="flex"
-                    justifyContent="space-between"
-                    alignItems="center"
-                    sx={{ gap: 2, flexWrap: 'wrap' }}
-                  >
-                    <Typography variant="h6" fontWeight={700} color={COLORS.textStrong}>
-                      Artículos del rubro
-                    </Typography>
-                    <TextField
-                      placeholder="Buscar artículos…"
-                      value={filtroInput}
-                      onChange={(e) => setFiltroInput(e.target.value)}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter') {
-                          const termino = filtroInput.trim();
-                          setBusquedaPersonalizada(termino);
-                          setPaginacion((prev) => (prev.pagina === 0 ? prev : { ...prev, pagina: 0 }));
-                        }
-                      }}
-                      size="small"
-                      sx={{ minWidth: { xs: '100%', sm: 240, md: 280 } }}
-                      InputProps={{
-                        startAdornment: (
-                          <InputAdornment position="start">
-                            <Icon icon="mdi:magnify" color={COLORS.primary} />
-                          </InputAdornment>
-                        ),
-                        sx: {
-                          '& .MuiOutlinedInput-root': {
-                            color: COLORS.textStrong,
-                            borderRadius: 2,
-                            background: '#fff',
-                            '& fieldset': { borderColor: alpha(COLORS.primary, 0.28) },
-                            '&:hover fieldset': { borderColor: alpha(COLORS.primary, 0.42) },
-                            '&.Mui-focused fieldset': { borderColor: COLORS.primary },
-                          },
-                        },
-                      }}
-                    />
-                  </Box>
-                </Box>
-
-                <Box mt={2}>
-                  <TablaArticulos
-                    key={`${rubroId ?? 'rubro'}-${proveedorSeleccionadoId ?? 'todos'}-${reloadKey}`}
-                    columns={columnasTabla}
-                    showToolbar={false}
-                    allowCreate={false}
-                    rowsPerPageOptions={PAGINAS_OPCIONES}
-                    defaultPageSize={limite}
-                    controlledFilters={filtrosControlados}
-                    onFiltersChange={handleTablaFiltersChange}
-                    onDataLoaded={handleTablaDataLoaded}
-                    dense
-                  />
-                  {errorArticulos && (
-                    <Typography variant="body2" color="error" mt={1}>
-                      Error al cargar artículos: {errorArticulos.message}
-                    </Typography>
-                  )}
-                  {loadingArticulos && (
-                    <Typography variant="body2" color="text.secondary" mt={1}>
-                      Cargando artículos…
-                    </Typography>
-                  )}
-                </Box>
-              </Box>
-            </Box>
-          </DialogContent>
-
-          {/* Divisor footer (oscuro arriba / claro abajo) */}
-          <Divider
-            sx={{
-              height: DIV_H,
-              border: 0,
-              backgroundImage: `
-                linear-gradient(to bottom, rgba(0,0,0,0.22), rgba(0,0,0,0.22)),
-                linear-gradient(to bottom, rgba(255,255,255,0.70), rgba(255,255,255,0.70)),
-                linear-gradient(90deg, rgba(255,255,255,0.05), ${COLORS.primary}, rgba(255,255,255,0.05))
-              `,
-              backgroundRepeat: 'no-repeat, no-repeat, repeat',
-              backgroundSize: '100% 1px, 100% 1px, 100% 100%',
-              backgroundPosition: 'top left, bottom left, center',
-              flex: '0 0 auto'
-            }}
-          />
-
-          {/* ===== FOOTER ===== */}
-          <DialogActions   sx={{
-    p: 0,
-    m: 0,
-    height: FOOTER_H,
-    minHeight: FOOTER_H,
-  }}>
-            <Box sx={{ width: '100%', display: 'flex', justifyContent: 'flex-end', px: 2, py: 1, gap: 1.5 }}>
-              <CrystalSoftButton baseColor={COLORS.primary} onClick={onCerrar}>
-                Cerrar
-              </CrystalSoftButton>
-            </Box>
-          </DialogActions>
-        </Box>
-      </TexturedPanel>
+      {/* Modal Eliminar (se mantiene igual, solo lógica) */}
       <ModalEliminarArticuloRubro
         open={confirmEliminarOpen}
         onClose={cerrarModalEliminar}

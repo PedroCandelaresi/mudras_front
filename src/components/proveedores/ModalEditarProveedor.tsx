@@ -82,18 +82,18 @@ const TIPO_IVA_OPTIONS = [
 ] as const;
 
 const makeColors = (base?: string) => {
-  const primary = '#b5a5ca'; // New Primary (Lavender)
-  const secondary = '#546e7a'; // Reverted to a neutral grey/blue for balance, or keep widely compatible
+  const primary = '#2e7d32'; // Green (Success/Edit)
+  const secondary = '#546e7a'; // Neutral grey/blue
   return {
     primary,
     secondary,
     primaryHover: darken(primary, 0.1),
-    textStrong: '#2c3e50',
+    textStrong: '#1b5e20', // Darker green for text
     inputBorder: '#bdc3c7',
     inputBorderHover: secondary,
     background: '#f8f9fa',
     paper: '#ffffff',
-    chipBorder: '#bdc3c7' // Compatibility with RubrosTransferList
+    chipBorder: '#bdc3c7'
   };
 };
 
