@@ -73,34 +73,37 @@ export const ProductProvider: React.FC<{ children: React.ReactNode }> = ({ child
 
 
     // Fetch products data from the API 
-    const { data: productsData, isLoading: isProductsLoading, error: productsError, mutate } = useSWR('/api/eCommerce', getFetcher);
+    // const { data: productsData, isLoading: isProductsLoading, error: productsError, mutate } = useSWR('/api/eCommerce', getFetcher);
+    const mutate = async () => { }; // No-op to fix TS errors
 
     useEffect(() => {
-        if (productsData) {
-            setProducts(productsData.data);
-            setLoading(isProductsLoading);
-        } else if (productsError) {
-            setError(productsError);
-            setLoading(isProductsLoading);
-        } else {
-            setLoading(isProductsLoading);
-        }
-    }, [productsData, productsError, isProductsLoading]);
+        // if (productsData) {
+        //     setProducts(productsData.data);
+        //     setLoading(isProductsLoading);
+        // } else if (productsError) {
+        //     setError(productsError);
+        //     setLoading(isProductsLoading);
+        // } else {
+        //     setLoading(isProductsLoading);
+        // }
+        setLoading(false); // Force loading to false if we aren't fetching
+    }, []); // [productsData, productsError, isProductsLoading]);
 
     // Fetch products data from the API 
-    const { data: cartsData, isLoading: isCartsLoading, error: cartsError, mutate: cartMutate } = useSWR('/api/eCommerce/carts', getFetcher);
+    // const { data: cartsData, isLoading: isCartsLoading, error: cartsError, mutate: cartMutate } = useSWR('/api/eCommerce/carts', getFetcher);
+    const cartMutate = async () => { }; // No-op to fix TS errors
 
     useEffect(() => {
-        if (cartsData) {
-            setCartItems(cartsData.data);
-            setLoading(isCartsLoading);
-        } else if (cartsError) {
-            setError(cartsError);
-            setLoading(isCartsLoading);
-        } else {
-            setLoading(isCartsLoading);
-        }
-    }, [cartsData, cartsError, isCartsLoading])
+        // if (cartsData) {
+        //     setCartItems(cartsData.data);
+        //     setLoading(isCartsLoading);
+        // } else if (cartsError) {
+        //     setError(cartsError);
+        //     setLoading(isCartsLoading);
+        // } else {
+        //     setLoading(isCartsLoading);
+        // }
+    }, []); // [cartsData, cartsError, isCartsLoading])
 
     // UseEffect to update local storage whenever cartItems changes
     useEffect(() => {
