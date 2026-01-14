@@ -240,6 +240,7 @@ const ModalDetallesRubro = ({ open, onClose, rubro, accentColor }: ModalDetalles
           borderRadius: 0, // Zero border radius for strict square aesthetic (like ModalEditarProveedor)
           bgcolor: '#ffffff',
           maxHeight: `${VH_MAX}vh`,
+          overflow: 'hidden', // Prevent Paper from scrolling
         },
         square: true, // Force square borders
       }}
@@ -257,6 +258,7 @@ const ModalDetallesRubro = ({ open, onClose, rubro, accentColor }: ModalDetalles
           justifyContent: 'space-between',
           borderBottom: `4px solid ${COLORS.secondary}`,
           borderRadius: 0,
+          flexShrink: 0, // Prevent Header from shrinking
         }}>
           <Box display="flex" alignItems="center" gap={2}>
             <Icon icon="mdi:tag-multiple" width={24} height={24} />
@@ -292,12 +294,13 @@ const ModalDetallesRubro = ({ open, onClose, rubro, accentColor }: ModalDetalles
           </CrystalSoftButton>
         </Box>
 
-        {/* ===== CONTENIDO ===== */}
         <DialogContent
           sx={{
             p: 3,
             bgcolor: '#ffffff',
             overflowY: 'auto',
+            flex: 1, // Take remaining space
+            minHeight: 0, // Allow shrinking below content size
           }}
         >
           {/* Tarjetas de Recargo/Descuento */}
@@ -459,7 +462,7 @@ const ModalDetallesRubro = ({ open, onClose, rubro, accentColor }: ModalDetalles
         </DialogContent>
 
         {/* ===== FOOTER ===== */}
-        <DialogActions sx={{ p: 2, bgcolor: '#f1f2f6', borderTop: '1px solid #e0e0e0', gap: 2, borderRadius: 0 }}>
+        <DialogActions sx={{ p: 2, bgcolor: '#f1f2f6', borderTop: '1px solid #e0e0e0', gap: 2, borderRadius: 0, flexShrink: 0 }}>
           <Box flex={1} />
           <CrystalSoftButton
             baseColor={COLORS.secondary}
