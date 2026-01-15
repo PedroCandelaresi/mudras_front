@@ -227,8 +227,6 @@ const TablaProveedores = forwardRef<TablaProveedoresHandle, Props>(({
         mb: 3,
         p: 2,
         bgcolor: '#ffffff',
-        border: '1px solid #e0e0e0',
-        borderBottom: 'none' // Merges with table
       }}
     >
       <Box display="flex" alignItems="center" gap={1}>
@@ -356,8 +354,11 @@ const TablaProveedores = forwardRef<TablaProveedoresHandle, Props>(({
             borderBottom: '1px solid #f0f0f0',
             color: '#37474f', // High contrast dark gray
           },
+          '& .MuiTableBody-root .MuiTableRow-root:nth-of-type(even)': {
+            bgcolor: alpha(azul.primary, 0.03), // Subtle zebra striping
+          },
           '& .MuiTableBody-root .MuiTableRow-root:hover': {
-            bgcolor: alpha(azul.primary, 0.08),
+            bgcolor: alpha(azul.primary, 0.12), // Distinct hover
           },
           '& .MuiTableCell-head': {
             fontSize: '0.8rem',
