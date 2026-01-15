@@ -70,22 +70,22 @@ const ModalEliminarProveedor = ({ open, onClose, proveedor, onProveedorEliminado
   if (!proveedor) return null;
 
   return (
-    <Dialog 
-      open={open} 
-      onClose={cerrarModalEliminar} 
-      maxWidth="sm" 
+    <Dialog
+      open={open}
+      onClose={cerrarModalEliminar}
+      maxWidth="sm"
       fullWidth
       PaperProps={{
-        sx: { 
-          borderRadius: 3,
+        sx: {
+          borderRadius: 0,
           border: '3px solid #d32f2f',
           boxShadow: '0 0 30px rgba(211, 47, 47, 0.3), 0 8px 32px rgba(0,0,0,0.12)',
           background: 'linear-gradient(135deg, #ffebee 0%, #fff 100%)'
         }
       }}
     >
-      <DialogTitle 
-        sx={{ 
+      <DialogTitle
+        sx={{
           background: 'linear-gradient(135deg, #d32f2f 0%, #b71c1c 100%)',
           color: 'white',
           display: 'flex',
@@ -110,7 +110,7 @@ const ModalEliminarProveedor = ({ open, onClose, proveedor, onProveedorEliminado
           }
         }}
       >
-        <Box 
+        <Box
           sx={{
             bgcolor: 'rgba(255,255,255,0.2)',
             borderRadius: '50%',
@@ -133,10 +133,10 @@ const ModalEliminarProveedor = ({ open, onClose, proveedor, onProveedorEliminado
             Eliminación Permanente de Proveedor
           </Typography>
         </Box>
-        <IconButton 
-          onClick={cerrarModalEliminar} 
-          size="small" 
-          sx={{ 
+        <IconButton
+          onClick={cerrarModalEliminar}
+          size="small"
+          sx={{
             color: 'white',
             bgcolor: 'rgba(255,255,255,0.2)',
             '&:hover': { bgcolor: 'rgba(255,255,255,0.3)' },
@@ -155,7 +155,7 @@ const ModalEliminarProveedor = ({ open, onClose, proveedor, onProveedorEliminado
         )}
 
         <Box display="flex" flexDirection="column" gap={4}>
-          <Box 
+          <Box
             sx={{
               p: 3,
               borderRadius: 2,
@@ -171,7 +171,7 @@ const ModalEliminarProveedor = ({ open, onClose, proveedor, onProveedorEliminado
             <Typography variant="body1" sx={{ mb: 2, fontWeight: 500 }}>
               Está a punto de eliminar permanentemente el proveedor:
             </Typography>
-            <Box 
+            <Box
               sx={{
                 p: 2,
                 bgcolor: 'white',
@@ -195,10 +195,10 @@ const ModalEliminarProveedor = ({ open, onClose, proveedor, onProveedorEliminado
               )}
             </Box>
           </Box>
-          
-          <Alert 
-            severity="error" 
-            sx={{ 
+
+          <Alert
+            severity="error"
+            sx={{
               borderRadius: 2,
               '& .MuiAlert-icon': {
                 fontSize: 28
@@ -230,7 +230,7 @@ const ModalEliminarProveedor = ({ open, onClose, proveedor, onProveedorEliminado
               helperText={textoConfirmacion !== '' && textoConfirmacion !== 'ELIMINAR' ? '❌ Debe escribir exactamente "ELIMINAR"' : textoConfirmacion === 'ELIMINAR' ? '✅ Confirmación correcta' : ''}
               sx={{
                 '& .MuiOutlinedInput-root': {
-                  borderRadius: 2,
+                  borderRadius: 0,
                   bgcolor: textoConfirmacion === 'ELIMINAR' ? '#e8f5e8' : '#ffebee',
                   '& fieldset': {
                     borderColor: textoConfirmacion === 'ELIMINAR' ? '#4caf50' : '#d32f2f',
@@ -260,17 +260,17 @@ const ModalEliminarProveedor = ({ open, onClose, proveedor, onProveedorEliminado
           </Box>
         </Box>
       </DialogContent>
-      <DialogActions 
-        sx={{ 
-          p: 4, 
+      <DialogActions
+        sx={{
+          p: 4,
           pt: 2,
           bgcolor: '#ffebee'
         }}
       >
-        <Button 
+        <Button
           onClick={cerrarModalEliminar}
           variant="outlined"
-          sx={{ 
+          sx={{
             textTransform: 'none',
             borderRadius: 2,
             px: 4,
@@ -286,11 +286,11 @@ const ModalEliminarProveedor = ({ open, onClose, proveedor, onProveedorEliminado
         >
           ❌ Cancelar
         </Button>
-        <Button 
+        <Button
           onClick={confirmarEliminacion}
           variant="contained"
           disabled={textoConfirmacion !== 'ELIMINAR'}
-          sx={{ 
+          sx={{
             textTransform: 'none',
             borderRadius: 2,
             px: 4,
