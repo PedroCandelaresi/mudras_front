@@ -21,9 +21,6 @@ import {
 } from '@tabler/icons-react';
 
 import { marron, azul, verde } from '@/ui/colores';
-import { crearConfiguracionBisel, crearEstilosBisel } from '@/components/ui/bevel';
-import { WoodBackdrop } from '@/components/ui/TexturedFrame/WoodBackdrop';
-import CrystalButton, { CrystalIconButton, CrystalSoftButton } from '@/components/ui/CrystalButton';
 import SearchToolbar from '@/components/ui/SearchToolbar';
 
 import {
@@ -57,42 +54,11 @@ interface Props {
   hideDeleteAction?: boolean;
 }
 
-/* ======================== Estética (match Rubros) ======================== */
-// Usamos el mismo marco con madera, pero “tint” más frío para respetar la temática azul.
-const accentExterior = azul.primary;
-const accentInterior = azul.borderInner ?? '#2f475f';
-const woodTintExterior = '#b7c9dc';   // leve tinte frío sobre madera
-const woodTintInterior = '#a9bfd7';
+/* ======================== Estética ======================== */
+// Diseño plano y limpio
+const tableBodyBg = '#ffffff';
+const tableBodyAlt = '#f8f9fa';
 
-const tableBodyBg = 'rgba(236, 245, 255, 0.55)';
-const tableBodyAlt = 'rgba(173, 208, 255, 0.20)';
-
-const biselExteriorConfig = crearConfiguracionBisel(accentExterior, 1.5);
-const estilosBiselExterior = crearEstilosBisel(biselExteriorConfig, { zContenido: 2 });
-
-const WoodSection: React.FC<React.PropsWithChildren> = ({ children }) => (
-  <Box
-    sx={{
-      position: 'relative',
-      borderRadius: 2,
-      overflow: 'hidden',
-      boxShadow: '0 18px 40px rgba(0,0,0,0.12)',
-      background: 'transparent',
-      ...estilosBiselExterior,
-    }}
-  >
-    <WoodBackdrop accent={woodTintExterior} radius={3} inset={0} strength={0.18} texture="tabla" />
-    <Box
-      sx={{
-        position: 'absolute',
-        inset: 0,
-        backgroundColor: alpha('#f5fbff', 0.78),
-        zIndex: 0,
-      }}
-    />
-    <Box sx={{ position: 'relative', zIndex: 2, p: 3 }}>{children}</Box>
-  </Box>
-);
 
 /* ======================== Componente ======================== */
 const TablaProveedores = forwardRef<TablaProveedoresHandle, Props>(({
@@ -271,37 +237,33 @@ const TablaProveedores = forwardRef<TablaProveedoresHandle, Props>(({
 
   if (loading) {
     return (
-      <WoodSection>
-        {/* Skeleton de toolbar */}
+      <Paper elevation={0} sx={{ p: 0, borderRadius: 0, bgcolor: 'transparent' }}>
         <Box sx={{ px: 1, py: 1, mb: 2 }}>
-          <Skeleton variant="rounded" height={44} sx={{ borderRadius: 2 }} />
+          <Skeleton variant="rectangular" height={44} sx={{ borderRadius: 0 }} />
         </Box>
-        {/* Skeleton de tabla */}
-        <Skeleton variant="rounded" height={360} sx={{ borderRadius: 2 }} />
-      </WoodSection>
+        <Skeleton variant="rectangular" height={360} sx={{ borderRadius: 0 }} />
+      </Paper>
     );
   }
 
   if (error) {
     return (
-      <WoodSection>
-        {toolbar}
-        <Box sx={{ p: 4, textAlign: 'center' }}>
-          <Typography color="error" variant="h6" mb={2}>
-            Error al cargar proveedores
-          </Typography>
-          <Typography color="text.secondary" mb={2}>
-            {error.message}
-          </Typography>
-          <CrystalButton
-            baseColor={azul.primary}
-            startIcon={<IconRefresh />}
-            onClick={() => refetch()}
-          >
-            Reintentar
-          </CrystalButton>
-        </Box>
-      </WoodSection>
+      <Paper elevation={0} sx={{ p: 4, textAlign: 'center', borderRadius: 0, border: '1px solid #e0e0e0' }}>
+        <Typography color="error" variant="h6" mb={2} fontWeight={700}>
+          Error al cargar proveedores
+        </Typography>
+        <Typography color="text.secondary" mb={2}>
+          {error.message}
+        </Typography>
+        <Button
+          variant="contained"
+          startIcon={<IconRefresh />}
+          onClick={() => refetch()}
+          sx={{ borderRadius: 0, textTransform: 'none', bgcolor: azul.primary }}
+        >
+          Reintentar
+        </Button>
+      </Paper>
     );
   }
 
@@ -310,68 +272,46 @@ const TablaProveedores = forwardRef<TablaProveedoresHandle, Props>(({
   /* ======================== Tabla ======================== */
   const tabla = (
     <TableContainer
+      component={Paper}
+      elevation={0}
       sx={{
-        position: 'relative',
         borderRadius: 0,
-        border: '1px solid',
-        borderColor: alpha(accentInterior, 0.38),
-        bgcolor: 'rgba(245, 251, 255, 0.94)',
-        backdropFilter: 'saturate(110%) blur(0.85px)',
-        overflow: 'hidden',
-        boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.55)',
+        border: '1px solid #e0e0e0',
+        bgcolor: '#ffffff',
+        overflow: 'auto',
       }}
     >
-      <WoodBackdrop accent={woodTintInterior} radius={0} inset={0} strength={0.12} texture="tabla" />
-      <Box
-        sx={{
-          position: 'absolute',
-          inset: 0,
-          backgroundColor: alpha('#f5fbff', 0.82),
-          zIndex: 0,
-        }}
-      />
       <Table
         stickyHeader
         size="small"
         sx={{
-          borderRadius: 0,
-          position: 'relative',
-          zIndex: 2,
-          bgcolor: tableBodyBg,
-          '& .MuiTableRow-root': { minHeight: 62 },
+          minWidth: 700,
+          '& .MuiTableRow-root': {
+            minHeight: 56, // Slightly reduced for compact modern look
+            transition: 'background-color 0.2s',
+          },
           '& .MuiTableCell-root': {
-            fontSize: '0.75rem',
-            px: 1,
-            py: 1.1,
-            borderBottomColor: alpha(accentInterior, 0.35),
-            bgcolor: 'transparent',
+            fontSize: '0.85rem', // Larger for readability (60+ yo target)
+            px: 2,
+            py: 1.5,
+            borderBottom: '1px solid #f0f0f0',
+            color: '#37474f', // High contrast dark gray
           },
-          '& .MuiTableBody-root .MuiTableRow-root:nth-of-type(odd) .MuiTableCell-root': {
-            bgcolor: tableBodyBg,
-          },
-          '& .MuiTableBody-root .MuiTableRow-root:nth-of-type(even) .MuiTableCell-root': {
-            bgcolor: tableBodyAlt,
-          },
-          '& .MuiTableBody-root .MuiTableRow-root.MuiTableRow-hover:hover .MuiTableCell-root': {
-            bgcolor: alpha('#a9c7e6', 0.50),
+          '& .MuiTableBody-root .MuiTableRow-root:hover': {
+            bgcolor: alpha(azul.primary, 0.08),
           },
           '& .MuiTableCell-head': {
-            fontSize: '0.75rem',
-            fontWeight: 600,
-            bgcolor: '#0D47A1',
-            color: alpha('#FFFFFF', 0.94),
-            boxShadow: 'inset 0 -1px 0 rgba(255, 255, 255, 0.12)',
-            textTransform: 'uppercase',
-            letterSpacing: 0.4,
-          },
-          // ✅ divisores sutiles entre columnas del header
-          '& .MuiTableHead-root .MuiTableCell-head:not(:last-of-type)': {
-            borderRight: `3px solid ${alpha(azul.headerBorder, 0.5)}`,
+            fontSize: '0.8rem',
+            fontWeight: 700,
+            bgcolor: '#f5f7fa', // Very light gray header instead of dark blue for modern cleaner look? Or keep blue? User liked blue modals. Let's stick to Blue header but flat.
+            color: azul.primary, // Blue text on light bg, or White text on Blue bg? Let's go Clean Light for modernization.
+            // Actually user mentioned "like the details/edit modals" which used Blue headers. Let's use Blue Header but Flat.
+            // visual continuity with modals.
           },
         }}
       >
         <TableHead>
-          <TableRow>
+          <TableRow sx={{ '& th': { bgcolor: azul.primary, color: '#ffffff', fontWeight: 600, letterSpacing: 0.5, borderRadius: 0 } }}>
             {/* Proveedor */}
             <TableCell align="center">
               <Box display="flex" alignItems="center" justifyContent="space-between">
@@ -480,34 +420,37 @@ const TablaProveedores = forwardRef<TablaProveedoresHandle, Props>(({
                 <Box display="flex" justifyContent="center" gap={0.5}>
                   {!hideViewAction && (onView || showViewModal) && (
                     <Tooltip title="Ver detalles">
-                      <CrystalIconButton
-                        baseColor={azul.primary}
+                      <IconButton
+                        size="small"
                         onClick={() => handleViewProveedor(proveedor)}
+                        sx={{ color: azul.primary, '&:hover': { bgcolor: alpha(azul.primary, 0.1) } }}
                       >
-                        <IconEye size={16} />
-                      </CrystalIconButton>
+                        <IconEye size={20} />
+                      </IconButton>
                     </Tooltip>
                   )}
 
                   {!hideEditAction && (onEdit || showEditModal) && (
                     <Tooltip title="Editar proveedor">
-                      <CrystalIconButton
-                        baseColor={verde.primary}
+                      <IconButton
+                        size="small"
                         onClick={() => handleEditProveedor(proveedor)}
+                        sx={{ color: verde.primary, '&:hover': { bgcolor: alpha(verde.primary, 0.1) } }}
                       >
-                        <IconEdit size={16} />
-                      </CrystalIconButton>
+                        <IconEdit size={20} />
+                      </IconButton>
                     </Tooltip>
                   )}
 
                   {!hideDeleteAction && (onDelete || showDeleteModal) && (
                     <Tooltip title="Eliminar proveedor">
-                      <CrystalIconButton
-                        baseColor="#c62828"
+                      <IconButton
+                        size="small"
                         onClick={() => handleDeleteProveedor(proveedor)}
+                        sx={{ color: '#d32f2f', '&:hover': { bgcolor: alpha('#d32f2f', 0.1) } }}
                       >
-                        <IconTrash size={16} />
-                      </CrystalIconButton>
+                        <IconTrash size={20} />
+                      </IconButton>
                     </Tooltip>
                   )}
                 </Box>
@@ -534,32 +477,29 @@ const TablaProveedores = forwardRef<TablaProveedoresHandle, Props>(({
         </Typography>
         {generarNumerosPaginas().map((num, idx) =>
           num === '...' ? (
-            <CrystalSoftButton
-              key={idx}
-              baseColor={azul.primary}
-              disabled
-              sx={{ minWidth: 32, minHeight: 30, px: 1, py: 0.25, borderRadius: 2, color: azul.textStrong }}
-            >
-              ...
-            </CrystalSoftButton>
+            <Box key={idx} sx={{ px: 1, color: 'text.secondary' }}>...</Box>
           ) : (
-            <CrystalButton
+            <Button
               key={num}
-              baseColor={azul.primary}
+              variant={Number(num) === paginaActual ? 'contained' : 'outlined'}
+              size="small"
               sx={{
                 minWidth: 32,
-                minHeight: 30,
                 px: 1,
-                py: 0.25,
-                borderRadius: 2,
-                fontWeight: Number(num) === paginaActual ? 800 : 600,
-                boxShadow: 'none',
+                borderRadius: 0,
+                borderColor: Number(num) === paginaActual ? 'transparent' : '#e0e0e0',
+                bgcolor: Number(num) === paginaActual ? azul.primary : 'transparent',
+                color: Number(num) === paginaActual ? '#fff' : 'text.primary',
+                '&:hover': {
+                  borderColor: azul.primary,
+                  bgcolor: Number(num) === paginaActual ? azul.primaryHover : alpha(azul.primary, 0.05)
+                }
               }}
               onClick={() => setPage(Number(num) - 1)}
               disabled={num === paginaActual}
             >
               {num}
-            </CrystalButton>
+            </Button>
           )
         )}
       </Stack>
@@ -569,11 +509,11 @@ const TablaProveedores = forwardRef<TablaProveedoresHandle, Props>(({
   /* ======================== Render ======================== */
   return (
     <>
-      <WoodSection>
+      <Box sx={{ width: '100%' }}>
         {toolbar}
         {tabla}
         {paginador}
-      </WoodSection>
+      </Box>
 
       {/* Menú de filtros por columna */}
       <Menu
@@ -618,18 +558,19 @@ const TablaProveedores = forwardRef<TablaProveedoresHandle, Props>(({
               >
                 Limpiar
               </Button>
-              <CrystalButton
+              <Button
+                variant="contained"
                 size="small"
-                baseColor={azul.primary}
                 onClick={() => {
                   setFiltrosColumna((prev) => ({ ...prev, [columnaActiva!]: filtroColInput }));
                   setPage(0);
                   setMenuAnchor(null);
                   setColumnaActiva(null);
                 }}
+                sx={{ borderRadius: 0, bgcolor: azul.primary }}
               >
                 Aplicar
-              </CrystalButton>
+              </Button>
             </Stack>
           </Box>
         )}

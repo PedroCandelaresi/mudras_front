@@ -38,7 +38,7 @@ export default function Proveedores() {
           {activeTab === 'proveedores' && (
             <Box
               sx={{
-                borderRadius: 2,
+                borderRadius: 0,
                 bgcolor: azul.toolbarBg,
                 transition: 'background-color .2s ease',
               }}
@@ -55,7 +55,7 @@ export default function Proveedores() {
           {activeTab === 'pedidos' && (
             <Box
               sx={{
-                borderRadius: 2,
+                borderRadius: 0,
                 bgcolor: azulOscuro.toolbarBg,
                 transition: 'background-color .2s ease',
               }}
