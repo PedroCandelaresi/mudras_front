@@ -21,7 +21,6 @@ import {
 } from '@tabler/icons-react';
 
 import { marron, azul, verde } from '@/ui/colores';
-import SearchToolbar from '@/components/ui/SearchToolbar';
 
 import {
   ModalDetallesProveedor,
@@ -220,19 +219,79 @@ const TablaProveedores = forwardRef<TablaProveedoresHandle, Props>(({
 
   /* ======================== Toolbar ======================== */
   const toolbar = (
-    <SearchToolbar
-      title="Proveedores"
-      icon={<IconUsers style={{ marginRight: 8, verticalAlign: 'middle' }} />}
-      baseColor={azul.primary}
-      placeholder="Buscar proveedores..."
-      searchValue={filtro}
-      onSearchValueChange={setFiltro}
-      onSubmitSearch={() => setPage(0)}
-      onClear={() => { setFiltro(''); setFiltrosColumna({}); setPage(0); }}
-      canCreate={puedeCrear}
-      createLabel="Nuevo Proveedor"
-      onCreateClick={handleNuevoProveedor}
-    />
+    <Box
+      sx={{
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        mb: 3,
+        p: 2,
+        bgcolor: '#ffffff',
+        border: '1px solid #e0e0e0',
+        borderBottom: 'none' // Merges with table
+      }}
+    >
+      <Box display="flex" alignItems="center" gap={1}>
+        <IconUsers size={24} color={azul.primary} />
+        <Typography variant="h5" fontWeight={700} color={azul.primary}>
+          Proveedores
+        </Typography>
+      </Box>
+
+      <Box display="flex" alignItems="center" gap={2}>
+        <TextField
+          placeholder="Buscar proveedores..."
+          size="small"
+          value={filtro}
+          onChange={(e) => setFiltro(e.target.value)}
+          onKeyDown={(e) => { if (e.key === 'Enter') setPage(0); }}
+          InputProps={{
+            startAdornment: (
+              <InputAdornment position="start">
+                <IconSearch size={18} color="#757575" />
+              </InputAdornment>
+            ),
+          }}
+          sx={{
+            minWidth: 300,
+            '& .MuiOutlinedInput-root': {
+              borderRadius: 0,
+              bgcolor: '#f5f5f5',
+              '& fieldset': { borderColor: '#e0e0e0' },
+              '&:hover fieldset': { borderColor: '#bdbdbd' },
+              '&.Mui-focused fieldset': { borderColor: azul.primary },
+            }
+          }}
+        />
+
+        <Button
+          variant="outlined"
+          startIcon={<IconRefresh size={18} />}
+          onClick={() => { setFiltro(''); setFiltrosColumna({}); setPage(0); }}
+          sx={{ borderRadius: 0, textTransform: 'none', color: '#757575', borderColor: '#e0e0e0', '&:hover': { borderColor: '#bdbdbd', bgcolor: '#f5f5f5' } }}
+        >
+          Limpiar
+        </Button>
+
+        {puedeCrear && (
+          <Button
+            variant="contained"
+            startIcon={<IconPlus size={18} />}
+            onClick={handleNuevoProveedor}
+            disableElevation
+            sx={{
+              borderRadius: 0,
+              textTransform: 'none',
+              bgcolor: azul.primary,
+              fontWeight: 600,
+              '&:hover': { bgcolor: azul.primaryHover }
+            }}
+          >
+            Nuevo Proveedor
+          </Button>
+        )}
+      </Box>
+    </Box>
   );
 
   if (loading) {

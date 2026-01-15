@@ -1,14 +1,20 @@
 'use client';
 import { useState } from 'react';
-import { Box } from '@mui/material';
+import { Box, Tabs, Tab } from '@mui/material';
 import PageContainer from '@/components/container/PageContainer';
 import ProveedoresTable from '@/components/proveedores/TablaProveedores';
 import TablaPedidos from '@/components/pedidos/TablaPedidos';
-import StylizedTabbedPanel, { type StylizedTabDefinition } from '@/components/ui/StylizedTabbedPanel';
 import { Icon } from '@iconify/react';
 import { azul, azulOscuro } from '@/ui/colores';
 
-const tabs: StylizedTabDefinition[] = [
+interface TabDefinition {
+  key: string;
+  label: React.ReactNode;
+  icon?: React.ReactNode;
+  color: string;
+}
+
+const tabs: TabDefinition[] = [
   {
     key: 'proveedores',
     label: 'Proveedores',
@@ -29,42 +35,72 @@ export default function Proveedores() {
 
   return (
     <PageContainer title="Proveedores - Mudras" description="Gestión de proveedores">
-      <StylizedTabbedPanel
-        tabs={tabs}
-        activeKey={activeTab}
-        onChange={(key) => setActiveTab(key as 'proveedores' | 'pedidos')}
-      >
-        <Box sx={{ pt: 1 }}>
-          {activeTab === 'proveedores' && (
-            <Box
-              sx={{
+      <Box sx={{ width: '100%' }}>
+        <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 3 }}>
+          <Tabs
+            value={activeTab}
+            onChange={(_, newValue) => setActiveTab(newValue)}
+            aria-label="tabs proveedores"
+            sx={{
+              '& .MuiTab-root': {
+                textTransform: 'none',
+                fontWeight: 600,
+                fontSize: '1rem',
+                minHeight: 48,
                 borderRadius: 0,
-                bgcolor: azul.toolbarBg,
-                transition: 'background-color .2s ease',
-              }}
-            >
-              <ProveedoresTable
-                puedeCrear={userRole === 'admin' || userRole === 'diseñadora'}
-                onNuevoProveedor={() => {
-                  console.log('Nuevo proveedor');
-                }}
+                color: '#546e7a',
+                '&.Mui-selected': {
+                  color: azul.primary,
+                },
+              },
+              '& .MuiTabs-indicator': {
+                backgroundColor: azul.primary,
+                height: 3,
+              },
+            }}
+          >
+            {tabs.map((tab) => (
+              <Tab
+                key={tab.key}
+                label={
+                  <Box display="flex" alignItems="center" gap={1}>
+                    {tab.icon}
+                    {tab.label}
+                  </Box>
+                }
+                value={tab.key}
               />
-            </Box>
-          )}
-
-          {activeTab === 'pedidos' && (
-            <Box
-              sx={{
-                borderRadius: 0,
-                bgcolor: azulOscuro.toolbarBg,
-                transition: 'background-color .2s ease',
-              }}
-            >
-              <TablaPedidos puedeCrear={userRole === 'admin' || userRole === 'diseñadora'} />
-            </Box>
-          )}
+            ))}
+          </Tabs>
         </Box>
-      </StylizedTabbedPanel>
+
+        {activeTab === 'proveedores' && (
+          <Box
+            sx={{
+              borderRadius: 0,
+              transition: 'background-color .2s ease',
+            }}
+          >
+            <ProveedoresTable
+              puedeCrear={userRole === 'admin' || userRole === 'diseñadora'}
+              onNuevoProveedor={() => {
+                console.log('Nuevo proveedor');
+              }}
+            />
+          </Box>
+        )}
+
+        {activeTab === 'pedidos' && (
+          <Box
+            sx={{
+              borderRadius: 0,
+              transition: 'background-color .2s ease',
+            }}
+          >
+            <TablaPedidos puedeCrear={userRole === 'admin' || userRole === 'diseñadora'} />
+          </Box>
+        )}
+      </Box>
     </PageContainer>
   );
 }
