@@ -8,6 +8,7 @@ export const GET_RUBROS = gql`
       codigo
       porcentajeRecargo
       porcentajeDescuento
+      unidadMedida
       cantidadArticulos
       cantidadProveedores
     }
@@ -24,6 +25,7 @@ export const BUSCAR_RUBROS = gql`
         codigo
         porcentajeRecargo
         porcentajeDescuento
+        unidadMedida
         cantidadArticulos
         cantidadProveedores
       }
@@ -39,6 +41,7 @@ export const GET_RUBRO = gql`
       Codigo
       PorcentajeRecargo
       PorcentajeDescuento
+      unidadMedida
     }
   }
 `;

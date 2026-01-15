@@ -6,18 +6,21 @@ export const CREAR_RUBRO = gql`
     $codigo: String
     $porcentajeRecargo: Float
     $porcentajeDescuento: Float
+    $unidadMedida: String
   ) {
     crearRubro(
       nombre: $nombre
       codigo: $codigo
       porcentajeRecargo: $porcentajeRecargo
       porcentajeDescuento: $porcentajeDescuento
+      unidadMedida: $unidadMedida
     ) {
       Id
       Rubro
       Codigo
       PorcentajeRecargo
       PorcentajeDescuento
+      unidadMedida
     }
   }
 `;
@@ -29,6 +32,7 @@ export const ACTUALIZAR_RUBRO = gql`
     $codigo: String
     $porcentajeRecargo: Float
     $porcentajeDescuento: Float
+    $unidadMedida: String
   ) {
     actualizarRubro(
       id: $id
@@ -36,12 +40,14 @@ export const ACTUALIZAR_RUBRO = gql`
       codigo: $codigo
       porcentajeRecargo: $porcentajeRecargo
       porcentajeDescuento: $porcentajeDescuento
+      unidadMedida: $unidadMedida
     ) {
       Id
       Rubro
       Codigo
       PorcentajeRecargo
       PorcentajeDescuento
+      unidadMedida
     }
   }
 `;

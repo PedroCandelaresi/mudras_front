@@ -10,6 +10,7 @@ import {
   TextField,
   Divider,
   Chip,
+  MenuItem,
 } from '@mui/material';
 import { alpha, darken } from '@mui/material/styles';
 import { useState, useEffect, useMemo, useCallback } from 'react';
@@ -28,6 +29,7 @@ interface Rubro {
   codigo?: string;
   porcentajeRecargo?: number;
   porcentajeDescuento?: number;
+  unidadMedida?: string;
   cantidadArticulos?: number;
   cantidadProveedores?: number;
 }
@@ -64,12 +66,15 @@ const makeColors = (base?: string) => {
   };
 };
 
+const UNIDADES_MEDIDA = ['Unidad', 'Kilogramo', 'Gramo', 'Litro', 'Mililitro', 'Metro', 'Pack', 'Docena'];
+
 const ModalEditarRubro = ({ open, onClose, rubro, onSuccess, accentColor }: ModalEditarRubroProps) => {
   const COLORS = useMemo(() => makeColors(accentColor), [accentColor]);
   const [nombre, setNombre] = useState('');
   const [codigo, setCodigo] = useState('');
   const [porcentajeRecargo, setPorcentajeRecargo] = useState<number>(0);
   const [porcentajeDescuento, setPorcentajeDescuento] = useState<number>(0);
+  const [unidadMedida, setUnidadMedida] = useState<string>('Unidad');
   const [error, setError] = useState('');
   const [saving, setSaving] = useState(false);
 
@@ -90,6 +95,7 @@ const ModalEditarRubro = ({ open, onClose, rubro, onSuccess, accentColor }: Moda
     setCodigo(rubro?.codigo ?? '');
     setPorcentajeRecargo(rubro?.porcentajeRecargo != null ? Number(rubro.porcentajeRecargo) : 0);
     setPorcentajeDescuento(rubro?.porcentajeDescuento != null ? Number(rubro.porcentajeDescuento) : 0);
+    setUnidadMedida(rubro?.unidadMedida ?? 'Unidad');
     setError('');
     setSaving(false);
   }, [open, rubro]);
@@ -114,6 +120,7 @@ const ModalEditarRubro = ({ open, onClose, rubro, onSuccess, accentColor }: Moda
         codigo: codigo.trim() || null,
         porcentajeRecargo: Number.isFinite(Number(porcentajeRecargo)) ? Number(porcentajeRecargo) : 0,
         porcentajeDescuento: Number.isFinite(Number(porcentajeDescuento)) ? Number(porcentajeDescuento) : 0,
+        unidadMedida: unidadMedida || 'Unidad',
       };
 
       if (rubroEditando && rubro?.id) {
@@ -129,7 +136,7 @@ const ModalEditarRubro = ({ open, onClose, rubro, onSuccess, accentColor }: Moda
     } finally {
       setSaving(false);
     }
-  }, [nombre, codigo, porcentajeRecargo, porcentajeDescuento, rubroEditando, rubro, actualizarRubroMutation, crearRubroMutation, onSuccess, onClose]);
+  }, [nombre, codigo, porcentajeRecargo, porcentajeDescuento, unidadMedida, rubroEditando, rubro, actualizarRubroMutation, crearRubroMutation, onSuccess, onClose]);
 
   const botonHabilitado = nombre.trim().length > 0 && !saving;
 
@@ -376,6 +383,29 @@ const ModalEditarRubro = ({ open, onClose, rubro, onSuccess, accentColor }: Moda
                       },
                     }}
                   />
+                  <TextField
+                    select
+                    label="Unidad de Medida"
+                    fullWidth
+                    value={unidadMedida}
+                    onChange={(e) => setUnidadMedida(e.target.value)}
+                    disabled={saving}
+                    sx={{
+                      '& .MuiOutlinedInput-root': {
+                        borderRadius: 2,
+                        background: '#ffffff',
+                        '& fieldset': { borderColor: COLORS.inputBorder },
+                        '&:hover fieldset': { borderColor: COLORS.inputBorderHover },
+                        '&.Mui-focused fieldset': { borderColor: COLORS.primary },
+                      },
+                    }}
+                  >
+                    {UNIDADES_MEDIDA.map((u) => (
+                      <MenuItem key={u} value={u}>
+                        {u}
+                      </MenuItem>
+                    ))}
+                  </TextField>
                 </Box>
 
                 {error && (
@@ -436,8 +466,8 @@ const ModalEditarRubro = ({ open, onClose, rubro, onSuccess, accentColor }: Moda
             </Box>
           </DialogActions>
         </Box>
-      </TexturedPanel>
-    </Dialog>
+      </TexturedPanel >
+    </Dialog >
   );
 };
 

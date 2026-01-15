@@ -24,6 +24,7 @@ interface Rubro {
   cantidadProveedores?: number;
   porcentajeRecargo?: number;
   porcentajeDescuento?: number;
+  unidadMedida?: string;
 }
 
 interface ModalDetallesRubroProps {
@@ -87,6 +88,7 @@ const ModalDetallesRubro = ({ open, onClose, rubro, accentColor }: ModalDetalles
   const rubroCodigo = rubro?.codigo ?? '';
   const porcentajeRecargo = Number(rubro?.porcentajeRecargo ?? 0);
   const porcentajeDescuento = Number(rubro?.porcentajeDescuento ?? 0);
+  const unidadMedida = rubro?.unidadMedida ?? 'Unidad';
 
   const formatPorcentaje = (valor: number) => {
     const formatter = new Intl.NumberFormat('es-AR', {
@@ -336,6 +338,23 @@ const ModalDetallesRubro = ({ open, onClose, rubro, accentColor }: ModalDetalles
               </Typography>
               <Typography variant="h4" fontWeight={700} color={COLORS.primary} mt={1}>
                 {formatPorcentaje(porcentajeDescuento)}
+              </Typography>
+            </Box>
+
+            <Box
+              sx={{
+                flex: 1,
+                p: 2,
+                border: `1px solid ${COLORS.chipBorder}`,
+                bgcolor: alpha(COLORS.primary, 0.05),
+                borderRadius: 0, // Square
+              }}
+            >
+              <Typography variant="subtitle2" fontWeight={700} color={COLORS.textStrong} sx={{ textTransform: 'uppercase', letterSpacing: 0.5 }}>
+                Unidad
+              </Typography>
+              <Typography variant="h4" fontWeight={700} color={COLORS.primary} mt={1}>
+                {unidadMedida}
               </Typography>
             </Box>
           </Box>
