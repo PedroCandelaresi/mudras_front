@@ -30,7 +30,7 @@ const ModalEliminarProveedor = ({ open, onClose, proveedor, onProveedorEliminado
   const [textoConfirmacion, setTextoConfirmacion] = useState('');
   const [error, setError] = useState('');
 
-  const [eliminarProveedor] = useMutation(ELIMINAR_PROVEEDOR);
+  const [eliminarProveedor, { loading }] = useMutation(ELIMINAR_PROVEEDOR);
 
   // Limpiar estado cuando se abre/cierra el modal
   useEffect(() => {
@@ -260,57 +260,43 @@ const ModalEliminarProveedor = ({ open, onClose, proveedor, onProveedorEliminado
           </Box>
         </Box>
       </DialogContent>
-      <DialogActions
-        sx={{
-          p: 4,
-          pt: 2,
-          bgcolor: '#ffebee'
-        }}
-      >
+      <DialogActions sx={{ p: 2, bgcolor: '#f1f2f6', borderTop: '1px solid #e0e0e0', gap: 2, borderRadius: 0 }}>
         <Button
           onClick={cerrarModalEliminar}
           variant="outlined"
+          disabled={loading}
           sx={{
-            textTransform: 'none',
-            borderRadius: 2,
+            flex: 1,
+            borderColor: '#b0bec5',
+            color: '#546e7a',
+            '&:hover': { borderColor: '#78909c', bgcolor: '#eceff1', color: '#37474f' },
             px: 4,
             py: 1,
-            borderColor: '#666',
-            color: '#666',
-            '&:hover': {
-              borderColor: '#333',
-              color: '#333',
-              bgcolor: '#f5f5f5'
-            }
+            textTransform: 'none',
+            fontWeight: 600,
+            borderRadius: 0,
           }}
         >
-          ❌ Cancelar
+          Cancelar
         </Button>
         <Button
           onClick={confirmarEliminacion}
           variant="contained"
-          disabled={textoConfirmacion !== 'ELIMINAR'}
+          disableElevation
+          disabled={textoConfirmacion !== 'ELIMINAR' || loading}
           sx={{
-            textTransform: 'none',
-            borderRadius: 2,
+            flex: 1,
+            bgcolor: '#d32f2f',
+            '&:hover': { bgcolor: '#b71c1c' },
             px: 4,
             py: 1,
-            bgcolor: '#d32f2f',
-            color: 'white',
-            fontWeight: 700,
-            '&:hover': {
-              bgcolor: '#b71c1c',
-              transform: 'translateY(-2px)',
-              boxShadow: '0 6px 20px rgba(211, 47, 47, 0.4)'
-            },
-            '&:disabled': {
-              bgcolor: '#ccc',
-              color: '#666'
-            },
-            transition: 'all 0.2s ease'
+            textTransform: 'none',
+            fontWeight: 600,
+            borderRadius: 0,
+            boxShadow: 'none',
           }}
         >
-          ⚠️ ELIMINAR PERMANENTEMENTE
+          {loading ? 'Eliminando...' : 'Eliminar Permanentemente'}
         </Button>
       </DialogActions>
     </Dialog>
