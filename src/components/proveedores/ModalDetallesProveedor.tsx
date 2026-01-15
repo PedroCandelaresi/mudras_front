@@ -22,6 +22,9 @@ import { azul, verde, marron as marronPalette } from '@/ui/colores';
 import { TablaArticulos } from '@/components/articulos';
 import { useQuery } from '@apollo/client/react';
 import { GET_PROVEEDOR, RUBROS_POR_PROVEEDOR } from '@/components/proveedores/graphql/queries';
+import { TexturedPanel } from '@/components/ui/TexturedFrame/TexturedPanel';
+import { WoodBackdrop } from '@/components/ui/TexturedFrame/WoodBackdrop';
+import CrystalButton, { CrystalIconButton, CrystalSoftButton } from '@/components/ui/CrystalButton'; // Make sure path is correct
 import type {
   ProveedorResponse,
   Proveedor,
@@ -63,23 +66,23 @@ const formatPercentage = (value?: number) => {
 };
 
 /* ======================== Layout ======================== */
-const VH_MAX = 85;
-const HEADER_H = 60;
-const FOOTER_H = 60;
+const VH_MAX = 78;
+const HEADER_H = 88;
+const FOOTER_H = 96;
 const DIV_H = 3;
 const CONTENT_MAX = `calc(${VH_MAX}vh - ${HEADER_H + FOOTER_H + DIV_H * 2}px)`;
 
 /* ======================== Paleta ======================== */
 const makeColors = (base?: string) => {
-  const primary = '#2c3e50'; // Serious dark blue/grey
-  const secondary = '#34495e';
+  const primary = base || '#2e7d32'; // Default to green if not provided, or match ModalEditar
+  const secondary = '#546e7a';
   return {
     primary,
     secondary,
-    primaryHover: '#1a252f',
-    textStrong: '#2c3e50',
-    inputBorder: '#bdc3c7',
-    inputBorderHover: '#7f8c8d',
+    primaryHover: darken(primary, 0.1),
+    textStrong: darken(primary, 0.35),
+    inputBorder: alpha(primary, 0.28),
+    inputBorderHover: alpha(primary, 0.42),
     background: '#f8f9fa',
     paper: '#ffffff',
     chipBorder: '#bdc3c7'
@@ -322,277 +325,373 @@ const ModalDetallesProveedor = ({ open, onClose, proveedor, accentColor }: Modal
   return (
     <Dialog
       open={open}
-      onClose={onClose}
+      onClose={onCerrar}
       maxWidth="lg"
       fullWidth
       PaperProps={{
         sx: {
-          borderRadius: 0, // Sharp corners
-          bgcolor: '#ffffff',
+          borderRadius: 3,
+          boxShadow: '0 8px 32px rgba(0,0,0,0.16)',
+          bgcolor: 'transparent',
+          overflow: 'hidden',
           maxHeight: `${VH_MAX}vh`,
-        }
+        },
       }}
     >
-      <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
-        {/* Header */}
-        <Box sx={{
-          p: 3,
-          bgcolor: COLORS.primary,
-          color: 'white',
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          borderBottom: `4px solid ${COLORS.secondary}`
-        }}>
-          <Box display="flex" alignItems="center" gap={2}>
-            <Icon icon="mdi:card-account-details-outline" width={24} height={24} />
-            <Box>
-              <Typography variant="h6" fontWeight={600} letterSpacing={0.5}>
-                {headerTitle.toUpperCase()}
-              </Typography>
+      <TexturedPanel
+        accent={COLORS.primary}
+        radius={12}
+        contentPadding={0}
+        bgTintPercent={12}
+        bgAlpha={1}
+        textureBaseOpacity={0.22}
+        textureBoostOpacity={0.19}
+        textureBrightness={1.12}
+        textureContrast={1.03}
+        tintOpacity={0.4}
+      >
+        <Box sx={{ display: 'flex', flexDirection: 'column', maxHeight: `${VH_MAX}vh` }}>
+          {/* Header */}
+          <DialogTitle sx={{ p: 0, m: 0, minHeight: HEADER_H, display: 'flex', alignItems: 'center' }}>
+            <Box sx={{ width: '100%', display: 'flex', alignItems: 'center', px: 3, py: 2.25, gap: 2 }}>
+              <Box
+                sx={{
+                  width: 40,
+                  height: 40,
+                  borderRadius: '50%',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  background: `linear-gradient(135deg, ${COLORS.primary} 0%, ${COLORS.primaryHover} 100%)`,
+                  boxShadow: 'inset 0 2px 4px rgba(255,255,255,0.3), 0 4px 12px rgba(0,0,0,0.25)',
+                  color: '#fff',
+                }}
+              >
+                <Icon icon="mdi:card-account-details-outline" width={22} height={22} />
+              </Box>
+
+              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.25 }}>
+                <Typography
+                  variant="h6"
+                  fontWeight={700}
+                  color="white"
+                  sx={{ textShadow: '0 4px 12px rgba(0,0,0,0.88), 0 0 2px rgba(0,0,0,0.72)' }}
+                >
+                  {headerTitle.toUpperCase()}
+                </Typography>
+              </Box>
+
+              <Box sx={{ ml: 'auto', display: 'flex', alignItems: 'center', gap: 1.25 }}>
+                <CrystalIconButton
+                  baseColor={COLORS.primary}
+                  onClick={onCerrar}
+                  sx={{
+                    minWidth: 40,
+                    height: 40,
+                    borderRadius: '50%',
+                    background: 'rgba(0,0,0,0.28)',
+                    color: '#fff',
+                    '&:hover': { background: 'rgba(0,0,0,0.4)' },
+                  }}
+                >
+                  <Icon icon="mdi:close" width={20} height={20} />
+                </CrystalIconButton>
+              </Box>
             </Box>
-          </Box>
-          <IconButton onClick={onCerrar} size="small" sx={{ color: 'white', '&:hover': { bgcolor: 'rgba(255,255,255,0.1)' } }}>
-            <Icon icon="mdi:close" width={24} />
-          </IconButton>
-        </Box>
+          </DialogTitle>
 
-        <DialogContent sx={{ p: 4, bgcolor: '#f8f9fa' }}>
-          <Box display="flex" flexDirection="column" gap={3}>
+          <Divider
+            sx={{
+              height: DIV_H,
+              border: 0,
+              backgroundImage: `
+                linear-gradient(to bottom, rgba(255,255,255,0.70), rgba(255,255,255,0.70)),
+                linear-gradient(to bottom, rgba(0,0,0,0.22), rgba(0,0,0,0.22)),
+                linear-gradient(90deg, rgba(255,255,255,0.05), ${COLORS.primary}, rgba(255,255,255,0.05))
+              `,
+              backgroundRepeat: 'no-repeat, no-repeat, repeat',
+              backgroundSize: '100% 1px, 100% 1px, 100% 100%',
+              backgroundPosition: 'top left, bottom left, center',
+              flex: '0 0 auto',
+            }}
+          />
 
-            {/* General Info */}
-            <Box>
-              <Typography variant="subtitle2" fontWeight={700} color={COLORS.secondary} sx={{ mb: 2, textTransform: 'uppercase', letterSpacing: 1 }}>
-                Datos Generales
-              </Typography>
-              <Paper variant="outlined" sx={{ p: 3, borderRadius: 0, borderColor: '#e0e0e0' }}>
-                <Box display="flex" flexWrap="wrap" gap={2}>
-                  <Box width={{ xs: '100%', md: '25%' }}>
-                    <ReadOnlyField label="Código" value={proveedorCompleto?.Codigo} />
-                  </Box>
-                  <Box width={{ xs: '100%', md: '70%', flexGrow: 1 }}>
-                    <ReadOnlyField label="Razón Social / Nombre" value={proveedorCompleto?.Nombre} />
-                  </Box>
-                  <Box width={{ xs: '100%', md: '100%' }}>
-                    <ReadOnlyField label="Persona de Contacto" value={proveedorCompleto?.Contacto} />
-                  </Box>
+          <DialogContent
+            sx={{
+              p: 0,
+              borderRadius: 0,
+              overflow: 'auto',
+              maxHeight: CONTENT_MAX,
+              flex: '0 1 auto',
+            }}
+          >
+            <Box sx={{ position: 'relative', borderRadius: 0, overflow: 'hidden', minHeight: '100%' }}>
+              <WoodBackdrop accent={COLORS.primary} radius={0} inset={0} strength={0.55} texture="wide" />
+              <Box
+                sx={{
+                  position: 'relative',
+                  zIndex: 1,
+                  p: 3,
+                  borderRadius: 0,
+                  backdropFilter: 'saturate(118%) blur(0.4px)',
+                  background: 'rgba(255,255,255,0.84)',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: 3,
+                  minHeight: '100%'
+                }}
+              >
+                {/* General Info */}
+                <Box>
+                  <Typography variant="subtitle2" fontWeight={700} color={COLORS.textStrong} sx={{ mb: 2, textTransform: 'uppercase', letterSpacing: 1 }}>
+                    Datos Generales
+                  </Typography>
+                  <Paper variant="outlined" sx={{ p: 3, borderRadius: 1, borderColor: alpha(COLORS.primary, 0.2), bgcolor: 'white' }}>
+                    <Box display="flex" flexWrap="wrap" gap={2}>
+                      <Box width={{ xs: '100%', md: '25%' }}>
+                        <ReadOnlyField label="Código" value={proveedorCompleto?.Codigo} />
+                      </Box>
+                      <Box width={{ xs: '100%', md: '70%', flexGrow: 1 }}>
+                        <ReadOnlyField label="Razón Social / Nombre" value={proveedorCompleto?.Nombre} />
+                      </Box>
+                      <Box width={{ xs: '100%', md: '100%' }}>
+                        <ReadOnlyField label="Persona de Contacto" value={proveedorCompleto?.Contacto} />
+                      </Box>
+                    </Box>
+                  </Paper>
                 </Box>
-              </Paper>
-            </Box>
 
-            {/* Contact Info */}
-            <Box>
-              <Typography variant="subtitle2" fontWeight={700} color={COLORS.secondary} sx={{ mb: 2, textTransform: 'uppercase', letterSpacing: 1 }}>
-                Información de Contacto
-              </Typography>
-              <Paper variant="outlined" sx={{ p: 3, borderRadius: 0, borderColor: '#e0e0e0' }}>
-                <Box display="flex" flexWrap="wrap" gap={2}>
-                  <Box width={{ xs: '100%', md: 'calc(50% - 8px)' }}>
-                    <ReadOnlyField label="Teléfono" value={proveedorCompleto?.Telefono} />
-                  </Box>
-                  <Box width={{ xs: '100%', md: 'calc(50% - 8px)' }}>
-                    <ReadOnlyField label="Celular" value={proveedorCompleto?.Celular} />
-                  </Box>
-                  <Box width={{ xs: '100%', md: 'calc(50% - 8px)' }}>
-                    <ReadOnlyField label="Email" value={proveedorCompleto?.Mail} />
-                  </Box>
-                  <Box width={{ xs: '100%', md: 'calc(50% - 8px)' }}>
-                    <ReadOnlyField label="Sitio Web" value={proveedorCompleto?.Web} />
-                  </Box>
-                  <Box width={{ xs: '100%', md: 'calc(50% - 8px)' }}>
-                    <ReadOnlyField label="Fax" value={proveedorCompleto?.Fax} />
-                  </Box>
+                {/* Contact Info */}
+                <Box>
+                  <Typography variant="subtitle2" fontWeight={700} color={COLORS.textStrong} sx={{ mb: 2, textTransform: 'uppercase', letterSpacing: 1 }}>
+                    Información de Contacto
+                  </Typography>
+                  <Paper variant="outlined" sx={{ p: 3, borderRadius: 1, borderColor: alpha(COLORS.primary, 0.2), bgcolor: 'white' }}>
+                    <Box display="flex" flexWrap="wrap" gap={2}>
+                      <Box width={{ xs: '100%', md: 'calc(50% - 8px)' }}>
+                        <ReadOnlyField label="Teléfono" value={proveedorCompleto?.Telefono} />
+                      </Box>
+                      <Box width={{ xs: '100%', md: 'calc(50% - 8px)' }}>
+                        <ReadOnlyField label="Celular" value={proveedorCompleto?.Celular} />
+                      </Box>
+                      <Box width={{ xs: '100%', md: 'calc(50% - 8px)' }}>
+                        <ReadOnlyField label="Email" value={proveedorCompleto?.Mail} />
+                      </Box>
+                      <Box width={{ xs: '100%', md: 'calc(50% - 8px)' }}>
+                        <ReadOnlyField label="Sitio Web" value={proveedorCompleto?.Web} />
+                      </Box>
+                      <Box width={{ xs: '100%', md: 'calc(50% - 8px)' }}>
+                        <ReadOnlyField label="Fax" value={proveedorCompleto?.Fax} />
+                      </Box>
+                    </Box>
+                  </Paper>
                 </Box>
-              </Paper>
-            </Box>
 
-            {/* Location */}
-            <Box>
-              <Typography variant="subtitle2" fontWeight={700} color={COLORS.secondary} sx={{ mb: 2, textTransform: 'uppercase', letterSpacing: 1 }}>
-                Ubicación
-              </Typography>
-              <Paper variant="outlined" sx={{ p: 3, borderRadius: 0, borderColor: '#e0e0e0' }}>
-                <Box display="flex" flexWrap="wrap" gap={2}>
-                  <Box width="100%">
-                    <ReadOnlyField label="Dirección" value={proveedorCompleto?.Direccion} />
-                  </Box>
-                  <Box width={{ xs: '100%', md: 'calc(33% - 11px)' }}>
-                    <ReadOnlyField label="Localidad" value={proveedorCompleto?.Localidad} />
-                  </Box>
-                  <Box width={{ xs: '100%', md: 'calc(33% - 11px)' }}>
-                    <ReadOnlyField label="Provincia" value={proveedorCompleto?.Provincia} />
-                  </Box>
-                  <Box width={{ xs: '100%', md: 'calc(33% - 11px)' }}>
-                    <ReadOnlyField label="Código Postal" value={proveedorCompleto?.CP} />
-                  </Box>
-                  <Box width={{ xs: '100%', md: 'calc(50% - 8px)' }}>
-                    <ReadOnlyField label="País" value={proveedorCompleto?.Pais} />
-                  </Box>
+                {/* Location */}
+                <Box>
+                  <Typography variant="subtitle2" fontWeight={700} color={COLORS.textStrong} sx={{ mb: 2, textTransform: 'uppercase', letterSpacing: 1 }}>
+                    Ubicación
+                  </Typography>
+                  <Paper variant="outlined" sx={{ p: 3, borderRadius: 1, borderColor: alpha(COLORS.primary, 0.2), bgcolor: 'white' }}>
+                    <Box display="flex" flexWrap="wrap" gap={2}>
+                      <Box width="100%">
+                        <ReadOnlyField label="Dirección" value={proveedorCompleto?.Direccion} />
+                      </Box>
+                      <Box width={{ xs: '100%', md: 'calc(33% - 11px)' }}>
+                        <ReadOnlyField label="Localidad" value={proveedorCompleto?.Localidad} />
+                      </Box>
+                      <Box width={{ xs: '100%', md: 'calc(33% - 11px)' }}>
+                        <ReadOnlyField label="Provincia" value={proveedorCompleto?.Provincia} />
+                      </Box>
+                      <Box width={{ xs: '100%', md: 'calc(33% - 11px)' }}>
+                        <ReadOnlyField label="Código Postal" value={proveedorCompleto?.CP} />
+                      </Box>
+                      <Box width={{ xs: '100%', md: 'calc(50% - 8px)' }}>
+                        <ReadOnlyField label="País" value={proveedorCompleto?.Pais} />
+                      </Box>
+                    </Box>
+                  </Paper>
                 </Box>
-              </Paper>
-            </Box>
 
-            {/* Fiscal Data */}
-            <Box>
-              <Typography variant="subtitle2" fontWeight={700} color={COLORS.secondary} sx={{ mb: 2, textTransform: 'uppercase', letterSpacing: 1 }}>
-                Datos Fiscales
-              </Typography>
-              <Paper variant="outlined" sx={{ p: 3, borderRadius: 0, borderColor: '#e0e0e0' }}>
-                <Box display="flex" flexWrap="wrap" gap={2}>
-                  <Box width={{ xs: '100%', md: 'calc(50% - 8px)' }}>
-                    <ReadOnlyField label="CUIT" value={proveedorCompleto?.CUIT} />
-                  </Box>
-                  <Box width={{ xs: '100%', md: 'calc(50% - 8px)' }}>
-                    <ReadOnlyField
-                      label="Tipo IVA"
-                      value={TIPO_IVA_OPTIONS.find(o => o.value === proveedorCompleto?.TipoIva?.toString())?.label || proveedorCompleto?.TipoIva}
+                {/* Fiscal Data */}
+                <Box>
+                  <Typography variant="subtitle2" fontWeight={700} color={COLORS.textStrong} sx={{ mb: 2, textTransform: 'uppercase', letterSpacing: 1 }}>
+                    Datos Fiscales
+                  </Typography>
+                  <Paper variant="outlined" sx={{ p: 3, borderRadius: 1, borderColor: alpha(COLORS.primary, 0.2), bgcolor: 'white' }}>
+                    <Box display="flex" flexWrap="wrap" gap={2}>
+                      <Box width={{ xs: '100%', md: 'calc(50% - 8px)' }}>
+                        <ReadOnlyField label="CUIT" value={proveedorCompleto?.CUIT} />
+                      </Box>
+                      <Box width={{ xs: '100%', md: 'calc(50% - 8px)' }}>
+                        <ReadOnlyField
+                          label="Tipo IVA"
+                          value={TIPO_IVA_OPTIONS.find(o => o.value === proveedorCompleto?.TipoIva?.toString())?.label || proveedorCompleto?.TipoIva}
+                        />
+                      </Box>
+                    </Box>
+                  </Paper>
+                </Box>
+
+                {/* Commercial & Rubros */}
+                <Box>
+                  <Typography variant="subtitle2" fontWeight={700} color={COLORS.textStrong} sx={{ mb: 2, textTransform: 'uppercase', letterSpacing: 1 }}>
+                    Comercial y Rubros
+                  </Typography>
+                  <Paper variant="outlined" sx={{ p: 3, borderRadius: 1, borderColor: alpha(COLORS.primary, 0.2), bgcolor: 'white' }}>
+                    <Box display="flex" flexWrap="wrap" gap={2}>
+                      <Box width={{ xs: '100%', md: 'calc(50% - 8px)' }}>
+                        <ReadOnlyField label="Recargo Proveedor (%)" value={proveedorCompleto?.PorcentajeRecargoProveedor} />
+                      </Box>
+                      <Box width={{ xs: '100%', md: 'calc(50% - 8px)' }}>
+                        <ReadOnlyField label="Descuento Proveedor (%)" value={proveedorCompleto?.PorcentajeDescuentoProveedor} />
+                      </Box>
+                      <Box width="100%">
+                        <ReadOnlyField label="Observaciones" value={proveedorCompleto?.Observaciones} />
+                      </Box>
+
+                      <Box width="100%" mt={1}>
+                        <Typography variant="subtitle2" gutterBottom sx={{ color: COLORS.textStrong, fontWeight: 600 }}>
+                          Rubros Asociados
+                        </Typography>
+                        <Divider sx={{ mb: 2 }} />
+                        {rubrosRelacionados.length > 0 ? (
+                          <Box display="flex" flexWrap="wrap" gap={1}>
+                            {rubrosRelacionados.map(({ nombre, cantidad }) => (
+                              <Chip
+                                key={nombre}
+                                label={`${nombre} (${cantidad || 0})`}
+                                variant="outlined"
+                                sx={{ borderRadius: 1, borderColor: COLORS.inputBorder, color: COLORS.textStrong, fontWeight: 500, bgcolor: 'white' }}
+                              />
+                            ))}
+                          </Box>
+                        ) : (
+                          <Typography variant="body2" color="text.secondary">No hay rubros asociados.</Typography>
+                        )}
+                      </Box>
+                    </Box>
+                  </Paper>
+                </Box>
+
+                {/* Articles Table */}
+                <Box>
+                  <Box
+                    sx={{
+                      border: `1px solid ${COLORS.inputBorder}`,
+                      borderRadius: 1,
+                      background: '#fff',
+                      px: 3,
+                      py: 2.25,
+                      mb: 2.5,
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      flexWrap: 'wrap',
+                      gap: 2
+                    }}
+                  >
+                    <Typography variant="h6" fontWeight={700} color={COLORS.textStrong}>
+                      Artículos del proveedor
+                    </Typography>
+                    <TextField
+                      placeholder="Buscar artículos…"
+                      value={filtroInput}
+                      onChange={(e) => setFiltroInput(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          const termino = filtroInput.trim();
+                          setBusquedaPersonalizada(termino);
+                          setPaginacion((prev) => (prev.pagina === 0 ? prev : { ...prev, pagina: 0 }));
+                        }
+                      }}
+                      size="small"
+                      sx={{ minWidth: { xs: '100%', sm: 240, md: 280 } }}
+                      InputProps={{
+                        startAdornment: (
+                          <InputAdornment position="start">
+                            <Icon icon="mdi:magnify" color={COLORS.primary} />
+                          </InputAdornment>
+                        ),
+                        sx: {
+                          '& .MuiOutlinedInput-root': {
+                            borderRadius: (theme) => theme.shape.borderRadius,
+                            backgroundColor: '#fff',
+                            '& fieldset': { borderColor: COLORS.inputBorder },
+                            '&:hover fieldset': { borderColor: COLORS.inputBorderHover },
+                            '&.Mui-focused fieldset': { borderColor: COLORS.primary },
+                          },
+                        },
+                      }}
                     />
                   </Box>
-                </Box>
-              </Paper>
-            </Box>
 
-            {/* Commercial & Rubros */}
-            <Box>
-              <Typography variant="subtitle2" fontWeight={700} color={COLORS.secondary} sx={{ mb: 2, textTransform: 'uppercase', letterSpacing: 1 }}>
-                Comercial y Rubros
-              </Typography>
-              <Paper variant="outlined" sx={{ p: 3, borderRadius: 0, borderColor: '#e0e0e0' }}>
-                <Box display="flex" flexWrap="wrap" gap={2}>
-                  <Box width={{ xs: '100%', md: 'calc(50% - 8px)' }}>
-                    <ReadOnlyField label="Recargo Proveedor (%)" value={proveedorCompleto?.PorcentajeRecargoProveedor} />
-                  </Box>
-                  <Box width={{ xs: '100%', md: 'calc(50% - 8px)' }}>
-                    <ReadOnlyField label="Descuento Proveedor (%)" value={proveedorCompleto?.PorcentajeDescuentoProveedor} />
-                  </Box>
-                  <Box width="100%">
-                    <ReadOnlyField label="Observaciones" value={proveedorCompleto?.Observaciones} />
-                  </Box>
-
-                  <Box width="100%" mt={1}>
-                    <Typography variant="subtitle2" gutterBottom sx={{ color: '#546e7a', fontWeight: 600 }}>
-                      Rubros Asociados
-                    </Typography>
-                    <Divider sx={{ mb: 2 }} />
-                    {rubrosRelacionados.length > 0 ? (
-                      <Box display="flex" flexWrap="wrap" gap={1}>
-                        {rubrosRelacionados.map(({ nombre, cantidad }) => (
-                          <Chip
-                            key={nombre}
-                            label={`${nombre} (${cantidad || 0})`}
-                            variant="outlined"
-                            sx={{ borderRadius: 0, borderColor: COLORS.inputBorder, color: COLORS.textStrong, fontWeight: 500 }}
-                          />
-                        ))}
+                  <Box mt={2} sx={{ bgcolor: 'white', border: `1px solid ${COLORS.inputBorder}`, borderRadius: 1, overflow: 'hidden' }}>
+                    <TablaArticulos
+                      key={`${proveedorId ?? 'prov'}-${rubroFiltro?.id ?? rubroFiltro?.nombre ?? 'all'}-${reloadKey}`}
+                      columns={columnasTabla}
+                      showToolbar={false}
+                      allowCreate={false}
+                      rowsPerPageOptions={PAGINAS_OPCIONES}
+                      defaultPageSize={limite}
+                      controlledFilters={filtrosControlados}
+                      onFiltersChange={handleTablaFiltersChange}
+                      onDataLoaded={handleTablaDataLoaded}
+                      dense
+                    />
+                    {errorArticulos && (
+                      <Box p={2}>
+                        <Typography variant="body2" color="error">
+                          Error al cargar artículos: {errorArticulos.message}
+                        </Typography>
                       </Box>
-                    ) : (
-                      <Typography variant="body2" color="text.secondary">No hay rubros asociados.</Typography>
+                    )}
+                    {loadingArticulos && (
+                      <Box p={2}>
+                        <Typography variant="body2" color="text.secondary">
+                          Cargando artículos…
+                        </Typography>
+                      </Box>
                     )}
                   </Box>
                 </Box>
-              </Paper>
+              </Box>
             </Box>
+          </DialogContent>
 
-            {/* Articles Table */}
-            <Box>
-              <Box
+          <Divider
+            sx={{
+              height: DIV_H,
+              border: 0,
+              backgroundImage: `
+                linear-gradient(to bottom, rgba(0,0,0,0.22), rgba(0,0,0,0.22)),
+                linear-gradient(to bottom, rgba(255,255,255,0.70), rgba(255,255,255,0.70)),
+                linear-gradient(90deg, rgba(255,255,255,0.05), ${COLORS.primary}, rgba(255,255,255,0.05))
+              `,
+              backgroundRepeat: 'no-repeat, no-repeat, repeat',
+              backgroundSize: '100% 1px, 100% 1px, 100% 100%',
+              backgroundPosition: 'top left, bottom left, center',
+              flex: '0 0 auto',
+            }}
+          />
+
+          <DialogActions sx={{ p: 0, m: 0, minHeight: FOOTER_H }}>
+            <Box sx={{ width: '100%', display: 'flex', justifyContent: 'flex-end', px: 3, py: 2.5, gap: 1.5 }}>
+              <CrystalSoftButton
+                baseColor={COLORS.primary}
+                onClick={onCerrar}
                 sx={{
-                  border: '1px solid #e0e0e0',
-                  borderRadius: 0, // Sharp corners
-                  background: '#fff',
+                  minHeight: 44,
                   px: 3,
-                  py: 2.25,
-                  mb: 2.5,
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                  flexWrap: 'wrap',
-                  gap: 2
+                  fontWeight: 600,
                 }}
               >
-                <Typography variant="h6" fontWeight={700} color={COLORS.textStrong}>
-                  Artículos del proveedor
-                </Typography>
-                <TextField
-                  placeholder="Buscar artículos…"
-                  value={filtroInput}
-                  onChange={(e) => setFiltroInput(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') {
-                      const termino = filtroInput.trim();
-                      setBusquedaPersonalizada(termino);
-                      setPaginacion((prev) => (prev.pagina === 0 ? prev : { ...prev, pagina: 0 }));
-                    }
-                  }}
-                  size="small"
-                  sx={{ minWidth: { xs: '100%', sm: 240, md: 280 } }}
-                  InputProps={{
-                    startAdornment: (
-                      <InputAdornment position="start">
-                        <Icon icon="mdi:magnify" color={COLORS.primary} />
-                      </InputAdornment>
-                    ),
-                    sx: {
-                      '& .MuiOutlinedInput-root': {
-                        borderRadius: 0, // Sharp corners
-                        backgroundColor: '#fff',
-                        '& fieldset': { borderColor: '#e0e0e0' },
-                        '&:hover fieldset': { borderColor: '#bdc3c7' },
-                        '&.Mui-focused fieldset': { borderColor: COLORS.primary },
-                      },
-                    },
-                  }}
-                />
-              </Box>
-
-              <Box mt={2}>
-                <TablaArticulos
-                  key={`${proveedorId ?? 'prov'}-${rubroFiltro?.id ?? rubroFiltro?.nombre ?? 'all'}-${reloadKey}`}
-                  columns={columnasTabla}
-                  showToolbar={false}
-                  allowCreate={false}
-                  rowsPerPageOptions={PAGINAS_OPCIONES}
-                  defaultPageSize={limite}
-                  controlledFilters={filtrosControlados}
-                  onFiltersChange={handleTablaFiltersChange}
-                  onDataLoaded={handleTablaDataLoaded}
-                  dense
-                />
-                {errorArticulos && (
-                  <Typography variant="body2" color="error" mt={1}>
-                    Error al cargar artículos: {errorArticulos.message}
-                  </Typography>
-                )}
-                {loadingArticulos && (
-                  <Typography variant="body2" color="text.secondary" mt={1}>
-                    Cargando artículos…
-                  </Typography>
-                )}
-              </Box>
+                Cerrar
+              </CrystalSoftButton>
             </Box>
-
-          </Box>
-        </DialogContent>
-
-        <DialogActions sx={{ p: 2, bgcolor: '#f1f2f6', borderTop: '1px solid #e0e0e0' }}>
-          <Button
-            onClick={onCerrar}
-            variant="contained"
-            disableElevation
-            sx={{
-              bgcolor: COLORS.primary,
-              '&:hover': { bgcolor: COLORS.primaryHover },
-              px: 4,
-              py: 1,
-              textTransform: 'none',
-              fontWeight: 600,
-              borderRadius: 0 // Sharp corners
-            }}
-          >
-            Cerrar
-          </Button>
-        </DialogActions>
-      </Box>
+          </DialogActions>
+        </Box>
+      </TexturedPanel>
     </Dialog>
   );
 };

@@ -66,7 +66,7 @@ const makeColors = (base?: string) => {
   };
 };
 
-const UNIDADES_MEDIDA = ['Unidad', 'Kilogramo', 'Gramo', 'Litro', 'Mililitro', 'Metro', 'Pack', 'Docena'];
+const UNIDADES_MEDIDA = ['Unidad', 'Gramo', 'Mililitro', 'Centímetro', 'Pack', 'Docena'];
 
 const ModalEditarRubro = ({ open, onClose, rubro, onSuccess, accentColor }: ModalEditarRubroProps) => {
   const COLORS = useMemo(() => makeColors(accentColor), [accentColor]);
