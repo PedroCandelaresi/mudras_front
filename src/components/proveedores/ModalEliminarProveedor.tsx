@@ -1,8 +1,7 @@
-// /home/candelaresi/proyectos/mudras/frontend/src/components/proveedores/ModalEliminarProveedor.tsx
 'use client';
+
 import {
   Dialog,
-  DialogTitle,
   DialogContent,
   DialogActions,
   Typography,
@@ -11,10 +10,11 @@ import {
   Button,
   IconButton,
   Alert,
-  InputAdornment
+  InputAdornment,
+  Paper
 } from '@mui/material';
 import { useState, useEffect } from 'react';
-import { IconX, IconAlertTriangle } from '@tabler/icons-react';
+import { IconAlertTriangle, IconX } from '@tabler/icons-react';
 import { useMutation } from '@apollo/client/react';
 import { ELIMINAR_PROVEEDOR } from '@/components/proveedores/graphql/mutations';
 import { Proveedor } from '@/interfaces/proveedores';
@@ -32,7 +32,6 @@ const ModalEliminarProveedor = ({ open, onClose, proveedor, onProveedorEliminado
 
   const [eliminarProveedor, { loading }] = useMutation(ELIMINAR_PROVEEDOR);
 
-  // Limpiar estado cuando se abre/cierra el modal
   useEffect(() => {
     if (open) {
       setTextoConfirmacion('');
@@ -76,205 +75,105 @@ const ModalEliminarProveedor = ({ open, onClose, proveedor, onProveedorEliminado
       maxWidth="sm"
       fullWidth
       PaperProps={{
+        elevation: 0,
         sx: {
           borderRadius: 0,
-          border: '3px solid #d32f2f',
-          boxShadow: '0 0 30px rgba(211, 47, 47, 0.3), 0 8px 32px rgba(0,0,0,0.12)',
-          background: 'linear-gradient(135deg, #ffebee 0%, #fff 100%)'
+          border: '1px solid #e0e0e0', // Simple border
+          bgcolor: '#ffffff'
         }
       }}
     >
-      <DialogTitle
-        sx={{
-          background: 'linear-gradient(135deg, #d32f2f 0%, #b71c1c 100%)',
-          color: 'white',
-          display: 'flex',
-          alignItems: 'center',
-          gap: 2,
-          py: 3,
-          position: 'relative',
-          overflow: 'hidden',
-          '&::before': {
-            content: '""',
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            background: 'repeating-linear-gradient(45deg, transparent, transparent 10px, rgba(255,255,255,0.1) 10px, rgba(255,255,255,0.1) 20px)',
-            animation: 'slide 2s linear infinite'
-          },
-          '@keyframes slide': {
-            '0%': { transform: 'translateX(-20px)' },
-            '100%': { transform: 'translateX(20px)' }
-          }
-        }}
-      >
-        <Box
-          sx={{
-            bgcolor: 'rgba(255,255,255,0.2)',
-            borderRadius: '50%',
-            p: 1.5,
-            display: 'flex',
-            animation: 'pulse 1.5s ease-in-out infinite alternate',
-            '@keyframes pulse': {
-              '0%': { transform: 'scale(1)' },
-              '100%': { transform: 'scale(1.1)' }
-            }
-          }}
-        >
-          <IconAlertTriangle size={28} />
-        </Box>
-        <Box sx={{ zIndex: 1, flex: 1 }}>
-          <Typography variant="h6" sx={{ fontWeight: 700, mb: 0.5, textShadow: '0 1px 2px rgba(0,0,0,0.3)' }}>
-            ⚠️ ZONA DE PELIGRO ⚠️
-          </Typography>
-          <Typography variant="body2" sx={{ opacity: 0.95, fontWeight: 500 }}>
-            Eliminación Permanente de Proveedor
+      {/* Header */}
+      <Box sx={{
+        bgcolor: '#f5f5f5',
+        px: 3,
+        py: 2,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        borderBottom: '1px solid #e0e0e0',
+        borderRadius: 0,
+      }}>
+        <Box display="flex" alignItems="center" gap={2}>
+          <IconAlertTriangle size={24} color="#d32f2f" />
+          <Typography variant="h6" fontWeight={700} color="#d32f2f">
+            Eliminar Proveedor
           </Typography>
         </Box>
-        <IconButton
-          onClick={cerrarModalEliminar}
-          size="small"
-          sx={{
-            color: 'white',
-            bgcolor: 'rgba(255,255,255,0.2)',
-            '&:hover': { bgcolor: 'rgba(255,255,255,0.3)' },
-            zIndex: 2
-          }}
-        >
+        <IconButton onClick={cerrarModalEliminar} size="small" sx={{ color: 'text.secondary', '&:hover': { bgcolor: 'rgba(0,0,0,0.05)' } }}>
           <IconX size={20} />
         </IconButton>
-      </DialogTitle>
-      <DialogContent sx={{ mt: 4, p: 5, pt: 4, bgcolor: '#fff' }}>
-        {/* Alerta de error */}
+      </Box>
+
+      <DialogContent sx={{ p: 4 }}>
         {error && (
-          <Alert severity="error" sx={{ mb: 3 }}>
+          <Alert severity="error" sx={{ mb: 3, borderRadius: 0 }}>
             {error}
           </Alert>
         )}
 
-        <Box display="flex" flexDirection="column" gap={4}>
-          <Box
-            sx={{
-              p: 3,
-              borderRadius: 2,
-              bgcolor: '#ffebee',
-              border: '2px dashed #d32f2f',
-              textAlign: 'center'
-            }}
-          >
-            <IconAlertTriangle size={48} color="#d32f2f" style={{ marginBottom: 16 }} />
-            <Typography variant="h6" sx={{ color: '#d32f2f', fontWeight: 700, mb: 2 }}>
-              ¡ATENCIÓN! Esta acción es IRREVERSIBLE
-            </Typography>
-            <Typography variant="body1" sx={{ mb: 2, fontWeight: 500 }}>
-              Está a punto de eliminar permanentemente el proveedor:
-            </Typography>
-            <Box
-              sx={{
-                p: 2,
-                bgcolor: 'white',
-                borderRadius: 1,
-                border: '1px solid #d32f2f',
-                display: 'inline-block'
-              }}
-            >
-              <Typography variant="h6" sx={{ color: '#d32f2f', fontWeight: 700 }}>
-                &quot;{proveedor.Nombre}&quot;
-              </Typography>
-              {proveedor.Codigo && (
-                <Typography variant="body2" sx={{ color: '#666' }}>
-                  Código: {proveedor.Codigo}
-                </Typography>
-              )}
-              {proveedor.Contacto && (
-                <Typography variant="body2" sx={{ color: '#666' }}>
-                  Contacto: {proveedor.Contacto}
-                </Typography>
-              )}
-            </Box>
-          </Box>
+        <Box display="flex" flexDirection="column" gap={3}>
 
-          <Alert
-            severity="error"
-            sx={{
-              borderRadius: 2,
-              '& .MuiAlert-icon': {
-                fontSize: 28
-              }
-            }}
-          >
-            <Typography variant="body2" sx={{ fontWeight: 600 }}>
-              ⚠️ CONSECUENCIAS DE ESTA ACCIÓN:
-            </Typography>
-            <Typography variant="body2" component="ul" sx={{ mt: 1, pl: 2 }}>
-              <li>¿Estás seguro de que deseas eliminar el proveedor &quot;{proveedor?.Nombre}&quot;?</li>
-              <li>Todos los artículos asociados quedarán sin proveedor</li>
-              <li>Se perderá el historial de compras registrado</li>
-              <li>Esta acción NO se puede deshacer</li>
-            </Typography>
-          </Alert>
+          {/* Warning Box */}
+          <Paper variant="outlined" sx={{ p: 3, borderRadius: 0, bgcolor: '#fff5f5', borderColor: '#ef9a9a', display: 'flex', gap: 2, alignItems: 'center' }}>
+            <Box>
+              <Typography variant="subtitle1" fontWeight={700} color="#c62828" gutterBottom>
+                Acción Irreversible
+              </Typography>
+              <Typography variant="body2" color="#c62828">
+                Estás a punto de eliminar al proveedor <strong>{proveedor.Nombre}</strong>.
+                Todos los artículos asociados quedarán sin proveedor y se perderá el historial de compras.
+              </Typography>
+            </Box>
+          </Paper>
 
           <Box>
-            <Typography variant="h6" sx={{ mb: 3, textAlign: 'center', color: '#d32f2f', fontWeight: 700 }}>
-              ELIMINAR
+            <Typography variant="body2" fontWeight={600} gutterBottom sx={{ color: 'text.secondary', textTransform: 'uppercase', fontSize: '0.75rem' }}>
+              Confirmación
             </Typography>
             <TextField
-              placeholder="Escriba la palabra de confirmación"
+              placeholder="Escribí ELIMINAR para confirmar"
               value={textoConfirmacion}
               onChange={(e) => setTextoConfirmacion(e.target.value.toUpperCase())}
               fullWidth
               variant="outlined"
               error={textoConfirmacion !== '' && textoConfirmacion !== 'ELIMINAR'}
-              helperText={textoConfirmacion !== '' && textoConfirmacion !== 'ELIMINAR' ? '❌ Debe escribir exactamente "ELIMINAR"' : textoConfirmacion === 'ELIMINAR' ? '✅ Confirmación correcta' : ''}
               sx={{
                 '& .MuiOutlinedInput-root': {
                   borderRadius: 0,
-                  bgcolor: textoConfirmacion === 'ELIMINAR' ? '#e8f5e8' : '#ffebee',
-                  '& fieldset': {
-                    borderColor: textoConfirmacion === 'ELIMINAR' ? '#4caf50' : '#d32f2f',
-                    borderWidth: 2
-                  },
-                  '&:hover fieldset': {
-                    borderColor: textoConfirmacion === 'ELIMINAR' ? '#4caf50' : '#d32f2f'
-                  },
+                  bgcolor: '#fff',
                   '&.Mui-focused fieldset': {
-                    borderColor: textoConfirmacion === 'ELIMINAR' ? '#4caf50' : '#d32f2f'
+                    borderColor: textoConfirmacion === 'ELIMINAR' ? '#2e7d32' : '#d32f2f',
                   }
                 }
               }}
               InputProps={{
                 startAdornment: (
                   <InputAdornment position="start">
-                    <IconAlertTriangle size={20} color="#d32f2f" />
+                    <IconAlertTriangle size={20} color={textoConfirmacion === 'ELIMINAR' ? '#2e7d32' : '#d32f2f'} />
                   </InputAdornment>
                 ),
-                style: {
-                  fontSize: '1.1rem',
-                  fontWeight: 600,
-                  textAlign: 'center'
-                }
               }}
             />
+            {textoConfirmacion === 'ELIMINAR' && (
+              <Typography variant="caption" color="success.main" sx={{ mt: 0.5, fontWeight: 600 }}>
+                ✅ Confirmación correcta
+              </Typography>
+            )}
           </Box>
         </Box>
       </DialogContent>
-      <DialogActions sx={{ p: 2, bgcolor: '#f1f2f6', borderTop: '1px solid #e0e0e0', gap: 2, borderRadius: 0 }}>
+
+      <DialogActions sx={{ p: 2, bgcolor: '#f5f5f5', borderTop: '1px solid #e0e0e0', gap: 2, borderRadius: 0 }}>
         <Button
           onClick={cerrarModalEliminar}
-          variant="outlined"
           disabled={loading}
           sx={{
-            flex: 1,
-            borderColor: '#b0bec5',
-            color: '#546e7a',
-            '&:hover': { borderColor: '#78909c', bgcolor: '#eceff1', color: '#37474f' },
-            px: 4,
-            py: 1,
+            color: 'text.secondary',
             textTransform: 'none',
             fontWeight: 600,
             borderRadius: 0,
+            px: 3
           }}
         >
           Cancelar
@@ -292,8 +191,7 @@ const ModalEliminarProveedor = ({ open, onClose, proveedor, onProveedorEliminado
             py: 1,
             textTransform: 'none',
             fontWeight: 600,
-            borderRadius: 0,
-            boxShadow: 'none',
+            borderRadius: 0
           }}
         >
           {loading ? 'Eliminando...' : 'Eliminar Permanentemente'}

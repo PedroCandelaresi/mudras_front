@@ -4,7 +4,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { apiFetch } from '@/lib/api';
 import { Box, Chip, CircularProgress, IconButton, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Tooltip, TextField, Button, Typography, Menu, Divider, Stack } from '@mui/material';
 import { IconAdjustments, IconPlus } from '@tabler/icons-react';
-import { marron } from '@/ui/colores';
+
 import SearchToolbar from '@/components/ui/SearchToolbar';
 
 export interface PermisoItem { id: string; resource: string; action: string; description?: string | null; }
@@ -68,16 +68,15 @@ export function RolesTable({ onAsignarPermisos, onCrear, refetchToken }: Props) 
         sx={{
           px: 1,
           py: 1,
-          bgcolor: marron.toolbarBg,
-          border: '1px solid',
-          borderColor: marron.toolbarBorder,
-          borderRadius: 1,
+          bgcolor: '#f5f5f5',
+          border: '1px solid #e0e0e0',
+          borderRadius: 0,
           mb: 2,
         }}
       >
         <SearchToolbar
           title="Roles"
-          baseColor={marron.primary}
+          baseColor=""
           placeholder="Buscar rol (nombre o slug)"
           searchValue={busquedaInput}
           onSearchValueChange={setBusquedaInput}
@@ -95,47 +94,49 @@ export function RolesTable({ onAsignarPermisos, onCrear, refetchToken }: Props) 
         )}
       </Box>
 
-      <TableContainer sx={{ borderRadius: 2, border: '1px solid', borderColor: marron.borderInner, bgcolor: 'background.paper' }}>
-        <Table stickyHeader size="small" sx={{ '& .MuiTableCell-head': { bgcolor: marron.headerBg, color: marron.headerText } }}>
-          <TableHead sx={{ position: 'sticky', top: 0, zIndex: 5 }}>
-            <TableRow sx={{ bgcolor: marron.headerBg, '& th': { top: 0, position: 'sticky', zIndex: 5 } }}>
-              <TableCell onClick={() => toggleOrden('name')} sx={{ cursor: 'pointer', fontWeight: 700, borderBottom: '3px solid', borderColor: marron.headerBorder, color: marron.headerText }}>
+      <TableContainer sx={{ borderRadius: 0, border: '1px solid #e0e0e0', bgcolor: '#fff', boxShadow: 'none' }}>
+        <Table stickyHeader size="small" sx={{ '& .MuiTableCell-head': { bgcolor: '#f5f5f5', color: '#000', fontWeight: 700 } }}>
+          <TableHead>
+            <TableRow>
+              <TableCell onClick={() => toggleOrden('name')} sx={{ cursor: 'pointer', borderBottom: '1px solid #e0e0e0' }}>
                 <Box display="flex" alignItems="center" justifyContent="space-between">
                   <span>Nombre {orden.campo === 'name' ? (orden.dir === 'asc' ? '▲' : '▼') : ''}</span>
                   <Tooltip title="Filtrar columna">
-                    <IconButton size="small" color="inherit" onClick={(e) => { setColumnaActiva('name'); setFiltroColInput(filtrosColumna.name || ''); setMenuAnchor(e.currentTarget); }}>
+                    <IconButton size="small" color="inherit" onClick={(e) => { setColumnaActiva('name'); setFiltroColInput(filtrosColumna.name || ''); setMenuAnchor(e.currentTarget); }} sx={{ opacity: 0.5 }}>
                       <IconAdjustments size={16} />
                     </IconButton>
                   </Tooltip>
                 </Box>
               </TableCell>
-              <TableCell onClick={() => toggleOrden('slug')} sx={{ cursor: 'pointer', fontWeight: 700, borderBottom: '3px solid', borderColor: marron.headerBorder, color: marron.headerText }}>
+              <TableCell onClick={() => toggleOrden('slug')} sx={{ cursor: 'pointer', borderBottom: '1px solid #e0e0e0' }}>
                 <Box display="flex" alignItems="center" justifyContent="space-between">
                   <span>Slug {orden.campo === 'slug' ? (orden.dir === 'asc' ? '▲' : '▼') : ''}</span>
                   <Tooltip title="Filtrar columna">
-                    <IconButton size="small" color="inherit" onClick={(e) => { setColumnaActiva('slug'); setFiltroColInput(filtrosColumna.slug || ''); setMenuAnchor(e.currentTarget); }}>
+                    <IconButton size="small" color="inherit" onClick={(e) => { setColumnaActiva('slug'); setFiltroColInput(filtrosColumna.slug || ''); setMenuAnchor(e.currentTarget); }} sx={{ opacity: 0.5 }}>
                       <IconAdjustments size={16} />
                     </IconButton>
                   </Tooltip>
                 </Box>
               </TableCell>
-              <TableCell sx={{ fontWeight: 700, borderBottom: '3px solid', borderColor: marron.headerBorder, color: marron.headerText }}>Permisos</TableCell>
-              <TableCell align="right" sx={{ fontWeight: 700, borderBottom: '3px solid', borderColor: marron.headerBorder, color: marron.headerText }}>Acciones</TableCell>
+              <TableCell sx={{ borderBottom: '1px solid #e0e0e0' }}>Permisos</TableCell>
+              <TableCell align="right" sx={{ borderBottom: '1px solid #e0e0e0' }}>Acciones</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
             {rolesFiltrados.map((r, idx) => (
-              <TableRow key={r.id} hover sx={{ bgcolor: idx % 2 === 1 ? 'grey.50' : 'inherit', '&:hover': { bgcolor: marron.rowHover } }}>
-                <TableCell>{r.name}</TableCell>
-                <TableCell><Chip size="small" label={r.slug} /></TableCell>
-                <TableCell>
+              <TableRow key={r.id} hover sx={{ '&:hover': { bgcolor: '#f5f5f5' } }}>
+                <TableCell sx={{ borderBottom: '1px solid #e0e0e0' }}>{r.name}</TableCell>
+                <TableCell sx={{ borderBottom: '1px solid #e0e0e0' }}>
+                  <Chip size="small" label={r.slug} sx={{ borderRadius: 0, fontWeight: 600, bgcolor: '#eee' }} />
+                </TableCell>
+                <TableCell sx={{ borderBottom: '1px solid #e0e0e0' }}>
                   {(r.rolePermissions || []).map((rp) => (
-                    <Chip key={rp.permission.id} size="small" label={`${rp.permission.resource}:${rp.permission.action}`} sx={{ mr: 0.5, mb: 0.5 }} />
+                    <Chip key={rp.permission.id} size="small" label={`${rp.permission.resource}:${rp.permission.action}`} sx={{ mr: 0.5, mb: 0.5, borderRadius: 0 }} variant="outlined" />
                   ))}
                 </TableCell>
-                <TableCell align="right">
+                <TableCell align="right" sx={{ borderBottom: '1px solid #e0e0e0' }}>
                   <Tooltip title="Asignar permisos">
-                    <IconButton onClick={() => onAsignarPermisos(r)}>
+                    <IconButton onClick={() => onAsignarPermisos(r)} sx={{ color: '#1976d2' }}>
                       <IconAdjustments size={18} />
                     </IconButton>
                   </Tooltip>
@@ -155,10 +156,6 @@ export function RolesTable({ onAsignarPermisos, onCrear, refetchToken }: Props) 
         transformOrigin={{ vertical: 'top', horizontal: 'right' }}
         slotProps={{ paper: { sx: { p: 1.5, minWidth: 260 } } } as any}
       >
-        <Typography variant="subtitle2" sx={{ px: 1, pb: 1 }}>
-          {columnaActiva === 'name' && 'Filtrar por Nombre'}
-          {columnaActiva === 'slug' && 'Filtrar por Slug'}
-        </Typography>
         <Divider sx={{ mb: 1 }} />
         {columnaActiva && (
           <Box px={1} pb={1}>
@@ -176,10 +173,11 @@ export function RolesTable({ onAsignarPermisos, onCrear, refetchToken }: Props) 
                   setColumnaActiva(null);
                 }
               }}
+              InputProps={{ sx: { borderRadius: 0 } }}
             />
             <Stack direction="row" justifyContent="flex-end" spacing={1} mt={1}>
-              <Button size="small" onClick={() => { setFiltroColInput(''); setFiltrosColumna((prev) => ({ ...prev, [columnaActiva!]: '' })); }}>Limpiar</Button>
-              <Button size="small" variant="contained" sx={{ bgcolor: marron.primary, '&:hover': { bgcolor: marron.primaryHover } }} onClick={() => {
+              <Button size="small" onClick={() => { setFiltroColInput(''); setFiltrosColumna((prev) => ({ ...prev, [columnaActiva!]: '' })); }} sx={{ borderRadius: 0 }}>Limpiar</Button>
+              <Button size="small" variant="contained" sx={{ borderRadius: 0, bgcolor: '#8d6e63', '&:hover': { bgcolor: '#6d4c41' } }} onClick={() => {
                 setFiltrosColumna((prev) => ({ ...prev, [columnaActiva!]: filtroColInput }));
                 setMenuAnchor(null);
                 setColumnaActiva(null);

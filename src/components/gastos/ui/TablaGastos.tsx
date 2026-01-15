@@ -1,8 +1,5 @@
 'use client';
-import { Box, Table, TableHead, TableBody, TableRow, TableCell, Chip, Tooltip } from '@mui/material';
-import { alpha, darken } from '@mui/material/styles';
-import { verde } from '@/ui/colores';
-import CrystalButton, { CrystalIconButton } from '@/components/ui/CrystalButton';
+import { Table, TableHead, TableBody, TableRow, TableCell, Chip, Tooltip, IconButton, TableContainer, Paper } from '@mui/material';
 import { Icon } from '@iconify/react';
 
 export type TablaGasto = {
@@ -20,48 +17,61 @@ export type TablaGasto = {
 type Props = { gastos: TablaGasto[]; onDelete?: (id: number) => void };
 
 const TablaGastos: React.FC<Props> = ({ gastos, onDelete }) => {
-  const headerBg = darken(verde.primary, 0.25);
   return (
-    <Table size="small" stickyHeader>
-      <TableHead>
-        <TableRow>
-          <TableCell>Fecha</TableCell>
-          <TableCell>Proveedor</TableCell>
-          <TableCell>Categoría</TableCell>
-          <TableCell align="right">Neto</TableCell>
-          <TableCell align="right">IVA</TableCell>
-          <TableCell align="right">Total</TableCell>
-          <TableCell>Descripción</TableCell>
-          <TableCell align="center">Acciones</TableCell>
-        </TableRow>
-      </TableHead>
-      <TableBody>
-        {gastos.map((g) => (
-          <TableRow key={g.id} hover>
-            <TableCell>{g.fecha ? new Date(g.fecha).toLocaleDateString('es-AR') : '—'}</TableCell>
-            <TableCell>{g.proveedor?.Nombre || (g.proveedor ? `Prov #${g.proveedor.IdProveedor}` : '—')}</TableCell>
-            <TableCell>
-              {g.categoria ? (
-                <Chip size="small" label={g.categoria.nombre} sx={{ bgcolor: alpha(headerBg, 0.2) }} />
-              ) : '—'}
-            </TableCell>
-            <TableCell align="right">${(g.montoNeto || 0).toLocaleString('es-AR')}</TableCell>
-            <TableCell align="right">{g.alicuotaIva ? `${g.alicuotaIva}%` : '—'} (${(g.montoIva || 0).toLocaleString('es-AR')})</TableCell>
-            <TableCell align="right">${(g.total || 0).toLocaleString('es-AR')}</TableCell>
-            <TableCell>{g.descripcion || '—'}</TableCell>
-            <TableCell align="center">
-              {onDelete && (
-                <Tooltip title="Eliminar">
-                  <CrystalIconButton baseColor="#b71c1c" onClick={() => onDelete(g.id)}>
-                    <Icon icon="mdi:trash-can" />
-                  </CrystalIconButton>
-                </Tooltip>
-              )}
-            </TableCell>
+    <TableContainer component={Paper} elevation={0} sx={{ borderRadius: 0, border: '1px solid #e0e0e0' }}>
+      <Table size="small" stickyHeader>
+        <TableHead>
+          <TableRow sx={{ bgcolor: '#f5f5f5' }}>
+            <TableCell sx={{ fontWeight: 700, color: 'text.secondary' }}>FECHA</TableCell>
+            <TableCell sx={{ fontWeight: 700, color: 'text.secondary' }}>PROVEEDOR</TableCell>
+            <TableCell sx={{ fontWeight: 700, color: 'text.secondary' }}>CATEGORÍA</TableCell>
+            <TableCell align="right" sx={{ fontWeight: 700, color: 'text.secondary' }}>NETO</TableCell>
+            <TableCell align="right" sx={{ fontWeight: 700, color: 'text.secondary' }}>IVA</TableCell>
+            <TableCell align="right" sx={{ fontWeight: 700, color: 'text.secondary' }}>TOTAL</TableCell>
+            <TableCell sx={{ fontWeight: 700, color: 'text.secondary' }}>DESCRIPCIÓN</TableCell>
+            <TableCell align="center" sx={{ fontWeight: 700, color: 'text.secondary' }}>ACCIONES</TableCell>
           </TableRow>
-        ))}
-      </TableBody>
-    </Table>
+        </TableHead>
+        <TableBody>
+          {gastos.length === 0 ? (
+            <TableRow>
+              <TableCell colSpan={8} align="center" sx={{ py: 4 }}>
+                No hay gastos registrados.
+              </TableCell>
+            </TableRow>
+          ) : (
+            gastos.map((g) => (
+              <TableRow key={g.id} hover>
+                <TableCell>{g.fecha ? new Date(g.fecha).toLocaleDateString('es-AR') : '—'}</TableCell>
+                <TableCell>{g.proveedor?.Nombre || (g.proveedor ? `Prov #${g.proveedor.IdProveedor}` : '—')}</TableCell>
+                <TableCell>
+                  {g.categoria ? (
+                    <Chip size="small" label={g.categoria.nombre} sx={{ borderRadius: 0, bgcolor: '#e0e0e0' }} />
+                  ) : '—'}
+                </TableCell>
+                <TableCell align="right">${(g.montoNeto || 0).toLocaleString('es-AR')}</TableCell>
+                <TableCell align="right">{g.alicuotaIva ? `${g.alicuotaIva}%` : '—'} (${(g.montoIva || 0).toLocaleString('es-AR')})</TableCell>
+                <TableCell align="right"><strong>${(g.total || 0).toLocaleString('es-AR')}</strong></TableCell>
+                <TableCell>{g.descripcion || '—'}</TableCell>
+                <TableCell align="center">
+                  {onDelete && (
+                    <Tooltip title="Eliminar">
+                      <IconButton
+                        size="small"
+                        onClick={() => onDelete(g.id)}
+                        sx={{ color: '#d32f2f', '&:hover': { bgcolor: '#ffebee' } }}
+                      >
+                        <Icon icon="mdi:trash-can" />
+                      </IconButton>
+                    </Tooltip>
+                  )}
+                </TableCell>
+              </TableRow>
+            ))
+          )}
+        </TableBody>
+      </Table>
+    </TableContainer>
   );
 };
 

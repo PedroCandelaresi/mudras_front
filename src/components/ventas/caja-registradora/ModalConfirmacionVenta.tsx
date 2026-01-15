@@ -25,13 +25,13 @@ import {
   InputLabel,
   Select,
   MenuItem,
-  Chip,
   IconButton,
   Card,
   CardContent,
   Snackbar,
+  Button,
+  InputAdornment,
 } from '@mui/material';
-import { alpha, darken } from '@mui/material/styles';
 import { Icon } from '@iconify/react';
 import { IconPlus, IconTrash } from '@tabler/icons-react';
 import {
@@ -43,10 +43,6 @@ import {
   type CrearVentaCajaInput,
 } from '@/components/ventas/caja-registradora/graphql/mutations';
 import { apiFetch } from '@/lib/api';
-import { TexturedPanel } from '@/components/ui/TexturedFrame/TexturedPanel';
-import { WoodBackdrop } from '@/components/ui/TexturedFrame/WoodBackdrop';
-import CrystalButton, { CrystalSoftButton } from '@/components/ui/CrystalButton';
-import { verde } from '@/ui/colores';
 import { USUARIOS_CAJA_AUTH_QUERY } from '@/components/usuarios/graphql/queries';
 
 interface ArticuloVenta {
@@ -85,28 +81,6 @@ const METODOS_PAGO = [
   { value: 'OTRO', label: 'Otro', icon: 'mdi:dots-horizontal' },
 ] as const;
 
-const VH_MAX = 85;
-const HEADER_H = 88;
-const FOOTER_H = 88;
-const DIV_H = 3;
-const CONTENT_MAX = `calc(${VH_MAX}vh - ${HEADER_H + FOOTER_H + DIV_H * 2}px)`;
-const NBSP = '\u00A0';
-
-const makeColors = (base?: string) => {
-  const primary = base || verde.primary;
-  return {
-    primary,
-    primaryHover: darken(primary, 0.12),
-    textStrong: darken(primary, 0.5),
-    chipBorder: 'rgba(255,255,255,0.35)',
-    inputBorder: alpha(primary, 0.28),
-    inputBorderHover: alpha(primary, 0.42),
-  };
-};
-
-const currency = (v: number) =>
-  v.toLocaleString('es-AR', { style: 'currency', currency: 'ARS' });
-
 export const ModalConfirmacionVenta: React.FC<ModalConfirmacionVentaProps> = ({
   open,
   onClose,
@@ -117,7 +91,6 @@ export const ModalConfirmacionVenta: React.FC<ModalConfirmacionVentaProps> = ({
   presetUsuarioId,
   descripcionPuntoSeleccionado,
 }) => {
-  const COLORS = useMemo(() => makeColors(), []);
   const [pagos, setPagos] = useState<PagoVenta[]>([]);
   const [nuevoPago, setNuevoPago] = useState<PagoVenta>({
     metodoPago: 'EFECTIVO',
@@ -129,41 +102,12 @@ export const ModalConfirmacionVenta: React.FC<ModalConfirmacionVentaProps> = ({
   const [errorUsuarios, setErrorUsuarios] = useState<string | null>(null);
   const [usuarioSeleccionado, setUsuarioSeleccionado] = useState<UsuarioOption | null>(null);
   const [perfilUsuarioId, setPerfilUsuarioId] = useState<string | null>(null);
-  const [snack, setSnack] = useState<{ open: boolean; msg: string; sev: 'success'|'error'|'info' }>({ open: false, msg: '', sev: 'success' });
-
-  console.log('🧾 [ModalConfirmacionVenta] render', {
-    open,
-    usuariosCount: usuarios.length,
-    cargandoUsuarios,
-    errorUsuarios,
-    usuarioSeleccionado,
-    perfilUsuarioId,
-    presetUsuarioId,
-    presetPuestoVentaId,
-    presetPuntoMudrasId,
-    descripcionPuntoSeleccionado,
-  });
+  const [snack, setSnack] = useState<{ open: boolean; msg: string; sev: 'success' | 'error' | 'info' }>({ open: false, msg: '', sev: 'success' });
 
   const [obtenerUsuarios, { called: usuariosCalled, loading: usuariosLoading, data: usuariosData, error: usuariosError }] =
     useLazyQuery<UsuariosCajaRespuesta>(USUARIOS_CAJA_AUTH_QUERY, {
       fetchPolicy: 'network-only',
     });
-
-  useEffect(() => {
-    if (!usuariosCalled && !usuariosLoading) return;
-    console.log('🧾 [ModalConfirmacionVenta] useLazyQuery estado', {
-      usuariosCalled,
-      usuariosLoading,
-      usuariosData,
-      usuariosError,
-    });
-    if (usuariosError) {
-      console.error('🧾 [ModalConfirmacionVenta] useLazyQuery:onError', usuariosError);
-    }
-    if (usuariosData) {
-      console.log('🧾 [ModalConfirmacionVenta] useLazyQuery:onCompleted', usuariosData);
-    }
-  }, [usuariosCalled, usuariosLoading, usuariosData, usuariosError]);
 
   const puestoVentaIdSeleccionado = presetPuestoVentaId ?? 0; // compat
   const puntoMudrasIdSeleccionado = presetPuntoMudrasId ?? null;
@@ -173,26 +117,13 @@ export const ModalConfirmacionVenta: React.FC<ModalConfirmacionVentaProps> = ({
 
   const cargarUsuarios = useCallback(async () => {
     try {
-      console.log('🧾 [ModalConfirmacionVenta] cargarUsuarios:start', {
-        open,
-        presetUsuarioId,
-        presetPuestoVentaId,
-        presetPuntoMudrasId,
-      });
       setCargandoUsuarios(true);
       setErrorUsuarios(null);
 
       const { data } = await obtenerUsuarios({ variables: { rolSlug: 'caja_registradora' } });
-      console.log('🧾 [ModalConfirmacionVenta] cargarUsuarios:data', data);
       const opciones = (data?.usuariosCajaAuth || [])
         .map((item) => {
-          const etiqueta = item.displayName?.trim() || item.username?.trim() || item.email?.trim() || `Usuario ${item.id.substring(0,6)}`;
-          
-          console.log('🧾 [ModalConfirmacionVenta] cargarUsuarios:opcion', {
-            id: item.id,
-            username: item.username,
-            etiqueta,
-          });
+          const etiqueta = item.displayName?.trim() || item.username?.trim() || item.email?.trim() || `Usuario ${item.id.substring(0, 6)}`;
           return {
             id: item.id,
             label: etiqueta,
@@ -200,32 +131,26 @@ export const ModalConfirmacionVenta: React.FC<ModalConfirmacionVentaProps> = ({
         })
         .filter((opcion): opcion is UsuarioOption => Boolean(opcion));
 
-      console.log('🧾 [ModalConfirmacionVenta] cargarUsuarios:setUsuarios', opciones);
       setUsuarios(opciones);
     } catch (error: any) {
       console.error('🧾 [ModalConfirmacionVenta] cargarUsuarios:error', error);
       setErrorUsuarios(error?.message ?? 'No se pudo cargar la lista de usuarios');
     } finally {
-      console.log('🧾 [ModalConfirmacionVenta] cargarUsuarios:finally');
       setCargandoUsuarios(false);
     }
-  }, [obtenerUsuarios, open, presetUsuarioId, presetPuestoVentaId, presetPuntoMudrasId]);
+  }, [obtenerUsuarios]);
 
   const cargarPerfilUsuario = useCallback(async () => {
     try {
-      console.log('🧾 [ModalConfirmacionVenta] cargarPerfilUsuario:start');
       const respuesta = await apiFetch<{ perfil?: { sub?: string | number; uid?: number } }>('/auth/perfil');
-      console.log('🧾 [ModalConfirmacionVenta] cargarPerfilUsuario:respuesta', respuesta);
       const uid = respuesta?.perfil?.uid;
       if (typeof uid === 'number' && Number.isFinite(uid)) {
-        console.log('🧾 [ModalConfirmacionVenta] cargarPerfilUsuario:uid', uid);
         setPerfilUsuarioId(String(uid));
       } else {
-      const sub = respuesta?.perfil?.sub;
-      if (typeof sub === 'string' && sub) {
-        console.log('🧾 [ModalConfirmacionVenta] cargarPerfilUsuario:sub', sub);
-        setPerfilUsuarioId(sub);
-      }
+        const sub = respuesta?.perfil?.sub;
+        if (typeof sub === 'string' && sub) {
+          setPerfilUsuarioId(sub);
+        }
       }
     } catch (error) {
       console.error('🧾 [ModalConfirmacionVenta] cargarPerfilUsuario:error', error);
@@ -235,7 +160,6 @@ export const ModalConfirmacionVenta: React.FC<ModalConfirmacionVentaProps> = ({
   // Mutations
   const [crearVenta, { loading: creandoVenta }] = useMutation<CrearVentaCajaResponse>(CREAR_VENTA_CAJA, {
     onCompleted: (data) => {
-      console.log('🧾 [ModalConfirmacionVenta] crearVenta:onCompleted', data);
       onVentaCreada(data.crearVentaCaja);
       handleClose();
     },
@@ -254,11 +178,7 @@ export const ModalConfirmacionVenta: React.FC<ModalConfirmacionVentaProps> = ({
 
   // Resetear formulario al abrir
   useEffect(() => {
-    if (!open) {
-      console.log('🧾 [ModalConfirmacionVenta] useEffect[open]: modal cerrado');
-      return;
-    }
-    console.log('🧾 [ModalConfirmacionVenta] useEffect[open]: reset formulario');
+    if (!open) return;
     setPagos([]);
     setNuevoPago({
       metodoPago: 'EFECTIVO',
@@ -270,73 +190,33 @@ export const ModalConfirmacionVenta: React.FC<ModalConfirmacionVentaProps> = ({
   }, [open, subtotal]);
 
   useEffect(() => {
-    if (!open) {
-      console.log('🧾 [ModalConfirmacionVenta] useEffect[cargarPerfilUsuario]: modal cerrado');
-      return;
-    }
-    console.log('🧾 [ModalConfirmacionVenta] useEffect[cargarPerfilUsuario]: invocando');
+    if (!open) return;
     void cargarPerfilUsuario();
   }, [open, cargarPerfilUsuario]);
 
   useEffect(() => {
-    if (!open) {
-      console.log('🧾 [ModalConfirmacionVenta] useEffect[cargarUsuarios]: modal cerrado');
-      return;
-    }
+    if (!open) return;
     if (usuarios.length === 0 && !cargandoUsuarios) {
-      console.log('🧾 [ModalConfirmacionVenta] useEffect[cargarUsuarios]: disparando carga');
       void cargarUsuarios();
-    } else {
-      console.log('🧾 [ModalConfirmacionVenta] useEffect[cargarUsuarios]: no se carga', {
-        usuariosLength: usuarios.length,
-        cargandoUsuarios,
-      });
     }
   }, [open, usuarios.length, cargandoUsuarios, cargarUsuarios, usuarios]);
 
   useEffect(() => {
-    if (!open) {
-      console.log('🧾 [ModalConfirmacionVenta] useEffect[usuarioPreferido]: modal cerrado');
-      return;
-    }
-    if (usuarioSeleccionado || usuarios.length === 0) {
-      console.log('🧾 [ModalConfirmacionVenta] useEffect[usuarioPreferido]: no se selecciona', {
-        usuarioSeleccionado,
-        usuariosLength: usuarios.length,
-      });
-      return;
-    }
+    if (!open) return;
+    if (usuarioSeleccionado || usuarios.length === 0) return;
 
     const preferidoId = (presetUsuarioId ? String(presetUsuarioId) : null) ?? perfilUsuarioId ?? usuarios[0]?.id;
-    console.log('🧾 [ModalConfirmacionVenta] useEffect[usuarioPreferido]: calculado', {
-      presetUsuarioId,
-      perfilUsuarioId,
-      primerUsuario: usuarios[0],
-      preferidoId,
-    });
-    if (preferidoId == null) {
-      return;
-    }
+    if (preferidoId == null) return;
     const encontrado = usuarios.find((usuario) => usuario.id === preferidoId) ?? usuarios[0];
-    console.log('🧾 [ModalConfirmacionVenta] useEffect[usuarioPreferido]: seteando', encontrado);
     setUsuarioSeleccionado(encontrado);
   }, [open, usuarios, presetUsuarioId, perfilUsuarioId, usuarioSeleccionado]);
 
-  useEffect(() => {
-    if (!open) {
-      console.log('🧾 [ModalConfirmacionVenta] useEffect[open-only]: modal cerrado');
-      return;
-    }
-    console.log('🧾 [ModalConfirmacionVenta] useEffect[open-only]: modal abierto');
-  }, [open]);
 
   const handleClose = () => {
-    console.log('🧾 [ModalConfirmacionVenta] handleClose');
     onClose();
   };
 
   const handleAgregarPago = () => {
-    console.log('🧾 [ModalConfirmacionVenta] handleAgregarPago', nuevoPago);
     if (nuevoPago.monto > 0) {
       setPagos(prev => [...prev, { ...nuevoPago }]);
       setNuevoPago({
@@ -347,17 +227,10 @@ export const ModalConfirmacionVenta: React.FC<ModalConfirmacionVentaProps> = ({
   };
 
   const handleEliminarPago = (index: number) => {
-    console.log('🧾 [ModalConfirmacionVenta] handleEliminarPago', index);
     setPagos(prev => prev.filter((_, i) => i !== index));
   };
 
   const handleConfirmarVenta = () => {
-    console.log('🧾 [ModalConfirmacionVenta] handleConfirmarVenta', {
-      puestoVentaIdSeleccionado,
-      pagos,
-      usuarioSeleccionado,
-      puntoValido,
-    });
     if (!puestoVentaIdSeleccionado || pagos.length === 0 || !usuarioSeleccionado) return;
     if (!puntoValido) return;
     if (requiereDni && (!dniCuit || dniCuit.trim().length < 7)) {
@@ -372,7 +245,6 @@ export const ModalConfirmacionVenta: React.FC<ModalConfirmacionVentaProps> = ({
         case 'TARJETA_CREDITO': return 'CREDITO';
         case 'TRANSFERENCIA': return 'TRANSFERENCIA';
         case 'CUENTA_CORRIENTE': return 'CUENTA_CORRIENTE';
-        // Si en UI se selecciona un método no soportado por el backend, devolvemos null
         case 'CHEQUE':
         case 'OTRO':
         default:
@@ -418,7 +290,6 @@ export const ModalConfirmacionVenta: React.FC<ModalConfirmacionVentaProps> = ({
       pagos: pagosTransformados,
     };
 
-    console.log('🧾 [ModalConfirmacionVenta] handleConfirmarVenta:mutationInput', input);
     crearVenta({ variables: { input } });
   };
 
@@ -428,33 +299,6 @@ export const ModalConfirmacionVenta: React.FC<ModalConfirmacionVentaProps> = ({
     Boolean(usuarioSeleccionado) &&
     puntoValido;
 
-  const fieldSx = useMemo(
-    () => ({
-      '& .MuiOutlinedInput-root': {
-        borderRadius: 2,
-        background: '#ffffff',
-        '& fieldset': { borderColor: COLORS.inputBorder },
-        '&:hover fieldset': { borderColor: COLORS.inputBorderHover },
-        '&.Mui-focused fieldset': { borderColor: COLORS.primary },
-      },
-      '& .MuiInputLabel-root.Mui-focused': {
-        color: COLORS.primary,
-      },
-    }),
-    [COLORS]
-  );
-
-  const selectSx = useMemo(
-    () => ({
-      borderRadius: 2,
-      background: '#ffffff',
-      '& .MuiOutlinedInput-notchedOutline': { borderColor: COLORS.inputBorder },
-      '&:hover .MuiOutlinedInput-notchedOutline': { borderColor: COLORS.inputBorderHover },
-      '&.Mui-focused .MuiOutlinedInput-notchedOutline': { borderColor: COLORS.primary },
-    }),
-    [COLORS]
-  );
-
   return (
     <Dialog
       open={open}
@@ -462,460 +306,355 @@ export const ModalConfirmacionVenta: React.FC<ModalConfirmacionVentaProps> = ({
       maxWidth="lg"
       fullWidth
       PaperProps={{
+        elevation: 0,
         sx: {
-          borderRadius: 3,
-          boxShadow: '0 8px 32px rgba(0,0,0,0.12)',
-          bgcolor: 'transparent',
-          overflow: 'hidden',
-          maxHeight: `${VH_MAX}vh`,
+          borderRadius: 0,
+          border: '1px solid #e0e0e0',
+          bgcolor: '#ffffff',
+          maxHeight: '90vh',
+          display: 'flex',
+          flexDirection: 'column',
         },
       }}
     >
-      <TexturedPanel
-        accent={COLORS.primary}
-        radius={12}
-        contentPadding={0}
-        bgTintPercent={12}
-        bgAlpha={1}
-        textureBaseOpacity={0.22}
-        textureBoostOpacity={0.19}
-        textureBrightness={1.12}
-        textureContrast={1.03}
-        tintOpacity={0.38}
-      >
-        <Box sx={{ display: 'flex', flexDirection: 'column', maxHeight: `${VH_MAX}vh` }}>
-          <DialogTitle sx={{ p: 0, m: 0, minHeight: HEADER_H, display: 'flex', alignItems: 'center' }}>
-            <Box sx={{ width: '100%', display: 'flex', alignItems: 'center', px: 3, py: 2.25, gap: 2 }}>
-              <Box
-                sx={{
-                  width: 40,
-                  height: 40,
-                  borderRadius: '50%',
-                  display: 'grid',
-                  placeItems: 'center',
-                  background: `linear-gradient(135deg, ${COLORS.primary} 0%, ${COLORS.primaryHover} 100%)`,
-                  boxShadow: 'inset 0 2px 4px rgba(255,255,255,0.3), 0 4px 12px rgba(0,0,0,0.25)',
-                  color: '#fff',
-                }}
-              >
-                <Icon icon="mdi:cash-register" width={22} height={22} />
-              </Box>
-
-              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.25 }}>
-                <Typography
-                  variant="h6"
-                  fontWeight={700}
-                  color="white"
-                  sx={{ textShadow: '0 2px 4px rgba(0,0,0,0.8)' }}
-                >
-                  Confirmar Venta
-                </Typography>
-                {descripcionPunto && (
-                  <Typography
-                    variant="caption"
-                    color="rgba(255,255,255,0.92)"
-                    sx={{ textShadow: '0 1px 2px rgba(0,0,0,0.6)', fontWeight: 700 }}
-                  >
-                    Punto de venta: {descripcionPunto}
-                  </Typography>
-                )}
-              </Box>
-              <Box sx={{ ml: 'auto', display: 'flex', alignItems: 'center' }}>
-                <CrystalSoftButton
-                  baseColor={COLORS.primary}
-                  onClick={handleClose}
-                  title="Cerrar"
-                  sx={{
-                    width: 40,
-                    height: 40,
-                    minWidth: 40,
-                    p: 0,
-                    borderRadius: '50%',
-                    display: 'grid',
-                    placeItems: 'center',
-                    transform: 'none !important',
-                    transition: 'none',
-                    '&:hover': { transform: 'none !important' },
-                  }}
-                >
-                  <Icon icon="mdi:close" color="#fff" width={22} height={22} />
-                </CrystalSoftButton>
-              </Box>
-            </Box>
-          </DialogTitle>
-
-          <Divider
+      <Box sx={{
+        bgcolor: '#f5f5f5',
+        px: 3,
+        py: 2,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        borderBottom: '1px solid #e0e0e0',
+        minHeight: 64,
+      }}>
+        <Box display="flex" alignItems="center" gap={1}>
+          <Box
             sx={{
-              height: DIV_H,
-              border: 0,
-              backgroundImage: `
-                linear-gradient(to bottom, rgba(255,255,255,0.70), rgba(255,255,255,0.70)),
-                linear-gradient(to bottom, rgba(0,0,0,0.22), rgba(0,0,0,0.22)),
-                linear-gradient(90deg, rgba(255,255,255,0.05), ${COLORS.primary}, rgba(255,255,255,0.05))
-              `,
-              backgroundRepeat: 'no-repeat, no-repeat, repeat',
-              backgroundSize: '100% 1px, 100% 1px, 100% 100%',
-              backgroundPosition: 'top left, bottom left, center',
-              flex: '0 0 auto',
-            }}
-          />
-
-          <DialogContent
-            sx={{
-              p: 0,
+              width: 40,
+              height: 40,
               borderRadius: 0,
-              overflow: 'auto',
-              maxHeight: CONTENT_MAX,
-              flex: '0 1 auto',
+              display: 'grid',
+              placeItems: 'center',
+              bgcolor: '#5d4037',
+              color: '#fff',
             }}
           >
-            <Box sx={{ position: 'relative', borderRadius: 0, overflow: 'hidden' }}>
-              <WoodBackdrop accent={COLORS.primary} radius={0} inset={0} strength={0.7} texture="wide" />
-              <Box
-                sx={{
-                  position: 'relative',
-                  zIndex: 1,
-                  p: 4,
-                  borderRadius: 0,
-                  backdropFilter: 'saturate(118%) blur(0.4px)',
-                  background: 'rgba(255,255,255,0.86)',
-                }}
-              >
-                <Grid container spacing={3}>
-                  <Grid size={{ xs: 12, md: 6 }}>
-                    <Card
-                      sx={{
-                        borderRadius: 2,
-                        border: `1px solid ${alpha(COLORS.primary, 0.18)}`,
-                        background: alpha(COLORS.primary, 0.05),
-                        boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.22)',
-                        mb: 2,
-                      }}
-                    >
-                      <CardContent sx={{ p: 2.5 }}>
-                        <Box display="flex" alignItems="center" gap={1} mb={2}>
-                          <Icon icon="mdi:cog-outline" width={20} height={20} color={COLORS.primary} />
-                          <Typography variant="h6" fontWeight={700} color={COLORS.textStrong}>
-                            Configuración de Venta
-                          </Typography>
-                        </Box>
+            <Icon icon="mdi:cash-register" width={22} height={22} />
+          </Box>
+          <Box>
+            <Typography variant="h6" fontWeight={700}>
+              Confirmar Venta
+            </Typography>
+            {descripcionPunto && (
+              <Typography variant="caption" color="text.secondary" fontWeight={500}>
+                Punto de venta: {descripcionPunto}
+              </Typography>
+            )}
+          </Box>
+        </Box>
+        <IconButton onClick={handleClose} size="small" sx={{ color: 'text.secondary', '&:hover': { bgcolor: 'rgba(0,0,0,0.05)' } }}>
+          <Icon icon="mdi:close" width={24} />
+        </IconButton>
+      </Box>
 
-                        <Grid container spacing={2}>
-                          <Grid size={{ xs: 12 }}>
-                            <Autocomplete
-                              value={usuarioSeleccionado}
-                              onChange={(_, value) => setUsuarioSeleccionado(value)}
-                              options={usuarios}
-                              loading={cargandoUsuarios}
-                              isOptionEqualToValue={(option, value) => option.id === value.id}
-                              getOptionLabel={(option) => option?.label ?? ''}
-                              noOptionsText={cargandoUsuarios ? 'Cargando usuarios...' : 'No se encontraron usuarios'}
-                              renderInput={(params) => (
-                                <TextField
-                                  {...params}
-                                  label="Usuario que registra la venta"
-                                  placeholder="Selecciona un usuario"
-                                  error={Boolean(errorUsuarios)}
-                                  helperText={errorUsuarios || undefined}
-                                  sx={fieldSx}
-                                  InputProps={{
-                                    ...params.InputProps,
-                                    endAdornment: (
-                                      <>
-                                        {cargandoUsuarios ? <CircularProgress color="inherit" size={16} /> : null}
-                                        {params.InputProps.endAdornment}
-                                      </>
-                                    ),
-                                  }}
-                                />
-                              )}
-                            />
-                          </Grid>
+      <DialogContent sx={{ p: 3, bgcolor: '#ffffff', overflowY: 'auto' }}>
+        <Grid container spacing={3}>
+          <Grid item xs={12} md={6}>
+            <Card elevation={0} sx={{ border: '1px solid #e0e0e0', borderRadius: 0, mb: 2 }}>
+              <CardContent sx={{ p: 2 }}>
+                <Box display="flex" alignItems="center" gap={1} mb={2}>
+                  <Icon icon="mdi:cog-outline" width={20} height={20} color="#5d4037" />
+                  <Typography variant="h6" fontWeight={700}>
+                    Configuración de Venta
+                  </Typography>
+                </Box>
 
-                          <Grid size={{ xs: 12 }}>
-                            <TextField
-                              fullWidth
-                              label="DNI o CUIT del cliente (requerido si no es efectivo)"
-                              value={dniCuit}
-                              onChange={(e) => setDniCuit(e.target.value)}
-                              sx={fieldSx}
-                              required={requiereDni}
-                            />
-                          </Grid>
-
-                          {/* Punto de venta informativo eliminado del cuerpo; ahora se muestra en el header */}
-                        </Grid>
-                      </CardContent>
-                    </Card>
-
-                    <Card
-                      sx={{
-                        borderRadius: 2,
-                        border: `1px solid ${alpha(COLORS.primary, 0.18)}`,
-                        background: alpha(COLORS.primary, 0.05),
-                        boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.22)',
-                      }}
-                    >
-                      <CardContent sx={{ p: 2.5 }}>
-                        <Box display="flex" alignItems="center" gap={1} mb={2}>
-                          <Icon icon="mdi:clipboard-list-outline" width={20} height={20} color={COLORS.primary} />
-                          <Typography variant="h6" fontWeight={700} color={COLORS.textStrong}>
-                            Artículos ({articulos.length})
-                          </Typography>
-                        </Box>
-
-                        <TableContainer sx={{ maxHeight: 200 }}>
-                          <Table size="small">
-                            <TableHead>
-                              <TableRow>
-                                <TableCell>Artículo</TableCell>
-                                <TableCell align="right">Cant.</TableCell>
-                                <TableCell align="right">Precio</TableCell>
-                                <TableCell align="right">Subtotal</TableCell>
-                              </TableRow>
-                            </TableHead>
-                            <TableBody>
-                              {articulos.map((articulo) => (
-                                <TableRow key={articulo.id}>
-                                  <TableCell>
-                                    <Typography variant="body2" color={COLORS.textStrong}>
-                                      {articulo.Codigo} - {articulo.Descripcion}
-                                    </Typography>
-                                  </TableCell>
-                                  <TableCell align="right">{articulo.cantidad}</TableCell>
-                                  <TableCell align="right">${articulo.precioUnitario.toFixed(2)}</TableCell>
-                                  <TableCell align="right">
-                                    <Typography fontWeight="bold" color={COLORS.primary}>
-                                      ${articulo.subtotal.toFixed(2)}
-                                    </Typography>
-                                  </TableCell>
-                                </TableRow>
-                              ))}
-                            </TableBody>
-                          </Table>
-                        </TableContainer>
-
-                        <Divider sx={{ my: 1 }} />
-                        <Box display="flex" justifyContent="space-between">
-                          <Typography variant="subtitle1" fontWeight={700} color={COLORS.textStrong}>
-                            Total
-                          </Typography>
-                          <Typography variant="subtitle1" fontWeight={700} color={COLORS.primary}>
-                            ${subtotal.toFixed(2)}
-                          </Typography>
-                        </Box>
-                      </CardContent>
-                    </Card>
+                <Grid container spacing={2}>
+                  <Grid item xs={12}>
+                    <Autocomplete
+                      value={usuarioSeleccionado}
+                      onChange={(_, value) => setUsuarioSeleccionado(value)}
+                      options={usuarios}
+                      loading={cargandoUsuarios}
+                      isOptionEqualToValue={(option, value) => option.id === value.id}
+                      getOptionLabel={(option) => option?.label ?? ''}
+                      noOptionsText={cargandoUsuarios ? 'Cargando usuarios...' : 'No se encontraron usuarios'}
+                      renderInput={(params) => (
+                        <TextField
+                          {...params}
+                          label="Usuario que registra la venta"
+                          placeholder="Selecciona un usuario"
+                          error={Boolean(errorUsuarios)}
+                          helperText={errorUsuarios || undefined}
+                          size="small"
+                          InputProps={{
+                            ...params.InputProps,
+                            sx: { borderRadius: 0 },
+                            endAdornment: (
+                              <>
+                                {cargandoUsuarios ? <CircularProgress color="inherit" size={16} /> : null}
+                                {params.InputProps.endAdornment}
+                              </>
+                            ),
+                          }}
+                        />
+                      )}
+                    />
                   </Grid>
 
-                  <Grid size={{ xs: 12, md: 6 }}>
-                    <Card
-                      sx={{
-                        borderRadius: 2,
-                        border: `1px solid ${alpha(COLORS.primary, 0.18)}`,
-                        background: alpha(COLORS.primary, 0.05),
-                        boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.22)',
-                        height: '100%',
-                      }}
-                    >
-                      <CardContent sx={{ p: 2.5, display: 'flex', flexDirection: 'column', gap: 2 }}>
-                        <Box display="flex" alignItems="center" gap={1}>
-                          <Icon icon="mdi:credit-card-check" width={20} height={20} color={COLORS.primary} />
-                          <Typography variant="h6" fontWeight={700} color={COLORS.textStrong}>
-                            Métodos de Pago
-                          </Typography>
-                        </Box>
-
-                        <Box
-                          sx={{
-                            mb: 1.5,
-                            p: 2,
-                            borderRadius: 2,
-                            background: alpha(COLORS.primary, 0.08),
-                            border: `1px solid ${alpha(COLORS.primary, 0.18)}`,
-                          }}
-                        >
-                          <Grid container spacing={2} alignItems="center">
-                            <Grid size={{ xs: 12, sm: 6 }}>
-                              <FormControl fullWidth size="small">
-                                <InputLabel>Método</InputLabel>
-                                <Select
-                                  value={nuevoPago.metodoPago}
-                                  onChange={(e) =>
-                                    setNuevoPago((prev) => ({ ...prev, metodoPago: e.target.value as MetodoPago }))
-                                  }
-                                  label="Método"
-                                  sx={selectSx}
-                                >
-                                  {METODOS_PAGO.map((metodo) => (
-                                    <MenuItem key={metodo.value} value={metodo.value}>
-                                      <Box display="flex" alignItems="center" gap={1}>
-                                        <Icon icon={metodo.icon} width={16} height={16} />
-                                        {metodo.label}
-                                      </Box>
-                                    </MenuItem>
-                                  ))}
-                                </Select>
-                              </FormControl>
-                            </Grid>
-                            <Grid size={{ xs: 12, sm: 4 }}>
-                              <TextField
-                                fullWidth
-                                size="small"
-                                type="number"
-                                label="Monto"
-                                value={nuevoPago.monto}
-                                onChange={(e) =>
-                                  setNuevoPago((prev) => ({ ...prev, monto: parseFloat(e.target.value) || 0 }))
-                                }
-                                inputProps={{ min: 0, step: 0.01 }}
-                                sx={fieldSx}
-                              />
-                            </Grid>
-                            <Grid size={{ xs: 12, sm: 2 }}>
-                              <CrystalButton
-                                baseColor={COLORS.primary}
-                                size="small"
-                                onClick={handleAgregarPago}
-                                disabled={nuevoPago.monto <= 0}
-                                sx={{ width: '100%', minHeight: 36 }}
-                              >
-                                <IconPlus size={16} />
-                              </CrystalButton>
-                            </Grid>
-                          </Grid>
-                        </Box>
-
-                        {pagos.length > 0 && (
-                          <TableContainer sx={{ mb: 2 }}>
-                            <Table size="small">
-                              <TableHead>
-                                <TableRow>
-                                  <TableCell>Método</TableCell>
-                                  <TableCell align="right">Monto</TableCell>
-                                  <TableCell align="center">Acciones</TableCell>
-                                </TableRow>
-                              </TableHead>
-                              <TableBody>
-                                {pagos.map((pago, index) => {
-                                  const metodo = METODOS_PAGO.find((m) => m.value === pago.metodoPago);
-                                  return (
-                                    <TableRow key={index}>
-                                      <TableCell>
-                                        <Box display="flex" alignItems="center" gap={1}>
-                                          {metodo && (
-                                            <Icon icon={metodo.icon} width={16} height={16} color={COLORS.primary} />
-                                          )}
-                                          {metodo?.label}
-                                        </Box>
-                                      </TableCell>
-                                      <TableCell align="right">
-                                        ${pago.monto.toFixed(2)}
-                                      </TableCell>
-                                      <TableCell align="center">
-                                        <IconButton
-                                          size="small"
-                                          onClick={() => handleEliminarPago(index)}
-                                          color="error"
-                                        >
-                                          <IconTrash size={16} />
-                                        </IconButton>
-                                      </TableCell>
-                                    </TableRow>
-                                  );
-                                })}
-                              </TableBody>
-                            </Table>
-                          </TableContainer>
-                        )}
-
-                        <Divider sx={{ my: 1.5 }} />
-                        <Box display="flex" flexDirection="column" gap={1}>
-                          <Box display="flex" justifyContent="space-between">
-                            <Typography color="text.secondary">Subtotal</Typography>
-                            <Typography fontWeight={600}>${subtotal.toFixed(2)}</Typography>
-                          </Box>
-                          <Box display="flex" justifyContent="space-between">
-                            <Typography color="text.secondary">Total Pagos</Typography>
-                            <Typography fontWeight={600} color={totalPagos >= subtotal ? 'success.main' : 'error.main'}>
-                              ${totalPagos.toFixed(2)}
-                            </Typography>
-                          </Box>
-                          {diferencia !== 0 && (
-                            <Box display="flex" justifyContent="space-between">
-                              <Typography fontWeight={700}>
-                                {diferencia > 0 ? 'Cambio' : 'Faltante'}
-                              </Typography>
-                              <Typography fontWeight={700} color={diferencia > 0 ? 'success.main' : 'error.main'}>
-                                ${Math.abs(diferencia).toFixed(2)}
-                              </Typography>
-                            </Box>
-                          )}
-                        </Box>
-
-                        {diferencia < -0.01 && (
-                          <Alert severity="error" sx={{ mt: 1.5 }}>
-                            Falta ${Math.abs(diferencia).toFixed(2)} para completar el pago
-                          </Alert>
-                        )}
-                        {diferencia > 0.01 && (
-                          <Alert severity="info" sx={{ mt: 1.5 }}>
-                            Cambio a entregar: ${cambio.toFixed(2)}
-                          </Alert>
-                        )}
-                      </CardContent>
-                    </Card>
+                  <Grid item xs={12}>
+                    <TextField
+                      fullWidth
+                      size="small"
+                      label="DNI o CUIT del cliente (requerido si no es efectivo)"
+                      value={dniCuit}
+                      onChange={(e) => setDniCuit(e.target.value)}
+                      required={requiereDni}
+                      InputProps={{ sx: { borderRadius: 0 } }}
+                    />
                   </Grid>
                 </Grid>
-              </Box>
-            </Box>
-          </DialogContent>
+              </CardContent>
+            </Card>
 
-          <Divider
-            sx={{
-              height: DIV_H,
-              border: 0,
-              backgroundImage: `
-                linear-gradient(to bottom, rgba(0,0,0,0.22), rgba(0,0,0,0.22)),
-                linear-gradient(to bottom, rgba(255,255,255,0.70), rgba(255,255,255,0.70)),
-                linear-gradient(90deg, rgba(255,255,255,0.05), ${COLORS.primary}, rgba(255,255,255,0.05))
-              `,
-              backgroundRepeat: 'no-repeat, no-repeat, repeat',
-              backgroundSize: '100% 1px, 100% 1px, 100% 100%',
-              backgroundPosition: 'top left, bottom left, center',
-              flex: '0 0 auto',
-            }}
-          />
+            <Card elevation={0} sx={{ border: '1px solid #e0e0e0', borderRadius: 0 }}>
+              <CardContent sx={{ p: 2 }}>
+                <Box display="flex" alignItems="center" gap={1} mb={2}>
+                  <Icon icon="mdi:clipboard-list-outline" width={20} height={20} color="#5d4037" />
+                  <Typography variant="h6" fontWeight={700}>
+                    Artículos ({articulos.length})
+                  </Typography>
+                </Box>
 
-          <DialogActions sx={{ p: 0, m: 0, minHeight: FOOTER_H }}>
-            <Box sx={{ width: '100%', display: 'flex', justifyContent: 'flex-end', px: 3, py: 2.5, gap: 1.5 }}>
-              <CrystalSoftButton
-                baseColor={COLORS.primary}
-                onClick={handleClose}
-                disabled={creandoVenta}
-                sx={{ minHeight: 44, px: 3, fontWeight: 600 }}
-              >
-                Cancelar
-              </CrystalSoftButton>
-              <CrystalButton
-                baseColor={COLORS.primary}
-                onClick={handleConfirmarVenta}
-                disabled={!puedeConfirmar || creandoVenta}
-                sx={{ minHeight: 44, px: 3, fontWeight: 700, '&:disabled': { opacity: 0.55, boxShadow: 'none' } }}
-              >
-                {creandoVenta ? 'Procesando...' : 'Confirmar Venta'}
-              </CrystalButton>
-            </Box>
-          </DialogActions>
-        </Box>
-      </TexturedPanel>
+                <TableContainer sx={{ maxHeight: 200, border: '1px solid #eeeeee' }}>
+                  <Table size="small" stickyHeader>
+                    <TableHead>
+                      <TableRow sx={{ bgcolor: '#f5f5f5' }}>
+                        <TableCell sx={{ fontWeight: 700, color: 'text.secondary' }}>Artículo</TableCell>
+                        <TableCell align="right" sx={{ fontWeight: 700, color: 'text.secondary' }}>Cant.</TableCell>
+                        <TableCell align="right" sx={{ fontWeight: 700, color: 'text.secondary' }}>Precio</TableCell>
+                        <TableCell align="right" sx={{ fontWeight: 700, color: 'text.secondary' }}>Subtotal</TableCell>
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
+                      {articulos.map((articulo) => (
+                        <TableRow key={articulo.id} hover>
+                          <TableCell>
+                            <Typography variant="body2">
+                              {articulo.Codigo} - {articulo.Descripcion}
+                            </Typography>
+                          </TableCell>
+                          <TableCell align="right">{articulo.cantidad}</TableCell>
+                          <TableCell align="right">${articulo.precioUnitario.toFixed(2)}</TableCell>
+                          <TableCell align="right">
+                            <Typography fontWeight="bold">
+                              ${articulo.subtotal.toFixed(2)}
+                            </Typography>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </TableContainer>
+
+                <Divider sx={{ my: 2 }} />
+                <Box display="flex" justifyContent="space-between">
+                  <Typography variant="subtitle1" fontWeight={700}>
+                    TOTAL DE ARTÍCULOS
+                  </Typography>
+                  <Typography variant="subtitle1" fontWeight={700} color="#5d4037">
+                    ${subtotal.toFixed(2)}
+                  </Typography>
+                </Box>
+              </CardContent>
+            </Card>
+          </Grid>
+
+          <Grid item xs={12} md={6}>
+            <Card elevation={0} sx={{ border: '1px solid #e0e0e0', borderRadius: 0, height: '100%' }}>
+              <CardContent sx={{ p: 2, display: 'flex', flexDirection: 'column', gap: 2 }}>
+                <Box display="flex" alignItems="center" gap={1}>
+                  <Icon icon="mdi:credit-card-check" width={20} height={20} color="#5d4037" />
+                  <Typography variant="h6" fontWeight={700}>
+                    Métodos de Pago
+                  </Typography>
+                </Box>
+
+                <Box
+                  sx={{
+                    p: 2,
+                    bgcolor: '#fafafa',
+                    border: '1px solid #e0e0e0',
+                  }}
+                >
+                  <Grid container spacing={2} alignItems="center">
+                    <Grid item xs={12} sm={6}>
+                      <FormControl fullWidth size="small">
+                        <InputLabel>Método</InputLabel>
+                        <Select
+                          value={nuevoPago.metodoPago}
+                          onChange={(e) =>
+                            setNuevoPago((prev) => ({ ...prev, metodoPago: e.target.value as MetodoPago }))
+                          }
+                          label="Método"
+                          sx={{ borderRadius: 0, bgcolor: '#fff' }}
+                        >
+                          {METODOS_PAGO.map((metodo) => (
+                            <MenuItem key={metodo.value} value={metodo.value}>
+                              <Box display="flex" alignItems="center" gap={1}>
+                                <Icon icon={metodo.icon} width={16} height={16} />
+                                {metodo.label}
+                              </Box>
+                            </MenuItem>
+                          ))}
+                        </Select>
+                      </FormControl>
+                    </Grid>
+                    <Grid item xs={12} sm={4}>
+                      <TextField
+                        fullWidth
+                        size="small"
+                        type="number"
+                        label="Monto"
+                        value={nuevoPago.monto}
+                        onChange={(e) =>
+                          setNuevoPago((prev) => ({ ...prev, monto: parseFloat(e.target.value) || 0 }))
+                        }
+                        InputProps={{ sx: { borderRadius: 0, bgcolor: '#fff' }, startAdornment: <InputAdornment position="start">$</InputAdornment> }}
+                        inputProps={{ min: 0, step: 0.01 }}
+                      />
+                    </Grid>
+                    <Grid item xs={12} sm={2}>
+                      <Button
+                        variant="contained"
+                        color="primary"
+                        size="small"
+                        onClick={handleAgregarPago}
+                        disabled={nuevoPago.monto <= 0}
+                        sx={{ width: '100%', minHeight: 40, borderRadius: 0, bgcolor: '#5d4037', '&:hover': { bgcolor: '#4e342e' } }}
+                      >
+                        <IconPlus size={16} />
+                      </Button>
+                    </Grid>
+                  </Grid>
+                </Box>
+
+                {pagos.length > 0 && (
+                  <TableContainer sx={{ mb: 2, border: '1px solid #e0e0e0' }}>
+                    <Table size="small">
+                      <TableHead>
+                        <TableRow sx={{ bgcolor: '#f5f5f5' }}>
+                          <TableCell sx={{ fontWeight: 700, color: 'text.secondary' }}>Método</TableCell>
+                          <TableCell align="right" sx={{ fontWeight: 700, color: 'text.secondary' }}>Monto</TableCell>
+                          <TableCell align="center" sx={{ fontWeight: 700, color: 'text.secondary' }}>Acciones</TableCell>
+                        </TableRow>
+                      </TableHead>
+                      <TableBody>
+                        {pagos.map((pago, index) => {
+                          const metodo = METODOS_PAGO.find((m) => m.value === pago.metodoPago);
+                          return (
+                            <TableRow key={index} hover>
+                              <TableCell>
+                                <Box display="flex" alignItems="center" gap={1}>
+                                  {metodo && (
+                                    <Icon icon={metodo.icon} width={16} height={16} color="#5d4037" />
+                                  )}
+                                  {metodo?.label}
+                                </Box>
+                              </TableCell>
+                              <TableCell align="right">
+                                ${pago.monto.toFixed(2)}
+                              </TableCell>
+                              <TableCell align="center">
+                                <IconButton
+                                  size="small"
+                                  onClick={() => handleEliminarPago(index)}
+                                  sx={{ color: '#d32f2f' }}
+                                >
+                                  <IconTrash size={16} />
+                                </IconButton>
+                              </TableCell>
+                            </TableRow>
+                          );
+                        })}
+                      </TableBody>
+                    </Table>
+                  </TableContainer>
+                )}
+
+                <Divider sx={{ my: 1.5 }} />
+                <Box display="flex" flexDirection="column" gap={1}>
+                  <Box display="flex" justifyContent="space-between">
+                    <Typography color="text.secondary">Total a Pagar</Typography>
+                    <Typography fontWeight={600}>${subtotal.toFixed(2)}</Typography>
+                  </Box>
+                  <Box display="flex" justifyContent="space-between">
+                    <Typography color="text.secondary">Pagado</Typography>
+                    <Typography fontWeight={600} color={totalPagos >= subtotal ? 'success.main' : 'error.main'}>
+                      ${totalPagos.toFixed(2)}
+                    </Typography>
+                  </Box>
+                  {diferencia !== 0 && (
+                    <Box display="flex" justifyContent="space-between">
+                      <Typography fontWeight={700}>
+                        {diferencia > 0 ? 'Cambio' : 'Faltante'}
+                      </Typography>
+                      <Typography fontWeight={700} color={diferencia > 0 ? 'success.main' : 'error.main'}>
+                        ${Math.abs(diferencia).toFixed(2)}
+                      </Typography>
+                    </Box>
+                  )}
+                </Box>
+
+                {diferencia < -0.01 && (
+                  <Alert severity="error" sx={{ mt: 1.5, borderRadius: 0 }}>
+                    Falta <strong>${Math.abs(diferencia).toFixed(2)}</strong> para completar el pago
+                  </Alert>
+                )}
+                {diferencia > 0.01 && (
+                  <Alert severity="info" sx={{ mt: 1.5, borderRadius: 0 }}>
+                    Cambio a entregar: <strong>${cambio.toFixed(2)}</strong>
+                  </Alert>
+                )}
+              </CardContent>
+            </Card>
+          </Grid>
+        </Grid>
+      </DialogContent>
+
+      <DialogActions sx={{ p: 2, bgcolor: '#f5f5f5', borderTop: '1px solid #e0e0e0' }}>
+        <Button
+          onClick={handleClose}
+          disabled={creandoVenta}
+          color="inherit"
+          sx={{ fontWeight: 600 }}
+        >
+          Cancelar
+        </Button>
+        <Button
+          variant="contained"
+          disableElevation
+          onClick={handleConfirmarVenta}
+          disabled={!puedeConfirmar || creandoVenta}
+          sx={{
+            bgcolor: '#5d4037',
+            borderRadius: 0,
+            px: 3,
+            fontWeight: 700,
+            '&:hover': { bgcolor: '#4e342e' },
+            '&:disabled': { opacity: 0.6 }
+          }}
+        >
+          {creandoVenta ? 'Procesando...' : 'Confirmar Venta'}
+        </Button>
+      </DialogActions>
+
       {/* Snackbar para feedback de errores */}
       <Snackbar open={snack.open} autoHideDuration={2600} onClose={() => setSnack((s) => ({ ...s, open: false }))} anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}>
-        <Alert onClose={() => setSnack((s) => ({ ...s, open: false }))} severity={snack.sev} variant="filled" sx={{ width: '100%' }}>
+        <Alert onClose={() => setSnack((s) => ({ ...s, open: false }))} severity={snack.sev} variant="filled" sx={{ width: '100%', borderRadius: 0 }}>
           {snack.msg}
         </Alert>
       </Snackbar>
     </Dialog>
   );
-}
-;
+};

@@ -20,13 +20,10 @@ import {
 import { alpha } from '@mui/material/styles';
 import { Icon } from '@iconify/react';
 
-// UI Components
-import { TexturedPanel } from '../ui/TexturedFrame/TexturedPanel';
-import CrystalButton, { CrystalSoftButton } from '../ui/CrystalButton';
-import { oroNegro } from '../../ui/colores';
+import { verde } from '../../ui/colores';
 
 // Configuración visual
-const COLORS = oroNegro;
+const COLORS = verde;
 const VH_MAX = 85;
 const HEADER_H = 60;
 const FOOTER_H = 60;
@@ -166,6 +163,7 @@ export default function IngresoStockModal({
 
     const stockActual = getStockActual();
 
+    /* ======================== Render ======================== */
     return (
         <Dialog
             open={open}
@@ -174,184 +172,116 @@ export default function IngresoStockModal({
             fullWidth
             PaperProps={{
                 sx: {
-                    borderRadius: 4,
-                    bgcolor: 'transparent !important',
-                    backgroundColor: 'transparent !important',
-                    boxShadow: '0 8px 40px rgba(0,0,0,0.28)',
-                    overflow: 'hidden',
-                    maxHeight: `${VH_MAX}vh`,
+                    borderRadius: 0,
+                    boxShadow: 'none',
+                    border: '1px solid #e0e0e0',
+                    maxHeight: '90vh',
                 }
             }}
         >
-            <TexturedPanel
-                accent={COLORS.primary}
-                radius={12}
-                contentPadding={0}
-                bgTintPercent={12}
-                bgAlpha={1}
-                textureBaseOpacity={0.22}
-                textureBoostOpacity={0.19}
-                textureBrightness={1.12}
-                textureContrast={1.03}
-                tintOpacity={0.38}
-            >
-                <Box sx={{ display: 'flex', flexDirection: 'column', maxHeight: `${VH_MAX}vh` }}>
-                    {/* Header */}
-                    <DialogTitle sx={{ p: 0, m: 0, minHeight: HEADER_H, display: 'flex', alignItems: 'center' }}>
-                        <Box sx={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', px: 3, gap: 2 }}>
-                            <Box sx={{
-                                width: 40,
-                                height: 40,
-                                borderRadius: '50%',
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                background: `linear-gradient(135deg, ${COLORS.primary} 0%, ${COLORS.primaryHover} 100%)`,
-                                boxShadow: 'inset 0 2px 4px rgba(255,255,255,0.3), 0 4px 12px rgba(0,0,0,0.25)',
-                                color: COLORS.textStrong
-                            }}>
-                                <Icon icon="mdi:package-variant-plus" width={22} height={22} />
-                            </Box>
+            <Box sx={{ display: 'flex', flexDirection: 'column', maxHeight: '90vh' }}>
+                {/* Header */}
+                <DialogTitle sx={{ p: 2, bgcolor: COLORS.primary, color: '#fff', display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <Icon icon="mdi:package-variant-plus" width={24} height={24} />
+                    <Box display="flex" flexDirection="column">
+                        <Typography variant="h6" fontWeight={700}>
+                            Ingreso / Ajuste de Stock
+                        </Typography>
+                        {selectedArticle && (
+                            <Typography variant="caption" fontWeight={500} sx={{ opacity: 0.9 }}>
+                                {selectedArticle.nombre}
+                            </Typography>
+                        )}
+                    </Box>
+                </DialogTitle>
 
-                            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.25 }}>
-                                <Typography variant="h6" fontWeight={700} color={COLORS.headerText} sx={{ textShadow: '0 2px 4px rgba(0,0,0,0.8)' }}>
-                                    Ingreso / Ajuste de Stock
-                                </Typography>
-                                {selectedArticle && (
-                                    <Typography variant="subtitle2" color={alpha(COLORS.headerText, 0.8)} fontWeight={600}>
-                                        {selectedArticle.nombre}
-                                    </Typography>
+                {/* Content */}
+                <DialogContent sx={{ p: 3, bgcolor: '#f9fafb' }}>
+                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+                        {error && <Alert severity="error" sx={{ borderRadius: 0 }}>{error}</Alert>}
+
+                        {!articuloPreseleccionado && (
+                            <Autocomplete
+                                options={(dataArticulos as any)?.buscarArticulosParaAsignacion || []}
+                                getOptionLabel={(option: any) => `${option.nombre} (${option.codigo})`}
+                                loading={loadingArticulos}
+                                onInputChange={(_, newInputValue) => setSearchTerm(newInputValue)}
+                                onChange={(_, newValue) => setSelectedArticle(newValue)}
+                                renderInput={(params) => (
+                                    <TextField
+                                        {...params}
+                                        label="Buscar Artículo"
+                                        fullWidth
+                                        InputProps={{
+                                            ...params.InputProps,
+                                            sx: { borderRadius: 0 },
+                                            endAdornment: (
+                                                <React.Fragment>
+                                                    {loadingArticulos ? <CircularProgress color="inherit" size={20} /> : null}
+                                                    {params.InputProps.endAdornment}
+                                                </React.Fragment>
+                                            ),
+                                        }}
+                                    />
                                 )}
-                            </Box>
-
-                            <Box sx={{ ml: 'auto' }}>
-                                <CrystalSoftButton
-                                    baseColor={COLORS.primary}
-                                    onClick={onClose}
-                                    sx={{
-                                        width: 40, height: 40, minWidth: 40, borderRadius: '50%', p: 0,
-                                        display: 'flex', alignItems: 'center', justifyContent: 'center'
-                                    }}
-                                >
-                                    <Icon icon="mdi:close" color={COLORS.headerText} width={20} height={20} />
-                                </CrystalSoftButton>
-                            </Box>
-                        </Box>
-                    </DialogTitle>
-
-                    <Divider sx={{
-                        height: DIV_H, border: 0,
-                        backgroundImage: `linear-gradient(90deg, rgba(255,255,255,0.05), ${COLORS.primary}, rgba(255,255,255,0.05))`
-                    }} />
-
-                    {/* Content */}
-                    <DialogContent sx={{ p: 0, overflow: 'auto', maxHeight: CONTENT_MAX, background: '#f8fafb' }}>
-                        <Box sx={{ p: 3, display: 'flex', flexDirection: 'column', gap: 2.5 }}>
-                            {error && <Alert severity="error" sx={{ borderRadius: 2 }}>{error}</Alert>}
-
-                            {!articuloPreseleccionado && (
-                                <Autocomplete
-                                    options={(dataArticulos as any)?.buscarArticulosParaAsignacion || []}
-                                    getOptionLabel={(option: any) => `${option.nombre} (${option.codigo})`}
-                                    loading={loadingArticulos}
-                                    onInputChange={(_, newInputValue) => setSearchTerm(newInputValue)}
-                                    onChange={(_, newValue) => setSelectedArticle(newValue)}
-                                    renderInput={(params) => (
-                                        <TextField
-                                            {...params}
-                                            label="Buscar Artículo"
-                                            fullWidth
-                                            sx={{
-                                                '& .MuiOutlinedInput-root': {
-                                                    borderRadius: 2,
-                                                    background: '#ffffff',
-                                                    '&.Mui-focused fieldset': { borderColor: COLORS.primary },
-                                                },
-                                            }}
-                                            InputProps={{
-                                                ...params.InputProps,
-                                                endAdornment: (
-                                                    <React.Fragment>
-                                                        {loadingArticulos ? <CircularProgress color="inherit" size={20} /> : null}
-                                                        {params.InputProps.endAdornment}
-                                                    </React.Fragment>
-                                                ),
-                                            }}
-                                        />
-                                    )}
-                                />
-                            )}
-
-                            <TextField
-                                select
-                                label="Punto de Destino"
-                                value={puntoDestino}
-                                onChange={(e) => setPuntoDestino(Number(e.target.value))}
-                                fullWidth
-                                sx={{
-                                    '& .MuiOutlinedInput-root': {
-                                        borderRadius: 2,
-                                        background: '#ffffff',
-                                        '&.Mui-focused fieldset': { borderColor: COLORS.primary },
-                                    },
-                                }}
-                            >
-                                {puntos.map((punto) => (
-                                    <MenuItem key={punto.id} value={punto.id}>
-                                        {punto.nombre}
-                                    </MenuItem>
-                                ))}
-                            </TextField>
-
-                            <TextField
-                                label="Nueva Cantidad Total"
-                                type="number"
-                                value={cantidad}
-                                onChange={(e) => setCantidad(e.target.value)}
-                                fullWidth
-                                helperText={stockActual !== null ? `Stock actual en este punto: ${stockActual}` : 'Ingrese la cantidad total final que habrá en el punto'}
-                                sx={{
-                                    '& .MuiOutlinedInput-root': {
-                                        borderRadius: 2,
-                                        background: '#ffffff',
-                                        '&.Mui-focused fieldset': { borderColor: COLORS.primary },
-                                    },
-                                }}
                             />
+                        )}
 
-                            <TextField
-                                label="Motivo (Opcional)"
-                                value={motivo}
-                                onChange={(e) => setMotivo(e.target.value)}
-                                fullWidth
-                                multiline
-                                rows={2}
-                                sx={{
-                                    '& .MuiOutlinedInput-root': {
-                                        borderRadius: 2,
-                                        background: '#ffffff',
-                                        '&.Mui-focused fieldset': { borderColor: COLORS.primary },
-                                    },
-                                }}
-                            />
-                        </Box>
-                    </DialogContent>
+                        <TextField
+                            select
+                            label="Punto de Destino"
+                            value={puntoDestino}
+                            onChange={(e) => setPuntoDestino(Number(e.target.value))}
+                            fullWidth
+                            InputProps={{ sx: { borderRadius: 0 } }}
+                        >
+                            {puntos.map((punto) => (
+                                <MenuItem key={punto.id} value={punto.id}>
+                                    {punto.nombre}
+                                </MenuItem>
+                            ))}
+                        </TextField>
 
-                    <Divider sx={{ height: DIV_H, border: 0, backgroundImage: `linear-gradient(90deg, rgba(255,255,255,0.05), ${COLORS.primary}, rgba(255,255,255,0.05))` }} />
+                        <TextField
+                            label="Nueva Cantidad Total"
+                            type="number"
+                            value={cantidad}
+                            onChange={(e) => setCantidad(e.target.value)}
+                            fullWidth
+                            helperText={stockActual !== null ? `Stock actual en este punto: ${stockActual}` : 'Ingrese la cantidad total final que habrá en el punto'}
+                            InputProps={{ sx: { borderRadius: 0 } }}
+                        />
 
-                    {/* Footer */}
-                    <DialogActions sx={{ p: 0, m: 0, minHeight: FOOTER_H, bgcolor: '#f8fafb' }}>
-                        <Box sx={{ width: '100%', height: '100%', display: 'flex', justifyContent: 'flex-end', alignItems: 'center', px: 3, gap: 1.5 }}>
-                            <CrystalSoftButton baseColor={COLORS.dark} onClick={onClose} disabled={loadingMutation}>
-                                Cancelar
-                            </CrystalSoftButton>
-                            <CrystalButton baseColor={COLORS.primary} onClick={handleSubmit} disabled={loadingMutation || !puntoDestino || !cantidad || !selectedArticle}>
-                                {loadingMutation ? 'Guardando...' : 'Guardar Ajuste'}
-                            </CrystalButton>
-                        </Box>
-                    </DialogActions>
-                </Box>
-            </TexturedPanel>
+                        <TextField
+                            label="Motivo (Opcional)"
+                            value={motivo}
+                            onChange={(e) => setMotivo(e.target.value)}
+                            fullWidth
+                            multiline
+                            rows={2}
+                            InputProps={{ sx: { borderRadius: 0 } }}
+                        />
+                    </Box>
+                </DialogContent>
+
+                <Divider />
+
+                {/* Footer */}
+                <DialogActions sx={{ p: 2, bgcolor: '#f5f5f5' }}>
+                    <Button onClick={onClose} disabled={loadingMutation} sx={{ color: 'text.secondary', fontWeight: 600 }}>
+                        Cancelar
+                    </Button>
+                    <Button
+                        variant="contained"
+                        onClick={handleSubmit}
+                        disabled={loadingMutation || !puntoDestino || !cantidad || !selectedArticle}
+                        disableElevation
+                        sx={{ bgcolor: COLORS.primary, borderRadius: 0, fontWeight: 700, px: 3, '&:hover': { bgcolor: COLORS.primary } }}
+                    >
+                        {loadingMutation ? 'Guardando...' : 'Guardar Ajuste'}
+                    </Button>
+                </DialogActions>
+            </Box>
         </Dialog>
     );
 }

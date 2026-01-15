@@ -22,6 +22,7 @@ import {
   TextField,
 } from '@mui/material';
 import { Store, Warehouse, MoreVert } from '@mui/icons-material';
+import { Icon } from '@iconify/react';
 import { IconEdit, IconEye, IconRefresh, IconTrash } from '@tabler/icons-react';
 import { useQuery, useMutation } from '@apollo/client/react';
 import {
@@ -330,67 +331,32 @@ export default function TablaPuntosMudras({ tipo, onEditarPunto, onVerInventario
     );
   }
 
+  /* ======================== Render ======================== */
   return (
-    <Paper elevation={0} variant="outlined" sx={{ p: 3, borderColor: paleta.borderOuter, borderRadius: 2, bgcolor: 'background.paper' }}>
+    <Box sx={{ bgcolor: 'background.paper', border: '1px solid #e0e0e0' }}>
       {toolbar}
 
-      <TableContainer sx={{ borderRadius: 2, border: '1px solid', borderColor: paleta.borderInner, bgcolor: 'background.paper' }}>
-        <Table stickyHeader size={'small'} sx={{ '& .MuiTableCell-head': { bgcolor: paleta.headerBg, color: paleta.headerText } }}>
-          <TableHead sx={{ position: 'sticky', top: 0, zIndex: 5 }}>
-            <TableRow sx={{ bgcolor: paleta.headerBg, '& th': { top: 0, position: 'sticky', zIndex: 5 }, '& th:first-of-type': { borderTopLeftRadius: 8 }, '& th:last-of-type': { borderTopRightRadius: 8 } }}>
-              <TableCell sx={{
-                fontWeight: 700,
-                color: paleta.headerText,
-                borderBottom: '3px solid',
-                borderColor: paleta.headerBorder,
-                width: { xs: '30%', sm: '25%', md: '25%' }
-              }}>
-                Nombre
-              </TableCell>
-              <TableCell sx={{
-                fontWeight: 700,
-                color: paleta.headerText,
-                borderBottom: '3px solid',
-                borderColor: paleta.headerBorder,
-                width: { xs: '25%', sm: '20%', md: '20%' }
-              }}>
-                Descripción
-              </TableCell>
-              <TableCell sx={{
-                fontWeight: 700,
-                color: paleta.headerText,
-                borderBottom: '3px solid',
-                borderColor: paleta.headerBorder,
-                width: { xs: '25%', sm: '25%', md: '25%' }
-              }}>
-                Ubicación
-              </TableCell>
-              <TableCell sx={{ fontWeight: 700, color: paleta.headerText, borderBottom: '3px solid', borderColor: paleta.headerBorder }}>
-                Estado
-              </TableCell>
-              <TableCell sx={{ fontWeight: 700, color: paleta.headerText, borderBottom: '3px solid', borderColor: paleta.headerBorder, textAlign: 'center' }}>Acciones</TableCell>
+      <TableContainer sx={{ borderRadius: 0 }}>
+        <Table stickyHeader size="small">
+          <TableHead>
+            <TableRow>
+              <TableCell sx={{ bgcolor: '#f5f5f5', fontWeight: 700, borderRadius: 0 }}>Nombre</TableCell>
+              <TableCell sx={{ bgcolor: '#f5f5f5', fontWeight: 700, borderRadius: 0 }}>Descripción</TableCell>
+              <TableCell sx={{ bgcolor: '#f5f5f5', fontWeight: 700, borderRadius: 0 }}>Ubicación</TableCell>
+              <TableCell sx={{ bgcolor: '#f5f5f5', fontWeight: 700, borderRadius: 0 }}>Estado</TableCell>
+              <TableCell align="center" sx={{ bgcolor: '#f5f5f5', fontWeight: 700, borderRadius: 0 }}>Acciones</TableCell>
             </TableRow>
           </TableHead>
-          <TableBody sx={{ '& .MuiTableCell-root': { py: 1 } }}>
-            {puntosFiltrados.map((punto, idx) => (
-              <TableRow
-                key={punto.id}
-                sx={{
-                  bgcolor: idx % 2 === 1 ? 'grey.50' : 'inherit',
-                  '&:hover': { bgcolor: paleta.rowHover }
-                }}
-              >
-                <TableCell sx={{ width: { xs: '30%', sm: '25%', md: '25%' } }}>
+          <TableBody>
+            {puntosPaginados.map((punto, idx) => (
+              <TableRow key={punto.id} hover>
+                <TableCell>
                   <Box display="flex" alignItems="center" gap={1}>
                     <Chip
                       icon={getIconByTipo(punto.tipo)}
                       label={punto.tipo === 'venta' ? 'Venta' : 'Depósito'}
                       size="small"
-                      sx={{
-                        bgcolor: paleta.chipBg,
-                        color: paleta.chipText,
-                        fontWeight: 500
-                      }}
+                      sx={{ borderRadius: 0, fontWeight: 600, bgcolor: punto.tipo === 'venta' ? 'success.light' : 'warning.light', color: punto.tipo === 'venta' ? 'success.dark' : 'warning.dark' }}
                     />
                     <Box>
                       <Typography variant="body2" fontWeight={600} sx={{ whiteSpace: 'normal' }}>
@@ -402,69 +368,40 @@ export default function TablaPuntosMudras({ tipo, onEditarPunto, onVerInventario
                     </Box>
                   </Box>
                 </TableCell>
-                <TableCell sx={{ width: { xs: '25%', sm: '20%', md: '20%' } }}>
-                  <Typography variant="body2" sx={{ whiteSpace: 'normal' }}>
-                    {punto.descripcion || '-'}
-                  </Typography>
+                <TableCell>
+                  <Typography variant="body2">{punto.descripcion || '-'}</Typography>
                   <Typography variant="caption" color="text.secondary">
                     {new Date(punto.fechaCreacion).toLocaleDateString('es-AR')}
                   </Typography>
                 </TableCell>
-                <TableCell sx={{ width: { xs: '25%', sm: '25%', md: '25%' } }}>
-                  <Typography variant="body2" sx={{ whiteSpace: 'normal' }}>
-                    {punto.direccion || '-'}
-                  </Typography>
-                  {punto.telefono && (
-                    <Typography variant="caption" color="text.secondary" display="block">
-                      📞 {punto.telefono}
-                    </Typography>
-                  )}
+                <TableCell>
+                  <Typography variant="body2">{punto.direccion || '-'}</Typography>
+                  {punto.telefono && <Typography variant="caption" display="block">📞 {punto.telefono}</Typography>}
                 </TableCell>
                 <TableCell>
                   <Chip
                     label={punto.activo ? 'Activo' : 'Inactivo'}
                     color={punto.activo ? 'success' : 'default'}
                     size="small"
-                    variant="filled"
+                    sx={{ borderRadius: 0 }}
                   />
                 </TableCell>
-                <TableCell>
+                <TableCell align="center">
                   <Box display="flex" justifyContent="center" gap={1}>
                     <Tooltip title="Ver detalles">
-                      <IconButton
-                        size="small"
-                        color="info"
-                        onClick={() => console.log('Ver punto:', punto)}
-                        sx={{ p: 0.75 }}
-                      >
-                        <IconEye size={20} />
+                      <IconButton size="small" onClick={() => console.log('Ver punto:', punto)}>
+                        <IconEye size={18} />
                       </IconButton>
                     </Tooltip>
                     <Tooltip title="Editar punto">
-                      <IconButton
-                        size="small"
-                        color="success"
-                        onClick={() => {
-                          setPuntoSeleccionado(punto);
-                          handleEditarPunto();
-                        }}
-                        sx={{ p: 0.75 }}
-                      >
-                        <IconEdit size={20} />
+                      <IconButton size="small" color="primary" onClick={() => { setPuntoSeleccionado(punto); handleEditarPunto(); }}>
+                        <IconEdit size={18} />
                       </IconButton>
                     </Tooltip>
                     {onVerInventario && (
                       <Tooltip title="Ver inventario">
-                        <IconButton
-                          size="small"
-                          color="primary"
-                          onClick={() => {
-                            setPuntoSeleccionado(punto);
-                            handleVerInventario();
-                          }}
-                          sx={{ p: 0.75 }}
-                        >
-                          <Store sx={{ fontSize: 20 }} />
+                        <IconButton size="small" color="secondary" onClick={() => { setPuntoSeleccionado(punto); handleVerInventario(); }}>
+                          <Store sx={{ fontSize: 18 }} />
                         </IconButton>
                       </Tooltip>
                     )}
@@ -474,13 +411,9 @@ export default function TablaPuntosMudras({ tipo, onEditarPunto, onVerInventario
                           size="small"
                           color="error"
                           disabled={puntos.filter(p => p.tipo === tipo).length <= 1}
-                          onClick={() => {
-                            setPuntoSeleccionado(punto);
-                            handleConfirmarEliminacion();
-                          }}
-                          sx={{ p: 0.75, opacity: puntos.filter(p => p.tipo === tipo).length <= 1 ? 0.3 : 1 }}
+                          onClick={() => { setPuntoSeleccionado(punto); handleConfirmarEliminacion(); }}
                         >
-                          <IconTrash size={20} />
+                          <IconTrash size={18} />
                         </IconButton>
                       </span>
                     </Tooltip>
@@ -488,119 +421,50 @@ export default function TablaPuntosMudras({ tipo, onEditarPunto, onVerInventario
                 </TableCell>
               </TableRow>
             ))}
+            {!loading && puntosFiltrados.length === 0 && (
+              <TableRow>
+                <TableCell colSpan={5} align="center" sx={{ py: 3 }}>
+                  <Typography color="text.secondary">
+                    No se encontraron {tipo === 'venta' ? 'puntos de venta' : 'depósitos'}.
+                  </Typography>
+                </TableCell>
+              </TableRow>
+            )}
           </TableBody>
         </Table>
       </TableContainer>
 
-      {/* Paginación personalizada */}
-      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', p: 2, borderTop: '1px solid', borderColor: 'divider' }}>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-          <Typography variant="body2" color="text.secondary">
-            Filas por página:
-          </Typography>
+      {/* Pagination Flat */}
+      <Box sx={{ borderTop: '1px solid #e0e0e0', p: 1, display: 'flex', alignItems: 'center', justifyContent: 'space-between', bgcolor: '#fafafa' }}>
+        <Box display="flex" alignItems="center" gap={2}>
+          <Typography variant="body2" color="text.secondary">Filas por página:</Typography>
           <TextField
             select
-            size="small"
             value={rowsPerPage}
             onChange={handleChangeRowsPerPage}
-            sx={{ minWidth: 80 }}
+            size="small"
+            variant="standard"
+            InputProps={{ disableUnderline: true, sx: { fontSize: '0.875rem' } }}
           >
-            {[50, 100, 150].map((option) => (
-              <option key={option} value={option}>
-                {option}
-              </option>
+            {[10, 25, 50, 100].map((opt) => (
+              <MenuItem key={opt} value={opt}>{opt}</MenuItem>
             ))}
           </TextField>
         </Box>
-
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+        <Box display="flex" alignItems="center" gap={1}>
           <Typography variant="body2" color="text.secondary">
-            {`${page * rowsPerPage + 1}-${Math.min((page + 1) * rowsPerPage, puntosFiltrados.length)} de ${puntosFiltrados.length}`}
+            {page * rowsPerPage + 1}-{Math.min((page + 1) * rowsPerPage, puntosFiltrados.length)} de {puntosFiltrados.length}
           </Typography>
-
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-            {generarNumerosPaginas().map((numeroPagina, index) => (
-              <Box key={index}>
-                {numeroPagina === '...' ? (
-                  <Typography variant="body2" color="text.secondary" sx={{ px: 1 }}>
-                    ...
-                  </Typography>
-                ) : (
-                  <Button
-                    size="small"
-                    variant={paginaActual === numeroPagina ? 'contained' : 'text'}
-                    onClick={() => handleChangePage(null, (numeroPagina as number) - 1)}
-                    sx={{
-                      minWidth: 32,
-                      height: 32,
-                      textTransform: 'none',
-                      fontSize: '0.875rem',
-                      ...(paginaActual === numeroPagina ? {
-                        bgcolor: grisVerdoso.primary,
-                        color: 'white',
-                        '&:hover': { bgcolor: grisVerdoso.primaryHover }
-                      } : {
-                        color: 'text.secondary',
-                        '&:hover': { bgcolor: grisVerdoso.rowHover }
-                      })
-                    }}
-                  >
-                    {numeroPagina}
-                  </Button>
-                )}
-              </Box>
-            ))}
-          </Box>
-
-          <Box sx={{ display: 'flex', alignItems: 'center' }}>
-            <IconButton
-              size="small"
-              onClick={() => handleChangePage(null, 0)}
-              disabled={page === 0}
-              sx={{ color: 'text.secondary' }}
-              title="Primera página"
-            >
-              ⏮
+          <Box>
+            <IconButton size="small" onClick={() => handleChangePage(null, page - 1)} disabled={page === 0}>
+              <Icon icon="mdi:chevron-left" />
             </IconButton>
-            <IconButton
-              size="small"
-              onClick={() => handleChangePage(null, page - 1)}
-              disabled={page === 0}
-              sx={{ color: 'text.secondary' }}
-              title="Página anterior"
-            >
-              ◀
-            </IconButton>
-            <IconButton
-              size="small"
-              onClick={() => handleChangePage(null, page + 1)}
-              disabled={page >= totalPaginas - 1}
-              sx={{ color: 'text.secondary' }}
-              title="Página siguiente"
-            >
-              ▶
-            </IconButton>
-            <IconButton
-              size="small"
-              onClick={() => handleChangePage(null, totalPaginas - 1)}
-              disabled={page >= totalPaginas - 1}
-              sx={{ color: 'text.secondary' }}
-              title="Última página"
-            >
-              ⏭
+            <IconButton size="small" onClick={() => handleChangePage(null, page + 1)} disabled={page >= totalPaginas - 1}>
+              <Icon icon="mdi:chevron-right" />
             </IconButton>
           </Box>
         </Box>
       </Box>
-
-      {/* Mensaje si no hay resultados */}
-      {!loading && puntosFiltrados.length === 0 && (
-        <Box textAlign="center" py={4}>
-          <Typography color="text.secondary">
-            No se encontraron {tipo === 'venta' ? 'puntos de venta' : 'depósitos'} que coincidan con la búsqueda
-          </Typography>
-        </Box>
-      )}
 
       {/* Modal de confirmación para eliminar */}
       <ModalConfirmarEliminacion
@@ -614,10 +478,10 @@ export default function TablaPuntosMudras({ tipo, onEditarPunto, onVerInventario
       />
       {/* Snackbar interno para feedback */}
       <Snackbar open={snack.open} autoHideDuration={2500} onClose={() => setSnack((s) => ({ ...s, open: false }))} anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}>
-        <Alert onClose={() => setSnack((s) => ({ ...s, open: false }))} severity={snack.sev} variant="filled" sx={{ width: '100%' }}>
+        <Alert onClose={() => setSnack((s) => ({ ...s, open: false }))} severity={snack.sev} variant="filled" sx={{ width: '100%', borderRadius: 0 }}>
           {snack.msg}
         </Alert>
       </Snackbar>
-    </Paper>
+    </Box>
   );
 }

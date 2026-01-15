@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import { Box, Button, Chip, CircularProgress, IconButton, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TablePagination, TableRow, Tooltip, Typography, TextField, InputAdornment, Menu, Divider, Stack } from '@mui/material';
 import { IconEdit, IconTrash, IconUserShield, IconSearch, IconDotsVertical } from '@tabler/icons-react';
-import { marron } from '@/ui/colores';
+
 import { useQuery } from '@apollo/client/react';
 import { USUARIOS_ADMIN_QUERY } from './graphql/queries';
 import SearchToolbar from '@/components/ui/SearchToolbar';
@@ -146,16 +146,15 @@ export function UserTable({ onCrear, onEditar, onRoles, onEliminar, refetchToken
       sx={{
         px: 1,
         py: 1,
-        bgcolor: marron.toolbarBg,
-        border: '1px solid',
-        borderColor: marron.toolbarBorder,
-        borderRadius: 1,
+        bgcolor: '#f5f5f5',
+        border: '1px solid #e0e0e0',
+        borderRadius: 0,
         marginTop: 0,
       }}
     >
       <SearchToolbar
         title="Usuarios"
-        baseColor={marron.primary}
+        baseColor=""
         placeholder="Buscar usuarios..."
         searchValue={filtroInput}
         onSearchValueChange={setFiltroInput}
@@ -197,97 +196,92 @@ export function UserTable({ onCrear, onEditar, onRoles, onEliminar, refetchToken
     <Paper elevation={0} sx={{ p: 3, border: 'none', boxShadow: 'none', borderRadius: 2, bgcolor: 'background.paper' }}>
       {toolbar}
 
-      <TableContainer sx={{ borderRadius: 2, border: '1px solid', borderColor: marron.borderInner, bgcolor: 'background.paper', mt: 2 }}>
-        <Table stickyHeader size="small" sx={{ '& .MuiTableCell-head': { bgcolor: marron.headerBg, color: marron.headerText } }}>
-          <TableHead sx={{ position: 'sticky', top: 0, zIndex: 5 }}>
-            <TableRow sx={{ bgcolor: marron.headerBg, '& th': { top: 0, position: 'sticky', zIndex: 5 }, '& th:first-of-type': { borderTopLeftRadius: 0 }, '& th:last-of-type': { borderTopRightRadius: 0 } }}>
-              <TableCell sx={{ fontWeight: 700, color: '#fbe9e7', borderBottom: '3px solid', borderColor: '#a1887f' }}>
+      <TableContainer sx={{ borderRadius: 0, border: '1px solid #e0e0e0', bgcolor: '#fff', mt: 2, boxShadow: 'none' }}>
+        <Table stickyHeader size="small" sx={{ '& .MuiTableCell-head': { bgcolor: '#f5f5f5', color: '#000', fontWeight: 700 } }}>
+          <TableHead>
+            <TableRow>
+              <TableCell sx={{ borderBottom: '1px solid #e0e0e0' }}>
                 <Box display="flex" alignItems="center" justifyContent="space-between">
                   Username
                   <Tooltip title="Filtrar columna">
-                    <IconButton size="small" color="inherit" onClick={abrirMenuColumna('username')}>
+                    <IconButton size="small" color="inherit" onClick={abrirMenuColumna('username')} sx={{ opacity: 0.5 }}>
                       <IconDotsVertical size={16} />
                     </IconButton>
                   </Tooltip>
                 </Box>
               </TableCell>
-              <TableCell sx={{ fontWeight: 700, color: '#fbe9e7', borderBottom: '3px solid', borderColor: '#a1887f' }}>
+              <TableCell sx={{ borderBottom: '1px solid #e0e0e0' }}>
                 <Box display="flex" alignItems="center" justifyContent="space-between">
                   Email
                   <Tooltip title="Filtrar columna">
-                    <IconButton size="small" color="inherit" onClick={abrirMenuColumna('email')}>
+                    <IconButton size="small" color="inherit" onClick={abrirMenuColumna('email')} sx={{ opacity: 0.5 }}>
                       <IconDotsVertical size={16} />
                     </IconButton>
                   </Tooltip>
                 </Box>
               </TableCell>
-              <TableCell sx={{ fontWeight: 700, color: '#fbe9e7', borderBottom: '3px solid', borderColor: '#a1887f' }}>
+              <TableCell sx={{ borderBottom: '1px solid #e0e0e0' }}>
                 <Box display="flex" alignItems="center" justifyContent="space-between">
                   Nombre
                   <Tooltip title="Filtrar columna">
-                    <IconButton size="small" color="inherit" onClick={abrirMenuColumna('nombre')}>
+                    <IconButton size="small" color="inherit" onClick={abrirMenuColumna('nombre')} sx={{ opacity: 0.5 }}>
                       <IconDotsVertical size={16} />
                     </IconButton>
                   </Tooltip>
                 </Box>
               </TableCell>
-              <TableCell sx={{ fontWeight: 700, color: '#fbe9e7', borderBottom: '3px solid', borderColor: '#a1887f' }}>
-                Tipo
-              </TableCell>
-              <TableCell sx={{ fontWeight: 700, color: '#fbe9e7', borderBottom: '3px solid', borderColor: '#a1887f' }}>
-                Roles
-              </TableCell>
-              <TableCell sx={{ fontWeight: 700, color: '#fbe9e7', borderBottom: '3px solid', borderColor: '#a1887f' }}>
+              <TableCell sx={{ borderBottom: '1px solid #e0e0e0' }}>Tipo</TableCell>
+              <TableCell sx={{ borderBottom: '1px solid #e0e0e0' }}>Roles</TableCell>
+              <TableCell sx={{ borderBottom: '1px solid #e0e0e0' }}>
                 <Box display="flex" alignItems="center" justifyContent="space-between">
                   Estado
                   <Tooltip title="Filtrar columna">
-                    <IconButton size="small" color="inherit" onClick={abrirMenuColumna('estado')}>
+                    <IconButton size="small" color="inherit" onClick={abrirMenuColumna('estado')} sx={{ opacity: 0.5 }}>
                       <IconDotsVertical size={16} />
                     </IconButton>
                   </Tooltip>
                 </Box>
               </TableCell>
-              <TableCell align="center" sx={{ fontWeight: 700, color: marron.headerText, borderBottom: '3px solid', borderColor: marron.headerBorder }}>Acciones</TableCell>
+              <TableCell align="center" sx={{ borderBottom: '1px solid #e0e0e0' }}>Acciones</TableCell>
             </TableRow>
           </TableHead>
-          <TableBody sx={{ '& .MuiTableCell-root': { py: 1 } }}>
+          <TableBody>
             {usuarios.map((u, idx) => (
               <TableRow
                 key={u.id}
                 sx={{
-                  bgcolor: idx % 2 === 1 ? 'grey.50' : 'inherit',
-                  '&:hover': { bgcolor: marron.rowHover },
+                  '&:hover': { bgcolor: '#f5f5f5' },
                 }}
               >
-                <TableCell>{u.username ?? '-'}</TableCell>
-                <TableCell>{u.email ?? '-'}</TableCell>
-                <TableCell>
+                <TableCell sx={{ borderBottom: '1px solid #e0e0e0' }}>{u.username ?? '-'}</TableCell>
+                <TableCell sx={{ borderBottom: '1px solid #e0e0e0' }}>{u.email ?? '-'}</TableCell>
+                <TableCell sx={{ borderBottom: '1px solid #e0e0e0' }}>
                   <Typography variant="body2" fontWeight={600} sx={{ whiteSpace: 'normal' }}>
                     {u.displayName}
                   </Typography>
                 </TableCell>
-                <TableCell>
-                  <Chip size="small" label={u.userType} sx={{ bgcolor: marron.chipBg, color: marron.chipText, fontWeight: 500 }} />
+                <TableCell sx={{ borderBottom: '1px solid #e0e0e0' }}>
+                  <Chip size="small" label={u.userType} sx={{ borderRadius: 0, fontWeight: 600, bgcolor: '#eee' }} />
                 </TableCell>
-                <TableCell>
+                <TableCell sx={{ borderBottom: '1px solid #e0e0e0' }}>
                   {(u.roles ?? []).map((r) => (
-                    <Chip key={r} label={r} size="small" sx={{ mr: 0.5, bgcolor: marron.toolbarBg, color: marron.headerBg }} />
+                    <Chip key={r} label={r} size="small" sx={{ mr: 0.5, borderRadius: 0 }} variant="outlined" />
                   ))}
                 </TableCell>
-                <TableCell>
-                  <Chip size="small" label={u.isActive ? 'Activo' : 'Inactivo'} sx={{ bgcolor: u.isActive ? '#c8e6c9' : '#fff3e0', color: u.isActive ? '#1b5e20' : '#ef6c00' }} />
+                <TableCell sx={{ borderBottom: '1px solid #e0e0e0' }}>
+                  <Chip size="small" label={u.isActive ? 'Activo' : 'Inactivo'} sx={{ borderRadius: 0, bgcolor: u.isActive ? '#e8f5e9' : '#fff3e0', color: u.isActive ? '#2e7d32' : '#e65100', fontWeight: 600 }} />
                 </TableCell>
-                <TableCell align="center">
+                <TableCell align="center" sx={{ borderBottom: '1px solid #e0e0e0' }}>
                   {onEditar && (
                     <Tooltip title="Editar">
-                      <IconButton onClick={() => onEditar(u)} size="small" sx={{ p: 0.75, color: marron.primary }}>
+                      <IconButton onClick={() => onEditar(u)} size="small" sx={{ p: 0.75, color: '#1976d2' }}>
                         <IconEdit size={18} />
                       </IconButton>
                     </Tooltip>
                   )}
                   {onRoles && (
                     <Tooltip title="Roles">
-                      <IconButton onClick={() => onRoles(u)} size="small" sx={{ p: 0.75, color: marron.primary }}>
+                      <IconButton onClick={() => onRoles(u)} size="small" sx={{ p: 0.75, color: '#ed6c02' }}>
                         <IconUserShield size={18} />
                       </IconButton>
                     </Tooltip>
@@ -315,12 +309,6 @@ export function UserTable({ onCrear, onEditar, onRoles, onEliminar, refetchToken
         transformOrigin={{ vertical: 'top', horizontal: 'right' }}
         slotProps={{ paper: { sx: { p: 1.5, minWidth: 260 } } } as any}
       >
-        <Typography variant="subtitle2" sx={{ px: 1, pb: 1 }}>
-          {columnaActiva === 'username' && 'Filtrar por Username'}
-          {columnaActiva === 'email' && 'Filtrar por Email'}
-          {columnaActiva === 'nombre' && 'Filtrar por Nombre'}
-          {columnaActiva === 'estado' && 'Filtrar por Estado'}
-        </Typography>
         <Divider sx={{ mb: 1 }} />
         {columnaActiva && (
           <Box px={1} pb={1}>
@@ -332,7 +320,7 @@ export function UserTable({ onCrear, onEditar, onRoles, onEliminar, refetchToken
                       key={op}
                       size="small"
                       variant={filtrosColumna.estado === op ? 'contained' : 'outlined'}
-                      sx={{ textTransform: 'none', bgcolor: filtrosColumna.estado === op ? '#8d6e63' : 'inherit', color: filtrosColumna.estado === op ? 'white' : 'inherit' }}
+                      sx={{ textTransform: 'none', borderRadius: 0 }}
                       onClick={() => { setFiltrosColumna((p) => ({ ...p, estado: op })); setPagina(0); cerrarMenuColumna(); }}
                     >
                       {op}
@@ -340,7 +328,7 @@ export function UserTable({ onCrear, onEditar, onRoles, onEliminar, refetchToken
                   ))}
                 </Stack>
                 <Stack direction="row" justifyContent="space-between">
-                  <Button size="small" onClick={() => { setFiltrosColumna((p) => ({ ...p, estado: '' })); setPagina(0); cerrarMenuColumna(); }}>Limpiar</Button>
+                  <Button size="small" onClick={() => { setFiltrosColumna((p) => ({ ...p, estado: '' })); setPagina(0); cerrarMenuColumna(); }} sx={{ borderRadius: 0 }}>Limpiar</Button>
                 </Stack>
               </Stack>
             ) : (
@@ -359,10 +347,11 @@ export function UserTable({ onCrear, onEditar, onRoles, onEliminar, refetchToken
                       cerrarMenuColumna();
                     }
                   }}
+                  InputProps={{ sx: { borderRadius: 0 } }}
                 />
                 <Stack direction="row" justifyContent="flex-end" spacing={1} mt={1}>
-                  <Button size="small" onClick={() => { setFiltroColInput(''); }}>Limpiar</Button>
-                  <Button size="small" variant="contained" sx={{ bgcolor: '#8d6e63', '&:hover': { bgcolor: '#6d4c41' } }} onClick={() => {
+                  <Button size="small" onClick={() => { setFiltroColInput(''); }} sx={{ borderRadius: 0 }}>Limpiar</Button>
+                  <Button size="small" variant="contained" sx={{ borderRadius: 0 }} onClick={() => {
                     if (!columnaActiva) return;
                     setFiltrosColumna((p) => ({ ...p, [columnaActiva!]: filtroColInput }));
                     setPagina(0);

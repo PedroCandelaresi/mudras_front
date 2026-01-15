@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useEffect } from 'react';
+import { useState } from 'react';
 import { useQuery } from '@apollo/client/react';
 import { gql } from '@apollo/client';
 import {
@@ -15,27 +15,21 @@ import {
     Tooltip,
     CircularProgress,
     Alert,
-    Stack,
     IconButton,
-    Chip
+    Chip,
+    Paper,
+    TextField,
+    Button,
+    InputAdornment
 } from '@mui/material';
-import { alpha, darken } from '@mui/material/styles';
-import { IconArrowsLeftRight, IconPlus, IconRefresh, IconSearch, IconClipboardList } from '@tabler/icons-react';
+import { Icon } from '@iconify/react';
+import { IconArrowsLeftRight } from '@tabler/icons-react';
 
 import PageContainer from '@/components/container/PageContainer';
 import Breadcrumb from '@/app/panel/layout/shared/breadcrumb/Breadcrumb';
 import TransferirStockModal from '@/components/stock/TransferirStockModal';
 import IngresoStockModal from '@/components/stock/IngresoStockModal';
-
 import ModalNuevaAsignacionStockOptimizado from '@/components/stock/ModalNuevaAsignacionStockOptimizado';
-
-// UI Components
-import { TexturedPanel } from '@/components/ui/TexturedFrame/TexturedPanel';
-import { WoodBackdrop } from '@/components/ui/TexturedFrame/WoodBackdrop';
-import CrystalButton, { CrystalIconButton } from '@/components/ui/CrystalButton';
-import SearchToolbar from '@/components/ui/SearchToolbar';
-import { crearConfiguracionBisel, crearEstilosBisel } from '@/components/ui/bevel';
-import { borgoña, verde } from '@/ui/colores';
 
 // GraphQL
 const GET_MATRIZ_STOCK = gql`
@@ -66,43 +60,6 @@ const GET_PUNTOS_MUDRAS = gql`
   }
 `;
 
-// --- Estilos y Configuración Visual (Clonado y adaptado de TablaArticulos) ---
-const PALETTE = borgoña; // Usamos borgoña para logística/stock
-const accentExterior = PALETTE.primary;
-const accentInterior = darken(PALETTE.primary, 0.3);
-const tableBodyBg = 'rgba(247, 234, 234, 0.58)'; // Tono rojizo muy suave
-const tableBodyAlt = 'rgba(226, 198, 198, 0.32)';
-const woodTintExterior = '#d8c6c6';
-const woodTintInterior = '#c6b2b2';
-const headerBg = darken(PALETTE.primary, 0.12);
-
-const biselExteriorConfig = crearConfiguracionBisel(accentExterior, 1.45);
-const estilosBiselExterior = crearEstilosBisel(biselExteriorConfig, { zContenido: 2 });
-
-const WoodSection: React.FC<React.PropsWithChildren> = ({ children }) => (
-    <Box
-        sx={{
-            position: 'relative',
-            borderRadius: 2,
-            overflow: 'hidden',
-            boxShadow: '0 18px 40px rgba(0,0,0,0.12)',
-            background: 'transparent',
-            ...estilosBiselExterior,
-        }}
-    >
-        <WoodBackdrop accent={woodTintExterior} radius={3} inset={0} strength={0.16} texture="tabla" />
-        <Box
-            sx={{
-                position: 'absolute',
-                inset: 0,
-                backgroundColor: alpha('#f7f4f4', 0.78),
-                zIndex: 0,
-            }}
-        />
-        <Box sx={{ position: 'relative', zIndex: 2, p: 2.75 }}>{children}</Box>
-    </Box>
-);
-
 export default function GlobalStockAssignmentPage() {
     const [busqueda, setBusqueda] = useState('');
     const [modalTransferenciaOpen, setModalTransferenciaOpen] = useState(false);
@@ -126,11 +83,6 @@ export default function GlobalStockAssignmentPage() {
         setModalTransferenciaOpen(true);
     };
 
-    const handleOpenIngreso = (articulo?: any) => {
-        setSelectedArticle(articulo || null);
-        setModalIngresoOpen(true);
-    };
-
     const handleCloseModals = () => {
         setModalTransferenciaOpen(false);
         setModalIngresoOpen(false);
@@ -144,205 +96,164 @@ export default function GlobalStockAssignmentPage() {
         <PageContainer title="Asignación Global de Stock" description="Gestiona el stock de todos los puntos">
             <Breadcrumb title="Asignación Global" items={[{ to: '/panel', title: 'Inicio' }, { title: 'Stock' }]} />
 
-            <WoodSection>
-                <Stack spacing={3}>
-                    {/* Toolbar */}
-                    <SearchToolbar
-                        title="Matriz de Stock"
-                        icon={<IconClipboardList size={30} />}
-                        baseColor={PALETTE.primary}
-                        placeholder="Buscar artículo por nombre o código..."
-                        searchValue={busqueda}
-                        onSearchValueChange={setBusqueda}
-                        onSubmitSearch={() => refetch()}
-                        onClear={() => { setBusqueda(''); refetch(); }}
-                        canCreate={true}
-                        createLabel="Asignación Masiva"
-                        onCreateClick={() => setModalOptimizadoOpen(true)}
-                        searchDisabled={loadingMatriz}
-                        customActions={
-                            <CrystalButton
-                                baseColor={PALETTE.primary}
-                                onClick={() => refetch()}
-                                startIcon={<IconRefresh size={18} />}
-                            >
-                                Actualizar
-                            </CrystalButton>
-                        }
-                    />
-
-                    {error && <Alert severity="error">Error al cargar datos: {error.message}</Alert>}
-
-                    {loadingMatriz || loadingPuntos ? (
-                        <Box display="flex" justifyContent="center" p={5}>
-                            <CircularProgress sx={{ color: PALETTE.primary }} />
+            <Paper elevation={0} sx={{ p: 3, borderRadius: 0, border: '1px solid #e0e0e0' }}>
+                <Box display="flex" justifyContent="space-between" alignItems="center" mb={3} flexWrap="wrap" gap={2}>
+                    <Box display="flex" alignItems="center" gap={1}>
+                        <Box sx={{ width: 40, height: 40, bgcolor: '#5d4037', color: '#fff', display: 'grid', placeItems: 'center' }}>
+                            <Icon icon="mdi:clipboard-list" width={24} />
                         </Box>
-                    ) : (
-                        <TableContainer
-                            sx={{
-                                position: 'relative',
-                                borderRadius: 0,
-                                border: '1px solid',
-                                borderColor: alpha(accentInterior, 0.38),
-                                bgcolor: 'rgba(255, 250, 242, 0.94)',
-                                backdropFilter: 'saturate(110%) blur(0.85px)',
-                                overflow: 'hidden',
-                                boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.55)',
+                        <Typography variant="h5" fontWeight={700}>
+                            Matriz de Stock
+                        </Typography>
+                    </Box>
+                    <Box display="flex" flexDirection={{ xs: 'column', md: 'row' }} gap={2} alignItems="center">
+                        <TextField
+                            placeholder="Buscar artículo..."
+                            size="small"
+                            value={busqueda}
+                            onChange={(e) => setBusqueda(e.target.value)}
+                            onKeyDown={(e) => e.key === 'Enter' && refetch()}
+                            sx={{ minWidth: 300 }}
+                            InputProps={{
+                                startAdornment: <InputAdornment position="start"><Icon icon="mdi:magnify" /></InputAdornment>,
+                                endAdornment: busqueda && (
+                                    <InputAdornment position="end">
+                                        <IconButton size="small" onClick={() => { setBusqueda(''); setTimeout(refetch, 0); }}>
+                                            <Icon icon="mdi:close" />
+                                        </IconButton>
+                                    </InputAdornment>
+                                ),
+                                sx: { borderRadius: 0 }
                             }}
+                        />
+                        <Button
+                            variant="outlined"
+                            color="primary"
+                            startIcon={<Icon icon="mdi:refresh" />}
+                            onClick={() => refetch()}
+                            sx={{ borderRadius: 0, textTransform: 'none', fontWeight: 600 }}
                         >
-                            <WoodBackdrop accent={woodTintInterior} radius={0} inset={0} strength={0.12} texture="tabla" />
-                            <Box
-                                sx={{
-                                    position: 'absolute',
-                                    inset: 0,
-                                    backgroundColor: alpha('#fffaf3', 0.82),
-                                    zIndex: 0,
-                                }}
-                            />
-                            <Table
-                                stickyHeader
-                                size="small"
-                                sx={{
-                                    borderRadius: 0,
-                                    position: 'relative',
-                                    zIndex: 2,
-                                    bgcolor: tableBodyBg,
-                                    '& .MuiTableRow-root': { minHeight: 62 },
-                                    '& .MuiTableCell-root': {
-                                        fontSize: '0.85rem', // Fuente un poco más grande para legibilidad
-                                        px: 1,
-                                        py: 1.5, // Más padding vertical
-                                        borderBottomColor: alpha(accentInterior, 0.35),
-                                        bgcolor: 'transparent',
-                                    },
-                                    '& .MuiTableBody-root .MuiTableRow-root:nth-of-type(odd) .MuiTableCell-root': {
-                                        bgcolor: tableBodyBg,
-                                    },
-                                    '& .MuiTableBody-root .MuiTableRow-root:nth-of-type(even) .MuiTableCell-root': {
-                                        bgcolor: tableBodyAlt,
-                                    },
-                                    '& .MuiTableBody-root .MuiTableRow-root.MuiTableRow-hover:hover .MuiTableCell-root': {
-                                        bgcolor: alpha(PALETTE.primary, 0.15),
-                                    },
-                                    '& .MuiTableCell-head': {
-                                        fontSize: '0.80rem',
-                                        fontWeight: 700,
-                                        bgcolor: headerBg,
-                                        color: alpha('#FFFFFF', 0.94),
-                                        boxShadow: 'inset 0 -1px 0 rgba(255,255,255,0.12)',
-                                        textTransform: 'uppercase',
-                                        letterSpacing: 0.4,
-                                    },
-                                    '& .MuiTableHead-root .MuiTableCell-head:not(:last-of-type)': {
-                                        borderRight: `3px solid ${alpha(PALETTE.headerBorder, 0.5)}`,
-                                    },
-                                }}
-                            >
-                                <TableHead>
-                                    <TableRow>
-                                        <TableCell>Código</TableCell>
-                                        <TableCell>Artículo</TableCell>
-                                        <TableCell align="center">Total Global</TableCell>
-                                        {puntos.map((punto: any) => (
-                                            <TableCell key={punto.id} align="center">
-                                                <Box display="flex" flexDirection="column" alignItems="center">
-                                                    <span>{punto.nombre}</span>
-                                                    <Typography variant="caption" sx={{ opacity: 0.8, fontWeight: 400, textTransform: 'none' }}>
-                                                        {punto.tipo === 'deposito' ? '(Depósito)' : '(Venta)'}
-                                                    </Typography>
-                                                </Box>
-                                            </TableCell>
-                                        ))}
-                                        <TableCell align="center">Acciones</TableCell>
-                                    </TableRow>
-                                </TableHead>
-                                <TableBody>
-                                    {articulos.map((articulo: any) => (
-                                        <TableRow key={articulo.id} hover>
-                                            <TableCell>
-                                                <Chip
-                                                    label={articulo.codigo ?? 'Sin código'}
-                                                    size="small"
-                                                    sx={{
-                                                        bgcolor: alpha(accentExterior, 0.14),
-                                                        color: darken(PALETTE.primary, 0.35),
-                                                        fontWeight: 600,
-                                                    }}
-                                                />
-                                            </TableCell>
-                                            <TableCell>
-                                                <Typography variant="body2" fontWeight={700} sx={{ color: darken(PALETTE.primary, 0.2), fontSize: '0.9rem' }}>
-                                                    {articulo.nombre}
+                            Actualizar
+                        </Button>
+                        <Button
+                            variant="contained"
+                            disableElevation
+                            startIcon={<Icon icon="mdi:plus" />}
+                            onClick={() => setModalOptimizadoOpen(true)}
+                            sx={{ bgcolor: '#5d4037', borderRadius: 0, fontWeight: 700, '&:hover': { bgcolor: '#4e342e' } }}
+                        >
+                            Asignación Masiva
+                        </Button>
+                    </Box>
+                </Box>
+
+                {error && <Alert severity="error" sx={{ mb: 2, borderRadius: 0 }}>Error al cargar datos: {error.message}</Alert>}
+
+                {loadingMatriz || loadingPuntos ? (
+                    <Box display="flex" justifyContent="center" p={5}>
+                        <CircularProgress sx={{ color: '#5d4037' }} />
+                    </Box>
+                ) : (
+                    <TableContainer sx={{ border: '1px solid #e0e0e0', borderRadius: 0 }}>
+                        <Table stickyHeader size="small">
+                            <TableHead>
+                                <TableRow>
+                                    <TableCell sx={{ bgcolor: '#f5f5f5', fontWeight: 700, color: 'text.secondary' }}>CÓDIGO</TableCell>
+                                    <TableCell sx={{ bgcolor: '#f5f5f5', fontWeight: 700, color: 'text.secondary' }}>ARTÍCULO</TableCell>
+                                    <TableCell align="center" sx={{ bgcolor: '#f5f5f5', fontWeight: 700, color: 'text.secondary' }}>TOTAL GLOBAL</TableCell>
+                                    {puntos.map((punto: any) => (
+                                        <TableCell key={punto.id} align="center" sx={{ bgcolor: '#f5f5f5', fontWeight: 700, color: 'text.secondary' }}>
+                                            <Box display="flex" flexDirection="column" alignItems="center">
+                                                <span>{punto.nombre}</span>
+                                                <Typography variant="caption" sx={{ opacity: 0.8, fontWeight: 400, textTransform: 'none' }}>
+                                                    {punto.tipo === 'deposito' ? '(Depósito)' : '(Venta)'}
                                                 </Typography>
-                                            </TableCell>
-                                            <TableCell align="center">
-                                                <Typography variant="body2" fontWeight={800} color={PALETTE.textStrong} sx={{ fontSize: '0.95rem' }}>
-                                                    {articulo.stockTotal}
-                                                </Typography>
-                                            </TableCell>
-                                            {puntos.map((punto: any) => {
-                                                const stockPunto = articulo.stockPorPunto.find((s: any) => s.puntoId === punto.id);
-                                                const cantidad = stockPunto?.cantidad || 0;
-                                                return (
-                                                    <TableCell key={punto.id} align="center">
-                                                        <Box
-                                                            sx={{
-                                                                display: 'flex',
-                                                                alignItems: 'center',
-                                                                justifyContent: 'center',
-                                                                gap: 1
-                                                            }}
-                                                        >
-                                                            <Typography
-                                                                color={cantidad > 0 ? 'textPrimary' : 'textSecondary'}
-                                                                fontWeight={cantidad > 0 ? 700 : 400}
-                                                                sx={{ fontSize: '0.9rem' }}
-                                                            >
-                                                                {cantidad}
-                                                            </Typography>
-                                                            {cantidad > 0 && (
-                                                                <Tooltip title={`Transferir desde ${punto.nombre}`}>
-                                                                    <CrystalIconButton
-                                                                        baseColor={PALETTE.primary}
-                                                                        size="small"
-                                                                        onClick={() => handleOpenTransferencia(articulo, punto.id)}
-                                                                        sx={{ width: 28, height: 28, minWidth: 28, minHeight: 28 }}
-                                                                    >
-                                                                        <IconArrowsLeftRight size={16} />
-                                                                    </CrystalIconButton>
-                                                                </Tooltip>
-                                                            )}
-                                                        </Box>
-                                                    </TableCell>
-                                                );
-                                            })}
-                                            <TableCell align="center">
-                                                <Tooltip title="Transferir Stock (Origen a elección)">
-                                                    <CrystalIconButton
-                                                        baseColor={verde.primary} // Verde para acción positiva
-                                                        onClick={() => handleOpenTransferencia(articulo)}
-                                                    >
-                                                        <IconArrowsLeftRight size={20} />
-                                                    </CrystalIconButton>
-                                                </Tooltip>
-                                            </TableCell>
-                                        </TableRow>
+                                            </Box>
+                                        </TableCell>
                                     ))}
-                                    {articulos.length === 0 && (
-                                        <TableRow>
-                                            <TableCell colSpan={4 + puntos.length} align="center" sx={{ py: 6 }}>
-                                                <Typography variant="body1" color="text.secondary">
-                                                    No se encontraron artículos.
-                                                </Typography>
-                                            </TableCell>
-                                        </TableRow>
-                                    )}
-                                </TableBody>
-                            </Table>
-                        </TableContainer>
-                    )}
-                </Stack>
-            </WoodSection>
+                                    <TableCell align="center" sx={{ bgcolor: '#f5f5f5', fontWeight: 700, color: 'text.secondary' }}>ACCIONES</TableCell>
+                                </TableRow>
+                            </TableHead>
+                            <TableBody>
+                                {articulos.map((articulo: any) => (
+                                    <TableRow key={articulo.id} hover>
+                                        <TableCell>
+                                            <Chip
+                                                label={articulo.codigo ?? 'Sin código'}
+                                                size="small"
+                                                sx={{ borderRadius: 0, bgcolor: '#e0e0e0', fontWeight: 600, color: 'text.primary' }}
+                                            />
+                                        </TableCell>
+                                        <TableCell>
+                                            <Typography variant="body2" fontWeight={600} color="text.primary">
+                                                {articulo.nombre}
+                                            </Typography>
+                                        </TableCell>
+                                        <TableCell align="center">
+                                            <Typography variant="body2" fontWeight={800} color="text.primary">
+                                                {articulo.stockTotal}
+                                            </Typography>
+                                        </TableCell>
+                                        {puntos.map((punto: any) => {
+                                            const stockPunto = articulo.stockPorPunto.find((s: any) => s.puntoId === punto.id);
+                                            const cantidad = stockPunto?.cantidad || 0;
+                                            return (
+                                                <TableCell key={punto.id} align="center">
+                                                    <Box
+                                                        sx={{
+                                                            display: 'flex',
+                                                            alignItems: 'center',
+                                                            justifyContent: 'center',
+                                                            gap: 1
+                                                        }}
+                                                    >
+                                                        <Typography
+                                                            color={cantidad > 0 ? 'textPrimary' : 'textSecondary'}
+                                                            fontWeight={cantidad > 0 ? 700 : 400}
+                                                        >
+                                                            {cantidad}
+                                                        </Typography>
+                                                        {cantidad > 0 && (
+                                                            <Tooltip title={`Transferir desde ${punto.nombre}`}>
+                                                                <IconButton
+                                                                    size="small"
+                                                                    onClick={() => handleOpenTransferencia(articulo, punto.id)}
+                                                                    sx={{ color: '#5d4037', padding: 0.5 }}
+                                                                >
+                                                                    <IconArrowsLeftRight size={16} />
+                                                                </IconButton>
+                                                            </Tooltip>
+                                                        )}
+                                                    </Box>
+                                                </TableCell>
+                                            );
+                                        })}
+                                        <TableCell align="center">
+                                            <Tooltip title="Transferir Stock (Origen a elección)">
+                                                <IconButton
+                                                    onClick={() => handleOpenTransferencia(articulo)}
+                                                    sx={{ color: '#2e7d32' }}
+                                                >
+                                                    <IconArrowsLeftRight size={20} />
+                                                </IconButton>
+                                            </Tooltip>
+                                        </TableCell>
+                                    </TableRow>
+                                ))}
+                                {articulos.length === 0 && (
+                                    <TableRow>
+                                        <TableCell colSpan={4 + puntos.length} align="center" sx={{ py: 6 }}>
+                                            <Typography variant="body1" color="text.secondary">
+                                                No se encontraron artículos.
+                                            </Typography>
+                                        </TableCell>
+                                    </TableRow>
+                                )}
+                            </TableBody>
+                        </Table>
+                    </TableContainer>
+                )}
+            </Paper>
 
             {/* Modales */}
             <TransferirStockModal

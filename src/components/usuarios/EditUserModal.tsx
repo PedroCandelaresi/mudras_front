@@ -1,6 +1,6 @@
 "use client";
 import React from 'react';
-import { Dialog, DialogActions, DialogContent, DialogTitle, Button, TextField, FormControlLabel, Checkbox } from '@mui/material';
+import { Dialog, DialogActions, DialogContent, DialogTitle, Button, TextField, FormControlLabel, Checkbox, Box } from '@mui/material';
 import { Controller, useForm } from 'react-hook-form';
 import type { UsuarioListado } from './UserTable';
 import { z } from 'zod';
@@ -41,13 +41,38 @@ export function EditUserModal({ open, usuario, onClose, onSubmit }: Props) {
 
   const submit = handleSubmit((data) => { onSubmit(data); });
 
+  /* ======================== Render ======================== */
   return (
-    <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm">
-      <DialogTitle>Editar Usuario</DialogTitle>
-      <DialogContent>
-        <div className="grid grid-cols-1 gap-3 py-2">
-          <TextField label="Email" {...register('email')} size="small" error={!!errors.email} helperText={errors.email?.message || ''} />
-          <TextField label="Nombre a mostrar" {...register('displayName')} size="small" error={!!errors.displayName} helperText={errors.displayName?.message || ''} />
+    <Dialog
+      open={open}
+      onClose={onClose}
+      fullWidth
+      maxWidth="sm"
+      PaperProps={{ sx: { borderRadius: 0, border: '1px solid #e0e0e0', boxShadow: 'none' } }}
+    >
+      <DialogTitle sx={{ bgcolor: '#f5f5f5', borderBottom: '1px solid #e0e0e0', fontWeight: 700 }}>
+        Editar Usuario
+      </DialogTitle>
+      <DialogContent sx={{ p: 3 }}>
+        <Box display="flex" flexDirection="column" gap={2} mt={1}>
+          <TextField
+            label="Email"
+            {...register('email')}
+            size="small"
+            error={!!errors.email}
+            helperText={errors.email?.message || ''}
+            fullWidth
+            InputProps={{ sx: { borderRadius: 0 } }}
+          />
+          <TextField
+            label="Nombre a mostrar"
+            {...register('displayName')}
+            size="small"
+            error={!!errors.displayName}
+            helperText={errors.displayName?.message || ''}
+            fullWidth
+            InputProps={{ sx: { borderRadius: 0 } }}
+          />
           <Controller
             control={control}
             name="isActive"
@@ -55,11 +80,11 @@ export function EditUserModal({ open, usuario, onClose, onSubmit }: Props) {
               <FormControlLabel control={<Checkbox checked={!!field.value} onChange={(e) => field.onChange(e.target.checked)} />} label="Activo" />
             )}
           />
-        </div>
+        </Box>
       </DialogContent>
-      <DialogActions>
-        <Button onClick={onClose}>Cancelar</Button>
-        <Button variant="contained" onClick={submit}>Guardar</Button>
+      <DialogActions sx={{ p: 2, bgcolor: '#f5f5f5', borderTop: '1px solid #e0e0e0' }}>
+        <Button onClick={onClose} sx={{ borderRadius: 0, fontWeight: 600 }}>Cancelar</Button>
+        <Button variant="contained" onClick={submit} disableElevation sx={{ borderRadius: 0, fontWeight: 600, bgcolor: '#8d6e63', '&:hover': { bgcolor: '#6d4c41' } }}>Guardar</Button>
       </DialogActions>
     </Dialog>
   );

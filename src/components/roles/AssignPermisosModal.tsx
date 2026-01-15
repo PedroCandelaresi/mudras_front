@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from 'react';
-import { Dialog, DialogActions, DialogContent, DialogTitle, Button, FormControlLabel, Checkbox, TextField } from '@mui/material';
+import { Dialog, DialogActions, DialogContent, DialogTitle, Button, FormControlLabel, Checkbox, TextField, Box } from '@mui/material';
 import type { RolItem, PermisoItem } from './RolesTable';
 
 interface Props {
@@ -42,26 +42,50 @@ export function AssignPermisosModal({ open, rol, onClose, onSubmit, cargarPermis
     return label.includes(q);
   });
 
+  /* ======================== Render ======================== */
   return (
-    <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm">
-      <DialogTitle>Asignar permisos al rol {rol?.name}</DialogTitle>
-      <DialogContent>
-        <div className="grid grid-cols-1 gap-2 py-2">
-          <TextField size="small" label="Buscar permiso (recurso:acción)" value={filtro} onChange={(e) => setFiltro(e.target.value)} />
-          <div className="max-h-80 overflow-auto">
+    <Dialog
+      open={open}
+      onClose={onClose}
+      fullWidth
+      maxWidth="sm"
+      PaperProps={{ sx: { borderRadius: 0, border: '1px solid #e0e0e0', boxShadow: 'none' } }}
+    >
+      <DialogTitle sx={{ bgcolor: '#f5f5f5', borderBottom: '1px solid #e0e0e0', fontWeight: 700 }}>
+        Asignar permisos al rol {rol?.name}
+      </DialogTitle>
+      <DialogContent sx={{ p: 3 }}>
+        <Box display="flex" flexDirection="column" gap={2} mt={1}>
+          <TextField
+            size="small"
+            label="Buscar permiso (recurso:acción)"
+            value={filtro}
+            onChange={(e) => setFiltro(e.target.value)}
+            fullWidth
+            InputProps={{ sx: { borderRadius: 0 } }}
+          />
+          <Box className="max-h-80 overflow-auto" display="flex" flexDirection="column" gap={0.5} sx={{ border: '1px solid #eee', p: 1 }}>
             {permisosFiltrados.map((p) => (
               <FormControlLabel
                 key={p.id}
                 control={<Checkbox checked={!!seleccion[p.id]} onChange={() => toggle(p.id)} />}
                 label={`${p.resource}:${p.action} ${p.description ? `- ${p.description}` : ''}`}
+                sx={{ ml: 0 }}
               />
             ))}
-          </div>
-        </div>
+          </Box>
+        </Box>
       </DialogContent>
-      <DialogActions>
-        <Button onClick={onClose}>Cancelar</Button>
-        <Button variant="contained" onClick={submit}>Guardar</Button>
+      <DialogActions sx={{ p: 2, bgcolor: '#f5f5f5', borderTop: '1px solid #e0e0e0' }}>
+        <Button onClick={onClose} sx={{ borderRadius: 0, fontWeight: 600 }}>Cancelar</Button>
+        <Button
+          variant="contained"
+          onClick={submit}
+          disableElevation
+          sx={{ borderRadius: 0, fontWeight: 600, bgcolor: '#8d6e63', '&:hover': { bgcolor: '#6d4c41' } }}
+        >
+          Guardar
+        </Button>
       </DialogActions>
     </Dialog>
   );

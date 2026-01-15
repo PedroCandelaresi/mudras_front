@@ -40,39 +40,12 @@ import { GET_MOVIMIENTOS_STOCK, GET_ARTICULOS } from '@/components/articulos/gra
 import { Stock } from '@/app/interfaces/mudras.types';
 import { MovimientosStockResponse } from '@/app/interfaces/graphql.types';
 import { verde, azul } from '@/ui/colores';
-import { crearConfiguracionBisel, crearEstilosBisel } from '@/components/ui/bevel';
-import { WoodBackdrop } from '@/components/ui/TexturedFrame/WoodBackdrop';
-import CrystalButton, { CrystalIconButton, CrystalSoftButton } from '@/components/ui/CrystalButton';
 import SearchToolbar from '@/components/ui/SearchToolbar';
 
 /* ======================== Estética (verde oliva, como Artículos) ======================== */
 const accentExterior = verde.primary;
 const accentInterior = verde.borderInner ?? '#2b4735';
-
-// Paneles/wood consistente con Artículos
-const woodTintExterior = '#c7d8cb';
 const colorAccionEliminar = '#b71c1c';
-
-const biselExteriorConfig = crearConfiguracionBisel(accentExterior, 1.4);
-const estilosBiselExterior = crearEstilosBisel(biselExteriorConfig, { zContenido: 2 });
-
-const WoodSection: React.FC<React.PropsWithChildren> = ({ children }) => (
-  <Box
-    sx={{
-      position: 'relative',
-      borderRadius: 2,
-      overflow: 'hidden',
-      boxShadow: '0 18px 40px rgba(0,0,0,0.12)',
-      background: 'transparent',
-      ...estilosBiselExterior,
-    }}
-  >
-    <WoodBackdrop accent={woodTintExterior} radius={3} inset={0} strength={0.16} texture="tabla" />
-    {/* Capa de tinte muy leve */}
-    <Box sx={{ position: 'absolute', inset: 0, backgroundColor: alpha('#f2f7f4', 0.86), zIndex: 0 }} />
-    <Box sx={{ position: 'relative', zIndex: 2, p: 3 }}>{children}</Box>
-  </Box>
-);
 
 const ARG_TIMEZONE = 'America/Argentina/Buenos_Aires';
 const formatearFechaHora = (valor?: string | Date | null, opciones?: Intl.DateTimeFormatOptions) => {
@@ -241,64 +214,39 @@ const TablaMovimientosStock = () => {
   /* ======================== Tabla ======================== */
   const tabla = (
     <TableContainer
+      component={Box} // Usamos Box para mayor control
       sx={{
-        position: 'relative',
-        borderRadius: 0,                 // ✅ esquinas más redondeadas
-        overflow: 'hidden',              // ✅ recorta header redondeado
-        border: '1px solid',
-        borderColor: alpha(accentExterior, 0.6),
-        bgcolor: alpha(verde.alternateRow, 0.72),
-        boxShadow: '0 8px 24px rgba(0,0,0,0.08)',
+        borderRadius: 0,
+        border: '1px solid #e0e0e0',
+        bgcolor: '#ffffff',
+        overflow: 'auto',
       }}
     >
-      {/* Capa sutil para separar del fondo */}
-      <Box
-        sx={{
-          position: 'absolute',
-          inset: 0,
-          pointerEvents: 'none',
-          boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.55)',
-          zIndex: 0,
-        }}
-      />
       <Table
         stickyHeader
         size="small"
         sx={{
-          borderRadius: 0,
-          position: 'relative',
-          zIndex: 2,
-          bgcolor: alpha(verde.alternateRow, 0.75),
-          '& .MuiTableRow-root': { minHeight: 62 },
+          minWidth: 700,
+          '& .MuiTableRow-root': { minHeight: 56 }, // Compact
           '& .MuiTableCell-root': {
-            fontSize: '0.75rem',
-            px: 1,
-            py: 1.1,
-            borderBottomColor: alpha(accentInterior, 0.35),
-            bgcolor: 'transparent',
+            fontSize: '0.85rem',
+            px: 2,
+            py: 1.5,
+            borderBottom: '1px solid #f0f0f0',
+            color: '#37474f',
           },
-          '& .MuiTableBody-root .MuiTableRow-root:nth-of-type(odd) .MuiTableCell-root': {
-            bgcolor: alpha(verde.alternateRow, 0.75),
+          '& .MuiTableBody-root .MuiTableRow-root:nth-of-type(even)': {
+            bgcolor: alpha(verde.primary, 0.03), // Zebra
           },
-          '& .MuiTableBody-root .MuiTableRow-root:nth-of-type(even) .MuiTableCell-root': {
-            bgcolor: alpha(verde.rowHover, 0.55),
-          },
-          '& .MuiTableBody-root .MuiTableRow-root.MuiTableRow-hover:hover .MuiTableCell-root': {
-            bgcolor: alpha(verde.actionHover, 0.7),
+          '& .MuiTableBody-root .MuiTableRow-root:hover': {
+            bgcolor: alpha(verde.primary, 0.12),
           },
           '& .MuiTableCell-head': {
-            fontSize: '0.75rem',
-            fontWeight: 600,
-            bgcolor: verde.headerBg,
-            color: alpha('#FFFFFF', 0.94),
-            boxShadow: 'inset 0 -1px 0 rgba(255,255,255,0.12)',
+            fontSize: '0.8rem',
+            fontWeight: 700,
+            bgcolor: '#f5f7fa',
+            color: verde.primary,
             textTransform: 'uppercase',
-            letterSpacing: 0.4,
-            whiteSpace: 'nowrap', // ✅ evita 2 líneas
-          },
-          // ✅ divisores sutiles entre columnas del header
-          '& .MuiTableHead-root .MuiTableCell-head:not(:last-of-type)': {
-            borderRight: `3px solid ${alpha(verde.headerBorder, 0.5)}`,
           },
         }}
       >
@@ -371,17 +319,6 @@ const TablaMovimientosStock = () => {
                 <TableRow
                   key={`${mov.Id}-${mov.Fecha}`}
                   hover
-                  sx={{
-                    '& .MuiTableCell-root': {
-                      bgcolor: 'inherit',
-                    },
-                    bgcolor: esEntrada
-                      ? alpha(verde.primary, 0.12)
-                      : esSalida
-                        ? alpha('#ff7043', 0.12)
-                        : alpha(verde.rowHover, 0.42),
-                    '&:hover': { bgcolor: alpha(accentExterior, 0.1) },
-                  }}
                 >
                   <TableCell>
                     <Typography variant="body2" fontWeight={600}>
@@ -390,7 +327,7 @@ const TablaMovimientosStock = () => {
                   </TableCell>
 
                   <TableCell>
-                    <Box sx={{ width: 36, height: 36, borderRadius: 1, overflow: 'hidden', border: '1px solid #eee', bgcolor: '#fff' }}>
+                    <Box sx={{ width: 36, height: 36, borderRadius: 0, overflow: 'hidden', border: '1px solid #e0e0e0', bgcolor: '#fff' }}>
                       {imagenUrl ? (
                         <img src={imagenUrl.startsWith('http') ? imagenUrl : `http://localhost:4000${imagenUrl}`} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                       ) : (
@@ -406,10 +343,11 @@ const TablaMovimientosStock = () => {
                       label={mov.Codigo ?? '—'}
                       size="small"
                       sx={{
-                        bgcolor: alpha(accentExterior, 0.2),
+                        bgcolor: alpha(accentExterior, 0.1),
                         color: verde.textStrong,
-                        height: 20,
-                        '& .MuiChip-label': { px: 0.8, fontWeight: 600 },
+                        height: 24,
+                        borderRadius: 0,
+                        '& .MuiChip-label': { px: 1, fontWeight: 600 },
                       }}
                     />
                   </TableCell>
@@ -427,7 +365,7 @@ const TablaMovimientosStock = () => {
                   </TableCell>
 
                   <TableCell align="right">
-                    <Stack direction="row" spacing={0.75} alignItems="center" justifyContent="flex-end">
+                    <Stack direction="row" spacing={0.5} alignItems="center" justifyContent="flex-end">
                       {diferencia >= 0 ? <IconArrowUp size={16} color={verde.primary} /> : <IconArrowDown size={16} color="#ff7043" />}
                       <Typography variant="body2" fontWeight={600} color={diferencia >= 0 ? verde.textStrong : '#ff7043'}>
                         {diferencia > 0 ? `+${diferencia}` : diferencia}
@@ -439,8 +377,13 @@ const TablaMovimientosStock = () => {
                     <Chip
                       label={tipo.toUpperCase()}
                       size="small"
-                      color={esEntrada ? 'success' : esSalida ? 'error' : 'warning'}
-                      sx={{ height: 20, '& .MuiChip-label': { px: 0.8, fontWeight: 600 } }}
+                      sx={{
+                        height: 24,
+                        borderRadius: 0,
+                        fontWeight: 600,
+                        bgcolor: esEntrada ? alpha('#2e7d32', 0.1) : esSalida ? alpha('#d32f2f', 0.1) : alpha('#ed6c02', 0.1),
+                        color: esEntrada ? '#1b5e20' : esSalida ? '#c62828' : '#e65100',
+                      }}
                     />
                   </TableCell>
 
@@ -449,21 +392,21 @@ const TablaMovimientosStock = () => {
                   </TableCell>
 
                   <TableCell align="center">
-                    <Stack direction="row" spacing={0.75} justifyContent="center">
+                    <Stack direction="row" spacing={1} justifyContent="center">
                       <Tooltip title="Ver detalle">
-                        <CrystalIconButton baseColor={azul.primary} onClick={() => handleViewMovimiento(mov)}>
-                          <IconEye size={16} />
-                        </CrystalIconButton>
+                        <IconButton size="small" onClick={() => handleViewMovimiento(mov)} sx={{ color: azul.primary, '&:hover': { bgcolor: alpha(azul.primary, 0.1) } }}>
+                          <IconEye size={18} />
+                        </IconButton>
                       </Tooltip>
                       <Tooltip title="Editar">
-                        <CrystalIconButton baseColor={verde.primary} onClick={() => handleEditMovimiento(mov)}>
-                          <IconEdit size={16} />
-                        </CrystalIconButton>
+                        <IconButton size="small" onClick={() => handleEditMovimiento(mov)} sx={{ color: verde.primary, '&:hover': { bgcolor: alpha(verde.primary, 0.1) } }}>
+                          <IconEdit size={18} />
+                        </IconButton>
                       </Tooltip>
                       <Tooltip title="Eliminar">
-                        <CrystalIconButton baseColor={colorAccionEliminar} onClick={() => handleDeleteMovimiento(mov)}>
-                          <IconTrash size={16} />
-                        </CrystalIconButton>
+                        <IconButton size="small" onClick={() => handleDeleteMovimiento(mov)} sx={{ color: colorAccionEliminar, '&:hover': { bgcolor: alpha(colorAccionEliminar, 0.1) } }}>
+                          <IconTrash size={18} />
+                        </IconButton>
                       </Tooltip>
                     </Stack>
                   </TableCell>
@@ -484,9 +427,9 @@ const TablaMovimientosStock = () => {
       onClose={cerrarMenuColumna}
       anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
       transformOrigin={{ vertical: 'top', horizontal: 'right' }}
-      slotProps={{ paper: { sx: { p: 1.5, minWidth: 260, borderRadius: 2 } } } as any}
+      slotProps={{ paper: { sx: { p: 1.5, minWidth: 260, borderRadius: 0, boxShadow: '0 4px 12px rgba(0,0,0,0.1)' } } as any }}
     >
-      <Typography variant="subtitle2" sx={{ px: 1, pb: 1 }}>
+      <Typography variant="subtitle2" sx={{ px: 1, pb: 1, fontWeight: 600 }}>
         {columnaActiva === 'descripcion' && 'Filtrar por Descripción'}
         {columnaActiva === 'usuario' && 'Filtrar por Usuario'}
       </Typography>
@@ -502,18 +445,19 @@ const TablaMovimientosStock = () => {
             value={filtroColInput}
             onChange={(e) => setFiltroColInput(e.target.value)}
             onKeyDown={(e) => { if (e.key === 'Enter') aplicarFiltroColumna(); }}
+            InputProps={{ sx: { borderRadius: 0 } }}
           />
           <Stack direction="row" justifyContent="flex-end" spacing={1} mt={1}>
-            <Button size="small" onClick={limpiarFiltroColActual}>
+            <Button size="small" onClick={limpiarFiltroColActual} sx={{ color: 'text.secondary', textTransform: 'none' }}>
               Limpiar
             </Button>
-            <CrystalButton
+            <Button
               size="small"
-              baseColor={accentExterior}
               onClick={aplicarFiltroColumna}
+              sx={{ bgcolor: accentExterior, color: '#fff', '&:hover': { bgcolor: alpha(accentExterior, 0.9) }, borderRadius: 0, textTransform: 'none' }}
             >
               Aplicar
-            </CrystalButton>
+            </Button>
           </Stack>
         </Box>
       )}
@@ -522,52 +466,52 @@ const TablaMovimientosStock = () => {
 
   /* ======================== Paginador ======================== */
   const paginador = (
-    <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mt: 3 }}>
+    <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mt: 3, px: 1 }}>
       <Typography variant="caption" color="text.secondary">
         Mostrando {Math.min(movimientosPaginados.length, rowsPerPage)} de {movimientosFiltrados.length} movimientos
       </Typography>
       <Stack direction="row" spacing={1} alignItems="center">
-        <TextField select size="small" value={String(rowsPerPage)} onChange={handleChangeRowsPerPage} sx={{ minWidth: 90 }}>
+        <Typography variant="caption" color="text.secondary">Filas por pág:</Typography>
+        <TextField
+          select
+          size="small"
+          value={String(rowsPerPage)}
+          onChange={handleChangeRowsPerPage}
+          sx={{ minWidth: 70, '& .MuiOutlinedInput-root': { borderRadius: 0 } }}
+        >
           {[50, 100, 150].map((option) => (
             <option key={option} value={option}>{option}</option>
           ))}
         </TextField>
-        <Typography variant="body2" color="text.secondary">
-          Página {paginaActual} de {Math.max(1, totalPaginas)}
-        </Typography>
-        {(() => {
-          const nums = generarNumerosPaginas();
-          return nums.map((num, idx) =>
+
+        <Box display="flex" gap={0.5}>
+          {generarNumerosPaginas().map((num, idx) =>
             num === '...' ? (
-              <CrystalSoftButton
-                key={`ellipsis-${idx}`}
-                baseColor={accentExterior}
-                disabled
-                sx={{ minWidth: 32, minHeight: 30, px: 1, py: 0.25, borderRadius: 2, color: verde.textStrong }}
-              >
-                …
-              </CrystalSoftButton>
+              <Box key={`ellipsis-${idx}`} px={1} display="flex" alignItems="center">...</Box>
             ) : (
-              <CrystalButton
+              <Button
                 key={`page-${num}`}
-                baseColor={accentExterior}
                 onClick={() => handleChangePage(null as unknown as Event, (num as number) - 1)}
                 disabled={num === paginaActual}
                 sx={{
                   minWidth: 32,
-                  minHeight: 30,
-                  px: 1,
-                  py: 0.25,
-                  borderRadius: 2,
-                  fontWeight: num === paginaActual ? 800 : 600,
-                  boxShadow: 'none',
+                  height: 32,
+                  p: 0,
+                  borderRadius: 0,
+                  fontWeight: num === paginaActual ? 700 : 500,
+                  bgcolor: num === paginaActual ? accentExterior : 'transparent',
+                  color: num === paginaActual ? '#fff' : 'text.primary',
+                  border: num === paginaActual ? 'none' : '1px solid #e0e0e0',
+                  '&:hover': {
+                    bgcolor: num === paginaActual ? accentExterior : '#f5f5f5',
+                  }
                 }}
               >
                 {num}
-              </CrystalButton>
+              </Button>
             )
-          );
-        })()}
+          )}
+        </Box>
       </Stack>
     </Box>
   );
@@ -575,16 +519,16 @@ const TablaMovimientosStock = () => {
   /* ======================== Loading / Error ======================== */
   if (loading) {
     return (
-      <WoodSection>
-        <Skeleton variant="rounded" height={48} sx={{ mb: 3, borderRadius: 2 }} />
-        <Skeleton variant="rounded" height={320} sx={{ borderRadius: 2 }} />
-      </WoodSection>
+      <Box p={3} bgcolor="#fff" border="1px solid #e0e0e0">
+        <Skeleton variant="rectangular" height={48} sx={{ mb: 3 }} />
+        <Skeleton variant="rectangular" height={320} />
+      </Box>
     );
   }
 
   if (error) {
     return (
-      <WoodSection>
+      <Box p={3} bgcolor="#fff" border="1px solid #e0e0e0">
         {toolbar}
         <Box sx={{ p: 4, textAlign: 'center' }}>
           <Typography color="error" variant="h6" mb={1}>
@@ -593,24 +537,29 @@ const TablaMovimientosStock = () => {
           <Typography color="text.secondary" mb={2}>
             {error.message}
           </Typography>
-          <CrystalButton baseColor={accentExterior} startIcon={<IconRefresh />} onClick={() => refetch()}>
+          <Button
+            variant="contained"
+            startIcon={<IconRefresh />}
+            onClick={() => refetch()}
+            sx={{ bgcolor: accentExterior, color: '#fff', borderRadius: 0, boxShadow: 'none' }}
+          >
             Reintentar
-          </CrystalButton>
+          </Button>
         </Box>
-      </WoodSection>
+      </Box>
     );
   }
 
   /* ======================== Render ======================== */
   return (
-    <>
-      <WoodSection>
-        {toolbar}
+    <Box sx={{ p: 3, bgcolor: '#f9f9fab', minHeight: '100vh' }}>
+      {toolbar}
+      <Box mt={3}>
         {tabla}
-        {paginador}
-      </WoodSection>
+      </Box>
+      {paginador}
       {menuFiltros}
-    </>
+    </Box>
   );
 };
 

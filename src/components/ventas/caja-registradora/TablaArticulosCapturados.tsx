@@ -17,8 +17,8 @@ import {
   Stack,
   Tooltip,
   Divider,
+  IconButton,
 } from '@mui/material';
-import { alpha } from '@mui/material/styles';
 import {
   IconTrash,
   IconEdit,
@@ -26,7 +26,6 @@ import {
   IconX,
   IconShoppingCart,
 } from '@tabler/icons-react';
-import { CrystalIconButton } from '@/components/ui/CrystalButton';
 
 export interface ArticuloCapturado {
   id: number;
@@ -94,7 +93,7 @@ export const TablaArticulosCapturados: React.FC<TablaArticulosCapturadosProps> =
   );
 
   const totalSeleccionados = articulosSeleccionados.length;
-  const subtotalSeleccionados = articulosSeleccionados.reduce((total, articulo) => total + articulo.subtotal, 0);
+  // const subtotalSeleccionados = articulosSeleccionados.reduce((total, articulo) => total + articulo.subtotal, 0);
   const haySeleccionados = totalSeleccionados > 0;
   const todosMarcados = haySeleccionados && totalSeleccionados === articulos.length;
 
@@ -145,14 +144,12 @@ export const TablaArticulosCapturados: React.FC<TablaArticulosCapturadosProps> =
         elevation={0}
         sx={{
           p: 3,
-          borderRadius: 2,
-          bgcolor: (t) => alpha(t.palette.background.paper, 0.3), // 70% transparente
-          backdropFilter: 'saturate(110%) blur(2px)',
-          border: '1px solid',
-          borderColor: 'divider',
+          borderRadius: 0,
+          bgcolor: '#fff',
+          border: '1px solid #e0e0e0',
         }}
       >
-        <Typography variant="h6" fontWeight={600} gutterBottom>
+        <Typography variant="h6" fontWeight={700} gutterBottom>
           Carrito de Venta
         </Typography>
         <Box textAlign="center" py={6}>
@@ -173,11 +170,9 @@ export const TablaArticulosCapturados: React.FC<TablaArticulosCapturadosProps> =
       elevation={0}
       sx={{
         p: 3,
-        borderRadius: 2,
-        bgcolor: (t) => alpha(t.palette.background.paper, 0.3), // 70% transparente
-        backdropFilter: 'saturate(110%) blur(2px)',
-        border: '1px solid',
-        borderColor: 'divider',
+        borderRadius: 0,
+        bgcolor: '#fff',
+        border: '1px solid #e0e0e0',
         display: 'flex',
         flexDirection: 'column',
         minHeight: 420,
@@ -185,7 +180,7 @@ export const TablaArticulosCapturados: React.FC<TablaArticulosCapturadosProps> =
     >
       <Box display="flex" justifyContent="space-between" alignItems="flex-start" mb={2} gap={2}>
         <Box>
-          <Typography variant="h6" fontWeight={600}>
+          <Typography variant="h6" fontWeight={700}>
             Carrito de Venta ({articulos.length})
           </Typography>
           <Typography variant="body2" color="text.secondary">
@@ -193,10 +188,10 @@ export const TablaArticulosCapturados: React.FC<TablaArticulosCapturadosProps> =
           </Typography>
         </Box>
         <Box textAlign="right">
-          <Typography variant="subtitle2" fontWeight={700}>
-            Total
+          <Typography variant="subtitle2" fontWeight={700} color="text.secondary">
+            TOTAL
           </Typography>
-          <Typography variant="h6" fontWeight={800}>
+          <Typography variant="h5" fontWeight={800} color="#5d4037">
             ${totalCarrito.toLocaleString()}
           </Typography>
         </Box>
@@ -204,45 +199,25 @@ export const TablaArticulosCapturados: React.FC<TablaArticulosCapturadosProps> =
 
       <Divider sx={{ mb: 2 }} />
 
-      <TableContainer
-        sx={{
-          bgcolor: 'transparent',
-          borderRadius: 1.5,
-        }}
-      >
-        <Table size="small" stickyHeader
-          sx={{
-            '& .MuiTableCell-root': { bgcolor: 'transparent' },
-            '& .MuiTableHead-root .MuiTableCell-head': {
-              bgcolor: (t) => alpha(t.palette.background.default, 0.35),
-              backdropFilter: 'saturate(110%) blur(2px)',
-              fontWeight: 700,
-            },
-            '& .MuiTableBody-root .MuiTableRow-root:nth-of-type(odd) .MuiTableCell-root': {
-              bgcolor: (t) => alpha(t.palette.common.white, 0.06),
-            },
-            '& .MuiTableBody-root .MuiTableRow-root.MuiTableRow-hover:hover .MuiTableCell-root': {
-              bgcolor: (t) => alpha(t.palette.common.white, 0.12),
-            },
-          }}
-        >
+      <TableContainer sx={{ bgcolor: '#fff', borderRadius: 0, border: '1px solid #e0e0e0' }}>
+        <Table size="small" stickyHeader>
           <TableHead>
             <TableRow>
-              <TableCell padding="checkbox">
+              <TableCell padding="checkbox" sx={{ bgcolor: '#f5f5f5' }}>
                 <Checkbox
                   indeterminate={haySeleccionados && !todosMarcados}
                   checked={todosMarcados}
                   onChange={() => onToggleSeleccionTodos()}
+                  color="default"
                 />
               </TableCell>
-              <TableCell>Código</TableCell>
-              <TableCell>Descripción</TableCell>
-              {/* Rubro eliminado */}
-              <TableCell align="right">Precio</TableCell>
-              <TableCell align="center">Stock</TableCell>
-              <TableCell align="center">Cantidad</TableCell>
-              <TableCell align="right">Subtotal</TableCell>
-              <TableCell align="center">Acciones</TableCell>
+              <TableCell sx={{ bgcolor: '#f5f5f5', fontWeight: 700, color: 'text.secondary' }}>CÓDIGO</TableCell>
+              <TableCell sx={{ bgcolor: '#f5f5f5', fontWeight: 700, color: 'text.secondary' }}>DESCRIPCIÓN</TableCell>
+              <TableCell align="right" sx={{ bgcolor: '#f5f5f5', fontWeight: 700, color: 'text.secondary' }}>PRECIO</TableCell>
+              <TableCell align="center" sx={{ bgcolor: '#f5f5f5', fontWeight: 700, color: 'text.secondary' }}>STOCK</TableCell>
+              <TableCell align="center" sx={{ bgcolor: '#f5f5f5', fontWeight: 700, color: 'text.secondary' }}>CANTIDAD</TableCell>
+              <TableCell align="right" sx={{ bgcolor: '#f5f5f5', fontWeight: 700, color: 'text.secondary' }}>SUBTOTAL</TableCell>
+              <TableCell align="center" sx={{ bgcolor: '#f5f5f5', fontWeight: 700, color: 'text.secondary' }}>ACCIONES</TableCell>
             </TableRow>
           </TableHead>
 
@@ -256,6 +231,7 @@ export const TablaArticulosCapturados: React.FC<TablaArticulosCapturadosProps> =
                     <Checkbox
                       checked={articulo.seleccionado}
                       onChange={() => onToggleSeleccion(articulo.id)}
+                      color="default"
                     />
                   </TableCell>
 
@@ -276,8 +252,6 @@ export const TablaArticulosCapturados: React.FC<TablaArticulosCapturadosProps> =
                     )}
                   </TableCell>
 
-                  {/* Columna de Rubro eliminada */}
-
                   <TableCell align="right">
                     ${articulo.PrecioVenta.toLocaleString()}
                   </TableCell>
@@ -296,7 +270,8 @@ export const TablaArticulosCapturados: React.FC<TablaArticulosCapturadosProps> =
                           onChange={(e) => manejarCambioCantidad(e.target.value)}
                           size="small"
                           type="number"
-                          inputProps={{ min: 0, step: '0.01', style: { width: 76, textAlign: 'center' } }}
+                          InputProps={{ sx: { borderRadius: 0, textAlign: 'center' } }}
+                          inputProps={{ min: 0, step: '0.01', style: { width: 60, textAlign: 'center' } }}
                           autoFocus
                           onKeyUp={(event) => {
                             if (event.key === 'Enter') confirmarEdicion(articulo.id);
@@ -304,22 +279,22 @@ export const TablaArticulosCapturados: React.FC<TablaArticulosCapturadosProps> =
                           }}
                         />
                         <Tooltip title="Confirmar">
-                          <CrystalIconButton
-                            baseColor="#2e7d32"
+                          <IconButton
                             onClick={() => confirmarEdicion(articulo.id)}
-                            sx={{ width: 30, height: 30 }}
+                            size="small"
+                            sx={{ color: '#2e7d32', bgcolor: '#e8f5e9', '&:hover': { bgcolor: '#c8e6c9' } }}
                           >
                             <IconCheck size={16} />
-                          </CrystalIconButton>
+                          </IconButton>
                         </Tooltip>
                         <Tooltip title="Cancelar">
-                          <CrystalIconButton
-                            baseColor="#616161"
+                          <IconButton
                             onClick={cancelarEdicion}
-                            sx={{ width: 30, height: 30 }}
+                            size="small"
+                            sx={{ color: '#616161', '&:hover': { bgcolor: '#f5f5f5' } }}
                           >
                             <IconX size={16} />
-                          </CrystalIconButton>
+                          </IconButton>
                         </Tooltip>
                       </Stack>
                     ) : (
@@ -328,13 +303,13 @@ export const TablaArticulosCapturados: React.FC<TablaArticulosCapturadosProps> =
                           {articulo.cantidad}
                         </Typography>
                         <Tooltip title="Editar cantidad">
-                          <CrystalIconButton
-                            baseColor="#2e7d32"
+                          <IconButton
                             onClick={() => manejarEdicion(articulo)}
-                            sx={{ width: 30, height: 30 }}
+                            size="small"
+                            sx={{ color: '#5d4037' }}
                           >
                             <IconEdit size={16} />
-                          </CrystalIconButton>
+                          </IconButton>
                         </Tooltip>
                       </Stack>
                     )}
@@ -348,13 +323,13 @@ export const TablaArticulosCapturados: React.FC<TablaArticulosCapturadosProps> =
 
                   <TableCell align="center">
                     <Tooltip title="Eliminar del carrito">
-                      <CrystalIconButton
-                        baseColor="#c62828"
+                      <IconButton
                         onClick={() => onEliminarArticulo(articulo.id)}
-                        sx={{ width: 30, height: 30 }}
+                        size="small"
+                        sx={{ color: '#d32f2f', '&:hover': { bgcolor: '#ffebee' } }}
                       >
                         <IconTrash size={16} />
-                      </CrystalIconButton>
+                      </IconButton>
                     </Tooltip>
                   </TableCell>
                 </TableRow>
@@ -373,7 +348,7 @@ export const TablaArticulosCapturados: React.FC<TablaArticulosCapturadosProps> =
         onRowsPerPageChange={handleChangeRowsPerPage}
         rowsPerPageOptions={[10, 25, 50, 100]}
         labelRowsPerPage="Filas por página"
-        sx={{ mt: 'auto' }}
+        sx={{ mt: 'auto', borderTop: '1px solid #e0e0e0' }}
       />
     </Paper>
   );

@@ -33,14 +33,11 @@ import { Icon } from '@iconify/react';
 import { BUSCAR_ARTICULOS, GET_ESTADISTICAS_ARTICULOS } from '@/components/articulos/graphql/queries';
 import type { Articulo } from '@/app/interfaces/mudras.types';
 import { abrevUnidad, type UnidadMedida } from '@/app/utils/unidades';
-import { crearConfiguracionBisel, crearEstilosBisel } from '@/components/ui/bevel';
-import { WoodBackdrop } from '@/components/ui/TexturedFrame/WoodBackdrop';
-import CrystalButton, { CrystalIconButton, CrystalSoftButton } from '@/components/ui/CrystalButton';
+import { Paper } from '@mui/material';
 import { azul, verde } from '@/ui/colores';
 import ModalDetallesArticulo from '@/components/articulos/ModalDetallesArticulo';
 import ModalEliminarArticulo from '@/components/articulos/ModalEliminarArticulo';
 import { calcularPrecioDesdeArticulo } from '@/utils/precioVenta';
-import SearchToolbar from '@/components/ui/SearchToolbar';
 
 /* ======================== Tipos de columnas ======================== */
 type ArticuloColumnKey =
@@ -119,44 +116,10 @@ type ArticulosTableProps = {
 };
 
 /* ======================== Estética ======================== */
-const militaryGreen = '#2b4735';
-const accentExterior = militaryGreen;
-const accentInterior = darken(militaryGreen, 0.3);
-const panelBg = 'rgba(222, 236, 227, 0.72)';
-const tableBodyBg = 'rgba(235, 247, 238, 0.58)';
-const tableBodyAlt = 'rgba(191, 214, 194, 0.32)';
-const woodTintExterior = '#c7d8cb';
-const woodTintInterior = '#b2c4b6';
-const headerBg = darken(militaryGreen, 0.12);
-const headerTextColor = alpha('#ffffff', 0.95);
+const headerBg = verde.primary; // Flat Green Header
+const tableBodyBg = '#ffffff';
+const tableBodyAlt = '#f8f9fa';
 const colorAccionEliminar = '#b71c1c';
-
-const biselExteriorConfig = crearConfiguracionBisel(accentExterior, 1.45);
-const estilosBiselExterior = crearEstilosBisel(biselExteriorConfig, { zContenido: 2 });
-
-const WoodSection: React.FC<React.PropsWithChildren> = ({ children }) => (
-  <Box
-    sx={{
-      position: 'relative',
-      borderRadius: 2,
-      overflow: 'hidden',
-      boxShadow: '0 18px 40px rgba(0,0,0,0.12)',
-      background: 'transparent',
-      ...estilosBiselExterior,
-    }}
-  >
-    <WoodBackdrop accent={woodTintExterior} radius={3} inset={0} strength={0.16} texture="tabla" />
-    <Box
-      sx={{
-        position: 'absolute',
-        inset: 0,
-        backgroundColor: alpha('#f2f7f4', 0.78),
-        zIndex: 0,
-      }}
-    />
-    <Box sx={{ position: 'relative', zIndex: 2, p: 2.75 }}>{children}</Box>
-  </Box>
-);
 
 /* ======================== Utils ======================== */
 const getStockColor = (stock: number, stockMinimo: number) => {
@@ -487,13 +450,13 @@ const TablaArticulos: React.FC<ArticulosTableProps> = ({
   const defaultRenderers: Record<ArticuloColumnKey, (a: Articulo) => React.ReactNode> = {
     descripcion: (a) => (
       <Box display="flex" flexDirection="column">
-        <Typography variant="body2" fontWeight={700} sx={{ color: darken(militaryGreen, 0.2) }}>
+        <Typography variant="body2" fontWeight={700} sx={{ color: '#2b4735' }}>
           {a.Descripcion || '-'}
         </Typography>
       </Box>
     ),
     imagen: (a) => (
-      <Box sx={{ width: 40, height: 40, borderRadius: 1, overflow: 'hidden', border: '1px solid #ddd', bgcolor: '#fff' }}>
+      <Box sx={{ width: 40, height: 40, borderRadius: 0, overflow: 'hidden', border: '1px solid #ddd', bgcolor: '#fff' }}>
         {a.ImagenUrl ? (
           <>
             {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -509,9 +472,10 @@ const TablaArticulos: React.FC<ArticulosTableProps> = ({
         label={a.Codigo ?? 'Sin código'}
         size="small"
         sx={{
-          bgcolor: alpha(accentExterior, 0.14),
-          color: darken(militaryGreen, 0.35),
+          bgcolor: '#eeeeee',
+          color: '#424242',
           fontWeight: 600,
+          borderRadius: 0,
         }}
       />
     ),
@@ -525,18 +489,19 @@ const TablaArticulos: React.FC<ArticulosTableProps> = ({
         label={a.Rubro || 'Sin rubro'}
         size="small"
         sx={{
-          bgcolor: alpha(accentExterior, 0.22),
-          color: headerBg,
+          bgcolor: alpha(verde.primary, 0.1),
+          color: verde.primary,
           fontWeight: 600,
-          height: 22,
-          '& .MuiChip-label': { px: 0.8 },
+          height: 24,
+          borderRadius: 0,
+          '& .MuiChip-label': { px: 1 },
         }}
       />
     ),
     stock: (a) => {
       const total = Number(obtenerStockTotal(a).toFixed(2));
       return (
-        <Typography variant="body2" fontWeight={700} color={total <= 0 ? 'error.main' : headerBg}>
+        <Typography variant="body2" fontWeight={700} color={total <= 0 ? 'error.main' : 'text.primary'}>
           {total} {abrevUnidad(a.Unidad as UnidadMedida)}
         </Typography>
       );
@@ -544,7 +509,7 @@ const TablaArticulos: React.FC<ArticulosTableProps> = ({
     precio: (a) => {
       const precio = obtenerPrecioCalculado(a);
       return (
-        <Typography variant="body2" fontWeight={700} color={headerBg}>
+        <Typography variant="body2" fontWeight={700} color="text.primary">
           {formatCurrency(precio)}
         </Typography>
       );
@@ -556,9 +521,10 @@ const TablaArticulos: React.FC<ArticulosTableProps> = ({
           label={ivaVal !== null ? `${ivaVal.toString().replace('.', ',')}%` : '—'}
           size="small"
           sx={{
-            bgcolor: alpha(accentExterior, 0.18),
-            color: darken(militaryGreen, 0.35),
+            bgcolor: '#eeeeee',
+            color: '#616161',
             fontWeight: 600,
+            borderRadius: 0,
           }}
         />
       );
@@ -576,31 +542,31 @@ const TablaArticulos: React.FC<ArticulosTableProps> = ({
           label={getStockLabel(dep, min)}
           color={getStockColor(dep, min)}
           size="small"
-          sx={{ fontWeight: 600 }}
+          sx={{ fontWeight: 600, borderRadius: 0 }}
         />
       );
     },
     acciones: (a) => (
-      <Box display="flex" justifyContent="center" gap={0.75}>
+      <Box display="flex" justifyContent="center" gap={0.5}>
         {handleView && (
           <Tooltip title="Ver detalles">
-            <CrystalIconButton baseColor={azul.primary} onClick={() => handleView(a)}>
-              <IconEye size={16} />
-            </CrystalIconButton>
+            <IconButton size="small" onClick={() => handleView(a)} sx={{ color: azul.primary, '&:hover': { bgcolor: alpha(azul.primary, 0.1) } }}>
+              <IconEye size={20} />
+            </IconButton>
           </Tooltip>
         )}
         {onEdit && (
           <Tooltip title="Editar">
-            <CrystalIconButton baseColor={verde.primary} onClick={() => onEdit(a)}>
-              <IconEdit size={16} />
-            </CrystalIconButton>
+            <IconButton size="small" onClick={() => onEdit(a)} sx={{ color: verde.primary, '&:hover': { bgcolor: alpha(verde.primary, 0.1) } }}>
+              <IconEdit size={20} />
+            </IconButton>
           </Tooltip>
         )}
         {handleDelete && (
           <Tooltip title="Eliminar">
-            <CrystalIconButton baseColor={colorAccionEliminar} onClick={() => handleDelete(a)}>
-              <IconTrash size={16} />
-            </CrystalIconButton>
+            <IconButton size="small" onClick={() => handleDelete(a)} sx={{ color: colorAccionEliminar, '&:hover': { bgcolor: alpha(colorAccionEliminar, 0.1) } }}>
+              <IconTrash size={20} />
+            </IconButton>
           </Tooltip>
         )}
       </Box>
@@ -613,88 +579,119 @@ const TablaArticulos: React.FC<ArticulosTableProps> = ({
     return renderer ? renderer(articulo) : null;
   };
 
+  /* ---------- Toolbar ---------- */
   const toolbar = (
-    <SearchToolbar
-      title="Artículos"
-      icon={<IconClipboardList size={30} />}
-      baseColor={verde.primary}
-      placeholder="Buscar descripción, código o proveedor…"
-      searchValue={globalSearchDraft}
-      onSearchValueChange={setGlobalSearchDraft}
-      onSubmitSearch={ejecutarBusqueda}
-      onClear={limpiarFiltros}
-      canCreate={allowCreate}
-      createLabel="Nuevo artículo"
-      onCreateClick={onCreateClick}
-      searchDisabled={loading}
-    />
-  );
+    <Box
+      sx={{
+        display: 'flex',
+        justifyContent: 'flex-start',
+        alignItems: 'center',
+        mb: 3,
+        p: 2,
+        bgcolor: '#ffffff',
+      }}
+    >
+      <Box display="flex" alignItems="center" gap={2} flexWrap="wrap">
+        <TextField
+          placeholder="Buscar descripción, código o proveedor…"
+          size="small"
+          value={globalSearchDraft}
+          onChange={(e) => setGlobalSearchDraft(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') ejecutarBusqueda();
+          }}
+          InputProps={{
+            startAdornment: (
+              <InputAdornment position="start">
+                <IconSearch size={18} color="#757575" />
+              </InputAdornment>
+            ),
+          }}
+          sx={{
+            minWidth: 350,
+            '& .MuiOutlinedInput-root': {
+              borderRadius: 0,
+              bgcolor: '#f5f5f5',
+              '& fieldset': { borderColor: '#e0e0e0' },
+              '&:hover fieldset': { borderColor: '#bdbdbd' },
+              '&.Mui-focused fieldset': { borderColor: verde.primary },
+            }
+          }}
+        />
 
+        <Button
+          variant="outlined"
+          startIcon={<IconRefresh size={18} />}
+          onClick={limpiarFiltros}
+          sx={{ borderRadius: 0, textTransform: 'none', color: '#757575', borderColor: '#e0e0e0', '&:hover': { borderColor: '#bdbdbd', bgcolor: '#f5f5f5' } }}
+        >
+          Limpiar
+        </Button>
+
+        {allowCreate && (
+          <Button
+            variant="contained"
+            startIcon={<IconPlus size={18} />}
+            onClick={onCreateClick}
+            disableElevation
+            sx={{
+              borderRadius: 0,
+              textTransform: 'none',
+              bgcolor: verde.primary,
+              fontWeight: 600,
+              '&:hover': { bgcolor: verde.primaryHover }
+            }}
+          >
+            {`Nuevo artículo`}
+          </Button>
+        )}
+      </Box>
+    </Box>
+  );
 
   const tabla = (
     <TableContainer
+      component={Paper}
+      elevation={0}
       sx={{
-        position: 'relative',
         borderRadius: 0,
-        border: '1px solid',
-        borderColor: alpha(accentInterior, 0.38),
-        bgcolor: 'rgba(255, 250, 242, 0.94)',
-        backdropFilter: 'saturate(110%) blur(0.85px)',
-        overflow: 'hidden',
-        boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.55)',
+        border: '1px solid #e0e0e0',
+        bgcolor: '#ffffff',
+        overflow: 'auto',
       }}
     >
-      <WoodBackdrop accent={woodTintInterior} radius={0} inset={0} strength={0.12} texture="tabla" />
-      <Box
-        sx={{
-          position: 'absolute',
-          inset: 0,
-          backgroundColor: alpha('#fffaf3', 0.82),
-          zIndex: 0,
-        }}
-      />
       <Table
         stickyHeader
-        size="small"
+        size={dense ? 'small' : 'medium'}
         sx={{
-          borderRadius: 0,
-          position: 'relative',
-          zIndex: 2,
-          bgcolor: tableBodyBg,
-          '& .MuiTableRow-root': { minHeight: 62 },
+          minWidth: 700,
+          '& .MuiTableRow-root': {
+            minHeight: 56,
+            transition: 'background-color 0.2s',
+          },
           '& .MuiTableCell-root': {
-            fontSize: '0.75rem',
-            px: 1,
-            py: 1.1,
-            borderBottomColor: alpha(accentInterior, 0.35),
-            bgcolor: 'transparent',
+            fontSize: '0.85rem',
+            px: 2,
+            py: 1.5,
+            borderBottom: '1px solid #f0f0f0',
+            color: '#37474f',
           },
-          '& .MuiTableBody-root .MuiTableRow-root:nth-of-type(odd) .MuiTableCell-root': {
-            bgcolor: tableBodyBg,
+          '& .MuiTableBody-root .MuiTableRow-root:nth-of-type(even)': {
+            bgcolor: alpha(verde.primary, 0.03), // Subtle Green Zebra
           },
-          '& .MuiTableBody-root .MuiTableRow-root:nth-of-type(even) .MuiTableCell-root': {
-            bgcolor: tableBodyAlt,
-          },
-          '& .MuiTableBody-root .MuiTableRow-root.MuiTableRow-hover:hover .MuiTableCell-root': {
-            bgcolor: alpha('#d9b18a', 0.58),
+          '& .MuiTableBody-root .MuiTableRow-root:hover': {
+            bgcolor: alpha(verde.primary, 0.12),
           },
           '& .MuiTableCell-head': {
-            fontSize: '0.75rem',
-            fontWeight: 600,
-            bgcolor: verde.headerBg,
-            color: alpha('#FFFFFF', 0.94),
-            boxShadow: 'inset 0 -1px 0 rgba(255,255,255,0.12)',
-            textTransform: 'uppercase',
-            letterSpacing: 0.4,
-          },
-          // ✅ divisores sutiles entre columnas del header
-          '& .MuiTableHead-root .MuiTableCell-head:not(:last-of-type)': {
-            borderRight: `3px solid ${alpha(verde.headerBorder, 0.5)}`,
+            fontSize: '0.8rem',
+            fontWeight: 700,
+            bgcolor: '#f5f7fa',
+            color: verde.primary,
           },
         }}
       >
         <TableHead>
-          <TableRow>
+          <TableRow sx={{ '& th': { bgcolor: verde.primary, color: '#ffffff', fontWeight: 600, letterSpacing: 0.5, borderRadius: 0 } }}>
             {columns.map((column) => {
               const displayedHeader = (column.header === 'STOCK TOTAL' || column.key === 'stock') ? 'Global' : (column.header ?? column.key.toUpperCase());
               return (
@@ -714,6 +711,7 @@ const TablaArticulos: React.FC<ArticulosTableProps> = ({
                           aria-label={`Filtrar estado de stock`}
                           aria-haspopup="menu"
                           onClick={abrirMenu('estado')}
+                          sx={{ color: 'inherit' }}
                         >
                           <IconDotsVertical size={16} />
                         </IconButton>
@@ -725,7 +723,6 @@ const TablaArticulos: React.FC<ArticulosTableProps> = ({
             })}
           </TableRow>
         </TableHead>
-
 
         <TableBody>
           {articulos.length === 0 ? (
@@ -793,39 +790,29 @@ const TablaArticulos: React.FC<ArticulosTableProps> = ({
 
         {generarNumerosPaginas().map((num, idx) =>
           num === '...' ? (
-            <CrystalSoftButton
-              key={`ellipsis-${idx}`}
-              baseColor={verde.primary}
-              disabled
-              sx={{
-                minWidth: 32,
-                minHeight: 30,
-                px: 1,
-                py: 0.25,
-                borderRadius: 2,
-                color: verde.textStrong,
-              }}
-            >
-              ...
-            </CrystalSoftButton>
+            <Box key={`ellipsis-${idx}`} sx={{ px: 1, color: 'text.secondary' }}>...</Box>
           ) : (
-            <CrystalButton
-              key={`page-${num}`}
-              baseColor={verde.primary}
+            <Button
+              key={num}
+              variant={Number(num) === paginaActual ? 'contained' : 'outlined'}
+              size="small"
               sx={{
                 minWidth: 32,
-                minHeight: 30,
                 px: 1,
-                py: 0.25,
-                borderRadius: 2,
-                fontWeight: Number(num) === paginaActual ? 800 : 600,
-                boxShadow: 'none',
+                borderRadius: 0,
+                borderColor: Number(num) === paginaActual ? 'transparent' : '#e0e0e0',
+                bgcolor: Number(num) === paginaActual ? verde.primary : 'transparent',
+                color: Number(num) === paginaActual ? '#fff' : 'text.primary',
+                '&:hover': {
+                  borderColor: verde.primary,
+                  bgcolor: Number(num) === paginaActual ? verde.primaryHover : alpha(verde.primary, 0.05)
+                }
               }}
-              onClick={() => handleChangePage(null, Number(num) - 1)}
+              onClick={() => handleChangePage(null as unknown as Event, Number(num) - 1)}
               disabled={num === paginaActual}
             >
               {num}
-            </CrystalButton>
+            </Button>
           )
         )}
       </Stack>
@@ -833,44 +820,46 @@ const TablaArticulos: React.FC<ArticulosTableProps> = ({
   );
 
 
+
   if (loading) {
     return (
-      <WoodSection>
-        {showToolbar ? (
-          <Skeleton variant="rounded" height={64} sx={{ mb: 3, borderRadius: 3 }} />
-        ) : null}
-        <Skeleton variant="rounded" height={dense ? 320 : 380} sx={{ borderRadius: 3 }} />
-      </WoodSection>
+      <Box sx={{ width: '100%' }}>
+        {showToolbar && <Skeleton variant="rectangular" height={80} sx={{ mb: 3, borderRadius: 0 }} />}
+        <Skeleton variant="rectangular" height={dense ? 320 : 380} sx={{ borderRadius: 0 }} />
+      </Box>
     );
   }
 
   if (error) {
     return (
-      <WoodSection>
+      <Paper elevation={0} sx={{ p: 4, textAlign: 'center', borderRadius: 0, border: '1px solid #e0e0e0' }}>
         {showToolbar && toolbar}
-        <Box sx={{ p: 4, textAlign: 'center' }}>
-          <Typography color="error" variant="h6" mb={1}>
-            Error al cargar artículos
-          </Typography>
-          <Typography color="text.secondary" mb={2}>
-            {error.message}
-          </Typography>
-          <CrystalButton baseColor={accentExterior} startIcon={<IconRefresh />} onClick={() => refetch()}>
-            Reintentar
-          </CrystalButton>
-        </Box>
-      </WoodSection>
+        <Typography color="error" variant="h6" mb={1} fontWeight={700}>
+          Error al cargar artículos
+        </Typography>
+        <Typography color="text.secondary" mb={2}>
+          {error.message}
+        </Typography>
+        <Button
+          variant="contained"
+          startIcon={<IconRefresh />}
+          onClick={() => refetch()}
+          sx={{ borderRadius: 0, bgcolor: azul.primary, textTransform: 'none' }}
+        >
+          Reintentar
+        </Button>
+      </Paper>
     );
   }
 
   return (
     <>
-      <WoodSection>
+      <Box sx={{ width: '100%' }}>
         {showToolbar && toolbar}
 
-        {/* Resumen debajo del subtítulo (similar a TablaStockPuntoVenta) */}
-        <Box px={1} pb={1}>
-          <Typography variant="body1" color="text.secondary">
+        {/* Resumen */}
+        <Box px={1} pb={2} display="flex" justifyContent="flex-end">
+          <Typography variant="body2" color="text.secondary" fontWeight={500}>
             {`${total} artículos • ${numberFormatter.format(
               statsData?.estadisticasArticulos?.totalUnidades ?? articulos.reduce((acc, it) => acc + Number(obtenerStockTotal(it) || 0), 0)
             )} unidades`}
@@ -879,7 +868,7 @@ const TablaArticulos: React.FC<ArticulosTableProps> = ({
 
         {tabla}
         {paginador}
-      </WoodSection>
+      </Box>
 
       <Menu
         anchorEl={menuAnchor}
@@ -1005,25 +994,27 @@ const TablaArticulos: React.FC<ArticulosTableProps> = ({
       </Menu>
 
       {/* Modales internos como en Rubros (opcional) */}
-      {useInternalModals && (
-        <>
-          <ModalDetallesArticulo
-            open={modalDetallesOpen}
-            onClose={closeModals}
-            articulo={articuloSeleccionado as any}
-            accentColor={verde.primary}
-            stockContext={{ label: 'Stock total' }}
-          />
-          <ModalEliminarArticulo
-            open={modalEliminarOpen}
-            onClose={closeModals}
-            articulo={articuloSeleccionado as any}
-            textoConfirmacion={textoConfirmEliminar}
-            setTextoConfirmacion={setTextoConfirmEliminar}
-            onSuccess={() => refetch()}
-          />
-        </>
-      )}
+      {
+        useInternalModals && (
+          <>
+            <ModalDetallesArticulo
+              open={modalDetallesOpen}
+              onClose={closeModals}
+              articulo={articuloSeleccionado as any}
+              accentColor={verde.primary}
+              stockContext={{ label: 'Stock total' }}
+            />
+            <ModalEliminarArticulo
+              open={modalEliminarOpen}
+              onClose={closeModals}
+              articulo={articuloSeleccionado as any}
+              textoConfirmacion={textoConfirmEliminar}
+              setTextoConfirmacion={setTextoConfirmEliminar}
+              onSuccess={() => refetch()}
+            />
+          </>
+        )
+      }
     </>
   );
 };

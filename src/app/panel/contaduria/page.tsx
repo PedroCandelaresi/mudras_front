@@ -6,83 +6,30 @@ import { Icon } from '@iconify/react';
 import PageContainer from '@/components/container/PageContainer';
 import TablaAsientos from '@/components/contaduria/TablaAsientos';
 import TablaCuentasContables from '@/components/contaduria/TablaCuentasContables';
-import { TexturedPanel } from '@/components/ui/TexturedFrame/TexturedPanel';
-import StylizedTabbedPanel, { type StylizedTabDefinition } from '@/components/ui/StylizedTabbedPanel';
 import { azulOscuro } from '@/ui/colores';
 
-const tabs: StylizedTabDefinition[] = [
-  {
-    key: 'contaduria',
-    label: 'Contaduría',
-    icon: <Icon icon="mdi:calculator-variant-outline" />,
-    color: azulOscuro.primary,
-  },
-];
-
 export default function Contaduria() {
-  const [activeTab, setActiveTab] = useState('contaduria');
 
   return (
     <PageContainer title="Contaduría - Mudras" description="Gestión contable">
-      <StylizedTabbedPanel
-        tabs={tabs}
-        activeKey={activeTab}
-        onChange={setActiveTab}
-      >
-        <Box>
-          <Grid container spacing={3}>
-            <Grid size={12}>
-              <Typography variant="h4" fontWeight={600} color="success.main" mb={2}>
+      <Box>
+        <Grid container spacing={3}>
+          <Grid size={12}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
+              <Icon icon="mdi:calculator-variant-outline" width={32} height={32} color={azulOscuro.primary} />
+              <Typography variant="h4" fontWeight={600} color="success.main">
                 Contaduría
               </Typography>
-            </Grid>
-            <Grid size={12}>
-              <TexturedPanel
-                accent="#2e7d32"
-                radius={14}
-                contentPadding={12}
-                bgTintPercent={22}
-                bgAlpha={0.98}
-                tintMode="soft-light"
-                tintOpacity={0.42}
-                textureScale={1.1}
-                textureBaseOpacity={0.18}
-                textureBoostOpacity={0.12}
-                textureContrast={0.92}
-                textureBrightness={1.03}
-                bevelWidth={12}
-                bevelIntensity={1.0}
-                glossStrength={1.0}
-                vignetteStrength={0.9}
-              >
-                <TablaAsientos />
-              </TexturedPanel>
-            </Grid>
-            <Grid size={12}>
-              <TexturedPanel
-                accent="#2e7d32"
-                radius={14}
-                contentPadding={12}
-                bgTintPercent={22}
-                bgAlpha={0.98}
-                tintMode="soft-light"
-                tintOpacity={0.42}
-                textureScale={1.1}
-                textureBaseOpacity={0.18}
-                textureBoostOpacity={0.12}
-                textureContrast={0.92}
-                textureBrightness={1.03}
-                bevelWidth={12}
-                bevelIntensity={1.0}
-                glossStrength={1.0}
-                vignetteStrength={0.9}
-              >
-                <TablaCuentasContables />
-              </TexturedPanel>
-            </Grid>
+            </Box>
           </Grid>
-        </Box>
-      </StylizedTabbedPanel>
+          <Grid size={12}>
+            <TablaAsientos />
+          </Grid>
+          <Grid size={12}>
+            <TablaCuentasContables />
+          </Grid>
+        </Grid>
+      </Box>
     </PageContainer>
   );
 }

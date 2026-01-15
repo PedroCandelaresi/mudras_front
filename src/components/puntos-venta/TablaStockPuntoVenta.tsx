@@ -1,12 +1,10 @@
 'use client';
-
-import { useCallback, useMemo, useState, type PropsWithChildren } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import {
   Alert,
   Box,
   Chip,
   Skeleton,
-  Stack,
   Table,
   TableBody,
   TableCell,
@@ -15,41 +13,16 @@ import {
   TableRow,
   Tooltip,
   Typography,
+  Paper,
+  IconButton,
+  TextField,
+  InputAdornment,
+  Button
 } from '@mui/material';
-import { alpha, darken } from '@mui/material/styles';
-import { IconClipboardList, IconEdit, IconEye } from '@tabler/icons-react';
-import { CrystalIconButton, CrystalSoftButton } from '@/components/ui/CrystalButton';
-import { crearConfiguracionBisel, crearEstilosBisel } from '@/components/ui/bevel';
-import { WoodBackdrop } from '@/components/ui/TexturedFrame/WoodBackdrop';
 import type { ArticuloConStockPuntoMudras } from '@/components/puntos-mudras/graphql/queries';
 import type { Articulo } from '@/app/interfaces/mudras.types';
 import { calcularPrecioDesdeArticulo } from '@/utils/precioVenta';
-import { azul, verde } from '@/ui/colores';
-import SearchToolbar from '@/components/ui/SearchToolbar';
-
-type TablaStockTheme = {
-  accent?: string;
-  accentInterior?: string;
-  woodTintExterior?: string;
-  woodTintInterior?: string;
-  tableBodyBg?: string;
-  tableBodyAlt?: string;
-  headerBg?: string;
-  panelOverlay?: string;
-  buttonColor?: string;
-};
-
-const DEFAULT_THEME: Required<Omit<TablaStockTheme, 'buttonColor'>> & { buttonColor: string } = {
-  accent: '#66BB6A',
-  accentInterior: darken('#66BB6A', 0.28),
-  woodTintExterior: '#c8e6c9',
-  woodTintInterior: '#b2dfbd',
-  tableBodyBg: 'rgba(225, 245, 229, 0.78)',
-  tableBodyAlt: 'rgba(200, 230, 205, 0.42)',
-  headerBg: darken('#66BB6A', 0.32),
-  panelOverlay: '#f1fbf2',
-  buttonColor: '#66BB6A',
-};
+import { Icon } from '@iconify/react';
 
 const numberFormatter = new Intl.NumberFormat('es-AR', { maximumFractionDigits: 2 });
 const currencyFormatter = new Intl.NumberFormat('es-AR', {
@@ -66,45 +39,8 @@ type Props = {
   onEditStock?: (articulo: ArticuloConStockPuntoMudras) => void;
   onViewDetails?: (articulo: ArticuloConStockPuntoMudras) => void;
   onNewAssignment?: () => void;
-  themeOverride?: TablaStockTheme;
+  themeOverride?: any; // Ignored in flat design
 };
-
-type WoodSectionProps = PropsWithChildren<{
-  estilosBiselExterior: any;
-  woodTintExterior: string;
-  panelOverlay: string;
-}>;
-
-const WoodSection: React.FC<WoodSectionProps> = ({
-  children,
-  estilosBiselExterior,
-  woodTintExterior,
-  panelOverlay,
-}) => (
-  <Box
-    sx={{
-      position: 'relative',
-      borderRadius: 2,
-      overflow: 'hidden',
-      boxShadow: '0 18px 40px rgba(0,0,0,0.12)',
-      background: 'transparent',
-      ...estilosBiselExterior,
-    }}
-  >
-    <WoodBackdrop accent={woodTintExterior} radius={3} inset={0} strength={0.16} texture="tabla" />
-
-    <Box
-      sx={{
-        position: 'absolute',
-        inset: 0,
-        backgroundColor: alpha(panelOverlay, 0.78),
-        zIndex: 0,
-      }}
-    />
-
-    <Box sx={{ position: 'relative', zIndex: 2, p: 2.75 }}>{children}</Box>
-  </Box>
-);
 
 const TablaStockPuntoVenta: React.FC<Props> = ({
   articulos,
@@ -114,24 +50,7 @@ const TablaStockPuntoVenta: React.FC<Props> = ({
   onEditStock,
   onViewDetails,
   onNewAssignment,
-  themeOverride,
 }) => {
-  const accent = themeOverride?.accent ?? DEFAULT_THEME.accent;
-  const accentExterior = accent;
-  const accentInterior = themeOverride?.accentInterior ?? (themeOverride?.accent ? darken(themeOverride.accent, 0.3) : DEFAULT_THEME.accentInterior);
-  const woodTintExterior = themeOverride?.woodTintExterior ?? DEFAULT_THEME.woodTintExterior;
-  const woodTintInterior = themeOverride?.woodTintInterior ?? DEFAULT_THEME.woodTintInterior;
-  const tableBodyBg = themeOverride?.tableBodyBg ?? DEFAULT_THEME.tableBodyBg;
-  const tableBodyAlt = themeOverride?.tableBodyAlt ?? DEFAULT_THEME.tableBodyAlt;
-  const headerBg = themeOverride?.headerBg ?? (themeOverride?.accent ? darken(themeOverride.accent, 0.12) : DEFAULT_THEME.headerBg);
-  const panelOverlay = themeOverride?.panelOverlay ?? DEFAULT_THEME.panelOverlay;
-  const buttonColor = themeOverride?.buttonColor ?? accent;
-
-  const chipText = darken(accent, 0.35);
-
-  const biselExteriorConfig = crearConfiguracionBisel(accent, 1.45);
-  const estilosBiselExterior = crearEstilosBisel(biselExteriorConfig, { zContenido: 2 });
-
   const [busquedaDraft, setBusquedaDraft] = useState('');
   const [busquedaAplicada, setBusquedaAplicada] = useState('');
   const [page, setPage] = useState(0);
@@ -182,356 +101,210 @@ const TablaStockPuntoVenta: React.FC<Props> = ({
     [articulosFiltrados, obtenerPrecioUnitario]
   );
 
-  const resumenInventario = `${articulosFiltrados.length} artículos visibles • ${numberFormatter.format(
-    totalUnidades
-  )} unidades • ${currencyFormatter.format(valorEstimado)} estimados`;
-
   const showActions = Boolean(onEditStock || onViewDetails);
-
-  /* =============================================================
-     🟢 FIX: TOOLBAR MEMOIZADO (NO SE REMONTA → NO PIERDE FOCO)
-     ============================================================= */
-
-  const toolbar = useMemo(
-    () => (
-      <SearchToolbar
-        title={puntoNombre ? `Stock en ${puntoNombre}` : 'Stock del punto de venta'}
-        icon={<IconClipboardList size={20} />}
-        baseColor={buttonColor}
-        placeholder="Buscar por código, descripción o rubro"
-        searchValue={busquedaDraft}
-        onSearchValueChange={setBusquedaDraft}
-        onSubmitSearch={ejecutarBusqueda}
-        onClear={limpiarFiltros}
-        canCreate={Boolean(onNewAssignment)}
-        createLabel="Nueva asignación"
-        onCreateClick={onNewAssignment}
-        searchDisabled={loading}
-      />
-    ),
-    [
-      puntoNombre,
-      buttonColor,
-      busquedaDraft,
-      loading,
-      onNewAssignment,
-      ejecutarBusqueda,
-      limpiarFiltros,
-    ]
-  );
-
-  /* =============================================================
-     TABLA (sin cambios estructurales)
-     ============================================================= */
-
   const totalPaginas = Math.ceil(articulosFiltrados.length / rowsPerPage) || 1;
-  const paginaActual = page + 1;
-
-  const generarNumerosPaginas = () => {
-    const paginas: (number | '...')[] = [];
-    const maxVisible = 7;
-
-    if (totalPaginas <= maxVisible) {
-      for (let i = 1; i <= totalPaginas; i++) paginas.push(i);
-    } else if (paginaActual <= 4) {
-      for (let i = 1; i <= 5; i++) paginas.push(i);
-      paginas.push('...', totalPaginas);
-    } else if (paginaActual >= totalPaginas - 3) {
-      paginas.push(1, '...');
-      for (let i = totalPaginas - 4; i <= totalPaginas; i++) paginas.push(i);
-    } else {
-      paginas.push(1, '...', paginaActual - 1, paginaActual, paginaActual + 1, '...', totalPaginas);
-    }
-
-    return paginas;
-  };
-
   const articulosPaginados = useMemo(
     () => articulosFiltrados.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage),
     [articulosFiltrados, page, rowsPerPage]
   );
 
-  const tabla = (
-    <TableContainer
-      sx={{
-        position: 'relative',
-        borderRadius: 0,
-        border: '1px solid',
-        borderColor: alpha(accentInterior, 0.38),
-        bgcolor: 'rgba(255, 250, 242, 0.94)',
-        backdropFilter: 'saturate(110%) blur(0.85px)',
-        overflow: 'hidden',
-        boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.55)',
-      }}
-    >
-      <WoodBackdrop accent={woodTintInterior} radius={0} inset={0} strength={0.12} texture="tabla" />
-
-      <Box
-        sx={{
-          position: 'absolute', inset: 0,
-          backgroundColor: alpha('#fffaf3', 0.82),
-          zIndex: 0,
-        }}
-      />
-
-      <Table stickyHeader size="small"
-        sx={{
-          borderRadius: 0,
-          position: 'relative',
-          zIndex: 2,
-          bgcolor: tableBodyBg,
-          '& .MuiTableRow-root': { minHeight: 62 },
-          '& .MuiTableCell-root': {
-            fontSize: '0.75rem',
-            px: 1,
-            py: 1.1,
-            borderBottomColor: alpha(accentInterior, 0.35),
-            bgcolor: 'transparent',
-          },
-          '& .MuiTableBody-root .MuiTableRow-root:nth-of-type(odd) .MuiTableCell-root': {
-            bgcolor: tableBodyBg,
-          },
-          '& .MuiTableBody-root .MuiTableRow-root:nth-of-type(even) .MuiTableCell-root': {
-            bgcolor: tableBodyAlt,
-          },
-          '& .MuiTableBody-root .MuiTableRow-root.MuiTableRow-hover:hover .MuiTableCell-root': {
-            bgcolor: alpha('#d9b18a', 0.42),
-          },
-          '& .MuiTableCell-head': {
-            fontSize: '0.75rem',
-            fontWeight: 600,
-            bgcolor: headerBg,
-            color: alpha('#FFFFFF', 0.94),
-            boxShadow: 'inset 0 -1px 0 rgba(255,255,255,0.12)',
-            textTransform: 'uppercase',
-            letterSpacing: 0.4,
-          },
-          '& .MuiTableHead-root .MuiTableCell-head:not(:last-of-type)': {
-            borderRight: `3px solid ${alpha(darken(headerBg, 0.25), 0.5)}`,
-          },
-        }}
-      >
-        <TableHead>
-          <TableRow>
-            {(['Imagen', 'Código', 'Descripción', 'Precio', 'Stock del punto', 'Rubro', ...(showActions ? ['Acciones'] : [])] as const).map((header) => (
-              <TableCell key={header}>{header}</TableCell>
-            ))}
-          </TableRow>
-        </TableHead>
-
-        <TableBody>
-          {loading ? (
-            Array.from({ length: 6 }).map((_, idx) => (
-              <TableRow key={`skeleton-${idx}`}>
-                {Array.from({ length: 5 }).map((__, cellIdx) => (
-                  <TableCell key={cellIdx}>
-                    <Skeleton variant="text" />
-                  </TableCell>
-                ))}
-              </TableRow>
-            ))
-          ) : articulosFiltrados.length === 0 ? (
-            <TableRow>
-              <TableCell colSpan={6} align="center" sx={{ py: 4 }}>
-                {busquedaAplicada
-                  ? 'No hay resultados que coincidan con la búsqueda.'
-                  : 'Este punto aún no tiene stock cargado.'}
-              </TableCell>
-            </TableRow>
-          ) : (
-            articulosPaginados.map((item) => {
-              const precioUnitario = obtenerPrecioUnitario(item);
-
-              return (
-                <TableRow key={item.id} hover>
-                  <TableCell>
-                    {item.articulo?.ImagenUrl ? (
-                      <Box
-                        sx={{
-                          width: 40,
-                          height: 40,
-                          borderRadius: 1,
-                          overflow: 'hidden',
-                          border: `1px solid ${alpha(accentExterior, 0.2)}`,
-                        }}
-                      >
-                        <img
-                          src={
-                            item.articulo.ImagenUrl.startsWith('http') || item.articulo.ImagenUrl.startsWith('data:')
-                              ? item.articulo.ImagenUrl
-                              : `${process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:4000'}${item.articulo.ImagenUrl.startsWith('/') ? '' : '/'}${item.articulo.ImagenUrl}`
-                          }
-                          alt={item.nombre}
-                          style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                        />
-                      </Box>
-                    ) : (
-                      <Box
-                        sx={{
-                          width: 40,
-                          height: 40,
-                          borderRadius: 1,
-                          bgcolor: alpha(accentExterior, 0.1),
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                        }}
-                      >
-                        <IconClipboardList size={20} color={alpha(accentExterior, 0.5)} />
-                      </Box>
-                    )}
-                  </TableCell>
-                  <TableCell>
-                    <Chip
-                      label={item.codigo ?? 'Sin código'}
-                      size="small"
-                      sx={{
-                        bgcolor: alpha(accentExterior, 0.14),
-                        color: chipText,
-                        fontWeight: 600,
-                      }}
-                    />
-                  </TableCell>
-
-                  <TableCell>{item.nombre}</TableCell>
-
-                  <TableCell align="right">
-                    {Number.isFinite(precioUnitario)
-                      ? currencyFormatter.format(precioUnitario)
-                      : '—'}
-                  </TableCell>
-
-                  <TableCell align="right">
-                    {numberFormatter.format(Number(item.stockAsignado) || 0)}
-                  </TableCell>
-
-                  <TableCell>
-                    {item.rubro?.nombre ? (
-                      <Chip
-                        label={item.rubro.nombre}
-                        size="small"
-                        sx={{
-                          bgcolor: alpha(accentExterior, 0.18),
-                          color: '#12331f',
-                          fontWeight: 600,
-                        }}
-                      />
-                    ) : (
-                      <Chip label="Sin rubro" size="small" variant="outlined" />
-                    )}
-                  </TableCell>
-
-                  {showActions && (
-                    <TableCell align="center">
-                      <Box display="flex" justifyContent="center" gap={0.75}>
-                        {onViewDetails && (
-                          <Tooltip title="Ver detalles">
-                            <span>
-                              <CrystalIconButton
-                                baseColor={azul.primary}
-                                onClick={() => onViewDetails(item)}
-                                disabled={!onViewDetails}
-                              >
-                                <IconEye size={16} />
-                              </CrystalIconButton>
-                            </span>
-                          </Tooltip>
-                        )}
-
-                        {onEditStock && (
-                          <Tooltip title="Editar stock">
-                            <span>
-                              <CrystalIconButton
-                                baseColor={verde.primary}
-                                onClick={() => onEditStock(item)}
-                                disabled={!onEditStock}
-                              >
-                                <IconEdit size={16} />
-                              </CrystalIconButton>
-                            </span>
-                          </Tooltip>
-                        )}
-                      </Box>
-                    </TableCell>
-                  )}
-                </TableRow>
-              );
-            })
-          )}
-        </TableBody>
-      </Table>
-    </TableContainer>
-  );
-
-  const paginador = (
-    <Box
-      sx={{
-        mt: 2,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        px: 1,
-      }}
-    >
-      <Typography variant="body2" color="text.secondary">
-        Mostrando {articulosPaginados.length} de {articulosFiltrados.length} artículos
-      </Typography>
-
-      <Stack direction="row" spacing={1}>
-        {generarNumerosPaginas().map((num, idx) =>
-          num === '...' ? (
-            <Typography key={`ellipsis-${idx}`} variant="body2" color="text.secondary" sx={{ px: 1 }}>
-              ...
-            </Typography>
-          ) : (
-            <CrystalSoftButton
-              key={num}
-              baseColor={buttonColor}
-              sx={{
-                minWidth: 32,
-                minHeight: 32,
-                px: 1,
-                fontSize: '0.775rem',
-                textTransform: 'none',
-                fontWeight: Number(num) === paginaActual ? 800 : 600,
-                boxShadow: 'none',
-              }}
-              onClick={() => setPage(Number(num) - 1)}
-              disabled={num === paginaActual}
-            >
-              {num}
-            </CrystalSoftButton>
-          )
-        )}
-      </Stack>
-    </Box>
-  );
-
   return (
-    <WoodSection
-      estilosBiselExterior={estilosBiselExterior}
-      woodTintExterior={woodTintExterior}
-      panelOverlay={panelOverlay}
-    >
-      {toolbar}
-
-      <Box px={1} pb={1}>
-        <Typography variant="body2" color="text.secondary">
-          {resumenInventario}
-        </Typography>
+    <Box>
+      <Box display="flex" flexDirection={{ xs: 'column', md: 'row' }} gap={2} mb={2} alignItems={{ xs: 'stretch', md: 'center' }} justifyContent="space-between">
+        <Box flex={1} display="flex" gap={1}>
+          <TextField
+            placeholder="Buscar por código, descripción o rubro..."
+            size="small"
+            fullWidth
+            value={busquedaDraft}
+            onChange={(e) => setBusquedaDraft(e.target.value)}
+            onKeyDown={(e) => e.key === 'Enter' && ejecutarBusqueda()}
+            InputProps={{
+              startAdornment: <InputAdornment position="start"><Icon icon="mdi:magnify" /></InputAdornment>,
+              endAdornment: busquedaDraft && (
+                <InputAdornment position="end">
+                  <IconButton size="small" onClick={limpiarFiltros}><Icon icon="mdi:close" /></IconButton>
+                </InputAdornment>
+              ),
+              sx: { borderRadius: 0, bgcolor: '#fff' }
+            }}
+          />
+          <Button
+            variant="contained"
+            disableElevation
+            onClick={ejecutarBusqueda}
+            sx={{ borderRadius: 0, bgcolor: '#5d4037', fontWeight: 700, '&:hover': { bgcolor: '#4e342e' } }}
+          >
+            Buscar
+          </Button>
+        </Box>
+        {onNewAssignment && (
+          <Button
+            variant="contained"
+            disableElevation
+            color="primary"
+            startIcon={<Icon icon="mdi:plus" />}
+            onClick={onNewAssignment}
+            sx={{ borderRadius: 0, fontWeight: 700 }}
+          >
+            Nueva Asignación
+          </Button>
+        )}
       </Box>
 
-      {error && !loading ? (
-        <Alert severity="error" sx={{ mb: 2 }}>
+      {error ? (
+        <Alert severity="error" sx={{ mb: 2, borderRadius: 0 }}>
           {error.message || 'No se pudo cargar el stock del punto seleccionado.'}
         </Alert>
       ) : (
-        <>
-          {tabla}
-          {paginador}
-        </>
+        <Paper elevation={0} sx={{ border: '1px solid #e0e0e0', borderRadius: 0, overflow: 'hidden' }}>
+          <Box px={2} py={1.5} bgcolor="#f5f5f5" borderBottom="1px solid #e0e0e0" display="flex" justifyContent="space-between" alignItems="center">
+            <Typography variant="subtitle2" fontWeight={700} color="text.secondary">
+              {puntoNombre ? `STOCK EN: ${puntoNombre.toUpperCase()}` : 'STOCK DEL PUNTO DE VENTA'}
+            </Typography>
+            <Typography variant="caption" color="text.secondary">
+              {articulosFiltrados.length} artículos • {numberFormatter.format(totalUnidades)} unidades • {currencyFormatter.format(valorEstimado)} val. est.
+            </Typography>
+          </Box>
+          <TableContainer>
+            <Table size="small" stickyHeader>
+              <TableHead>
+                <TableRow>
+                  <TableCell sx={{ bgcolor: '#f5f5f5', fontWeight: 700, color: 'text.secondary' }}>IMAGEN</TableCell>
+                  <TableCell sx={{ bgcolor: '#f5f5f5', fontWeight: 700, color: 'text.secondary' }}>CÓDIGO</TableCell>
+                  <TableCell sx={{ bgcolor: '#f5f5f5', fontWeight: 700, color: 'text.secondary' }}>DESCRIPCIÓN</TableCell>
+                  <TableCell align="right" sx={{ bgcolor: '#f5f5f5', fontWeight: 700, color: 'text.secondary' }}>PRECIO</TableCell>
+                  <TableCell align="right" sx={{ bgcolor: '#f5f5f5', fontWeight: 700, color: 'text.secondary' }}>STOCK</TableCell>
+                  <TableCell sx={{ bgcolor: '#f5f5f5', fontWeight: 700, color: 'text.secondary' }}>RUBRO</TableCell>
+                  {showActions && <TableCell align="center" sx={{ bgcolor: '#f5f5f5', fontWeight: 700, color: 'text.secondary' }}>ACCIONES</TableCell>}
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {loading ? (
+                  Array.from({ length: 6 }).map((_, idx) => (
+                    <TableRow key={`skeleton-${idx}`}>
+                      {Array.from({ length: 6 + (showActions ? 1 : 0) }).map((__, cellIdx) => (
+                        <TableCell key={cellIdx}>
+                          <Skeleton variant="text" />
+                        </TableCell>
+                      ))}
+                    </TableRow>
+                  ))
+                ) : articulosFiltrados.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={6 + (showActions ? 1 : 0)} align="center" sx={{ py: 4 }}>
+                      {busquedaAplicada
+                        ? 'No hay resultados que coincidan con la búsqueda.'
+                        : 'Este punto aún no tiene stock cargado.'}
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  articulosPaginados.map((item) => (
+                    <TableRow key={item.id} hover>
+                      <TableCell>
+                        {item.articulo?.ImagenUrl ? (
+                          <Box
+                            sx={{
+                              width: 40,
+                              height: 40,
+                              borderRadius: 0,
+                              overflow: 'hidden',
+                              border: '1px solid #e0e0e0',
+                            }}
+                          >
+                            <img
+                              src={
+                                item.articulo.ImagenUrl.startsWith('http') || item.articulo.ImagenUrl.startsWith('data:')
+                                  ? item.articulo.ImagenUrl
+                                  : `${process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:4000'}${item.articulo.ImagenUrl.startsWith('/') ? '' : '/'}${item.articulo.ImagenUrl}`
+                              }
+                              alt={item.nombre}
+                              style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                            />
+                          </Box>
+                        ) : (
+                          <Box width={40} height={40} bgcolor="#f5f5f5" border="1px solid #e0e0e0" display="grid" placeItems="center">
+                            <Icon icon="mdi:image-off-outline" color="#bdbdbd" />
+                          </Box>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        <Chip
+                          label={item.codigo ?? 'Sin código'}
+                          size="small"
+                          sx={{ borderRadius: 0, bgcolor: '#e0e0e0', fontWeight: 600, color: 'text.primary' }}
+                        />
+                      </TableCell>
+                      <TableCell><Typography variant="body2" fontWeight={500}>{item.nombre}</Typography></TableCell>
+                      <TableCell align="right">
+                        {Number.isFinite(obtenerPrecioUnitario(item))
+                          ? currencyFormatter.format(obtenerPrecioUnitario(item))
+                          : '—'}
+                      </TableCell>
+                      <TableCell align="right">
+                        <Typography variant="body2" fontWeight={700}>{numberFormatter.format(Number(item.stockAsignado) || 0)}</Typography>
+                      </TableCell>
+                      <TableCell>
+                        {item.rubro?.nombre ? (
+                          <Chip
+                            label={item.rubro.nombre}
+                            size="small"
+                            sx={{ borderRadius: 0, bgcolor: '#f5f5f5', border: '1px solid #e0e0e0' }}
+                          />
+                        ) : (
+                          <Chip label="Sin rubro" size="small" variant="outlined" sx={{ borderRadius: 0 }} />
+                        )}
+                      </TableCell>
+                      {showActions && (
+                        <TableCell align="center">
+                          <Box display="flex" justifyContent="center" gap={1}>
+                            {onViewDetails && (
+                              <Tooltip title="Ver detalles">
+                                <IconButton size="small" onClick={() => onViewDetails(item)} sx={{ color: '#1976d2' }}>
+                                  <Icon icon="mdi:eye" width={20} />
+                                </IconButton>
+                              </Tooltip>
+                            )}
+                            {onEditStock && (
+                              <Tooltip title="Editar stock">
+                                <IconButton size="small" onClick={() => onEditStock(item)} sx={{ color: '#2e7d32' }}>
+                                  <Icon icon="mdi:pencil" width={20} />
+                                </IconButton>
+                              </Tooltip>
+                            )}
+                          </Box>
+                        </TableCell>
+                      )}
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
+          </TableContainer>
+          {totalPaginas > 1 && (
+            <Box p={2} borderTop="1px solid #e0e0e0" display="flex" justifyContent="center" gap={1}>
+              <Button
+                size="small"
+                disabled={page === 0}
+                onClick={() => setPage(p => p - 1)}
+                sx={{ borderRadius: 0 }}
+              >
+                Anterior
+              </Button>
+              <Typography variant="caption" sx={{ alignSelf: 'center' }}>Página {page + 1} de {totalPaginas}</Typography>
+              <Button
+                size="small"
+                disabled={page >= totalPaginas - 1}
+                onClick={() => setPage(p => p + 1)}
+                sx={{ borderRadius: 0 }}
+              >
+                Siguiente
+              </Button>
+            </Box>
+          )}
+        </Paper>
       )}
-    </WoodSection>
+    </Box>
   );
 };
 

@@ -4,10 +4,9 @@ import {
   Dialog, DialogTitle, DialogContent, DialogActions,
   Box, Typography, TextField, MenuItem,
   Table, TableHead, TableBody, TableRow, TableCell,
-  Snackbar, Alert
+  Snackbar, Alert, Button
 } from '@mui/material';
 import { useQuery, useMutation } from '@apollo/client/react';
-import { TexturedPanel } from '@/components/ui/TexturedFrame/TexturedPanel';
 import {
   OBTENER_STOCK_PUNTO_MUDRAS,
   OBTENER_PUNTOS_MUDRAS,
@@ -17,7 +16,6 @@ import {
 } from '@/components/puntos-mudras/graphql/queries';
 import Tooltip from '@mui/material/Tooltip';
 import { MODIFICAR_STOCK_PUNTO, TRANSFERIR_STOCK_PUNTO } from '@/components/puntos-mudras/graphql/mutations';
-import CrystalButton, { CrystalSoftButton } from '@/components/ui/CrystalButton';
 import { verde } from '@/ui/colores';
 
 type Props = { open: boolean; onClose: () => void; punto: { id: number; nombre: string; tipo: 'venta' | 'deposito' } | null };
@@ -71,95 +69,133 @@ const ModalInventarioPunto: React.FC<Props> = ({ open, onClose, punto }) => {
     }
   };
 
+  /* ======================== Render ======================== */
   return (
-    <Dialog open={open} onClose={onClose} fullWidth maxWidth="md">
-      <TexturedPanel accent={verde.primary} radius={12} contentPadding={0}>
-        <DialogTitle>Inventario — {punto?.nombre ?? ''}</DialogTitle>
-        <DialogContent>
-          {loading ? (
-            <Typography variant="body2">Cargando…</Typography>
-          ) : error ? (
-            <Typography color="error">{error.message}</Typography>
-          ) : (
-            <Table size="small" stickyHeader>
-              <TableHead>
-                <TableRow>
-                  <TableCell>Img</TableCell>
-                  <TableCell>Código</TableCell>
-                  <TableCell>Descripción</TableCell>
-                  <TableCell align="right">Stock</TableCell>
-                  <TableCell align="center">Ajuste</TableCell>
-                  <TableCell align="center">Transferir</TableCell>
+    <Dialog open={open} onClose={onClose} fullWidth maxWidth="md" PaperProps={{ sx: { borderRadius: 0, border: '1px solid #e0e0e0', boxShadow: 'none' } }}>
+      <DialogTitle sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', bgcolor: '#f5f5f5', borderBottom: '1px solid #e0e0e0' }}>
+        <Typography variant="h6" fontWeight={700}>Inventario — {punto?.nombre ?? ''}</Typography>
+      </DialogTitle>
+
+      <DialogContent sx={{ p: 0, bgcolor: '#ffffff' }}>
+        {loading ? (
+          <Box p={3}><Typography variant="body2">Cargando...</Typography></Box>
+        ) : error ? (
+          <Box p={3}><Typography color="error">{error.message}</Typography></Box>
+        ) : (
+          <Table size="small" stickyHeader>
+            <TableHead>
+              <TableRow>
+                <TableCell sx={{ bgcolor: '#f5f5f5', fontWeight: 700, borderRadius: 0 }}>Img</TableCell>
+                <TableCell sx={{ bgcolor: '#f5f5f5', fontWeight: 700, borderRadius: 0 }}>Código</TableCell>
+                <TableCell sx={{ bgcolor: '#f5f5f5', fontWeight: 700, borderRadius: 0 }}>Descripción</TableCell>
+                <TableCell align="right" sx={{ bgcolor: '#f5f5f5', fontWeight: 700, borderRadius: 0 }}>Stock</TableCell>
+                <TableCell align="center" sx={{ bgcolor: '#f5f5f5', fontWeight: 700, borderRadius: 0 }}>Ajuste</TableCell>
+                <TableCell align="center" sx={{ bgcolor: '#f5f5f5', fontWeight: 700, borderRadius: 0 }}>Transferir</TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {items.map((a) => (
+                <TableRow key={a.id} hover>
+                  <TableCell>
+                    <Box sx={{ width: 36, height: 36, borderRadius: 0, overflow: 'hidden', border: '1px solid #e0e0e0', bgcolor: '#fff' }}>
+                      {a.articulo?.ImagenUrl ? (
+                        <img
+                          src={
+                            a.articulo.ImagenUrl.startsWith('http') || a.articulo.ImagenUrl.startsWith('data:')
+                              ? a.articulo.ImagenUrl
+                              : `${process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:4000'}${a.articulo.ImagenUrl.startsWith('/') ? '' : '/'}${a.articulo.ImagenUrl}`
+                          }
+                          alt={a.nombre}
+                          style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                        />
+                      ) : (
+                        <Box sx={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', bgcolor: '#f0f0f0' }} />
+                      )}
+                    </Box>
+                  </TableCell>
+                  <TableCell>{a.codigo}</TableCell>
+                  <TableCell>{a.nombre}</TableCell>
+                  <TableCell align="right">
+                    <Tooltip title={
+                      <Box sx={{ p: 0.5 }}>
+                        <Typography variant="caption" display="block">Disponible en punto: {a.stockAsignado}</Typography>
+                        <Typography variant="caption" display="block">Total artículo: {a.stockTotal ?? '—'}</Typography>
+                        <Typography variant="caption" display="block">Stock mínimo punto: {a.stockMinimo ?? '—'}</Typography>
+                      </Box>
+                    }>
+                      <Box sx={{ cursor: 'help' }}>{a.stockAsignado}</Box>
+                    </Tooltip>
+                  </TableCell>
+                  <TableCell align="center">
+                    <Box sx={{ display: 'flex', gap: 1, alignItems: 'center', justifyContent: 'center' }}>
+                      <TextField
+                        size="small"
+                        type="number"
+                        value={ajustes[a.id] ?? ''}
+                        onChange={(e) => setAjustes((p) => ({ ...p, [a.id]: e.target.value }))}
+                        sx={{ width: 100 }}
+                        placeholder="Nueva"
+                        InputProps={{ sx: { borderRadius: 0 } }}
+                      />
+                      <Button
+                        variant="outlined"
+                        size="small"
+                        onClick={() => handleAjustar(a.id, a.stockAsignado)}
+                        disabled={!(ajustes[a.id] ?? '').toString().length}
+                        sx={{ borderRadius: 0, fontWeight: 600 }}
+                      >
+                        Aplicar
+                      </Button>
+                    </Box>
+                  </TableCell>
+                  <TableCell align="center">
+                    <Box sx={{ display: 'flex', gap: 1, alignItems: 'center', justifyContent: 'center' }}>
+                      <TextField
+                        size="small"
+                        type="number"
+                        value={transferencias[a.id] ?? ''}
+                        onChange={(e) => setTransferencias((p) => ({ ...p, [a.id]: e.target.value }))}
+                        sx={{ width: 100 }}
+                        placeholder="Cant."
+                        InputProps={{ sx: { borderRadius: 0 } }}
+                      />
+                      <Button
+                        variant="outlined"
+                        size="small"
+                        onClick={() => handleTransferir(a.id)}
+                        disabled={!destinoId || !(transferencias[a.id] ?? '').toString().length}
+                        sx={{ borderRadius: 0, fontWeight: 600 }}
+                      >
+                        →
+                      </Button>
+                    </Box>
+                  </TableCell>
                 </TableRow>
-              </TableHead>
-              <TableBody>
-                {items.map((a) => (
-                  <TableRow key={a.id} hover>
-                    <TableCell>
-                      <Box sx={{ width: 36, height: 36, borderRadius: 1, overflow: 'hidden', border: '1px solid #eee', bgcolor: '#fff' }}>
-                        {a.articulo?.ImagenUrl ? (
-                          <img
-                            src={
-                              a.articulo.ImagenUrl.startsWith('http') || a.articulo.ImagenUrl.startsWith('data:')
-                                ? a.articulo.ImagenUrl
-                                : `${process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:4000'}${a.articulo.ImagenUrl.startsWith('/') ? '' : '/'}${a.articulo.ImagenUrl}`
-                            }
-                            alt={a.nombre}
-                            style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                          />
-                        ) : (
-                          <Box sx={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                            <img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCI+PHBhdGggZmlsbD0iI2NjYyIgZD0iTTIxIDE5VjVjMC0xLjEtOS0yLTItMkg1Yy0xLjEgMC0yIC45LTIgMnYxNGMwIDEuMS45IDIgMiAyaDE0YzEuMSAwIDItLjkgMi0yem0tOS01LjU1bC0yLjgzIDIuODJMMTYgMjFoLTRsLTUtN2w1LTd6bS05IDMuNTVMMTAuMTcgMTNsLTItMmwtMyAzdi00bC0yIDJ6Ii8+PC9zdmc+" alt="" style={{ width: 20, opacity: 0.5 }} />
-                          </Box>
-                        )}
-                      </Box>
-                    </TableCell>
-                    <TableCell>{a.codigo}</TableCell>
-                    <TableCell>{a.nombre}</TableCell>
-                    <TableCell align="right">
-                      <Tooltip title={<Box sx={{ p: .5 }}>
-                        <Typography variant="caption">Disponible en punto: {a.stockAsignado}</Typography><br />
-                        <Typography variant="caption">Total artículo: {a.stockTotal ?? '—'}</Typography><br />
-                        <Typography variant="caption">Stock mínimo punto: {a.stockMinimo ?? '—'}</Typography>
-                      </Box>}>
-                        <span>{a.stockAsignado}</span>
-                      </Tooltip>
-                    </TableCell>
-                    <TableCell align="center">
-                      <Box sx={{ display: 'flex', gap: 1, alignItems: 'center', justifyContent: 'center' }}>
-                        <TextField size="small" type="number" value={ajustes[a.id] ?? ''} onChange={(e) => setAjustes((p) => ({ ...p, [a.id]: e.target.value }))} sx={{ width: 100 }} placeholder="Nueva" />
-                        <CrystalSoftButton baseColor={verde.primary} onClick={() => handleAjustar(a.id, a.stockAsignado)} disabled={!(ajustes[a.id] ?? '').toString().length}>Aplicar</CrystalSoftButton>
-                      </Box>
-                    </TableCell>
-                    <TableCell align="center">
-                      <Box sx={{ display: 'flex', gap: 1, alignItems: 'center', justifyContent: 'center' }}>
-                        <TextField size="small" type="number" value={transferencias[a.id] ?? ''} onChange={(e) => setTransferencias((p) => ({ ...p, [a.id]: e.target.value }))} sx={{ width: 100 }} placeholder="Cant." />
-                        <CrystalButton baseColor={verde.primary} onClick={() => handleTransferir(a.id)} disabled={!destinoId || !(transferencias[a.id] ?? '').toString().length}>→</CrystalButton>
-                      </Box>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          )}
-        </DialogContent>
-        <DialogActions>
-          <TextField
-            select size="small" label="Destino"
-            value={destinoId}
-            onChange={(e) => setDestinoId(e.target.value)}
-            sx={{ mr: 'auto', minWidth: 260 }}
-          >
-            <MenuItem value="">Seleccione destino…</MenuItem>
-            {puntos.map((p) => (
-              <MenuItem key={p.id} value={String(p.id)}>{p.tipo === 'deposito' ? 'Depósito: ' : 'Punto: '}{p.nombre}</MenuItem>
-            ))}
-          </TextField>
-          <CrystalSoftButton baseColor={verde.primary} onClick={onClose}>Cerrar</CrystalSoftButton>
-        </DialogActions>
-      </TexturedPanel>
+              ))}
+            </TableBody>
+          </Table>
+        )}
+      </DialogContent>
+      <DialogActions sx={{ p: 2, bgcolor: '#f5f5f5', borderTop: '1px solid #e0e0e0', justifyContent: 'space-between' }}>
+        <TextField
+          select size="small" label="Destino"
+          value={destinoId}
+          onChange={(e) => setDestinoId(e.target.value)}
+          sx={{ minWidth: 260 }}
+          InputProps={{ sx: { borderRadius: 0, bgcolor: '#fff' } }}
+        >
+          <MenuItem value="">Seleccione destino...</MenuItem>
+          {puntos.map((p) => (
+            <MenuItem key={p.id} value={String(p.id)}>{p.tipo === 'deposito' ? 'Depósito: ' : 'Punto: '}{p.nombre}</MenuItem>
+          ))}
+        </TextField>
+        <Button onClick={onClose} variant="contained" disableElevation sx={{ borderRadius: 0, bgcolor: verde.primary }}>
+          Cerrar
+        </Button>
+      </DialogActions>
+
       <Snackbar open={snack.open} autoHideDuration={2500} onClose={() => setSnack((s) => ({ ...s, open: false }))} anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}>
-        <Alert onClose={() => setSnack((s) => ({ ...s, open: false }))} severity={snack.sev} variant="filled" sx={{ width: '100%' }}>
+        <Alert onClose={() => setSnack((s) => ({ ...s, open: false }))} severity={snack.sev} variant="filled" sx={{ width: '100%', borderRadius: 0 }}>
           {snack.msg}
         </Alert>
       </Snackbar>

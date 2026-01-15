@@ -29,6 +29,7 @@ import {
   MenuItem,
   Autocomplete,
 } from '@mui/material';
+import { alpha } from '@mui/material/styles';
 import { Icon } from '@iconify/react';
 import { verde } from '@/ui/colores';
 
@@ -361,6 +362,8 @@ export default function ModalNuevaAsignacionStockOptimizado({ open, onClose, pun
 
   const totalAsignaciones = asignaciones.reduce((total, a) => total + a.cantidad, 0);
 
+
+  /* ======================== Render ======================== */
   return (
     <Dialog
       open={open}
@@ -368,234 +371,172 @@ export default function ModalNuevaAsignacionStockOptimizado({ open, onClose, pun
       maxWidth="lg"
       fullWidth
       PaperProps={{
-        sx: { borderRadius: 2, minHeight: '70vh' }
+        sx: {
+          borderRadius: 0,
+          boxShadow: 'none',
+          border: '1px solid #e0e0e0',
+          minHeight: '80vh',
+          maxHeight: '90vh',
+        },
       }}
     >
-      <DialogTitle sx={{ pb: 1 }}>
-        <Box display="flex" alignItems="center" gap={1}>
-          <Icon icon="mdi:package-variant-plus" width={24} />
-          <Typography variant="h6">
-            Asignar Stock {puntoVentaProp ? `a ${puntoVentaProp.nombre}` : ''}
-          </Typography>
-        </Box>
+      {/* HEADER */}
+      <DialogTitle sx={{ p: 2, bgcolor: verde.primary, color: '#fff', display: 'flex', alignItems: 'center', gap: 1 }}>
+        <Icon icon="mdi:package-variant-plus" width={24} height={24} />
+        <Typography variant="h6" fontWeight={700}>
+          Asignar Stock {puntoVentaProp ? `a ${puntoVentaProp.nombre}` : ''}
+        </Typography>
       </DialogTitle>
 
-      <DialogContent>
-        {error && (
-          <Alert severity="error" sx={{ mb: 2 }}>
-            {error}
-          </Alert>
-        )}
+      <DialogContent sx={{ p: 3, bgcolor: '#f9fafb' }}>
+        <Box display="flex" flexDirection="column" gap={3}>
 
-        {/* Selección de Destino */}
-        <Paper elevation={1} sx={{ p: 2, mb: 2, bgcolor: '#f5f5f5' }}>
-          <Typography variant="subtitle2" fontWeight={600} gutterBottom>
-            Destino de la Asignación
-          </Typography>
-          <FormControl fullWidth>
-            <InputLabel>Punto de Venta / Depósito</InputLabel>
-            <Select
-              value={puntoDestinoId}
-              onChange={(e) => setPuntoDestinoId(Number(e.target.value))}
-              label="Punto de Venta / Depósito"
-              startAdornment={<InputAdornment position="start"><Icon icon="mdi:store-marker" /></InputAdornment>}
-            >
-              {puntos.map((p: any) => (
-                <MenuItem key={p.id} value={p.id}>
-                  {p.nombre} ({p.tipo})
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-        </Paper>
+          {error && (
+            <Alert severity="error" sx={{ borderRadius: 0 }}>
+              {error}
+            </Alert>
+          )}
 
-        {/* Filtros */}
-        <Paper elevation={1} sx={{ p: 2, mb: 2 }}>
-          <Typography variant="subtitle2" fontWeight={600} gutterBottom>
-            Filtros de Búsqueda
-          </Typography>
+          {/* SECCIÓN DESTINO */}
+          <Box p={2} bgcolor="#fff" border="1px solid #e0e0e0">
+            <Typography variant="subtitle2" fontWeight={700} color="text.secondary" mb={2} textTransform="uppercase">
+              Destino
+            </Typography>
+            <FormControl fullWidth size="small">
+              <InputLabel>Punto de Venta / Depósito</InputLabel>
+              <Select
+                value={puntoDestinoId}
+                onChange={(e) => setPuntoDestinoId(Number(e.target.value))}
+                label="Punto de Venta / Depósito"
+                sx={{ borderRadius: 0 }}
+              >
+                {puntos.map((p: any) => (
+                  <MenuItem key={p.id} value={p.id}>
+                    {p.nombre} ({p.tipo})
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+          </Box>
 
-          <Box display="flex" gap={2} flexWrap="wrap" mb={3}>
-            {/* Proveedor */}
-            <Box flex="1 1 250px" minWidth={250}>
+          {/* SECCIÓN FILTROS */}
+          <Box p={2} bgcolor="#fff" border="1px solid #e0e0e0">
+            <Typography variant="subtitle2" fontWeight={700} color="text.secondary" mb={2} textTransform="uppercase">
+              Búsqueda de Artículos
+            </Typography>
+            <Box display="grid" gridTemplateColumns={{ xs: '1fr', md: 'repeat(3, 1fr)' }} gap={2}>
               <Autocomplete
                 options={proveedores}
                 getOptionLabel={(option) => option.nombre}
                 value={proveedorSeleccionado}
                 onChange={(_, newValue) => setProveedorSeleccionado(newValue)}
-                loading={loadingProveedores}
+                size="small"
                 renderInput={(params) => (
-                  <TextField
-                    {...params}
-                    label="Proveedor"
-                    placeholder="Seleccione un proveedor"
-                    required
-                    InputProps={{
-                      ...params.InputProps,
-                      startAdornment: (
-                        <InputAdornment position="start">
-                          <Icon icon="mdi:factory" />
-                        </InputAdornment>
-                      ),
-                    }}
-                  />
+                  <TextField {...params} label="Proveedor" placeholder="Seleccione..." required InputProps={{ ...params.InputProps, sx: { borderRadius: 0 } }} />
                 )}
               />
-            </Box>
-
-            {/* Rubro */}
-            <Box flex="1 1 250px" minWidth={250}>
-              <FormControl fullWidth disabled={!proveedorSeleccionado || loadingRubros}>
+              <FormControl fullWidth size="small" disabled={!proveedorSeleccionado || loadingRubros}>
                 <InputLabel>Rubro</InputLabel>
                 <Select
                   value={rubroSeleccionado}
                   onChange={(e) => setRubroSeleccionado(e.target.value)}
                   label="Rubro"
-                  startAdornment={
-                    <InputAdornment position="start">
-                      <Icon icon="mdi:tag" />
-                    </InputAdornment>
-                  }
+                  sx={{ borderRadius: 0 }}
                 >
-                  <MenuItem value="">
-                    <em>Todos los rubros</em>
-                  </MenuItem>
-                  {rubros.map((rubro) => (
-                    <MenuItem key={rubro.rubro} value={rubro.rubro}>
-                      {rubro.rubro}
-                    </MenuItem>
-                  ))}
+                  <MenuItem value=""><em>Todos</em></MenuItem>
+                  {rubros.map((r) => (<MenuItem key={r.rubro} value={r.rubro}>{r.rubro}</MenuItem>))}
                 </Select>
               </FormControl>
-            </Box>
-
-            {/* Búsqueda */}
-            <Box flex="1 1 250px" minWidth={250}>
               <TextField
                 fullWidth
+                size="small"
                 label="Buscar Artículo"
-                placeholder="Mínimo 3 caracteres + Enter"
+                placeholder="Mín. 3 caracteres..."
                 value={busqueda}
                 onChange={(e) => setBusqueda(e.target.value)}
                 onKeyPress={handleBusquedaKeyPress}
                 disabled={!proveedorSeleccionado}
-                InputProps={{
-                  startAdornment: (
-                    <InputAdornment position="start">
-                      <Icon icon="mdi:magnify" />
-                    </InputAdornment>
-                  ),
-                }}
-                helperText="Presione Enter para buscar"
+                InputProps={{ sx: { borderRadius: 0 }, endAdornment: <Icon icon="mdi:magnify" color="#9e9e9e" /> }}
               />
             </Box>
           </Box>
-        </Paper>
 
-        {/* Resultados */}
-        {loading && (
-          <Box display="flex" justifyContent="center" py={4}>
-            <Typography>Buscando artículos...</Typography>
-          </Box>
-        )}
+          {/* RESULTADOS TABLE */}
+          {loading && <Typography align="center" py={2}>Buscando...</Typography>}
 
-        {articulos.length > 0 && (
-          <TableContainer component={Paper} elevation={1}>
-            <Table size="small">
-              <TableHead>
-                <TableRow>
-                  <TableCell>Código</TableCell>
-                  <TableCell>Descripción</TableCell>
-                  <TableCell>Rubro</TableCell>
-                  <TableCell align="right">Precio</TableCell>
-                  <TableCell align="right">Stock Disponible</TableCell>
-                  <TableCell align="right">Cantidad a Asignar</TableCell>
-                  <TableCell align="center">Acciones</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {articulos.map((articulo) => {
-                  const cantidadAsignada = getCantidadAsignada(articulo.id);
-                  return (
-                    <TableRow key={articulo.id}>
-                      <TableCell>{articulo.codigo}</TableCell>
-                      <TableCell>{articulo.nombre}</TableCell>
-                      <TableCell>
-                        <Chip size="small" label={articulo.rubro} />
-                      </TableCell>
-                      <TableCell align="right">
-                        ${articulo.precio.toFixed(2)}
-                      </TableCell>
-                      <TableCell align="right">
-                        <Chip
-                          size="small"
-                          label={articulo.stockDisponible}
-                          color={articulo.stockDisponible > 0 ? 'success' : 'error'}
-                        />
-                      </TableCell>
-                      <TableCell align="right">
-                        <TextField
-                          type="number"
-                          size="small"
-                          value={cantidadAsignada}
-                          onChange={(e) => handleAsignarStock(articulo.id, parseInt(e.target.value) || 0)}
-                          inputProps={{
-                            min: 0,
-                            max: articulo.stockDisponible,
-                            style: { textAlign: 'right' }
-                          }}
-                          sx={{ width: 80 }}
-                        />
-                      </TableCell>
-                      <TableCell align="center">
-                        {cantidadAsignada > 0 && (
-                          <Tooltip title="Remover asignación">
-                            <IconButton
-                              size="small"
-                              color="error"
-                              onClick={() => handleRemoverAsignacion(articulo.id)}
-                            >
+          {articulos.length > 0 && (
+            <TableContainer sx={{ border: '1px solid #e0e0e0', borderRadius: 0, bgcolor: '#fff', maxHeight: 400 }}>
+              <Table stickyHeader size="small">
+                <TableHead>
+                  <TableRow>
+                    <TableCell sx={{ bgcolor: '#f5f5f5', fontWeight: 700 }}>CÓDIGO</TableCell>
+                    <TableCell sx={{ bgcolor: '#f5f5f5', fontWeight: 700 }}>DESCRIPCIÓN</TableCell>
+                    <TableCell sx={{ bgcolor: '#f5f5f5', fontWeight: 700 }}>RUBRO</TableCell>
+                    <TableCell align="right" sx={{ bgcolor: '#f5f5f5', fontWeight: 700 }}>PRECIO</TableCell>
+                    <TableCell align="center" sx={{ bgcolor: '#f5f5f5', fontWeight: 700 }}>STOCK DISP.</TableCell>
+                    <TableCell align="center" sx={{ bgcolor: '#f5f5f5', fontWeight: 700, width: 120 }}>ASIGNAR</TableCell>
+                    <TableCell align="center" sx={{ bgcolor: '#f5f5f5', fontWeight: 700 }}>ACCIÓN</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {articulos.map((articulo) => {
+                    const cantidadAsignada = getCantidadAsignada(articulo.id);
+                    return (
+                      <TableRow key={articulo.id} hover>
+                        <TableCell>{articulo.codigo}</TableCell>
+                        <TableCell>{articulo.nombre}</TableCell>
+                        <TableCell>{articulo.rubro}</TableCell>
+                        <TableCell align="right">${articulo.precio.toFixed(2)}</TableCell>
+                        <TableCell align="center">
+                          <Chip size="small" label={articulo.stockDisponible} sx={{ borderRadius: 0, height: 20 }} color={articulo.stockDisponible > 0 ? 'success' : 'error'} />
+                        </TableCell>
+                        <TableCell align="center">
+                          <TextField
+                            type="number"
+                            size="small"
+                            value={cantidadAsignada}
+                            onChange={(e) => handleAsignarStock(articulo.id, parseInt(e.target.value) || 0)}
+                            InputProps={{ sx: { borderRadius: 0, textAlign: 'center' } }}
+                          />
+                        </TableCell>
+                        <TableCell align="center">
+                          {cantidadAsignada > 0 && (
+                            <IconButton size="small" color="error" onClick={() => handleRemoverAsignacion(articulo.id)}>
                               <Icon icon="mdi:delete" />
                             </IconButton>
-                          </Tooltip>
-                        )}
-                      </TableCell>
-                    </TableRow>
-                  );
-                })}
-              </TableBody>
-            </Table>
-          </TableContainer>
-        )}
+                          )}
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
+            </TableContainer>
+          )}
 
-        {/* Resumen de asignaciones */}
-        {asignaciones.length > 0 && (
-          <Paper elevation={0} sx={{ p: 2, mt: 2, bgcolor: '#e8f5e8', border: '1px solid #4caf50' }}>
-            <Typography variant="subtitle2" fontWeight={600} gutterBottom>
-              Resumen de Asignaciones
-            </Typography>
-            <Typography variant="body2">
-              <strong>Total de artículos:</strong> {asignaciones.length}
-            </Typography>
-            <Typography variant="body2">
-              <strong>Total de unidades:</strong> {totalAsignaciones}
-            </Typography>
-          </Paper>
-        )}
+          {/* RESUMEN FOOTER */}
+          {asignaciones.length > 0 && (
+            <Box p={2} bgcolor={alpha(verde.primary, 0.08)} border={`1px solid ${verde.primary}`} display="flex" justifyContent="space-between" alignItems="center">
+              <Box>
+                <Typography variant="subtitle2" fontWeight={700} color={verde.textStrong}>Resumen</Typography>
+                <Typography variant="body2">Artículos: <b>{asignaciones.length}</b> | Unidades Total: <b>{totalAsignaciones}</b></Typography>
+              </Box>
+            </Box>
+          )}
+
+        </Box>
       </DialogContent>
 
-      <DialogActions sx={{ px: 3, pb: 2 }}>
-        <Button onClick={handleCerrar} disabled={loading}>
-          Cancelar
-        </Button>
+      <DialogActions sx={{ p: 2, bgcolor: '#f5f5f5', borderTop: '1px solid #e0e0e0' }}>
+        <Button onClick={handleCerrar} color="inherit" sx={{ fontWeight: 600 }}>Cancelar</Button>
         <Button
-          variant="contained"
           onClick={handleConfirmarAsignaciones}
           disabled={loading || asignaciones.length === 0}
-          startIcon={<Icon icon="mdi:check" />}
-          sx={{ bgcolor: verde.primary }}
+          variant="contained"
+          disableElevation
+          sx={{ bgcolor: verde.primary, borderRadius: 0, px: 3, fontWeight: 700, '&:hover': { bgcolor: verde.primaryHover } }}
         >
-          {loading ? 'Asignando...' : `Asignar Stock (${asignaciones.length})`}
+          {loading ? 'Procesando...' : 'CONFIRMAR ASIGNACIÓN'}
         </Button>
       </DialogActions>
     </Dialog>

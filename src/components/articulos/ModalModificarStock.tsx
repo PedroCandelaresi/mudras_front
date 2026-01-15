@@ -14,7 +14,6 @@ import {
 } from '@mui/material';
 
 import type { Articulo } from '@/app/interfaces/mudras.types';
-import { TexturedPanel } from '@/components/ui/TexturedFrame/TexturedPanel';
 
 const ACCENT_COLOR = '#2b4735';
 
@@ -62,57 +61,82 @@ const ModalModificarStock = ({
   };
 
   return (
-    <Dialog open={open} onClose={handleClose} fullWidth maxWidth="sm">
-      <TexturedPanel accent={ACCENT_COLOR} radius={10} contentPadding={0}>
-        <DialogTitle>
-          {`Modificar stock${articulo ? ` — ${articulo.Descripcion ?? ''}` : ''}`}
-        </DialogTitle>
-        <DialogContent>
-          <Box sx={{ display: 'grid', gap: 1.5 }}>
-            {articulo ? (
-              <Typography variant="subtitle2">
-                {`Código: ${articulo.Codigo ?? '—'}`}
-              </Typography>
-            ) : null}
+    <Dialog
+      open={open}
+      onClose={handleClose}
+      fullWidth
+      maxWidth="sm"
+      PaperProps={{
+        sx: {
+          borderRadius: 0,
+          bgcolor: '#ffffff',
+          boxShadow: 'none',
+          border: '1px solid #e0e0e0',
+        }
+      }}
+    >
+      <DialogTitle sx={{ bgcolor: ACCENT_COLOR, color: '#ffffff', py: 2 }}>
+        {`Modificar stock${articulo ? ` — ${articulo.Descripcion ?? ''}` : ''}`}
+      </DialogTitle>
 
-            <TextField
-              label="Cantidad"
-              type="number"
-              value={cantidad}
-              onChange={(event) => setCantidad(Number(event.target.value))}
-              fullWidth
-            />
+      <DialogContent sx={{ mt: 2 }}>
+        <Box sx={{ display: 'grid', gap: 2 }}>
+          {articulo ? (
+            <Typography variant="subtitle2" color="text.secondary">
+              {`Código: ${articulo.Codigo ?? '—'}`}
+            </Typography>
+          ) : null}
 
-            <TextField
-              select
-              label="Punto de venta"
-              value={puntoVentaId}
-              onChange={(event) => setPuntoVentaId(event.target.value)}
-              fullWidth
-            >
-              {puntosVenta.map((pv) => (
-                <MenuItem key={pv.id} value={pv.id}>
-                  {pv.nombre}
-                </MenuItem>
-              ))}
-            </TextField>
+          <TextField
+            label="Cantidad"
+            type="number"
+            value={cantidad}
+            onChange={(event) => setCantidad(Number(event.target.value))}
+            fullWidth
+            size="small"
+            sx={{ '& .MuiOutlinedInput-root': { borderRadius: 0 } }}
+          />
 
-            <TextField
-              label="Costo unitario"
-              type="number"
-              value={costo}
-              onChange={(event) => setCosto(Number(event.target.value))}
-              fullWidth
-            />
-          </Box>
-        </DialogContent>
-        <DialogActions sx={{ pr: 2.5, pb: 2.5 }}>
-          <Button onClick={handleClose}>Cancelar</Button>
-          <Button variant="contained" onClick={handleSave}>
-            Confirmar
-          </Button>
-        </DialogActions>
-      </TexturedPanel>
+          <TextField
+            select
+            label="Punto de venta"
+            value={puntoVentaId}
+            onChange={(event) => setPuntoVentaId(event.target.value)}
+            fullWidth
+            size="small"
+            sx={{ '& .MuiOutlinedInput-root': { borderRadius: 0 } }}
+          >
+            {puntosVenta.map((pv) => (
+              <MenuItem key={pv.id} value={pv.id}>
+                {pv.nombre}
+              </MenuItem>
+            ))}
+          </TextField>
+
+          <TextField
+            label="Costo unitario"
+            type="number"
+            value={costo}
+            onChange={(event) => setCosto(Number(event.target.value))}
+            fullWidth
+            size="small"
+            sx={{ '& .MuiOutlinedInput-root': { borderRadius: 0 } }}
+          />
+        </Box>
+      </DialogContent>
+
+      <DialogActions sx={{ p: 2, bgcolor: '#f5f5f5' }}>
+        <Button onClick={handleClose} sx={{ color: 'text.secondary', borderRadius: 0 }}>
+          Cancelar
+        </Button>
+        <Button
+          variant="contained"
+          onClick={handleSave}
+          sx={{ bgcolor: ACCENT_COLOR, borderRadius: 0, '&:hover': { bgcolor: ACCENT_COLOR } }}
+        >
+          Confirmar
+        </Button>
+      </DialogActions>
     </Dialog>
   );
 };

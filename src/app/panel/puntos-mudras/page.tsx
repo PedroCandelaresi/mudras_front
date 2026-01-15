@@ -1,12 +1,11 @@
-"use client";
-import { TexturedPanel } from '@/components/ui/TexturedFrame/TexturedPanel';
+
 
 import React, { useState } from 'react';
-import { 
-  Box, 
-  Typography, 
-  Tabs, 
-  Tab, 
+import {
+  Box,
+  Typography,
+  Tabs,
+  Tab,
   Chip,
   Snackbar,
   Alert
@@ -62,7 +61,7 @@ export default function PuntosMudrasPage() {
   const [refetchTrigger, setRefetchTrigger] = useState(0);
   const [inventarioOpen, setInventarioOpen] = useState(false);
   const [puntoInventario, setPuntoInventario] = useState<PuntoMudras | null>(null);
-  const [snack, setSnack] = useState<{ open: boolean; msg: string; sev: 'success'|'error'|'info' }>({ open: false, msg: '', sev: 'success' });
+  const [snack, setSnack] = useState<{ open: boolean; msg: string; sev: 'success' | 'error' | 'info' }>({ open: false, msg: '', sev: 'success' });
 
   // Query para estadísticas
   const { data: estadisticas, loading: loadingEstadisticas, error: errorEstadisticas, refetch: refetchEstadisticas } = useQuery<ObtenerEstadisticasPuntosMudrasResponse>(
@@ -105,106 +104,76 @@ export default function PuntosMudrasPage() {
   return (
     <PageContainer title="Puntos Mudras" description="Gestión de puntos de venta y depósitos">
       <Box>
-        <Typography variant="h4" fontWeight={700} color={paleta.textStrong} sx={{ mb: 2 }}>
-          Gestión de Puntos Mudras
-        </Typography>
-        <TexturedPanel
-          accent={paleta.headerBg}
-          radius={14}
-          contentPadding={12}
-          bgTintPercent={20}
-          bgAlpha={0.98}
-          tintMode="soft-light"
-          tintOpacity={0.36}
-          textureScale={1.08}
-          textureBaseOpacity={0.18}
-          textureBoostOpacity={0.10}
-          textureContrast={0.92}
-          textureBrightness={1.02}
-          bevelWidth={12}
-          bevelIntensity={0.95}
-          glossStrength={0.9}
-          vignetteStrength={0.8}
-        >
-          {/* Toolbar superior con tabs */}
-          <Box sx={{ bgcolor: 'transparent', px: 2, py: 1.5 }}>
-            <Tabs
-              value={tabActual}
-              onChange={handleChangeTab}
-              aria-label="puntos mudras tabs"
-              TabIndicatorProps={{ sx: { display: 'none' } }}
-              sx={{
-                '& .MuiTabs-flexContainer': { gap: 1 },
-                '& .MuiTab-root': {
-                  color: paleta.headerText,
-                  textTransform: 'none',
-                  fontWeight: 600,
-                  minHeight: 40,
-                  px: 2,
-                  borderRadius: 1.5,
-                  bgcolor: paleta.primary,
-                  '&:hover': { bgcolor: paleta.primaryHover },
-                  '& .MuiTab-iconWrapper': { mr: 1 }
-                },
-                '& .MuiTab-root.Mui-selected': {
-                  bgcolor: paleta.headerBg,
-                  color: paleta.headerText
-                }
-              }}
-            >
-              <Tab 
-                icon={<Icon icon="mdi:store" />} 
-                label={
-                  <Box display="flex" alignItems="center" gap={1}>
-                    Puntos de Venta
-                    <Chip label={estadisticas?.obtenerEstadisticasPuntosMudras?.puntosVenta || 0} size="small" sx={{ bgcolor: 'rgba(255,255,255,0.3)', color: 'inherit' }} />
-                  </Box>
-                } 
-                iconPosition="start" 
-                {...a11yProps(0)} 
-              />
-              <Tab 
-                icon={<Icon icon="mdi:warehouse" />} 
-                label={
-                  <Box display="flex" alignItems="center" gap={1}>
-                    Depósitos
-                    <Chip label={estadisticas?.obtenerEstadisticasPuntosMudras?.depositos || 0} size="small" sx={{ bgcolor: 'rgba(255,255,255,0.3)', color: 'inherit' }} />
-                  </Box>
-                } 
-                iconPosition="start" 
-                {...a11yProps(1)} 
-              />
-            </Tabs>
-          </Box>
-          {/* Zona de contenido con mismo fondo y padding */}
-          <Box sx={{ bgcolor: 'transparent', px: 2, pb: 2, pt: 1.5 }}>
-            <Box sx={{ pt: 2 }}>
-              {/* Tab 0 - Puntos de Venta */}
-              {tabActual === 0 && (
-                <TablaPuntosMudras 
-                  tipo="venta" 
-                  onEditarPunto={abrirModalEditar}
-                  onNuevoPunto={() => abrirModalCrear('venta')}
-                  onVerInventario={(p) => { setPuntoInventario(p as any); setInventarioOpen(true); }}
-                  onEliminado={(p) => setSnack({ open: true, msg: `Punto eliminado: ${p.nombre}`, sev: 'success' })}
-                  key={`venta-${refetchTrigger}`}
-                />
-              )}
-              
-              {/* Tab 1 - Depósitos */}
-              {tabActual === 1 && (
-                <TablaPuntosMudras 
-                  tipo="deposito" 
-                  onEditarPunto={abrirModalEditar}
-                  onNuevoPunto={() => abrirModalCrear('deposito')}
-                  onVerInventario={(p) => { setPuntoInventario(p as any); setInventarioOpen(true); }}
-                  onEliminado={(p) => setSnack({ open: true, msg: `Depósito eliminado: ${p.nombre}`, sev: 'success' })}
-                  key={`deposito-${refetchTrigger}`}
-                />
-              )}
-            </Box>
-          </Box>
-        </TexturedPanel>
+        <Box mb={2} display="flex" justifyContent="space-between" alignItems="center">
+          <Typography variant="h4" fontWeight={700} color={paleta.textStrong}>
+            Gestión de Puntos Mudras
+          </Typography>
+        </Box>
+
+        <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 2 }}>
+          <Tabs
+            value={tabActual}
+            onChange={handleChangeTab}
+            aria-label="puntos mudras tabs"
+            sx={{
+              '& .MuiTabs-indicator': { backgroundColor: paleta.primary },
+              '& .MuiTab-root': {
+                textTransform: 'none',
+                fontWeight: 600,
+                fontSize: '1rem',
+                color: 'text.secondary',
+                '&.Mui-selected': { color: paleta.primary }
+              }
+            }}
+          >
+            <Tab
+              label={
+                <Box display="flex" alignItems="center" gap={1}>
+                  <Icon icon="mdi:store" width={20} />
+                  Puntos de Venta
+                  <Chip label={estadisticas?.obtenerEstadisticasPuntosMudras?.puntosVenta || 0} size="small" sx={{ borderRadius: 0, height: 20, bgcolor: 'action.hover' }} />
+                </Box>
+              }
+              {...a11yProps(0)}
+            />
+            <Tab
+              label={
+                <Box display="flex" alignItems="center" gap={1}>
+                  <Icon icon="mdi:warehouse" width={20} />
+                  Depósitos
+                  <Chip label={estadisticas?.obtenerEstadisticasPuntosMudras?.depositos || 0} size="small" sx={{ borderRadius: 0, height: 20, bgcolor: 'action.hover' }} />
+                </Box>
+              }
+              {...a11yProps(1)}
+            />
+          </Tabs>
+        </Box>
+
+        <Box>
+          {/* Tab 0 - Puntos de Venta */}
+          {tabActual === 0 && (
+            <TablaPuntosMudras
+              tipo="venta"
+              onEditarPunto={abrirModalEditar}
+              onNuevoPunto={() => abrirModalCrear('venta')}
+              onVerInventario={(p) => { setPuntoInventario(p as any); setInventarioOpen(true); }}
+              onEliminado={(p) => setSnack({ open: true, msg: `Punto eliminado: ${p.nombre}`, sev: 'success' })}
+              key={`venta-${refetchTrigger}`}
+            />
+          )}
+
+          {/* Tab 1 - Depósitos */}
+          {tabActual === 1 && (
+            <TablaPuntosMudras
+              tipo="deposito"
+              onEditarPunto={abrirModalEditar}
+              onNuevoPunto={() => abrirModalCrear('deposito')}
+              onVerInventario={(p) => { setPuntoInventario(p as any); setInventarioOpen(true); }}
+              onEliminado={(p) => setSnack({ open: true, msg: `Depósito eliminado: ${p.nombre}`, sev: 'success' })}
+              key={`deposito-${refetchTrigger}`}
+            />
+          )}
+        </Box>
       </Box>
 
       {/* Modal para crear/editar puntos */}

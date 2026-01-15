@@ -1,17 +1,15 @@
-// /src/components/rubros/ModalDetallesRubro.tsx
 'use client';
+
 import {
-  Dialog, DialogTitle, DialogContent, DialogActions,
-  Typography, Box, Chip, TextField, InputAdornment, Divider
+  Dialog, DialogContent, DialogActions,
+  Typography, Box, Chip, TextField, InputAdornment, Button, IconButton
 } from '@mui/material';
-import { alpha, darken } from '@mui/material/styles';
 import { useState, useEffect, useMemo, useCallback, type ComponentProps } from 'react';
 import { Icon } from '@iconify/react';
-import { azul } from '@/ui/colores';
 import { useMutation, useQuery } from '@apollo/client/react';
+
 import { GET_PROVEEDORES_POR_RUBRO } from '@/components/rubros/graphql/queries';
-import type { ProveedoresPorRubroResponse } from '@/interfaces/rubros';
-import { CrystalSoftButton } from '@/components/ui/CrystalButton';
+import { ProveedoresPorRubroResponse } from '@/interfaces/rubros';
 import { TablaArticulos } from '@/components/articulos';
 import { ModalEliminarArticuloRubro } from '@/components/rubros/ModalEliminarArticuloRubro';
 import { ELIMINAR_ARTICULO_DE_RUBRO } from '@/components/rubros/graphql/mutations';
@@ -31,7 +29,6 @@ interface ModalDetallesRubroProps {
   open: boolean;
   onClose: () => void;
   rubro: Rubro | null;
-  /** Color que viene de la tabla de rubros (hex/rgb/hsl). */
   accentColor?: string;
 }
 
@@ -53,30 +50,9 @@ const NBSP = '\u00A0';
 const formatCount = (n: number, singular: string, plural?: string) =>
   `${n.toLocaleString('es-AR')}${NBSP}${n === 1 ? singular : (plural ?? `${singular}s`)}`;
 
-// === Layout (header + footer + divisores) ===
 const VH_MAX = 85;
-const HEADER_H = 60;
-const FOOTER_H = 60;
-const DIV_H = 3;
-const CONTENT_MAX = `calc(${VH_MAX}vh - ${HEADER_H + FOOTER_H + DIV_H * 2}px)`;
-
-// Derivar paleta desde el color de rubro
-const makeColors = (base?: string) => {
-  const primary = azul.primary; // Blue
-  const secondary = azul.headerBorder;
-  return {
-    primary,
-    secondary,
-    primaryHover: darken(primary, 0.12),
-    textStrong: azul.textStrong,
-    chipBorder: azul.borderInner,
-    background: '#f8f9fa',
-  };
-};
 
 const ModalDetallesRubro = ({ open, onClose, rubro, accentColor }: ModalDetallesRubroProps) => {
-  const COLORS = useMemo(() => makeColors(accentColor), [accentColor]);
-
   const [filtroInput, setFiltroInput] = useState('');
   const [busquedaPersonalizada, setBusquedaPersonalizada] = useState('');
   const [proveedorSeleccionadoId, setProveedorSeleccionadoId] = useState<number | null>(null);
@@ -128,12 +104,6 @@ const ModalDetallesRubro = ({ open, onClose, rubro, accentColor }: ModalDetalles
     setConfirmEliminarOpen(false);
     setTextoConfirmEliminar('');
     setArticuloAEliminar(null);
-  }, []);
-
-  const abrirModalEliminar = useCallback((articulo: TablaArticulosRow) => {
-    setArticuloAEliminar(articulo);
-    setTextoConfirmEliminar('');
-    setConfirmEliminarOpen(true);
   }, []);
 
   const confirmarEliminarArticulo = useCallback(async () => {
@@ -237,63 +207,53 @@ const ModalDetallesRubro = ({ open, onClose, rubro, accentColor }: ModalDetalles
       maxWidth="md"
       fullWidth
       PaperProps={{
-        elevation: 4,
+        elevation: 0,
         sx: {
-          borderRadius: 0, // Zero border radius for strict square aesthetic (like ModalEditarProveedor)
+          borderRadius: 0,
+          border: '1px solid #e0e0e0',
           bgcolor: '#ffffff',
           maxHeight: `${VH_MAX}vh`,
-          overflow: 'hidden', // Prevent Paper from scrolling
+          overflow: 'hidden',
         },
-        square: true, // Force square borders
       }}
     >
       <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%', maxHeight: `${VH_MAX}vh` }}>
 
         {/* ===== HEADER ===== */}
         <Box sx={{
-          bgcolor: COLORS.primary,
-          color: '#ffffff',
+          bgcolor: '#f5f5f5',
+          color: '#000',
           px: 3,
           py: 2,
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
-          borderBottom: `4px solid ${COLORS.secondary}`,
+          borderBottom: '1px solid #e0e0e0',
           borderRadius: 0,
-          flexShrink: 0, // Prevent Header from shrinking
+          flexShrink: 0,
         }}>
           <Box display="flex" alignItems="center" gap={2}>
-            <Icon icon="mdi:tag-multiple" width={24} height={24} />
+            <Icon icon="mdi:tag-multiple" width={24} height={24} color="#546e7a" />
             <Box>
-              <Typography variant="h6" fontWeight={600} letterSpacing={0.5}>
-                {rubroNombre.toUpperCase()}
+              <Typography variant="h6" fontWeight={700} letterSpacing={0}>
+                {rubroNombre}
               </Typography>
-              <Box display="flex" alignItems="center" gap={1} mt={0.5}>
+              <Box display="flex" alignItems="center" gap={1} mt={0}>
                 {!!rubroCodigo && (
-                  <Typography variant="caption" sx={{ opacity: 0.8, letterSpacing: 0.5 }}>
+                  <Typography variant="caption" color="text.secondary">
                     CÓD: {rubroCodigo}
                   </Typography>
                 )}
-                {!!rubroCodigo && <Typography variant="caption" sx={{ opacity: 0.6 }}>|</Typography>}
-                <Typography variant="caption" sx={{ opacity: 0.8, letterSpacing: 0.5 }}>
+                {!!rubroCodigo && <Typography variant="caption" color="text.disabled">|</Typography>}
+                <Typography variant="caption" color="text.secondary">
                   {formatCount(totalArticulosRubro, 'ARTÍCULO', 'ARTÍCULOS')}
                 </Typography>
               </Box>
             </Box>
           </Box>
-          <CrystalSoftButton
-            baseColor="rgba(255,255,255,0.2)"
-            onClick={onCerrar}
-            title="Cerrar"
-            sx={{
-              width: 32, height: 32, minWidth: 32,
-              p: 0, borderRadius: 0,
-              display: 'grid', placeItems: 'center',
-              '&:hover': { bgcolor: 'rgba(255,255,255,0.3)' },
-            }}
-          >
-            <Icon icon="mdi:close" color="#fff" width={20} height={20} />
-          </CrystalSoftButton>
+          <IconButton onClick={onCerrar} size="small" sx={{ color: 'text.secondary', '&:hover': { bgcolor: 'rgba(0,0,0,0.05)' } }}>
+            <Icon icon="mdi:close" width={24} />
+          </IconButton>
         </Box>
 
         <DialogContent
@@ -301,8 +261,8 @@ const ModalDetallesRubro = ({ open, onClose, rubro, accentColor }: ModalDetalles
             p: 3,
             bgcolor: '#ffffff',
             overflowY: 'auto',
-            flex: 1, // Take remaining space
-            minHeight: 0, // Allow shrinking below content size
+            flex: 1,
+            minHeight: 0,
           }}
         >
           {/* Tarjetas de Recargo/Descuento */}
@@ -311,15 +271,15 @@ const ModalDetallesRubro = ({ open, onClose, rubro, accentColor }: ModalDetalles
               sx={{
                 flex: 1,
                 p: 2,
-                border: `1px solid ${COLORS.chipBorder}`,
-                bgcolor: alpha(COLORS.primary, 0.05),
-                borderRadius: 0, // Square
+                border: '1px solid #e0e0e0',
+                bgcolor: '#f8f9fa',
+                borderRadius: 0,
               }}
             >
-              <Typography variant="subtitle2" fontWeight={700} color={COLORS.textStrong} sx={{ textTransform: 'uppercase', letterSpacing: 0.5 }}>
+              <Typography variant="subtitle2" fontWeight={700} color="text.secondary" sx={{ textTransform: 'uppercase', fontSize: '0.75rem', letterSpacing: 0.5 }}>
                 Recargo
               </Typography>
-              <Typography variant="h4" fontWeight={700} color={COLORS.primary} mt={1}>
+              <Typography variant="h5" fontWeight={700} color="text.primary" mt={1}>
                 {formatPorcentaje(porcentajeRecargo)}
               </Typography>
             </Box>
@@ -328,15 +288,15 @@ const ModalDetallesRubro = ({ open, onClose, rubro, accentColor }: ModalDetalles
               sx={{
                 flex: 1,
                 p: 2,
-                border: `1px solid ${COLORS.chipBorder}`,
-                bgcolor: alpha(COLORS.primary, 0.05),
-                borderRadius: 0, // Square
+                border: '1px solid #e0e0e0',
+                bgcolor: '#f8f9fa',
+                borderRadius: 0,
               }}
             >
-              <Typography variant="subtitle2" fontWeight={700} color={COLORS.textStrong} sx={{ textTransform: 'uppercase', letterSpacing: 0.5 }}>
+              <Typography variant="subtitle2" fontWeight={700} color="text.secondary" sx={{ textTransform: 'uppercase', fontSize: '0.75rem', letterSpacing: 0.5 }}>
                 Descuento
               </Typography>
-              <Typography variant="h4" fontWeight={700} color={COLORS.primary} mt={1}>
+              <Typography variant="h5" fontWeight={700} color="text.primary" mt={1}>
                 {formatPorcentaje(porcentajeDescuento)}
               </Typography>
             </Box>
@@ -345,15 +305,15 @@ const ModalDetallesRubro = ({ open, onClose, rubro, accentColor }: ModalDetalles
               sx={{
                 flex: 1,
                 p: 2,
-                border: `1px solid ${COLORS.chipBorder}`,
-                bgcolor: alpha(COLORS.primary, 0.05),
-                borderRadius: 0, // Square
+                border: '1px solid #e0e0e0',
+                bgcolor: '#f8f9fa',
+                borderRadius: 0,
               }}
             >
-              <Typography variant="subtitle2" fontWeight={700} color={COLORS.textStrong} sx={{ textTransform: 'uppercase', letterSpacing: 0.5 }}>
+              <Typography variant="subtitle2" fontWeight={700} color="text.secondary" sx={{ textTransform: 'uppercase', fontSize: '0.75rem', letterSpacing: 0.5 }}>
                 Unidad
               </Typography>
-              <Typography variant="h4" fontWeight={700} color={COLORS.primary} mt={1}>
+              <Typography variant="h5" fontWeight={700} color="text.primary" mt={1}>
                 {unidadMedida}
               </Typography>
             </Box>
@@ -361,7 +321,7 @@ const ModalDetallesRubro = ({ open, onClose, rubro, accentColor }: ModalDetalles
 
           {/* Proveedores */}
           <Box mb={3}>
-            <Typography variant="subtitle2" fontWeight={700} color={COLORS.secondary} sx={{ mb: 2, textTransform: 'uppercase', letterSpacing: 1 }}>
+            <Typography variant="subtitle2" fontWeight={700} color="text.secondary" sx={{ mb: 1.5, textTransform: 'uppercase', fontSize: '0.75rem', letterSpacing: 0.5 }}>
               Proveedores Asociados
             </Typography>
             <Box display="flex" flexWrap="wrap" gap={1}>
@@ -380,10 +340,10 @@ const ModalDetallesRubro = ({ open, onClose, rubro, accentColor }: ModalDetalles
                     }}
                     sx={{
                       borderRadius: 0, fontWeight: 600,
-                      bgcolor: proveedorSeleccionadoId === null ? COLORS.primary : 'transparent',
-                      color: proveedorSeleccionadoId === null ? '#fff' : COLORS.primary,
-                      borderColor: COLORS.primary,
-                      '&:hover': { bgcolor: proveedorSeleccionadoId === null ? COLORS.primaryHover : alpha(COLORS.primary, 0.1) }
+                      bgcolor: proveedorSeleccionadoId === null ? '#455a64' : 'transparent', // Blue/Grey
+                      color: proveedorSeleccionadoId === null ? '#fff' : '#455a64',
+                      borderColor: '#455a64',
+                      '&:hover': { bgcolor: proveedorSeleccionadoId === null ? '#37474f' : '#eceff1' }
                     }}
                   />
                   {proveedores.map((p) => {
@@ -401,10 +361,10 @@ const ModalDetallesRubro = ({ open, onClose, rubro, accentColor }: ModalDetalles
                         }}
                         sx={{
                           borderRadius: 0, fontWeight: 600,
-                          bgcolor: seleccionado ? COLORS.primary : 'transparent',
-                          color: seleccionado ? '#fff' : COLORS.primary,
-                          borderColor: COLORS.primary,
-                          '&:hover': { bgcolor: seleccionado ? COLORS.primaryHover : alpha(COLORS.primary, 0.1) }
+                          bgcolor: seleccionado ? '#455a64' : 'transparent',
+                          color: seleccionado ? '#fff' : '#455a64',
+                          borderColor: '#455a64',
+                          '&:hover': { bgcolor: seleccionado ? '#37474f' : '#eceff1' }
                         }}
                       />
                     );
@@ -420,7 +380,7 @@ const ModalDetallesRubro = ({ open, onClose, rubro, accentColor }: ModalDetalles
 
           {/* Toolbar y Tabla */}
           <Box mb={2} display="flex" justifyContent="space-between" alignItems="center" flexWrap="wrap" gap={2}>
-            <Typography variant="subtitle2" fontWeight={700} color={COLORS.secondary} sx={{ textTransform: 'uppercase', letterSpacing: 1 }}>
+            <Typography variant="subtitle2" fontWeight={700} color="text.secondary" sx={{ textTransform: 'uppercase', fontSize: '0.75rem', letterSpacing: 0.5 }}>
               Artículos ({totalArticulos})
             </Typography>
             <TextField
@@ -439,14 +399,15 @@ const ModalDetallesRubro = ({ open, onClose, rubro, accentColor }: ModalDetalles
                 '& .MuiOutlinedInput-root': {
                   borderRadius: 0,
                   bgcolor: '#fff',
-                  '& fieldset': { borderColor: COLORS.chipBorder },
-                  '&.Mui-focused fieldset': { borderColor: COLORS.primary, borderWidth: 2 },
+                  '& fieldset': { borderColor: '#e0e0e0' },
+                  '&.Mui-focused fieldset': { borderColor: '#455a64', borderWidth: 2 },
+                  '&:hover fieldset': { borderColor: '#b0bec5' },
                 }
               }}
               InputProps={{
                 startAdornment: (
                   <InputAdornment position="start">
-                    <Icon icon="mdi:magnify" color={COLORS.secondary} />
+                    <Icon icon="mdi:magnify" color="#757575" />
                   </InputAdornment>
                 ),
               }}
@@ -481,26 +442,30 @@ const ModalDetallesRubro = ({ open, onClose, rubro, accentColor }: ModalDetalles
         </DialogContent>
 
         {/* ===== FOOTER ===== */}
-        <DialogActions sx={{ p: 2, bgcolor: '#f1f2f6', borderTop: '1px solid #e0e0e0', gap: 2, borderRadius: 0, flexShrink: 0 }}>
+        <DialogActions sx={{ p: 2, bgcolor: '#f5f5f5', borderTop: '1px solid #e0e0e0', gap: 2, borderRadius: 0, flexShrink: 0 }}>
           <Box flex={1} />
-          <CrystalSoftButton
-            baseColor={COLORS.secondary}
+          <Button
             onClick={onCerrar}
+            variant="contained"
+            disableElevation
             sx={{
-              borderRadius: 0,
+              bgcolor: '#5d4037', // Brownish
               color: '#fff',
-              px: 3,
+              px: 4,
+              py: 1,
               fontWeight: 600,
-              '&:hover': { bgcolor: darken(COLORS.secondary, 0.2) }
+              textTransform: 'none',
+              borderRadius: 0,
+              '&:hover': { bgcolor: '#4e342e' }
             }}
           >
             Cerrar
-          </CrystalSoftButton>
+          </Button>
         </DialogActions>
 
       </Box>
 
-      {/* Modal Eliminar (se mantiene igual, solo lógica) */}
+      {/* Modal Eliminar */}
       <ModalEliminarArticuloRubro
         open={confirmEliminarOpen}
         onClose={cerrarModalEliminar}

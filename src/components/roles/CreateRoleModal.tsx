@@ -34,17 +34,28 @@ export function CreateRoleModal({ open, onClose, onCreated }: Props) {
     onCreated?.();
   }
 
+  /* ======================== Render ======================== */
   return (
-    <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm">
-      <DialogTitle>Nuevo Rol</DialogTitle>
-      <DialogContent>
-        <Stack spacing={2} mt={1}>
+    <Dialog
+      open={open}
+      onClose={onClose}
+      fullWidth
+      maxWidth="sm"
+      PaperProps={{ sx: { borderRadius: 0, border: '1px solid #e0e0e0', boxShadow: 'none' } }}
+    >
+      <DialogTitle sx={{ bgcolor: '#f5f5f5', borderBottom: '1px solid #e0e0e0', fontWeight: 700 }}>
+        Nuevo Rol
+      </DialogTitle>
+      <DialogContent sx={{ p: 3 }}>
+        <Stack spacing={3} mt={1}>
           <TextField
             label="Nombre"
             {...register('name')}
             error={Boolean(errors.name)}
             helperText={errors.name?.message}
             fullWidth
+            size="small"
+            InputProps={{ sx: { borderRadius: 0 } }}
           />
           <TextField
             label="Slug"
@@ -52,6 +63,8 @@ export function CreateRoleModal({ open, onClose, onCreated }: Props) {
             error={Boolean(errors.slug)}
             helperText={errors.slug?.message}
             fullWidth
+            size="small"
+            InputProps={{ sx: { borderRadius: 0 } }}
           />
           <TextField
             label="Descripción"
@@ -61,12 +74,22 @@ export function CreateRoleModal({ open, onClose, onCreated }: Props) {
             fullWidth
             multiline
             minRows={2}
+            size="small"
+            InputProps={{ sx: { borderRadius: 0 } }}
           />
         </Stack>
       </DialogContent>
-      <DialogActions>
-        <Button onClick={onClose} color="inherit">Cancelar</Button>
-        <Button onClick={handleSubmit(onSubmit)} variant="contained" disabled={isSubmitting}>Crear</Button>
+      <DialogActions sx={{ p: 2, bgcolor: '#f5f5f5', borderTop: '1px solid #e0e0e0' }}>
+        <Button onClick={onClose} sx={{ borderRadius: 0, fontWeight: 600 }}>Cancelar</Button>
+        <Button
+          onClick={handleSubmit(onSubmit)}
+          variant="contained"
+          disabled={isSubmitting}
+          disableElevation
+          sx={{ borderRadius: 0, fontWeight: 600, bgcolor: '#8d6e63', '&:hover': { bgcolor: '#6d4c41' } }}
+        >
+          Crear
+        </Button>
       </DialogActions>
     </Dialog>
   );

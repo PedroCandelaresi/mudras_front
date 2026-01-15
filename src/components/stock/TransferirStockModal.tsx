@@ -7,21 +7,16 @@ import {
     DialogTitle,
     DialogContent,
     DialogActions,
+    Button,
     TextField,
     MenuItem,
-    Stack,
     Typography,
     Alert,
     Box,
     Divider
 } from '@mui/material';
-import { alpha, darken } from '@mui/material/styles';
 import { Icon } from '@iconify/react';
-
-// UI Components
-import { TexturedPanel } from '../ui/TexturedFrame/TexturedPanel';
-import CrystalButton, { CrystalSoftButton } from '../ui/CrystalButton';
-import { oroNegro } from '../../ui/colores';
+import { verde } from '../../ui/colores';
 
 const TRANSFERIR_STOCK = gql`
   mutation TransferirStock($input: TransferirStockInput!) {
@@ -37,13 +32,7 @@ interface TransferirStockModalProps {
     puntos: any[];
 }
 
-// Configuración visual heredada de ModalNuevoArticulo pero con paleta OroNegro
-const COLORS = oroNegro;
-const VH_MAX = 85;
-const HEADER_H = 60;
-const FOOTER_H = 60;
-const DIV_H = 3;
-const CONTENT_MAX = `calc(${VH_MAX}vh - ${HEADER_H + FOOTER_H + DIV_H * 2}px)`;
+const COLORS = verde;
 
 export default function TransferirStockModal({
     open,
@@ -111,6 +100,7 @@ export default function TransferirStockModal({
         return articuloPreseleccionado.stockPorPunto?.find((s: any) => s.puntoId === origen)?.cantidad || 0;
     }, [origen, articuloPreseleccionado]);
 
+    /* ======================== Render ======================== */
     return (
         <Dialog
             open={open}
@@ -119,172 +109,104 @@ export default function TransferirStockModal({
             fullWidth
             PaperProps={{
                 sx: {
-                    borderRadius: 4,
-                    bgcolor: 'transparent !important',
-                    backgroundColor: 'transparent !important',
-                    boxShadow: '0 8px 40px rgba(0,0,0,0.28)',
-                    overflow: 'hidden',
-                    maxHeight: `${VH_MAX} vh`,
+                    borderRadius: 0,
+                    boxShadow: 'none',
+                    border: '1px solid #e0e0e0',
+                    maxHeight: '90vh',
                 }
             }}
         >
-            <TexturedPanel
-                accent={COLORS.primary}
-                radius={12}
-                contentPadding={0}
-                bgTintPercent={12}
-                bgAlpha={1}
-                textureBaseOpacity={0.22}
-                textureBoostOpacity={0.19}
-                textureBrightness={1.12}
-                textureContrast={1.03}
-                tintOpacity={0.38}
-            >
-                <Box sx={{ display: 'flex', flexDirection: 'column', maxHeight: `${VH_MAX} vh` }}>
-                    {/* Header */}
-                    <DialogTitle sx={{ p: 0, m: 0, minHeight: HEADER_H, display: 'flex', alignItems: 'center' }}>
-                        <Box sx={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', px: 3, gap: 2 }}>
-                            <Box sx={{
-                                width: 40,
-                                height: 40,
-                                borderRadius: '50%',
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                background: `linear - gradient(135deg, ${COLORS.primary} 0 %, ${COLORS.primaryHover} 100 %)`,
-                                boxShadow: 'inset 0 2px 4px rgba(255,255,255,0.3), 0 4px 12px rgba(0,0,0,0.25)',
-                                color: COLORS.textStrong
-                            }}>
-                                <Icon icon="mdi:transfer" width={22} height={22} />
-                            </Box>
+            <Box sx={{ display: 'flex', flexDirection: 'column', maxHeight: '90vh' }}>
+                {/* Header */}
+                <DialogTitle sx={{ p: 2, bgcolor: COLORS.primary, color: '#fff', display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <Icon icon="mdi:transfer" width={24} height={24} />
+                    <Box display="flex" flexDirection="column">
+                        <Typography variant="h6" fontWeight={700}>
+                            Transferir Stock
+                        </Typography>
+                        <Typography variant="caption" fontWeight={500} sx={{ opacity: 0.9 }}>
+                            {articuloPreseleccionado?.nombre}
+                        </Typography>
+                    </Box>
+                </DialogTitle>
 
-                            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.25 }}>
-                                <Typography variant="h6" fontWeight={700} color={COLORS.headerText} sx={{ textShadow: '0 2px 4px rgba(0,0,0,0.8)' }}>
-                                    Transferir Stock
-                                </Typography>
-                                <Typography variant="subtitle2" color={alpha(COLORS.headerText, 0.8)} fontWeight={600}>
-                                    {articuloPreseleccionado?.nombre}
-                                </Typography>
-                            </Box>
+                {/* Content */}
+                <DialogContent sx={{ p: 3, bgcolor: '#f9fafb' }}>
+                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+                        {error && <Alert severity="error" sx={{ borderRadius: 0 }}>{error}</Alert>}
 
-                            <Box sx={{ ml: 'auto' }}>
-                                <CrystalSoftButton
-                                    baseColor={COLORS.primary}
-                                    onClick={onClose}
-                                    sx={{
-                                        width: 40, height: 40, minWidth: 40, borderRadius: '50%', p: 0,
-                                        display: 'flex', alignItems: 'center', justifyContent: 'center'
-                                    }}
-                                >
-                                    <Icon icon="mdi:close" color={COLORS.headerText} width={20} height={20} />
-                                </CrystalSoftButton>
-                            </Box>
-                        </Box>
-                    </DialogTitle>
-
-                    <Divider sx={{
-                        height: DIV_H, border: 0,
-                        backgroundImage: `linear - gradient(90deg, rgba(255, 255, 255, 0.05), ${COLORS.primary}, rgba(255, 255, 255, 0.05))`
-                    }} />
-
-                    {/* Content */}
-                    <DialogContent sx={{ p: 0, overflow: 'auto', maxHeight: CONTENT_MAX, background: '#f8fafb' }}>
-                        <Box sx={{ p: 3, display: 'flex', flexDirection: 'column', gap: 2.5 }}>
-                            {error && <Alert severity="error" sx={{ borderRadius: 2 }}>{error}</Alert>}
-
-                            <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2 }}>
-                                <TextField
-                                    select
-                                    label="Punto de Origen"
-                                    value={origen}
-                                    onChange={(e) => setOrigen(Number(e.target.value))}
-                                    fullWidth
-                                    sx={{
-                                        '& .MuiOutlinedInput-root': {
-                                            borderRadius: 2,
-                                            background: '#ffffff',
-                                            '&.Mui-focused fieldset': { borderColor: COLORS.primary },
-                                        },
-                                    }}
-                                >
-                                    {puntos.map((punto) => (
-                                        <MenuItem key={punto.id} value={punto.id}>
-                                            {punto.nombre}
-                                        </MenuItem>
-                                    ))}
-                                </TextField>
-
-                                <TextField
-                                    select
-                                    label="Punto de Destino"
-                                    value={destino}
-                                    onChange={(e) => setDestino(Number(e.target.value))}
-                                    fullWidth
-                                    sx={{
-                                        '& .MuiOutlinedInput-root': {
-                                            borderRadius: 2,
-                                            background: '#ffffff',
-                                            '&.Mui-focused fieldset': { borderColor: COLORS.primary },
-                                        },
-                                    }}
-                                >
-                                    {puntos.map((punto) => (
-                                        <MenuItem key={punto.id} value={punto.id} disabled={punto.id === origen}>
-                                            {punto.nombre}
-                                        </MenuItem>
-                                    ))}
-                                </TextField>
-                            </Box>
+                        <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2 }}>
+                            <TextField
+                                select
+                                label="Punto de Origen"
+                                value={origen}
+                                onChange={(e) => setOrigen(Number(e.target.value))}
+                                fullWidth
+                                InputProps={{ sx: { borderRadius: 0 } }}
+                            >
+                                {puntos.map((punto) => (
+                                    <MenuItem key={punto.id} value={punto.id}>
+                                        {punto.nombre}
+                                    </MenuItem>
+                                ))}
+                            </TextField>
 
                             <TextField
-                                label="Cantidad a Transferir"
-                                type="number"
-                                value={cantidad}
-                                onChange={(e) => setCantidad(e.target.value)}
+                                select
+                                label="Punto de Destino"
+                                value={destino}
+                                onChange={(e) => setDestino(Number(e.target.value))}
                                 fullWidth
-                                helperText={origen ? `Disponible en origen: ${stockEnOrigen} ` : ''}
-                                sx={{
-                                    '& .MuiOutlinedInput-root': {
-                                        borderRadius: 2,
-                                        background: '#ffffff',
-                                        '&.Mui-focused fieldset': { borderColor: COLORS.primary },
-                                    },
-                                }}
-                            />
-
-                            <TextField
-                                label="Motivo (Opcional)"
-                                value={motivo}
-                                onChange={(e) => setMotivo(e.target.value)}
-                                fullWidth
-                                multiline
-                                rows={2}
-                                sx={{
-                                    '& .MuiOutlinedInput-root': {
-                                        borderRadius: 2,
-                                        background: '#ffffff',
-                                        '&.Mui-focused fieldset': { borderColor: COLORS.primary },
-                                    },
-                                }}
-                            />
+                                InputProps={{ sx: { borderRadius: 0 } }}
+                            >
+                                {puntos.map((punto) => (
+                                    <MenuItem key={punto.id} value={punto.id} disabled={punto.id === origen}>
+                                        {punto.nombre}
+                                    </MenuItem>
+                                ))}
+                            </TextField>
                         </Box>
-                    </DialogContent>
 
-                    <Divider sx={{ height: DIV_H, border: 0, backgroundImage: `linear - gradient(90deg, rgba(255, 255, 255, 0.05), ${COLORS.primary}, rgba(255, 255, 255, 0.05))` }} />
+                        <TextField
+                            label="Cantidad a Transferir"
+                            type="number"
+                            value={cantidad}
+                            onChange={(e) => setCantidad(e.target.value)}
+                            fullWidth
+                            helperText={origen ? `Disponible en origen: ${stockEnOrigen}` : ''}
+                            InputProps={{ sx: { borderRadius: 0 } }}
+                        />
 
-                    {/* Footer */}
-                    <DialogActions sx={{ p: 0, m: 0, minHeight: FOOTER_H, bgcolor: '#f8fafb' }}>
-                        <Box sx={{ width: '100%', height: '100%', display: 'flex', justifyContent: 'flex-end', alignItems: 'center', px: 3, gap: 1.5 }}>
-                            <CrystalSoftButton baseColor={COLORS.dark} onClick={onClose} disabled={loading}>
-                                Cancelar
-                            </CrystalSoftButton>
-                            <CrystalButton baseColor={COLORS.primary} onClick={handleSubmit} disabled={loading || !origen || !destino || !cantidad}>
-                                {loading ? 'Transfiriendo...' : 'Confirmar Transferencia'}
-                            </CrystalButton>
-                        </Box>
-                    </DialogActions>
-                </Box>
-            </TexturedPanel>
+                        <TextField
+                            label="Motivo (Opcional)"
+                            value={motivo}
+                            onChange={(e) => setMotivo(e.target.value)}
+                            fullWidth
+                            multiline
+                            rows={2}
+                            InputProps={{ sx: { borderRadius: 0 } }}
+                        />
+                    </Box>
+                </DialogContent>
+
+                <Divider />
+
+                {/* Footer */}
+                <DialogActions sx={{ p: 2, bgcolor: '#f5f5f5' }}>
+                    <Button onClick={onClose} disabled={loading} sx={{ color: 'text.secondary', fontWeight: 600 }}>
+                        Cancelar
+                    </Button>
+                    <Button
+                        variant="contained"
+                        onClick={handleSubmit}
+                        disabled={loading || !origen || !destino || !cantidad}
+                        disableElevation
+                        sx={{ bgcolor: COLORS.primary, borderRadius: 0, fontWeight: 700, px: 3, '&:hover': { bgcolor: COLORS.primary } }}
+                    >
+                        {loading ? 'Transfiriendo...' : 'Confirmar Transferencia'}
+                    </Button>
+                </DialogActions>
+            </Box>
         </Dialog>
     );
 }

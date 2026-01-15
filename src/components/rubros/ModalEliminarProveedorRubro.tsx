@@ -1,22 +1,19 @@
-// /home/candelaresi/proyectos/mudras/frontend/src/components/rubros/ModalEliminarProveedorRubro.tsx
 'use client';
+
 import React from 'react';
 import {
   Box,
   Dialog,
-  DialogTitle,
   DialogContent,
   DialogActions,
   Typography,
   TextField,
   IconButton,
   InputAdornment,
+  Button,
+  Alert
 } from '@mui/material';
-import { alpha } from '@mui/material/styles';
 import { IconAlertTriangle, IconX } from '@tabler/icons-react';
-
-import { marron } from './colores-marron';
-import CrystalButton, { CrystalSoftButton } from '@/components/ui/CrystalButton';
 
 interface Proveedor { id: number; nombre: string }
 interface Rubro { id: number; nombre: string }
@@ -31,80 +28,122 @@ interface Props {
   setTextoConfirmacion: (v: string) => void;
 }
 
-const ACCENT = marron.primary;
-const ACCENT_DARK = marron.primaryHover ?? marron.primary;
-const ACCENT_SOFT_BG = marron.secondary ?? '#EDDFD4';
-
 export function ModalEliminarProveedorRubro({ open, onClose, onConfirm, proveedor, rubro, textoConfirmacion, setTextoConfirmacion }: Props) {
   return (
-    <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth sx={{ '& .MuiDialog-paper': { borderRadius: 3, overflow: 'hidden' } }}>
-      <DialogTitle sx={{ background: `linear-gradient(135deg, ${ACCENT} 0%, ${ACCENT_DARK} 100%)`, color: 'white', display: 'flex', alignItems: 'center', gap: 2, py: 3, position: 'relative' }}>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, zIndex: 1, position: 'relative' }}>
-          <Box sx={{ bgcolor: alpha('#ffffff', 0.18), borderRadius: '50%', p: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <IconAlertTriangle size={28} />
-          </Box>
-          <Box>
-            <Typography variant="h5" fontWeight={700}>⚠️ ELIMINAR PROVEEDOR</Typography>
-            <Typography variant="body2" sx={{ opacity: 0.9, mt: 0.5 }}>Esta acción no se puede deshacer</Typography>
-          </Box>
+    <Dialog
+      open={open}
+      onClose={onClose}
+      maxWidth="sm"
+      fullWidth
+      PaperProps={{
+        elevation: 0,
+        sx: {
+          borderRadius: 0,
+          border: '1px solid #e0e0e0',
+          bgcolor: '#ffffff'
+        }
+      }}
+    >
+      {/* Header */}
+      <Box sx={{
+        bgcolor: '#f5f5f5',
+        px: 3,
+        py: 2,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        borderBottom: '1px solid #e0e0e0',
+        borderRadius: 0,
+      }}>
+        <Box display="flex" alignItems="center" gap={2}>
+          <IconAlertTriangle size={24} color="#d32f2f" />
+          <Typography variant="h6" fontWeight={700} color="#d32f2f">
+            Eliminar Proveedor
+          </Typography>
         </Box>
-        <IconButton onClick={onClose} sx={{ position: 'absolute', right: 16, top: 16, color: 'white', bgcolor: alpha('#ffffff', 0.1), '&:hover': { bgcolor: alpha('#ffffff', 0.2) }, zIndex: 2 }}>
+        <IconButton onClick={onClose} size="small" sx={{ color: 'text.secondary', '&:hover': { bgcolor: 'rgba(0,0,0,0.05)' } }}>
           <IconX size={20} />
         </IconButton>
-      </DialogTitle>
-      <DialogContent sx={{ mt: 4, p: 5, pt: 4, bgcolor: '#fff' }}>
+      </Box>
+
+      <DialogContent sx={{ p: 4 }}>
         <Box display="flex" flexDirection="column" gap={3}>
-          <Box sx={{ p: 3, borderRadius: 2, border: `2px solid ${alpha(ACCENT, 0.25)}`, bgcolor: ACCENT_SOFT_BG, display: 'flex', alignItems: 'center', gap: 2 }}>
-            <IconAlertTriangle size={24} color={ACCENT} />
-            <Box>
-              <Typography variant="body1" fontWeight={600} color={ACCENT}>¿Está seguro que quiere eliminar este proveedor del rubro?</Typography>
-              <Typography variant="body2" color="text.secondary" mt={1}>Proveedor: <strong>{proveedor?.nombre}</strong></Typography>
-              {rubro && <Typography variant="body2" color="text.secondary">Rubro: <strong>{rubro.nombre}</strong></Typography>}
-            </Box>
-          </Box>
+
+          {/* Warning Box */}
+          <Alert severity="error" sx={{ borderRadius: 0 }} icon={<IconAlertTriangle fontSize="inherit" />}>
+            <Typography variant="subtitle2" fontWeight={700} gutterBottom>
+              ¿Estás seguro que querés eliminar este proveedor del rubro?
+            </Typography>
+            <Typography variant="body2" display="block">
+              Proveedor: <strong>{proveedor?.nombre}</strong>
+            </Typography>
+            {rubro && (
+              <Typography variant="body2" display="block">
+                Rubro: <strong>{rubro.nombre}</strong>
+              </Typography>
+            )}
+          </Alert>
+
           <Box>
-            <Typography variant="body1" fontWeight={600} mb={2} color={ACCENT}>Para confirmar la acción escriba la palabra ELIMINAR</Typography>
+            <Typography variant="body2" fontWeight={600} gutterBottom sx={{ color: 'text.secondary', textTransform: 'uppercase', fontSize: '0.75rem' }}>
+              Confirmación
+            </Typography>
             <TextField
               value={textoConfirmacion}
               onChange={(e) => setTextoConfirmacion(e.target.value)}
               fullWidth
               variant="outlined"
-              placeholder="Escriba ELIMINAR para confirmar"
-              sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
-              InputProps={{ startAdornment: (<InputAdornment position="start"><IconAlertTriangle size={16} color={ACCENT} /></InputAdornment>) }}
+              placeholder="Escribí ELIMINAR para confirmar"
+              sx={{
+                '& .MuiOutlinedInput-root': {
+                  borderRadius: 0,
+                  bgcolor: '#fff',
+                  '&.Mui-focused fieldset': {
+                    borderColor: textoConfirmacion === 'ELIMINAR' ? '#2e7d32' : '#d32f2f',
+                  }
+                }
+              }}
+              InputProps={{ startAdornment: (<InputAdornment position="start"><IconAlertTriangle size={16} color={textoConfirmacion === 'ELIMINAR' ? '#2e7d32' : '#d32f2f'} /></InputAdornment>) }}
             />
+            {textoConfirmacion === 'ELIMINAR' && (
+              <Typography variant="caption" color="success.main" sx={{ mt: 0.5, fontWeight: 600 }}>
+                ✅ Confirmación correcta
+              </Typography>
+            )}
           </Box>
         </Box>
       </DialogContent>
-      <DialogActions sx={{ p: 4, pt: 2, bgcolor: alpha(ACCENT, 0.08), borderTop: '1px solid #eee', gap: 1.5 }}>
-        <CrystalSoftButton
-          baseColor={ACCENT}
+
+      <DialogActions sx={{ p: 2, bgcolor: '#f5f5f5', borderTop: '1px solid #e0e0e0', gap: 2, borderRadius: 0 }}>
+        <Button
           onClick={onClose}
           sx={{
-            minHeight: 42,
-            px: 3,
+            color: 'text.secondary',
+            textTransform: 'none',
             fontWeight: 600,
-            color: marron.textStrong,
+            borderRadius: 0,
+            px: 3
           }}
         >
           Cancelar
-        </CrystalSoftButton>
-        <CrystalButton
-          baseColor={ACCENT}
+        </Button>
+        <Button
           onClick={onConfirm}
+          variant="contained"
+          disableElevation
           disabled={textoConfirmacion !== 'ELIMINAR'}
           sx={{
-            minHeight: 42,
+            bgcolor: '#d32f2f',
+            '&:hover': { bgcolor: '#b71c1c' },
             px: 4,
-            fontWeight: 700,
-            '&:disabled': {
-              opacity: 0.55,
-              boxShadow: 'none',
-            },
+            py: 1,
+            textTransform: 'none',
+            fontWeight: 600,
+            borderRadius: 0
           }}
         >
-          ⚠️ ELIMINAR PROVEEDOR
-        </CrystalButton>
+          Eliminar
+        </Button>
       </DialogActions>
     </Dialog>
   );

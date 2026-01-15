@@ -97,12 +97,12 @@ export const ModalPuntoMudras = ({
   const [actualizarPunto] = useMutation(ACTUALIZAR_PUNTO_MUDRAS);
 
   const esEdicion = Boolean(punto);
-  const titulo = esEdicion 
+  const titulo = esEdicion
     ? `Editar ${tipo === 'venta' ? 'Punto de Venta' : 'Depósito'}`
     : `Crear ${tipo === 'venta' ? 'Punto de Venta' : 'Depósito'}`;
-  
+
   const color = tipo === 'venta' ? 'primary' : 'secondary';
-  const icono = tipo === 'venta' 
+  const icono = tipo === 'venta'
     ? <IconShoppingBag size={24} />
     : <IconBuilding size={24} />;
 
@@ -130,7 +130,7 @@ export const ModalPuntoMudras = ({
     event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) => {
     const target = event.target as HTMLInputElement;
-    const valor = target.type === 'checkbox' 
+    const valor = target.type === 'checkbox'
       ? target.checked
       : target.value;
 
@@ -243,6 +243,7 @@ export const ModalPuntoMudras = ({
     }
   };
 
+  /* ======================== Render ======================== */
   return (
     <Dialog
       open={abierto}
@@ -250,62 +251,48 @@ export const ModalPuntoMudras = ({
       maxWidth="md"
       fullWidth
       PaperProps={{
-        sx: { borderRadius: 2 }
+        sx: { borderRadius: 0, border: '1px solid #e0e0e0', boxShadow: 'none' }
       }}
     >
-      <DialogTitle sx={{ pb: 2 }}>
+      <DialogTitle sx={{ p: 2, bgcolor: '#f5f5f5', borderBottom: '1px solid #e0e0e0' }}>
         <Box display="flex" alignItems="center" gap={2}>
-          <Box
-            sx={{
-              p: 1,
-              borderRadius: 1,
-              bgcolor: `${color}.light`,
-              color: `${color}.main`,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}
-          >
-            {icono}
-          </Box>
-          <Typography variant="h6" component="div">
+          {icono}
+          <Typography variant="h6" fontWeight={700}>
             {titulo}
           </Typography>
         </Box>
       </DialogTitle>
 
-      <DialogContent dividers>
+      <DialogContent sx={{ p: 3, bgcolor: '#fff' }}>
         <Stack spacing={3}>
           {/* Información básica */}
           <Box>
-            <Typography variant="subtitle1" fontWeight="bold" gutterBottom>
+            <Typography variant="subtitle2" fontWeight={700} color="text.secondary" gutterBottom sx={{ textTransform: 'uppercase' }}>
               Información Básica
             </Typography>
           </Box>
 
-          <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
-            <Box sx={{ flex: '1 1 300px', minWidth: '250px' }}>
-              <TextField
-                fullWidth
-                label="Nombre del punto"
-                value={formulario.nombre}
-                onChange={handleChange('nombre')}
-                error={Boolean(errores.nombre)}
-                helperText={errores.nombre}
-                placeholder={tipo === 'venta' ? 'ej. Tienda Centro' : 'ej. Depósito Principal'}
-              />
-            </Box>
-            <Box sx={{ flex: '1 1 300px', minWidth: '250px' }}>
-              <TextField
-                fullWidth
-                label="Dirección"
-                value={formulario.direccion}
-                onChange={handleChange('direccion')}
-                error={Boolean(errores.direccion)}
-                helperText={errores.direccion}
-                placeholder="Dirección física o 'Virtual' para online"
-              />
-            </Box>
+          <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 3 }}>
+            <TextField
+              fullWidth
+              label="Nombre del punto"
+              value={formulario.nombre}
+              onChange={handleChange('nombre')}
+              error={Boolean(errores.nombre)}
+              helperText={errores.nombre}
+              placeholder={tipo === 'venta' ? 'ej. Tienda Centro' : 'ej. Depósito Principal'}
+              InputProps={{ sx: { borderRadius: 0 } }}
+            />
+            <TextField
+              fullWidth
+              label="Dirección"
+              value={formulario.direccion}
+              onChange={handleChange('direccion')}
+              error={Boolean(errores.direccion)}
+              helperText={errores.direccion}
+              placeholder="Dirección física o 'Virtual' para online"
+              InputProps={{ sx: { borderRadius: 0 } }}
+            />
           </Box>
 
           <Box>
@@ -319,45 +306,44 @@ export const ModalPuntoMudras = ({
               multiline
               rows={3}
               placeholder="Describe las características y propósito de este punto"
+              InputProps={{ sx: { borderRadius: 0 } }}
             />
           </Box>
 
           {/* Información de contacto */}
           <Box>
-            <Divider sx={{ my: 1 }} />
-            <Typography variant="subtitle1" fontWeight="bold" gutterBottom>
+            <Divider sx={{ mb: 2 }} />
+            <Typography variant="subtitle2" fontWeight={700} color="text.secondary" gutterBottom sx={{ textTransform: 'uppercase' }}>
               Información de Contacto
             </Typography>
           </Box>
 
-          <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
-            <Box sx={{ flex: '1 1 300px', minWidth: '250px' }}>
-              <TextField
-                fullWidth
-                label="Teléfono"
-                value={formulario.telefono}
-                onChange={handleChange('telefono')}
-                placeholder="+54 11 1234-5678"
-              />
-            </Box>
-            <Box sx={{ flex: '1 1 300px', minWidth: '250px' }}>
-              <TextField
-                fullWidth
-                label="Email"
-                type="email"
-                value={formulario.email}
-                onChange={handleChange('email')}
-                error={Boolean(errores.email)}
-                helperText={errores.email}
-                placeholder="contacto@mudras.com"
-              />
-            </Box>
+          <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 3 }}>
+            <TextField
+              fullWidth
+              label="Teléfono"
+              value={formulario.telefono}
+              onChange={handleChange('telefono')}
+              placeholder="+54 11 1234-5678"
+              InputProps={{ sx: { borderRadius: 0 } }}
+            />
+            <TextField
+              fullWidth
+              label="Email"
+              type="email"
+              value={formulario.email}
+              onChange={handleChange('email')}
+              error={Boolean(errores.email)}
+              helperText={errores.email}
+              placeholder="contacto@mudras.com"
+              InputProps={{ sx: { borderRadius: 0 } }}
+            />
           </Box>
 
           {/* Configuración especial */}
           <Box>
-            <Divider sx={{ my: 1 }} />
-            <Typography variant="subtitle1" fontWeight="bold" gutterBottom>
+            <Divider sx={{ mb: 2 }} />
+            <Typography variant="subtitle2" fontWeight={700} color="text.secondary" gutterBottom sx={{ textTransform: 'uppercase' }}>
               Configuración Especial
             </Typography>
           </Box>
@@ -404,7 +390,7 @@ export const ModalPuntoMudras = ({
           {/* Error general */}
           {errores.general && (
             <Box>
-              <Alert severity="error">
+              <Alert severity="error" sx={{ borderRadius: 0 }}>
                 {errores.general}
               </Alert>
             </Box>
@@ -412,10 +398,10 @@ export const ModalPuntoMudras = ({
 
           {/* Información importante */}
           <Box>
-            <Alert severity="info" sx={{ mt: 2 }}>
+            <Alert severity="info" sx={{ mt: 1, borderRadius: 0 }}>
               <Typography variant="body2">
-                <strong>Importante:</strong> Al crear este {tipo === 'venta' ? 'punto de venta' : 'depósito'}, 
-                se generará automáticamente una tabla de inventario asociada para gestionar el stock 
+                <strong>Importante:</strong> Al crear este {tipo === 'venta' ? 'punto de venta' : 'depósito'},
+                se generará automáticamente una tabla de inventario asociada para gestionar el stock
                 específico de este punto.
               </Typography>
             </Alert>
@@ -423,12 +409,12 @@ export const ModalPuntoMudras = ({
         </Stack>
       </DialogContent>
 
-      <DialogActions sx={{ p: 3, gap: 1 }}>
+      <DialogActions sx={{ p: 2, bgcolor: '#f5f5f5', borderTop: '1px solid #e0e0e0' }}>
         <Button
           onClick={handleCerrar}
-          variant="outlined"
           startIcon={<IconX size={16} />}
           disabled={guardando}
+          sx={{ color: 'text.secondary', fontWeight: 600 }}
         >
           Cancelar
         </Button>
@@ -436,8 +422,10 @@ export const ModalPuntoMudras = ({
           onClick={handleGuardar}
           variant="contained"
           color={color}
+          disableElevation
           startIcon={<IconDeviceFloppy size={16} />}
           disabled={guardando}
+          sx={{ borderRadius: 0, fontWeight: 700 }}
         >
           {guardando ? 'Guardando...' : esEdicion ? 'Actualizar' : 'Crear'}
         </Button>

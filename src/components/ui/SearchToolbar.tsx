@@ -7,10 +7,11 @@ import {
   InputAdornment,
   Tooltip,
   Typography,
+  Button,
+  IconButton
 } from '@mui/material';
 import { alpha } from '@mui/material/styles';
 import { IconSearch, IconRefresh } from '@tabler/icons-react';
-import CrystalButton, { CrystalSoftButton } from '@/components/ui/CrystalButton';
 
 export interface SearchToolbarProps {
   title?: React.ReactNode;
@@ -70,7 +71,6 @@ const SearchToolbarInner: React.FC<SearchToolbarProps> = ({
   searchDisabled,
   customActions,
 }) => {
-  const borderColor = alpha(baseColor, 0.35);
   const inputRef = useRef<HTMLInputElement | null>(null);
 
   const handleSubmit = () => {
@@ -86,19 +86,20 @@ const SearchToolbarInner: React.FC<SearchToolbarProps> = ({
       display="flex"
       justifyContent="space-between"
       alignItems="center"
-      sx={{ px: 1, py: 1, mb: 2, borderRadius: 0, border: '0px' }}
+      sx={{ px: 1, py: 1, mb: 2 }}
     >
       {title ? (
         <Typography
-          variant="h2"
+          variant="h6"
           fontWeight={700}
           sx={{
             display: 'flex',
             alignItems: 'center',
             gap: 1,
+            color: 'text.primary'
           }}
         >
-          {icon}
+          {icon && <Box component="span" sx={{ display: 'flex', color: baseColor }}>{icon}</Box>}
           {title}
         </Typography>
       ) : (
@@ -109,9 +110,13 @@ const SearchToolbarInner: React.FC<SearchToolbarProps> = ({
         {customActions}
 
         {canCreate && onCreateClick && (
-          <CrystalButton baseColor={baseColor} onClick={onCreateClick}>
+          <Button
+            variant="contained"
+            onClick={onCreateClick}
+            sx={{ bgcolor: baseColor, '&:hover': { bgcolor: baseColor } }}
+          >
             {createLabel}
-          </CrystalButton>
+          </Button>
         )}
 
         <TextField
@@ -136,15 +141,7 @@ const SearchToolbarInner: React.FC<SearchToolbarProps> = ({
           sx={{
             minWidth: 250,
             '& .MuiOutlinedInput-root': {
-              backgroundColor: 'rgba(255,255,255,0.65)',
-              backdropFilter: 'saturate(125%) blur(0.5px)',
-              borderRadius: 2,
-            },
-            '& .MuiOutlinedInput-root fieldset': {
-              borderColor,
-            },
-            '& .MuiOutlinedInput-root:hover fieldset': {
-              borderColor: alpha(baseColor, 0.55),
+              borderRadius: 0,
             },
             '& .MuiOutlinedInput-root.Mui-focused fieldset': {
               borderColor: baseColor,
@@ -153,26 +150,26 @@ const SearchToolbarInner: React.FC<SearchToolbarProps> = ({
         />
 
         <Tooltip title="Buscar (Enter)">
-          <span>
-            <CrystalButton
-              baseColor={baseColor}
-              startIcon={<IconSearch size={18} />}
-              onClick={handleSubmit}
-              disabled={searchDisabled}
-            >
-              Buscar
-            </CrystalButton>
-          </span>
+          <Button
+            variant="outlined"
+            onClick={handleSubmit}
+            disabled={searchDisabled}
+            sx={{ color: baseColor, borderColor: alpha(baseColor, 0.5), '&:hover': { borderColor: baseColor, bgcolor: alpha(baseColor, 0.05) } }}
+          >
+            Buscar
+          </Button>
         </Tooltip>
 
         {onClear && (
-          <CrystalSoftButton
-            baseColor={baseColor}
-            startIcon={<IconRefresh size={18} />}
-            onClick={onClear}
-          >
-            Limpiar filtros
-          </CrystalSoftButton>
+          <Tooltip title="Limpiar filtros">
+            <IconButton
+              onClick={onClear}
+              size="small"
+              sx={{ color: 'text.secondary', '&:hover': { color: 'error.main' } }}
+            >
+              <IconRefresh size={20} />
+            </IconButton>
+          </Tooltip>
         )}
       </Box>
     </Box>

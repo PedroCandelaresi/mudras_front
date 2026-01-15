@@ -2,7 +2,6 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import {
   Dialog,
-  DialogTitle,
   DialogContent,
   DialogActions,
   Box,
@@ -22,11 +21,13 @@ import {
   Alert,
   Autocomplete,
   Snackbar,
-  Alert as MuiAlert,
   MenuItem,
   Select,
   Checkbox,
   Divider,
+  Button,
+  FormControl,
+  InputLabel
 } from '@mui/material';
 import { Icon } from '@iconify/react';
 import { useQuery, useLazyQuery, useMutation } from '@apollo/client/react';
@@ -44,10 +45,6 @@ import {
   type ObtenerRelacionesProveedorRubroResponse,
 } from '@/components/puntos-mudras/graphql/queries';
 import { ASIGNAR_STOCK_MASIVO } from '@/components/puntos-mudras/graphql/mutations';
-import { TexturedPanel } from '@/components/ui/TexturedFrame/TexturedPanel';
-import CrystalButton, { CrystalSoftButton, CrystalIconButton } from '@/components/ui/CrystalButton';
-import { verde, azul, oroNegro } from '@/ui/colores';
-import { darken, alpha } from '@mui/material/styles';
 
 interface AsignacionStock {
   articuloId: number;
@@ -66,10 +63,6 @@ interface Props {
 }
 
 export default function ModalNuevaAsignacionStock({ open, onClose, destinoId, onStockAsignado, titulo, tipoDestinoPreferido, articuloPreseleccionado, origen }: Props) {
-  const HEADER_H = 60;
-  const FOOTER_H = 60;
-  const DIV_H = 3;
-
   // Estados para filtros
   const [proveedores, setProveedores] = useState<ProveedorBasico[]>([]);
   const [proveedorSeleccionado, setProveedorSeleccionado] = useState<ProveedorBasico | null>(null);
@@ -82,35 +75,13 @@ export default function ModalNuevaAsignacionStock({ open, onClose, destinoId, on
   const [asignaciones, setAsignaciones] = useState<AsignacionStock[]>([]);
   const [articulosSnapshot, setArticulosSnapshot] = useState<Record<number, ArticuloFiltrado>>({});
   const [loading, setLoading] = useState(false);
-  // (loadingProveedores/loadingRubros provienen de los hooks de Apollo)
   const [error, setError] = useState<string>('');
   const [snack, setSnack] = useState<{ open: boolean; msg: string; sev: 'success' | 'error' | 'info' }>(() => ({ open: false, msg: '', sev: 'success' }));
   const [confirmOpen, setConfirmOpen] = useState(false);
   const prevDestino = useRef<number | null>(null);
 
-  const tablaAccent = '#2b4735';
-  const tablaHeaderBg = darken(tablaAccent, 0.12);
-  const tablaHeaderText = alpha('#ffffff', 0.95);
-  const tablaBodyBg = 'rgba(235, 247, 238, 0.58)';
-  const tablaBodyAlt = 'rgba(191, 214, 194, 0.32)';
   const busquedaActiva = useMemo(() => busqueda.trim().length > 0, [busqueda]);
-  const filtrosProveedorActivos = useMemo(
-    () => !busquedaActiva && (!!proveedorSeleccionado || !!rubroSeleccionado.trim()),
-    [busquedaActiva, proveedorSeleccionado, rubroSeleccionado]
-  );
-  const dividerTop = `
-                linear-gradient(to bottom, ${alpha('#fff', 0.68)}, ${alpha('#fff', 0.68)}),
-                linear-gradient(to bottom, ${alpha(darken(oroNegro.primary, 0.5), 0.3)}, ${alpha(darken(oroNegro.primary, 0.5), 0.3)}),
-                linear-gradient(90deg, ${alpha(oroNegro.primary, 0.12)}, ${oroNegro.primary}, ${alpha(oroNegro.primary, 0.12)})
-              `;
-  const dividerBottom = `
-                linear-gradient(to bottom, ${alpha(darken(oroNegro.primary, 0.5), 0.3)}, ${alpha(darken(oroNegro.primary, 0.5), 0.3)}),
-                linear-gradient(to bottom, ${alpha('#fff', 0.68)}, ${alpha('#fff', 0.68)}),
-                linear-gradient(90deg, ${alpha(oroNegro.primary, 0.12)}, ${oroNegro.primary}, ${alpha(oroNegro.primary, 0.12)})
-              `;
 
-  // Cargar proveedores al abrir el modal
-  // Apollo: cargar proveedores al abrir
   const { data: proveedoresData, loading: loadingProveedores } = useQuery<ObtenerProveedoresConStockResponse>(OBTENER_PROVEEDORES_CON_STOCK, { skip: !open, fetchPolicy: 'cache-and-network' });
   useEffect(() => {
     if (!open) return;
@@ -175,10 +146,12 @@ export default function ModalNuevaAsignacionStock({ open, onClose, destinoId, on
       setProveedorSeleccionado(null);
     }
   }, [proveedorSeleccionado, proveedoresFiltrados]);
+
   const puntosDisponibles: PuntoMudras[] = useMemo(
     () => (puntosData?.obtenerPuntosMudras ?? []).filter((p) => p.activo),
     [puntosData]
   );
+
   const puntosFiltrados = useMemo(() => {
     const prefer = origen === 'venta' ? 'venta' : origen === 'deposito' ? 'deposito' : tipoDestinoPreferido;
     if (prefer === 'venta' || prefer === 'deposito') {
@@ -187,8 +160,6 @@ export default function ModalNuevaAsignacionStock({ open, onClose, destinoId, on
     return puntosDisponibles;
   }, [puntosDisponibles, origen, tipoDestinoPreferido]);
 
-  // Buscar artículos sólo cuando el usuario lo pide (Enter / botón),
-  // no en cada pulsación, para que el input no pierda el foco ni se "trabe".
   const buscarArticulos = useCallback(async () => {
     const term = busqueda.trim();
     if (!term && !proveedorSeleccionado && !rubroSeleccionado) {
@@ -207,6 +178,7 @@ export default function ModalNuevaAsignacionStock({ open, onClose, destinoId, on
       },
     });
   }, [proveedorSeleccionado, rubroSeleccionado, busqueda, destinoSeleccionado, buscarArticulosQuery, busquedaActiva]);
+
   useEffect(() => {
     if (articulosData?.buscarArticulosParaAsignacion) {
       const normalizados = (articulosData.buscarArticulosParaAsignacion as any[]).map((a) => ({
@@ -225,6 +197,7 @@ export default function ModalNuevaAsignacionStock({ open, onClose, destinoId, on
       });
     }
   }, [articulosData]);
+
   useEffect(() => {
     if (errorBuscar) setError(errorBuscar.message);
   }, [errorBuscar]);
@@ -268,12 +241,6 @@ export default function ModalNuevaAsignacionStock({ open, onClose, destinoId, on
     return map;
   }, [articulos]);
 
-  const getArticuloSnapshot = useCallback(
-    (id: number) => articuloPorId.get(id) || articulosSnapshot[id],
-    [articuloPorId, articulosSnapshot]
-  );
-
-  // Limpiar lista de artículos cuando se cambia de proveedor
   useEffect(() => {
     if (!proveedorSeleccionado) {
       setArticulos([]);
@@ -348,7 +315,6 @@ export default function ModalNuevaAsignacionStock({ open, onClose, destinoId, on
     try {
       if (!destinoSeleccionado) throw new Error('No hay destino seleccionado');
 
-      // Prepare payload for bulk assignment
       const payload = {
         puntoMudrasId: destinoSeleccionado,
         asignaciones: asignaciones.map(a => ({
@@ -445,8 +411,6 @@ export default function ModalNuevaAsignacionStock({ open, onClose, destinoId, on
     }
   }, [open, destinoSeleccionado, busquedaActiva, proveedorSeleccionado, rubroSeleccionado, buscarArticulos]);
 
-  // No buscar automáticamente al cambiar destino: esperamos Enter o botón (incluye el Enter del escáner)
-
   return (
     <Dialog
       open={open}
@@ -454,543 +418,225 @@ export default function ModalNuevaAsignacionStock({ open, onClose, destinoId, on
       maxWidth="lg"
       fullWidth
       PaperProps={{
+        elevation: 0,
         sx: {
-          borderRadius: 4,
-          bgcolor: 'transparent',
-          boxShadow: '0 8px 40px rgba(0,0,0,0.28)',
-          overflow: 'hidden',
-        }
+          borderRadius: 0,
+          border: '1px solid #e0e0e0',
+          bgcolor: '#ffffff',
+          maxHeight: '90vh',
+        },
       }}
     >
-      <TexturedPanel
-        accent={oroNegro.primary}
-        radius={12}
-        contentPadding={0}
-        bgTintPercent={18}
-        bgAlpha={1}
-        textureBaseOpacity={0.3}
-        textureBoostOpacity={0.26}
-        textureBrightness={1.08}
-        textureContrast={1.1}
-        tintOpacity={0.5}
-      >
-        <Box sx={{ display: 'flex', flexDirection: 'column', maxHeight: '85vh' }}>
-          <DialogTitle sx={{ p: 0, m: 0, minHeight: HEADER_H, display: 'flex', alignItems: 'center' }}>
-            <Box sx={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', px: 3, gap: 2 }}>
-              <Box sx={{
-                width: 40,
-                height: 40,
-                borderRadius: '50%',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                background: `linear-gradient(135deg, ${oroNegro.primary} 0%, ${darken(oroNegro.primary, 0.2)} 100%)`,
-                boxShadow: 'inset 0 2px 4px rgba(255,255,255,0.3), 0 4px 12px rgba(0,0,0,0.25)',
-                color: '#fff'
-              }}>
-                <Icon icon="mdi:package-variant-plus" width={22} height={22} />
-              </Box>
-              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.25 }}>
-                <Typography
-                  variant="h5"
-                  fontWeight={900}
-                  color="#ffda74"
-                  sx={{ textShadow: '0 2px 6px rgba(0,0,0,0.9)', whiteSpace: 'nowrap' }}
-                >
-                  {titulo || 'Asignar stock'}{destinoSeleccionado ? ' · Destino seleccionado' : ''}
-                </Typography>
-              </Box>
-              <Box sx={{ ml: 'auto', display: 'flex', gap: 1, alignItems: 'center' }}>
-                <CrystalIconButton baseColor={oroNegro.dark} onClick={handleCerrar}>
-                  <Icon icon="mdi:close" color="#fff" width={20} height={20} />
-                </CrystalIconButton>
-              </Box>
-            </Box>
-          </DialogTitle>
-
-          <Divider
-            sx={{
-              height: DIV_H,
-              border: 0,
-              backgroundImage: dividerTop,
-              backgroundRepeat: 'no-repeat, no-repeat, repeat',
-              backgroundSize: '100% 1px, 100% 1px, 100% 100%',
-              backgroundPosition: 'top left, bottom left, center',
-              flex: '0 0 auto'
-            }}
-          />
-
-          <DialogContent sx={{ p: 0, overflow: 'auto', maxHeight: `calc(85vh - ${HEADER_H + FOOTER_H + DIV_H * 2}px)`, background: '#f8fafb' }}>
-            {error && (
-              <Alert severity="error" sx={{ m: 2 }}>
-                {error}
-              </Alert>
+      {/* Header */}
+      <Box sx={{
+        bgcolor: '#f5f5f5',
+        color: '#000',
+        px: 3,
+        py: 2,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        borderBottom: '1px solid #e0e0e0',
+        borderRadius: 0,
+      }}>
+        <Box display="flex" alignItems="center" gap={2}>
+          <Icon icon="mdi:package-variant-plus" width={24} height={24} color="#546e7a" />
+          <Box>
+            <Typography variant="h6" fontWeight={700} letterSpacing={0}>
+              {titulo || 'Asignar stock'}
+            </Typography>
+            {destinoSeleccionado && (
+              <Typography variant="caption" color="text.secondary">
+                Destino: {puntosDisponibles.find(p => p.id === destinoSeleccionado)?.nombre}
+              </Typography>
             )}
-
-            <Box sx={{ p: { xs: 3, md: 4 }, display: 'grid', gap: 2 }}>
-              <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '3fr auto auto' }, gap: 1 }}>
-                <TextField
-                  fullWidth
-                  label="Artículo (escáner)"
-                  placeholder="Escaneá código o escribí y Enter"
-                  value={busqueda}
-                  autoFocus
-                  disabled={filtrosProveedorActivos}
-                  onChange={(e) => {
-                    const value = e.target.value;
-                    setBusqueda(value);
-                    if (!value) setArticulos([]);
-                  }}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') {
-                      e.preventDefault();
-                      void buscarArticulos();
-                    }
-                  }}
-                  InputProps={{
-                    startAdornment: (
-                      <InputAdornment position="start">
-                        <Icon icon="mdi:barcode-scan" />
-                      </InputAdornment>
-                    ),
-                  }}
-                  helperText="Enter o botón buscar"
-                />
-                <CrystalButton
-                  baseColor={oroNegro.primary}
-                  onClick={() => void buscarArticulos()}
-                  disabled={!busqueda.trim() && !proveedorSeleccionado && !rubroSeleccionado}
-                  sx={{ minHeight: 52, px: 3.5, fontWeight: 700 }}
-                >
-                  Buscar
-                </CrystalButton>
-                <CrystalSoftButton
-                  baseColor={oroNegro.dark}
-                  onClick={limpiarFiltros}
-                  sx={{ minHeight: 52, px: 2.5, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 0.5 }}
-                >
-                  <Icon icon="mdi:trash-can-outline" width={18} height={18} />
-                </CrystalSoftButton>
-              </Box>
-
-              <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'repeat(3,1fr)' }, gap: 1.5 }}>
-                <Autocomplete
-                  options={puntosFiltrados}
-                  getOptionLabel={(p) => `${p.nombre} (${p.tipo === 'venta' ? 'Punto de venta' : 'Depósito'})`}
-                  value={puntosFiltrados.find((p) => p.id === destinoSeleccionado) ?? null}
-                  onChange={(_, val) => setDestinoSeleccionado(val ? val.id : null)}
-                  renderInput={(params) => (
-                    <TextField
-                      {...params}
-                      label="Destino"
-                      placeholder="Elegí punto o depósito"
-                    />
-                  )}
-                />
-
-                <Autocomplete
-                  options={proveedoresFiltrados}
-                  getOptionLabel={(option) => option.nombre}
-                  value={proveedorSeleccionado}
-                  onChange={(_, newValue) => {
-                    setProveedorSeleccionado(newValue);
-                    if (newValue) setBusqueda('');
-                  }}
-                  loading={loadingProveedores}
-                  disabled={Boolean(articuloPreseleccionado?.proveedorId) || busquedaActiva}
-                  renderInput={(params) => (
-                    <TextField
-                      {...params}
-                      label="Proveedor"
-                      placeholder={rubroSeleccionado ? 'Filtrado por rubro' : 'Buscá proveedor'}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter') {
-                          e.preventDefault();
-                          void buscarArticulos();
-                        }
-                      }}
-                      InputProps={{
-                        ...params.InputProps,
-                        startAdornment: (
-                          <InputAdornment position="start">
-                            <Icon icon="mdi:factory" />
-                          </InputAdornment>
-                        ),
-                      }}
-                    />
-                  )}
-                />
-
-                <Autocomplete
-                  options={rubrosOpciones}
-                  getOptionLabel={(r) => r || ''}
-                  value={rubroSeleccionado || ''}
-                  onChange={(_, val) => {
-                    setRubroSeleccionado(val ?? '');
-                    if (val) setBusqueda('');
-                  }}
-                  disabled={Boolean(articuloPreseleccionado?.rubro) || busquedaActiva}
-                  loading={loadingRelaciones}
-                  renderInput={(params) => (
-                    <TextField
-                      {...params}
-                      label="Rubro"
-                      placeholder={proveedorSeleccionado ? 'Filtrá por rubro' : 'Elegí proveedor o rubro'}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter') {
-                          e.preventDefault();
-                          void buscarArticulos();
-                        }
-                      }}
-                      InputProps={{
-                        ...params.InputProps,
-                        startAdornment: (
-                          <InputAdornment position="start">
-                            <Icon icon="mdi:tag" />
-                          </InputAdornment>
-                        ),
-                      }}
-                    />
-                  )}
-                />
-              </Box>
-
-              {(buscandoArticulos || loading) && (
-                <Box display="flex" justifyContent="center" py={3}>
-                  <Typography>Buscando artículos...</Typography>
-                </Box>
-              )}
-
-              {articulosOrdenados.length > 0 && (
-                <TableContainer
-                  component={Paper}
-                  elevation={0}
-                  sx={{
-                    borderRadius: 0,
-                    overflow: 'hidden',
-                    border: `1px solid ${alpha(tablaAccent, 0.38)}`,
-                    boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.55)',
-                    bgcolor: 'rgba(235, 247, 238, 0.9)',
-                  }}
-                >
-                  <Table
-                    size="small"
-                    stickyHeader
-                    sx={{
-                      '& thead': {
-                        bgcolor: tablaHeaderBg,
-                      },
-                      '& thead .MuiTableCell-root': {
-                        color: tablaHeaderText,
-                        fontWeight: 800,
-                        borderBottom: `2px solid ${alpha('#fff', 0.16)}`,
-                        fontSize: '0.82rem',
-                        textTransform: 'uppercase',
-                        letterSpacing: 0.4,
-                        bgcolor: tablaHeaderBg,
-                      },
-                      '& .MuiTableHead-root .MuiTableCell-head:not(:last-of-type)': {
-                        borderRight: `3px solid ${alpha(tablaAccent, 0.5)}`,
-                      },
-                      '& tbody .MuiTableCell-root': {
-                        borderBottomColor: alpha(tablaAccent, 0.15),
-                        fontSize: '0.85rem',
-                        bgcolor: tablaBodyBg,
-                      },
-                      '& tbody .MuiTableRow-root:hover': {
-                        backgroundColor: alpha(tablaAccent, 0.08),
-                      },
-                      '& tbody .MuiTableRow-root:nth-of-type(odd) .MuiTableCell-root': {
-                        backgroundColor: tablaBodyBg,
-                      },
-                      '& tbody .MuiTableRow-root:nth-of-type(even) .MuiTableCell-root': {
-                        backgroundColor: tablaBodyAlt,
-                      },
-                      '& .MuiTableRow-root': { minHeight: 62 },
-                      '& .MuiTableCell-root': { px: 1, py: 1.1 },
-                    }}
-                  >
-                    <TableHead>
-                      <TableRow>
-                        <TableCell padding="checkbox" sx={{ width: 52 }} />
-                        <TableCell sx={{ width: 150 }}>Código</TableCell>
-                        <TableCell>Descripción</TableCell>
-                        <TableCell sx={{ width: 160 }}>Rubro</TableCell>
-                        <TableCell align="right" sx={{ width: 140 }}>Stock destino</TableCell>
-                        <TableCell align="right" sx={{ width: 180 }}>Asignar</TableCell>
-                      </TableRow>
-                    </TableHead>
-                    <TableBody>
-                      {articulosOrdenados.map((articulo) => {
-                        const asignacion = asignaciones.find((a) => Number(a.articuloId) === Number(articulo.id));
-                        const cantidadAsignada = asignacion?.cantidad ?? 0;
-                        const seleccionado = Boolean(asignacion);
-                        return (
-                          <TableRow key={articulo.id}>
-                            <TableCell padding="checkbox" sx={{ width: 52 }}>
-                              <Checkbox
-                                checked={seleccionado}
-                                onChange={(e) => toggleSeleccion(articulo, e.target.checked)}
-                              />
-                            </TableCell>
-                            <TableCell sx={{ width: 150, fontFamily: 'monospace', fontWeight: 700 }}>
-                              {articulo.codigo}
-                            </TableCell>
-                            <TableCell>{articulo.nombre}</TableCell>
-                            <TableCell sx={{ width: 160 }}>
-                              <Chip size="small" label={(articulo as any)?.rubro || '—'} />
-                            </TableCell>
-                            <TableCell align="right" sx={{ width: 140 }}>
-                              <Chip
-                                size="small"
-                                label={articulo.stockEnDestino ?? 0}
-                                color={(articulo.stockEnDestino ?? 0) > 0 ? 'success' : 'default'}
-                              />
-                            </TableCell>
-                            <TableCell align="right" sx={{ width: 180 }}>
-                              <Box sx={{ display: 'flex', gap: 1, justifyContent: 'flex-end', alignItems: 'center' }}>
-                                <TextField
-                                  type="number"
-                                  size="small"
-                                  value={cantidadAsignada || ''}
-                                  onChange={(e) => {
-                                    const next = e.target.value;
-                                    const parsed = next === '' ? 0 : parseInt(next, 10) || 0;
-                                    handleAsignarStock(articulo.id, parsed, { allowZero: next === '' });
-                                  }}
-                                  inputProps={{
-                                    min: 0,
-                                    style: { textAlign: 'right' }
-                                  }}
-                                  sx={{ width: 90 }}
-                                  disabled={!seleccionado}
-                                />
-                              </Box>
-                            </TableCell>
-                          </TableRow>
-                        );
-                      })}
-                    </TableBody>
-                  </Table>
-                </TableContainer>
-              )}
-
-              {asignaciones.length > 0 && (
-                <Paper elevation={0} sx={{ p: 2, mt: 2, bgcolor: alpha(verde.primary, 0.06), border: `1px solid ${alpha(verde.primary, 0.35)}` }}>
-                  <Typography variant="subtitle2" fontWeight={700} gutterBottom>
-                    Resumen de asignaciones
-                  </Typography>
-                  <Typography variant="body2" sx={{ mb: 1 }}>
-                    <strong>Total de artículos:</strong> {asignaciones.length} · <strong>Total de unidades:</strong> {totalAsignaciones}
-                  </Typography>
-                  <TableContainer
-                    component={Paper}
-                    elevation={0}
-                    sx={{
-                      borderRadius: 0,
-                      border: `1px solid ${alpha(tablaAccent, 0.38)}`,
-                      overflow: 'hidden',
-                      boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.55)',
-                    }}
-                  >
-                    <Table
-                      size="small"
-                      stickyHeader
-                      sx={{
-                        '& thead': { bgcolor: tablaHeaderBg },
-                        '& thead .MuiTableCell-root': {
-                          bgcolor: tablaHeaderBg,
-                          color: tablaHeaderText,
-                          fontWeight: 800,
-                          borderBottom: `2px solid ${alpha('#fff', 0.16)}`,
-                          fontSize: '0.78rem',
-                          textTransform: 'uppercase',
-                          letterSpacing: 0.3,
-                        },
-                        '& tbody .MuiTableCell-root': {
-                          borderBottomColor: alpha(tablaAccent, 0.15),
-                          fontSize: '0.82rem',
-                        },
-                        '& tbody .MuiTableRow-root:nth-of-type(odd) .MuiTableCell-root': {
-                          bgcolor: tablaBodyBg,
-                        },
-                        '& tbody .MuiTableRow-root:nth-of-type(even) .MuiTableCell-root': {
-                          bgcolor: tablaBodyAlt,
-                        },
-                        '& .MuiTableCell-root': { px: 1, py: 0.7 },
-                      }}
-                    >
-                      <TableHead>
-                        <TableRow>
-                          <TableCell>Código</TableCell>
-                          <TableCell>Descripción</TableCell>
-                          <TableCell align="right">Cantidad</TableCell>
-                        </TableRow>
-                      </TableHead>
-                      <TableBody>
-                        {asignaciones
-                          .map((a) => {
-                            const art = getArticuloSnapshot(Number(a.articuloId));
-                            return {
-                              ...a,
-                              codigo: art?.codigo || '',
-                              nombre: art?.nombre || 'Artículo',
-                            };
-                          })
-                          .sort((a, b) => (a.codigo || '').localeCompare(b.codigo || ''))
-                          .map((row) => (
-                            <TableRow key={row.articuloId}>
-                              <TableCell sx={{ fontFamily: 'monospace', fontWeight: 700 }}>{row.codigo || row.articuloId}</TableCell>
-                              <TableCell>{row.nombre}</TableCell>
-                              <TableCell align="right" sx={{ fontWeight: 700 }}>{row.cantidad}</TableCell>
-                            </TableRow>
-                          ))}
-                      </TableBody>
-                    </Table>
-                  </TableContainer>
-                  <Box sx={{ display: 'flex', gap: 1, mt: 1 }}>
-                    <CrystalSoftButton baseColor={oroNegro.dark} onClick={() => setAsignaciones([])}>
-                      Limpiar todas
-                    </CrystalSoftButton>
-                  </Box>
-                </Paper>
-              )}
-            </Box>
-          </DialogContent>
-
-          <Divider
-            sx={{
-              height: DIV_H,
-              border: 0,
-              backgroundImage: dividerBottom,
-              backgroundRepeat: 'no-repeat, no-repeat, repeat',
-              backgroundSize: '100% 1px, 100% 1px, 100% 100%',
-              backgroundPosition: 'top left, bottom left, center',
-              flex: '0 0 auto'
-            }}
-          />
-
-          <DialogActions sx={{ p: 0, m: 0, minHeight: FOOTER_H }}>
-            <Box sx={{ width: '100%', height: '100%', display: 'flex', justifyContent: 'flex-end', alignItems: 'center', px: 3, gap: 1.5 }}>
-              <CrystalSoftButton baseColor={oroNegro.dark} onClick={handleCerrar} disabled={loading}>
-                Cancelar
-              </CrystalSoftButton>
-              <CrystalButton baseColor={oroNegro.primary} onClick={handleConfirmarAsignaciones} disabled={loading || asignaciones.length === 0 || !destinoSeleccionado} sx={{ minHeight: 44, fontWeight: 800 }}>
-                {loading ? 'Asignando…' : `Asignar Stock (${asignaciones.length})`}
-              </CrystalButton>
-            </Box>
-          </DialogActions>
-        </Box>
-      </TexturedPanel>
-
-      <Dialog
-        open={confirmOpen}
-        onClose={() => setConfirmOpen(false)}
-        maxWidth="sm"
-        fullWidth
-        PaperProps={{
-          sx: {
-            borderRadius: 3,
-            bgcolor: 'transparent',
-            boxShadow: '0 10px 40px rgba(0,0,0,0.35)',
-            overflow: 'hidden',
-          },
-        }}
-      >
-        <TexturedPanel
-          accent={oroNegro.primary}
-          radius={12}
-          contentPadding={0}
-          bgTintPercent={16}
-          bgAlpha={1}
-          textureBaseOpacity={0.28}
-          textureBoostOpacity={0.22}
-          textureBrightness={1.08}
-          textureContrast={1.05}
-          tintOpacity={0.42}
-        >
-          <Box sx={{ display: 'flex', flexDirection: 'column' }}>
-            <DialogTitle sx={{ p: 0, m: 0, minHeight: 56, display: 'flex', alignItems: 'center' }}>
-              <Box sx={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', px: 3, gap: 1.5 }}>
-                <Box sx={{
-                  width: 36,
-                  height: 36,
-                  borderRadius: '50%',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  background: `linear-gradient(135deg, ${oroNegro.primary} 0%, ${darken(oroNegro.primary, 0.18)} 100%)`,
-                  boxShadow: 'inset 0 2px 4px rgba(255,255,255,0.3), 0 4px 12px rgba(0,0,0,0.25)',
-                  color: '#fff'
-                }}>
-                  <Icon icon="mdi:check-decagram" width={20} height={20} />
-                </Box>
-                <Typography variant="h6" fontWeight={800} color="#ffda74" sx={{ textShadow: '0 2px 6px rgba(0,0,0,0.9)' }}>
-                  Confirmar asignaciones
-                </Typography>
-              </Box>
-            </DialogTitle>
-
-            <Divider
-              sx={{
-                height: DIV_H,
-                border: 0,
-                backgroundImage: `
-                  linear-gradient(to bottom, ${alpha('#fff', 0.68)}, ${alpha('#fff', 0.68)}),
-                  linear-gradient(to bottom, ${alpha(darken(oroNegro.primary, 0.5), 0.3)}, ${alpha(darken(oroNegro.primary, 0.5), 0.3)}),
-                  linear-gradient(90deg, ${alpha(oroNegro.primary, 0.12)}, ${oroNegro.primary}, ${alpha(oroNegro.primary, 0.12)})
-                `,
-                backgroundRepeat: 'no-repeat, no-repeat, repeat',
-                backgroundSize: '100% 1px, 100% 1px, 100% 100%',
-                backgroundPosition: 'top left, bottom left, center',
-                flex: '0 0 auto'
-              }}
-            />
-
-            <DialogContent sx={{ p: 3, background: '#f8fafb' }}>
-              <Typography variant="body1" fontWeight={700} color={oroNegro.primary} gutterBottom>
-                Vas a aplicar {asignaciones.length} asignaciones ({totalAsignaciones} unidades) al destino seleccionado.
-              </Typography>
-              <Typography variant="body2" color="text.secondary">
-                Confirmá para actualizar el stock en el punto/deposito elegido.
-              </Typography>
-            </DialogContent>
-
-            <Divider
-              sx={{
-                height: DIV_H,
-                border: 0,
-                backgroundImage: `
-                  linear-gradient(to bottom, ${alpha(darken(oroNegro.primary, 0.5), 0.3)}, ${alpha(darken(oroNegro.primary, 0.5), 0.3)}),
-                  linear-gradient(to bottom, ${alpha('#fff', 0.68)}, ${alpha('#fff', 0.68)}),
-                  linear-gradient(90deg, ${alpha(oroNegro.primary, 0.12)}, ${oroNegro.primary}, ${alpha(oroNegro.primary, 0.12)})
-                `,
-                backgroundRepeat: 'no-repeat, no-repeat, repeat',
-                backgroundSize: '100% 1px, 100% 1px, 100% 100%',
-                backgroundPosition: 'top left, bottom left, center',
-                flex: '0 0 auto'
-              }}
-            />
-
-            <DialogActions sx={{ p: 0, m: 0, minHeight: 60 }}>
-              <Box sx={{ width: '100%', display: 'flex', justifyContent: 'flex-end', alignItems: 'center', px: 3, gap: 1 }}>
-                <CrystalSoftButton baseColor={oroNegro.dark} onClick={() => setConfirmOpen(false)} disabled={loading}>
-                  Volver
-                </CrystalSoftButton>
-                <CrystalButton baseColor={oroNegro.primary} onClick={aplicarAsignaciones} disabled={loading}>
-                  {loading ? 'Aplicando…' : 'Confirmar'}
-                </CrystalButton>
-              </Box>
-            </DialogActions>
           </Box>
-        </TexturedPanel>
+        </Box>
+        <IconButton onClick={handleCerrar} size="small" sx={{ color: 'text.secondary', '&:hover': { bgcolor: 'rgba(0,0,0,0.05)' } }}>
+          <Icon icon="mdi:close" width={24} />
+        </IconButton>
+      </Box>
+
+      {/* Content */}
+      <DialogContent sx={{ p: 3, bgcolor: '#ffffff' }}>
+        {error && (
+          <Alert severity="error" sx={{ mb: 3, borderRadius: 0 }}>
+            {error}
+          </Alert>
+        )}
+
+        <Box display="grid" gap={3}>
+          {/* Toolbar */}
+          <Box display="flex" gap={2} flexWrap="wrap">
+            <Box flex="1 1 auto" display="flex" gap={2}>
+              <TextField
+                fullWidth
+                size="small"
+                label="Artículo (escáner)"
+                placeholder="Escaneá código..."
+                value={busqueda}
+                onChange={(e) => setBusqueda(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                    void buscarArticulos();
+                  }
+                }}
+                disabled={Boolean(proveedorSeleccionado || rubroSeleccionado)}
+                InputProps={{
+                  startAdornment: <InputAdornment position="start"><Icon icon="mdi:barcode-scan" /></InputAdornment>,
+                  sx: { borderRadius: 0 }
+                }}
+                helperText="Enter para buscar"
+              />
+              <Button
+                variant="contained"
+                onClick={() => void buscarArticulos()}
+                disabled={!busqueda.trim() && !proveedorSeleccionado && !rubroSeleccionado}
+                disableElevation
+                sx={{ borderRadius: 0, fontWeight: 700, px: 3, bgcolor: '#5d4037', '&:hover': { bgcolor: '#4e342e' } }}
+              >
+                Buscar
+              </Button>
+              <IconButton onClick={limpiarFiltros} title="Limpiar filtros" sx={{ borderRadius: 0, border: '1px solid #e0e0e0' }}>
+                <Icon icon="mdi:trash-can-outline" />
+              </IconButton>
+            </Box>
+          </Box>
+
+          <Box display="grid" gridTemplateColumns={{ xs: '1fr', md: 'repeat(3, 1fr)' }} gap={2}>
+            <Autocomplete
+              options={puntosFiltrados}
+              getOptionLabel={(p) => `${p.nombre} (${p.tipo})`}
+              value={puntosFiltrados.find((p) => p.id === destinoSeleccionado) ?? null}
+              onChange={(_, val) => setDestinoSeleccionado(val ? val.id : null)}
+              renderInput={(params) => <TextField {...params} label="Destino" size="small" InputProps={{ ...params.InputProps, sx: { borderRadius: 0 } }} />}
+            />
+            <Autocomplete
+              options={proveedoresFiltrados}
+              getOptionLabel={(p) => p.nombre}
+              value={proveedorSeleccionado}
+              onChange={(_, val) => setProveedorSeleccionado(val)}
+              disabled={Boolean(articuloPreseleccionado?.proveedorId) || busquedaActiva}
+              renderInput={(params) => <TextField {...params} label="Proveedor" size="small" InputProps={{ ...params.InputProps, sx: { borderRadius: 0 } }} />}
+            />
+            <Autocomplete
+              options={rubrosOpciones}
+              value={rubroSeleccionado}
+              onChange={(_, val) => setRubroSeleccionado(val || '')}
+              disabled={Boolean(articuloPreseleccionado?.rubro) || busquedaActiva}
+              renderInput={(params) => <TextField {...params} label="Rubro" size="small" InputProps={{ ...params.InputProps, sx: { borderRadius: 0 } }} />}
+            />
+          </Box>
+
+          {(buscandoArticulos || loading) && (
+            <Typography align="center" color="text.secondary">Buscando...</Typography>
+          )}
+
+          {/* Table */}
+          {articulosOrdenados.length > 0 && (
+            <TableContainer component={Paper} elevation={0} sx={{ borderRadius: 0, border: '1px solid #e0e0e0', maxHeight: 400 }}>
+              <Table stickyHeader size="small">
+                <TableHead>
+                  <TableRow>
+                    <TableCell padding="checkbox" sx={{ bgcolor: '#f5f5f5' }} />
+                    <TableCell sx={{ bgcolor: '#f5f5f5', fontWeight: 700 }}>CÓDIGO</TableCell>
+                    <TableCell sx={{ bgcolor: '#f5f5f5', fontWeight: 700 }}>DESCRIPCIÓN</TableCell>
+                    <TableCell sx={{ bgcolor: '#f5f5f5', fontWeight: 700 }}>RUBRO</TableCell>
+                    <TableCell align="right" sx={{ bgcolor: '#f5f5f5', fontWeight: 700 }}>STOCK DEST.</TableCell>
+                    <TableCell align="right" sx={{ bgcolor: '#f5f5f5', fontWeight: 700 }}>ASIGNAR</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {articulosOrdenados.map((articulo) => {
+                    const asignacion = asignaciones.find((a) => Number(a.articuloId) === Number(articulo.id));
+                    const cantidadAsignada = asignacion?.cantidad ?? 0;
+                    const seleccionado = Boolean(asignacion);
+                    return (
+                      <TableRow key={articulo.id} hover selected={seleccionado}>
+                        <TableCell padding="checkbox">
+                          <Checkbox
+                            checked={seleccionado}
+                            onChange={(e) => toggleSeleccion(articulo, e.target.checked)}
+                            size="small"
+                          />
+                        </TableCell>
+                        <TableCell sx={{ fontFamily: 'monospace' }}>{articulo.codigo}</TableCell>
+                        <TableCell>{articulo.nombre}</TableCell>
+                        <TableCell>{(articulo as any)?.rubro || '—'}</TableCell>
+                        <TableCell align="right">
+                          <Chip size="small" label={articulo.stockEnDestino ?? 0} sx={{ borderRadius: 0 }} />
+                        </TableCell>
+                        <TableCell align="right">
+                          <TextField
+                            type="number"
+                            size="small"
+                            value={cantidadAsignada || ''}
+                            onChange={(e) => {
+                              const next = e.target.value;
+                              const parsed = next === '' ? 0 : parseInt(next, 10) || 0;
+                              handleAsignarStock(articulo.id, parsed, { allowZero: next === '' });
+                            }}
+                            sx={{ width: 80, '& .MuiOutlinedInput-root': { borderRadius: 0 } }}
+                            disabled={!seleccionado}
+                          />
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
+            </TableContainer>
+          )}
+
+          {/* Summary */}
+          {asignaciones.length > 0 && (
+            <Alert severity="info" sx={{ borderRadius: 0 }}>
+              <Typography variant="subtitle2" fontWeight={700}>Resumen de asignaciones</Typography>
+              <Typography variant="body2">
+                Total Artículos: <strong>{asignaciones.length}</strong> | Unidades Total: <strong>{totalAsignaciones}</strong>
+              </Typography>
+            </Alert>
+          )}
+        </Box>
+      </DialogContent>
+
+      <DialogActions sx={{ p: 2, bgcolor: '#f5f5f5', borderTop: '1px solid #e0e0e0' }}>
+        <Button onClick={handleCerrar} color="inherit" sx={{ fontWeight: 600 }}>Cancelar</Button>
+        <Button
+          onClick={handleConfirmarAsignaciones}
+          disabled={loading || asignaciones.length === 0}
+          variant="contained"
+          disableElevation
+          sx={{ bgcolor: '#5d4037', borderRadius: 0, px: 3, fontWeight: 700, '&:hover': { bgcolor: '#4e342e' } }}
+        >
+          CONFIRMAR ASIGNACIÓN
+        </Button>
+      </DialogActions>
+
+      {/* Confirmation Dialog */}
+      <Dialog open={confirmOpen} onClose={() => setConfirmOpen(false)}>
+        <Box p={3}>
+          <Typography variant="h6" fontWeight={700} gutterBottom>Confirmar Asignación</Typography>
+          <Typography variant="body2" mb={2}>
+            Estás a punto de asignar <strong>{totalAsignaciones}</strong> unidades de <strong>{asignaciones.length}</strong> artículos
+            al destino seleccionado.
+          </Typography>
+          <Box display="flex" justifyContent="flex-end" gap={2}>
+            <Button onClick={() => setConfirmOpen(false)}>Cancelar</Button>
+            <Button onClick={aplicarAsignaciones} variant="contained" disableElevation sx={{ bgcolor: '#5d4037', borderRadius: 0, '&:hover': { bgcolor: '#4e342e' } }}>
+              Confirmar
+            </Button>
+          </Box>
+        </Box>
       </Dialog>
 
-      <Snackbar open={snack.open} autoHideDuration={2600} onClose={() => setSnack((s) => ({ ...s, open: false }))} anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}>
-        <MuiAlert onClose={() => setSnack((s) => ({ ...s, open: false }))} severity={snack.sev} variant="filled" sx={{ width: '100%' }}>
+      <Snackbar open={snack.open} autoHideDuration={6000} onClose={() => setSnack(prev => ({ ...prev, open: false }))}>
+        <Alert onClose={() => setSnack(prev => ({ ...prev, open: false }))} severity={snack.sev as any} sx={{ width: '100%', borderRadius: 0 }}>
           {snack.msg}
-        </MuiAlert>
+        </Alert>
       </Snackbar>
+
     </Dialog>
   );
 }
