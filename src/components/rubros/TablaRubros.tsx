@@ -3,6 +3,7 @@
 
 import {
   Box,
+  Paper,
   Chip,
   Table,
   TableBody,
@@ -37,13 +38,9 @@ import {
 import { BUSCAR_RUBROS } from '@/components/rubros/graphql/queries';
 import type { BuscarRubrosResponse, RubroConEstadisticas } from '@/app/interfaces/graphql.types';
 import { verde, azul } from '@/ui/colores';
-import { crearConfiguracionBisel, crearEstilosBisel } from '@/components/ui/bevel';
-import { WoodBackdrop } from '@/components/ui/TexturedFrame/WoodBackdrop';
 import ModalEditarRubro from './ModalEditarRubro';
 import ModalDetallesRubro from './ModalDetallesRubro';
 import ModalEliminarRubro from './ModalEliminarRubro';
-import CrystalButton, { CrystalIconButton, CrystalSoftButton } from '@/components/ui/CrystalButton';
-import SearchToolbar from '@/components/ui/SearchToolbar';
 
 type Props = {
   onNuevoRubro?: () => void;
@@ -71,39 +68,11 @@ type RubroParaModal = {
 };
 
 /* ======================== Estética ======================== */
-const accentExterior = verde.primary;
-const accentInterior = verde.borderInner ?? '#4a3b35';
-const tableBodyBg = 'rgba(235, 247, 238, 0.58)';
-const tableBodyAlt = 'rgba(191, 214, 194, 0.32)';
-const woodTintExterior = '#c7d8cb';
-const woodTintInterior = '#b2c4b6';
+// Diseño plano y limpio
+const tableBodyBg = '#ffffff';
+const tableBodyAlt = '#f8f9fa';
 
-const biselExteriorConfig = crearConfiguracionBisel(accentExterior, 1.5);
-const estilosBiselExterior = crearEstilosBisel(biselExteriorConfig, { zContenido: 2 });
-
-const WoodSection: React.FC<React.PropsWithChildren> = ({ children }) => (
-  <Box
-    sx={{
-      position: 'relative',
-      borderRadius: 2,
-      overflow: 'hidden',
-      boxShadow: '0 18px 40px rgba(0,0,0,0.12)',
-      background: 'transparent',
-      ...estilosBiselExterior,
-    }}
-  >
-    <WoodBackdrop accent={woodTintExterior} radius={3} inset={0} strength={0.18} texture="tabla" />
-    <Box
-      sx={{
-        position: 'absolute',
-        inset: 0,
-        backgroundColor: alpha('#fff7ef', 0.78),
-        zIndex: 0,
-      }}
-    />
-    <Box sx={{ position: 'relative', zIndex: 2, p: 3 }}>{children}</Box>
-  </Box>
-);
+/* ======================== Tipos de filtros por columna ======================== */
 
 /* ======================== Tipos de filtros por columna ======================== */
 type ColKey = 'nombre' | 'codigo';
@@ -274,89 +243,139 @@ const TablaRubros: React.FC<Props> = ({ onNuevoRubro, puedeCrear = true }) => {
 
   /* ---------- Toolbar ---------- */
   const toolbar = (
-    <SearchToolbar
-      title="Rubros y Categorías"
-      icon={<IconCategory style={{ marginRight: 8, verticalAlign: 'middle' }} />}
-      baseColor={verde.primary}
-      placeholder="Buscar rubros..."
-      searchValue={filtroInput}
-      onSearchValueChange={setFiltroInput}
-      onSubmitSearch={() => { setFiltro(filtroInput); setPage(0); }}
-      onClear={limpiarFiltros}
-      canCreate={puedeCrear}
-      createLabel="Nuevo Rubro"
-      onCreateClick={onNuevoRubro || handleNuevoRubro}
-      searchDisabled={loading}
-    />
+    <Box
+      sx={{
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        mb: 3,
+        p: 2,
+        bgcolor: '#ffffff',
+      }}
+    >
+      <Box display="flex" alignItems="center" gap={1}>
+        <IconCategory size={24} color={verde.primary} />
+        <Typography variant="h5" fontWeight={700} color={verde.primary}>
+          Rubros y Categorías
+        </Typography>
+      </Box>
+
+      <Box display="flex" alignItems="center" gap={2}>
+        <TextField
+          placeholder="Buscar rubros..."
+          size="small"
+          value={filtroInput}
+          onChange={(e) => setFiltroInput(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') {
+              setFiltro(filtroInput);
+              setPage(0);
+            }
+          }}
+          InputProps={{
+            startAdornment: (
+              <InputAdornment position="start">
+                <IconSearch size={18} color="#757575" />
+              </InputAdornment>
+            ),
+          }}
+          sx={{
+            minWidth: 300,
+            '& .MuiOutlinedInput-root': {
+              borderRadius: 0,
+              bgcolor: '#f5f5f5',
+              '& fieldset': { borderColor: '#e0e0e0' },
+              '&:hover fieldset': { borderColor: '#bdbdbd' },
+              '&.Mui-focused fieldset': { borderColor: verde.primary },
+            }
+          }}
+        />
+
+        <Button
+          variant="outlined"
+          startIcon={<IconRefresh size={18} />}
+          onClick={limpiarFiltros}
+          sx={{ borderRadius: 0, textTransform: 'none', color: '#757575', borderColor: '#e0e0e0', '&:hover': { borderColor: '#bdbdbd', bgcolor: '#f5f5f5' } }}
+        >
+          Limpiar
+        </Button>
+
+        {puedeCrear && (
+          <Button
+            variant="contained"
+            startIcon={<IconPlus size={18} />}
+            onClick={onNuevoRubro || handleNuevoRubro}
+            disableElevation
+            sx={{
+              borderRadius: 0,
+              textTransform: 'none',
+              bgcolor: verde.primary,
+              fontWeight: 600,
+              '&:hover': { bgcolor: verde.primaryHover }
+            }}
+          >
+            Nuevo Rubro
+          </Button>
+        )}
+      </Box>
+    </Box>
   );
 
   /* ---------- Tabla ---------- */
   const tabla = (
     <TableContainer
+      component={Paper}
+      elevation={0}
       sx={{
-        position: 'relative',
         borderRadius: 0,
-        border: '1px solid',
-        borderColor: alpha(accentInterior, 0.38),
-        bgcolor: 'rgba(255, 250, 242, 0.94)',
-        backdropFilter: 'saturate(110%) blur(0.85px)',
-        overflow: 'hidden',
-        boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.55)',
+        border: '1px solid #e0e0e0',
+        bgcolor: '#ffffff',
+        overflow: 'auto',
       }}
     >
-      <WoodBackdrop accent={woodTintInterior} radius={0} inset={0} strength={0.12} texture="tabla" />
-      <Box
-        sx={{
-          position: 'absolute',
-          inset: 0,
-          backgroundColor: alpha('#fffaf3', 0.82),
-          zIndex: 0,
-        }}
-      />
       <Table
         stickyHeader
         size="small"
         sx={{
-          borderRadius: 0,
-          position: 'relative',
-          zIndex: 2,
-          bgcolor: tableBodyBg,
-          '& .MuiTableRow-root': { minHeight: 62 },
-          '& .MuiTableCell-root': {
-            fontSize: '0.75rem',
-            px: 1,
-            py: 1.1,
-            borderBottomColor: alpha(accentInterior, 0.35),
-            bgcolor: 'transparent',
+          minWidth: 700,
+          '& .MuiTableRow-root': {
+            minHeight: 56, // Compact
+            transition: 'background-color 0.2s',
           },
-          '& .MuiTableBody-root .MuiTableRow-root:nth-of-type(odd) .MuiTableCell-root': { bgcolor: tableBodyBg },
-          '& .MuiTableBody-root .MuiTableRow-root:nth-of-type(even) .MuiTableCell-root': { bgcolor: tableBodyAlt },
-          '& .MuiTableBody-root .MuiTableRow-root.MuiTableRow-hover:hover .MuiTableCell-root': {
-            bgcolor: alpha('#d9b18a', 0.58),
+          '& .MuiTableCell-root': {
+            fontSize: '0.85rem',
+            px: 2,
+            py: 1.5,
+            borderBottom: '1px solid #f0f0f0',
+            color: '#37474f',
+          },
+          '& .MuiTableBody-root .MuiTableRow-root:nth-of-type(even)': {
+            bgcolor: alpha(verde.primary, 0.03), // Subtle Green Zebra
+          },
+          '& .MuiTableBody-root .MuiTableRow-root:hover': {
+            bgcolor: alpha(verde.primary, 0.12),
           },
           '& .MuiTableCell-head': {
-            fontSize: '0.75rem',
-            fontWeight: 600,
-            bgcolor: verde.headerBg,
-            color: alpha('#FFFFFF', 0.94),
-            boxShadow: 'inset 0 -1px 0 rgba(255, 255, 255, 0.12)',
-            textTransform: 'uppercase',
-            letterSpacing: 0.4,
-          },
-          // ✅ divisores sutiles entre columnas del header
-          '& .MuiTableHead-root .MuiTableCell-head:not(:last-of-type)': {
-            borderRight: `3px solid ${alpha(verde.headerBorder, 0.5)}`,
+            fontSize: '0.8rem',
+            fontWeight: 700,
+            bgcolor: '#f5f7fa',
+            color: verde.primary,
           },
         }}
       >
         <TableHead>
-          <TableRow>
+          <TableRow sx={{ '& th': { bgcolor: verde.primary, color: '#ffffff', fontWeight: 600, letterSpacing: 0.5, borderRadius: 0 } }}>
             {/* Nombre + menú de filtro como Proveedores */}
             <TableCell align="center">
               <Box display="flex" alignItems="center" justifyContent="space-between">
                 Nombre
                 <Tooltip title="Filtrar columna">
-                  <IconButton size="small" color="inherit" aria-label="Filtrar columna nombre" aria-haspopup="menu" onClick={abrirMenuColumna('nombre')}>
+                  <IconButton
+                    size="small" color="inherit"
+                    aria-label="Filtrar columna nombre"
+                    aria-haspopup="menu"
+                    onClick={abrirMenuColumna('nombre')}
+                  >
                     <IconDotsVertical size={16} />
                   </IconButton>
                 </Tooltip>
@@ -368,7 +387,12 @@ const TablaRubros: React.FC<Props> = ({ onNuevoRubro, puedeCrear = true }) => {
               <Box display="flex" alignItems="center" justifyContent="space-between">
                 Código
                 <Tooltip title="Filtrar columna">
-                  <IconButton size="small" color="inherit" aria-label="Filtrar columna código" aria-haspopup="menu" onClick={abrirMenuColumna('codigo')}>
+                  <IconButton
+                    size="small" color="inherit"
+                    aria-label="Filtrar columna código"
+                    aria-haspopup="menu"
+                    onClick={abrirMenuColumna('codigo')}
+                  >
                     <IconDotsVertical size={16} />
                   </IconButton>
                 </Tooltip>
@@ -391,39 +415,50 @@ const TablaRubros: React.FC<Props> = ({ onNuevoRubro, puedeCrear = true }) => {
                     size="medium"
                     sx={{
                       bgcolor: verde.primary,
+                      borderRadius: 0, // Flat Chip
                       color: '#fff',
-                      height: 36,
-                      '& .MuiChip-label': { px: 1.1, py: 0.25 },
+                      height: 32,
+                      '& .MuiChip-label': { px: 1 },
                     }}
                   />
                   <Typography variant="body2" fontWeight={600}>{rubro.nombre}</Typography>
                 </Box>
               </TableCell>
               <TableCell>
-                <Chip
-                  label={rubro.codigo || 'Sin código'}
-                  size="small"
-                  sx={{ bgcolor: alpha(accentInterior, 0.18), color: verde.textStrong }}
-                />
+                <Typography variant="body2" fontFamily="monospace" fontWeight={600}>
+                  {rubro.codigo || 'Sin código'}
+                </Typography>
               </TableCell>
               <TableCell align="center">{rubro.cantidadArticulos != null ? rubro.cantidadArticulos : 0}</TableCell>
               <TableCell align="center">{rubro.cantidadProveedores != null ? rubro.cantidadProveedores : 0}</TableCell>
               <TableCell align="center">
                 <Box display="flex" justifyContent="center" gap={0.5}>
                   <Tooltip title="Ver detalles">
-                    <CrystalIconButton baseColor={azul.primary} onClick={() => handleViewRubro(rubro as RubroConEstadisticas)}>
-                      <IconEye size={16} />
-                    </CrystalIconButton>
+                    <IconButton
+                      size="small"
+                      onClick={() => handleViewRubro(rubro as RubroConEstadisticas)}
+                      sx={{ color: azul.primary, '&:hover': { bgcolor: alpha(azul.primary, 0.1) } }}
+                    >
+                      <IconEye size={20} />
+                    </IconButton>
                   </Tooltip>
                   <Tooltip title="Editar">
-                    <CrystalIconButton baseColor={verde.primary} onClick={() => handleEditRubro(rubro as RubroConEstadisticas)}>
-                      <IconEdit size={16} />
-                    </CrystalIconButton>
+                    <IconButton
+                      size="small"
+                      onClick={() => handleEditRubro(rubro as RubroConEstadisticas)}
+                      sx={{ color: verde.primary, '&:hover': { bgcolor: alpha(verde.primary, 0.1) } }}
+                    >
+                      <IconEdit size={20} />
+                    </IconButton>
                   </Tooltip>
                   <Tooltip title="Eliminar">
-                    <CrystalIconButton baseColor={colorAccionEliminar} onClick={() => handleDeleteRubro(rubro as RubroConEstadisticas)}>
-                      <IconTrash size={16} />
-                    </CrystalIconButton>
+                    <IconButton
+                      size="small"
+                      onClick={() => handleDeleteRubro(rubro as RubroConEstadisticas)}
+                      sx={{ color: colorAccionEliminar, '&:hover': { bgcolor: alpha(colorAccionEliminar, 0.1) } }}
+                    >
+                      <IconTrash size={20} />
+                    </IconButton>
                   </Tooltip>
                 </Box>
               </TableCell>
@@ -466,12 +501,21 @@ const TablaRubros: React.FC<Props> = ({ onNuevoRubro, puedeCrear = true }) => {
             }}
           />
           <Stack direction="row" justifyContent="flex-end" spacing={1} mt={1}>
-            <Button size="small" onClick={limpiarFiltroColumna}>
+            <Button
+              size="small"
+              onClick={limpiarFiltroColumna}
+              sx={{ textTransform: 'none', color: '#757575' }}
+            >
               Limpiar
             </Button>
-            <CrystalButton size="small" baseColor={verde.primary} onClick={aplicarFiltroColumna}>
+            <Button
+              size="small"
+              variant="contained"
+              onClick={aplicarFiltroColumna}
+              sx={{ borderRadius: 0, bgcolor: verde.primary, textTransform: 'none', '&:hover': { bgcolor: verde.primaryHover } }}
+            >
               Aplicar
-            </CrystalButton>
+            </Button>
           </Stack>
         </Box>
       )}
@@ -493,32 +537,29 @@ const TablaRubros: React.FC<Props> = ({ onNuevoRubro, puedeCrear = true }) => {
         </Typography>
         {generarNumerosPaginas().map((num, idx) =>
           num === '...' ? (
-            <CrystalSoftButton
-              key={idx}
-              baseColor={verde.primary}
-              disabled
-              sx={{ minWidth: 32, minHeight: 30, px: 1, py: 0.25, borderRadius: 2, color: verde.textStrong }}
-            >
-              ...
-            </CrystalSoftButton>
+            <Box key={idx} sx={{ px: 1, color: 'text.secondary' }}>...</Box>
           ) : (
-            <CrystalButton
+            <Button
               key={num}
-              baseColor={verde.primary}
+              variant={Number(num) === paginaActual ? 'contained' : 'outlined'}
+              size="small"
               sx={{
                 minWidth: 32,
-                minHeight: 30,
                 px: 1,
-                py: 0.25,
-                borderRadius: 2,
-                fontWeight: Number(num) === paginaActual ? 800 : 600,
-                boxShadow: 'none',
+                borderRadius: 0,
+                borderColor: Number(num) === paginaActual ? 'transparent' : '#e0e0e0',
+                bgcolor: Number(num) === paginaActual ? verde.primary : 'transparent',
+                color: Number(num) === paginaActual ? '#fff' : 'text.primary',
+                '&:hover': {
+                  borderColor: verde.primary,
+                  bgcolor: Number(num) === paginaActual ? verde.primaryHover : alpha(verde.primary, 0.05)
+                }
               }}
               onClick={() => handleChangePage(null as unknown as Event, Number(num) - 1)}
               disabled={num === paginaActual}
             >
               {num}
-            </CrystalButton>
+            </Button>
           )
         )}
       </Stack>
@@ -527,48 +568,47 @@ const TablaRubros: React.FC<Props> = ({ onNuevoRubro, puedeCrear = true }) => {
   /* ======================== Loading / Error ======================== */
   if (loading) {
     return (
-      <WoodSection>
-        {/* Skeleton de toolbar */}
+      <Paper elevation={0} sx={{ p: 0, borderRadius: 0, bgcolor: 'transparent' }}>
         <Box sx={{ px: 1, py: 1, mb: 2 }}>
-          <Skeleton variant="rounded" height={44} sx={{ borderRadius: 2 }} />
+          <Skeleton variant="rectangular" height={44} sx={{ borderRadius: 0 }} />
         </Box>
-        {/* Skeleton de tabla */}
-        <Skeleton variant="rounded" height={360} sx={{ borderRadius: 2 }} />
-      </WoodSection>
+        <Skeleton variant="rectangular" height={360} sx={{ borderRadius: 0 }} />
+      </Paper>
     );
   }
 
   if (error) {
     return (
-      <WoodSection>
+      <Paper elevation={0} sx={{ p: 4, textAlign: 'center', borderRadius: 0, border: '1px solid #e0e0e0' }}>
         {toolbar}
         <Box sx={{ p: 4, textAlign: 'center' }}>
-          <Typography color="error" variant="h6" mb={2}>
+          <Typography color="error" variant="h6" mb={2} fontWeight={700}>
             Error al cargar rubros
           </Typography>
           <Typography color="text.secondary" mb={2}>
             {error.message}
           </Typography>
-          <CrystalButton
-            baseColor={azul.primary}
+          <Button
+            variant="contained"
             startIcon={<IconRefresh />}
             onClick={() => refetch()}
+            sx={{ borderRadius: 0, textTransform: 'none', bgcolor: azul.primary }}
           >
             Reintentar
-          </CrystalButton>
+          </Button>
         </Box>
-      </WoodSection>
+      </Paper>
     );
   }
 
   /* ---------- Render ---------- */
   return (
     <>
-      <WoodSection>
+      <Box sx={{ width: '100%' }}>
         {toolbar}
         {tabla}
         {paginador}
-      </WoodSection>
+      </Box>
 
       {menuFiltros}
 

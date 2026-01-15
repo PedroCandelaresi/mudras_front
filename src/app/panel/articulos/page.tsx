@@ -1,8 +1,8 @@
 'use client';
 import { useState } from 'react';
 import { Icon } from '@iconify/react';
+import { Box, Tabs, Tab } from '@mui/material';
 import PageContainer from '@/components/container/PageContainer';
-import StylizedTabbedPanel, { type StylizedTabDefinition } from '@/components/ui/StylizedTabbedPanel';
 
 import TablaArticulos from '@/components/articulos/TablaArticulos';
 import TablaRubros from '@/components/rubros/TablaRubros';
@@ -12,7 +12,14 @@ import ModalModificarStock from '@/components/articulos/ModalModificarStock';
 import type { Articulo } from '@/app/interfaces/mudras.types';
 import { verde } from '@/ui/colores';
 
-const tabDefinitions: StylizedTabDefinition[] = [
+interface TabDefinition {
+  key: string;
+  label: React.ReactNode;
+  icon?: React.ReactNode;
+  color: string;
+}
+
+const tabDefinitions: TabDefinition[] = [
   { key: 'articulos', label: 'Artículos', icon: <Icon icon="mdi:cube-outline" />, color: verde.primary },
   { key: 'rubros', label: 'Rubros', icon: <Icon icon="mdi:tag" />, color: verde.primary },
   { key: 'movimientos', label: 'Movimientos de Stock', icon: <Icon icon="mdi:swap-horizontal" />, color: verde.primary },
@@ -33,46 +40,88 @@ export default function ArticulosPage() {
 
   return (
     <PageContainer title="Artículos - Mudras" description="Gestión integral de artículos, rubros y stock">
-      <StylizedTabbedPanel
-        tabs={tabDefinitions}
-        activeKey={activeTab}
-        onChange={(key) => setActiveTab(key as 'articulos' | 'rubros' | 'movimientos')}
-      >
+      <Box sx={{ width: '100%' }}>
+        <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 3 }}>
+          <Tabs
+            value={activeTab}
+            onChange={(_, newValue) => setActiveTab(newValue)}
+            aria-label="tabs articulos"
+            sx={{
+              '& .MuiTab-root': {
+                textTransform: 'none',
+                fontWeight: 600,
+                fontSize: '1rem',
+                minHeight: 48,
+                borderRadius: 0,
+                color: '#546e7a',
+                '&.Mui-selected': {
+                  color: verde.primary,
+                },
+              },
+              '& .MuiTabs-indicator': {
+                backgroundColor: verde.primary,
+                height: 3,
+              },
+            }}
+          >
+            {tabDefinitions.map((tab) => (
+              <Tab
+                key={tab.key}
+                label={
+                  <Box display="flex" alignItems="center" gap={1}>
+                    {tab.icon}
+                    {tab.label}
+                  </Box>
+                }
+                value={tab.key}
+              />
+            ))}
+          </Tabs>
+        </Box>
+
         {activeTab === 'articulos' && (
-          <TablaArticulos
-            key={`articulos-${reloadKey}`}
-            title="Artículos"
-            showToolbar
-            showGlobalSearch
-            allowCreate={userRole === 'admin' || userRole === 'diseñadora'}
-            onCreateClick={() => {
-              setArticuloSeleccionado(null);
-              setModalNuevoOpen(true);
-            }}
-            columns={[
-              { key: 'imagen', header: 'Img', width: 60 },
-              { key: 'descripcion', header: 'Descripción', filterable: true, width: '40%' },
-              { key: 'codigo', header: 'Código', filterable: true, width: 140 },
-              { key: 'stock', header: 'Stock total', width: 140 },
-              { key: 'precio', header: 'Precio', width: 140 },
-              { key: 'estado', header: 'Estado', filterable: true, width: 200 },
-              { key: 'acciones', header: 'Acciones', width: 180 },
-            ]}
-            initialServerFilters={{ pagina: 0, limite: 50, ordenarPor: 'Descripcion', direccionOrden: 'ASC' }}
-            onEdit={(a) => {
-              setArticuloSeleccionado(a);
-              setModalNuevoOpen(true);
-            }}
-            dense
-          />
+          <Box sx={{ borderRadius: 0 }}>
+            <TablaArticulos
+              key={`articulos-${reloadKey}`}
+              title="Artículos"
+              showToolbar
+              showGlobalSearch
+              allowCreate={userRole === 'admin' || userRole === 'diseñadora'}
+              onCreateClick={() => {
+                setArticuloSeleccionado(null);
+                setModalNuevoOpen(true);
+              }}
+              columns={[
+                { key: 'imagen', header: 'Img', width: 60 },
+                { key: 'descripcion', header: 'Descripción', filterable: true, width: '40%' },
+                { key: 'codigo', header: 'Código', filterable: true, width: 140 },
+                { key: 'stock', header: 'Stock total', width: 140 },
+                { key: 'precio', header: 'Precio', width: 140 },
+                { key: 'estado', header: 'Estado', filterable: true, width: 200 },
+                { key: 'acciones', header: 'Acciones', width: 180 },
+              ]}
+              initialServerFilters={{ pagina: 0, limite: 50, ordenarPor: 'Descripcion', direccionOrden: 'ASC' }}
+              onEdit={(a) => {
+                setArticuloSeleccionado(a);
+                setModalNuevoOpen(true);
+              }}
+              dense
+            />
+          </Box>
         )}
 
         {activeTab === 'rubros' && (
-          <TablaRubros puedeCrear={userRole === 'admin' || userRole === 'diseñadora'} />
+          <Box sx={{ borderRadius: 0 }}>
+            <TablaRubros puedeCrear={userRole === 'admin' || userRole === 'diseñadora'} />
+          </Box>
         )}
 
-        {activeTab === 'movimientos' && <TablaMovimientosStock />}
-      </StylizedTabbedPanel>
+        {activeTab === 'movimientos' && (
+          <Box sx={{ borderRadius: 0 }}>
+            <TablaMovimientosStock />
+          </Box>
+        )}
+      </Box>
 
       <ModalNuevoArticulo
         open={modalNuevoOpen}
