@@ -221,13 +221,28 @@ const TablaProveedores = forwardRef<TablaProveedoresHandle, Props>(({
         bgcolor: '#ffffff',
       }}
     >
-      <Box display="flex" alignItems="center" gap={1}>
-        <IconUsers size={24} color={azul.primary} />
-        <Typography variant="h5" fontWeight={700} color={azul.primary}>
-          Proveedores
-        </Typography>
+      {/* IZQUIERDA: Botón Nuevo */}
+      <Box>
+        {puedeCrear && (
+          <Button
+            variant="contained"
+            startIcon={<IconPlus size={18} />}
+            onClick={handleNuevoProveedor}
+            disableElevation
+            sx={{
+              borderRadius: 0,
+              textTransform: 'none',
+              bgcolor: azul.primary,
+              fontWeight: 600,
+              '&:hover': { bgcolor: azul.primaryHover }
+            }}
+          >
+            Nuevo Proveedor
+          </Button>
+        )}
       </Box>
 
+      {/* DERECHA: Buscador y Limpiar */}
       <Box display="flex" alignItems="center" gap={2}>
         <TextField
           placeholder="Buscar proveedores..."
@@ -262,24 +277,6 @@ const TablaProveedores = forwardRef<TablaProveedoresHandle, Props>(({
         >
           Limpiar
         </Button>
-
-        {puedeCrear && (
-          <Button
-            variant="contained"
-            startIcon={<IconPlus size={18} />}
-            onClick={handleNuevoProveedor}
-            disableElevation
-            sx={{
-              borderRadius: 0,
-              textTransform: 'none',
-              bgcolor: azul.primary,
-              fontWeight: 600,
-              '&:hover': { bgcolor: azul.primaryHover }
-            }}
-          >
-            Nuevo Proveedor
-          </Button>
-        )}
       </Box>
     </Box>
   );
