@@ -1,8 +1,9 @@
-html { overflow-y: scroll; }
+html {
+  overflow-y: scroll;
+}
 
 /* Variables de diseño globales para Mudras */
 :root {
   /* Fondo suave para toolbars/zona superior en vistas de gestión */
-  --toolbar-bg: #ECFDF5; /* emerald-50 por defecto; ajustable según tema */
+  --toolbar-bg: #FFFFFF;
 }
-

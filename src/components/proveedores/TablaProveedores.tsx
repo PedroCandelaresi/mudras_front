@@ -215,8 +215,6 @@ const TablaProveedores = forwardRef<TablaProveedoresHandle, Props>(({
     setPage(0);
   };
 
-  /* ======================== Loading / Error ======================== */
-
   /* ======================== Toolbar ======================== */
   const toolbar = (
     <Box
