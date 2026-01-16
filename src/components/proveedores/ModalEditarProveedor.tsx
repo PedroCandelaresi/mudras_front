@@ -567,7 +567,7 @@ const ModalEditarProveedor = ({ open, onClose, proveedor, onProveedorGuardado }:
     <Dialog
       open={open}
       onClose={handleClose}
-      maxWidth="md"
+      maxWidth="lg"
       fullWidth
       PaperProps={{
         elevation: 4,
