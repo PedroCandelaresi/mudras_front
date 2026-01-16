@@ -5,13 +5,11 @@ import PageContainer from '@/components/container/PageContainer';
 import ProveedoresTable from '@/components/proveedores/TablaProveedores';
 import TablaPedidos from '@/components/pedidos/TablaPedidos';
 import { Icon } from '@iconify/react';
-import { azul } from '@/ui/colores';
 
 interface TabDefinition {
   key: string;
   label: React.ReactNode;
   icon?: React.ReactNode;
-  color: string;
 }
 
 const tabs: TabDefinition[] = [
@@ -19,13 +17,11 @@ const tabs: TabDefinition[] = [
     key: 'proveedores',
     label: 'Proveedores',
     icon: <Icon icon="mdi:account-group" />,
-    color: azul.primary,
   },
   {
     key: 'pedidos',
     label: 'Pedidos',
     icon: <Icon icon="mdi:clipboard-text-outline" />,
-    color: azul.primary,
   },
 ];
 
@@ -50,11 +46,11 @@ export default function Proveedores() {
                 borderRadius: 0,
                 color: '#546e7a',
                 '&.Mui-selected': {
-                  color: azul.primary,
+                  color: '#8d6e63',
                 },
               },
               '& .MuiTabs-indicator': {
-                backgroundColor: azul.primary,
+                backgroundColor: '#8d6e63',
                 height: 3,
               },
             }}
@@ -75,12 +71,7 @@ export default function Proveedores() {
         </Box>
 
         {activeTab === 'proveedores' && (
-          <Box
-            sx={{
-              borderRadius: 0,
-              transition: 'background-color .2s ease',
-            }}
-          >
+          <Box sx={{ borderRadius: 0 }}>
             <ProveedoresTable
               puedeCrear={userRole === 'admin' || userRole === 'diseñadora'}
               onNuevoProveedor={() => {
@@ -91,12 +82,7 @@ export default function Proveedores() {
         )}
 
         {activeTab === 'pedidos' && (
-          <Box
-            sx={{
-              borderRadius: 0,
-              transition: 'background-color .2s ease',
-            }}
-          >
+          <Box sx={{ borderRadius: 0 }}>
             <TablaPedidos puedeCrear={userRole === 'admin' || userRole === 'diseñadora'} />
           </Box>
         )}
