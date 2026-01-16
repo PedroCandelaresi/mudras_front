@@ -20,7 +20,7 @@ import {
   IconEdit, IconTrash, IconEye, IconPlus, IconDotsVertical
 } from '@tabler/icons-react';
 
-import { marron, azul, verde } from '@/ui/colores';
+import { azul, verde } from '@/ui/colores';
 
 import {
   ModalDetallesProveedor,
@@ -52,12 +52,6 @@ interface Props {
   hideEditAction?: boolean;
   hideDeleteAction?: boolean;
 }
-
-/* ======================== Estética ======================== */
-// Diseño plano y limpio
-const tableBodyBg = '#ffffff';
-const tableBodyAlt = '#f8f9fa';
-
 
 /* ======================== Componente ======================== */
 const TablaProveedores = forwardRef<TablaProveedoresHandle, Props>(({
@@ -353,23 +347,23 @@ const TablaProveedores = forwardRef<TablaProveedoresHandle, Props>(({
             color: '#37474f', // High contrast dark gray
           },
           '& .MuiTableBody-root .MuiTableRow-root:nth-of-type(even)': {
-            bgcolor: alpha(azul.primary, 0.03), // Subtle zebra striping
+            bgcolor: azul.tableStriped, // Zebra striping celeste pastel
           },
           '& .MuiTableBody-root .MuiTableRow-root:hover': {
-            bgcolor: alpha(azul.primary, 0.12), // Distinct hover
+            bgcolor: alpha(azul.primary, 0.12),
           },
           '& .MuiTableCell-head': {
             fontSize: '0.8rem',
             fontWeight: 700,
-            bgcolor: '#FFFFFF', // Very light gray header instead of dark blue for modern cleaner look? Or keep blue? User liked blue modals. Let's stick to Blue header but flat.
-            color: azul.primary, // Blue text on light bg, or White text on Blue bg? Let's go Clean Light for modernization.
-            // Actually user mentioned "like the details/edit modals" which used Blue headers. Let's use Blue Header but Flat.
-            // visual continuity with modals.
+            bgcolor: azul.tableHeader, // Header celeste fuerte
+            color: '#ffffff', // Texto blanco para contraste con celeste fuerte
+            textTransform: 'uppercase', // Opcional: estilo más "header"
+            letterSpacing: '0.5px',
           },
         }}
       >
         <TableHead>
-          <TableRow sx={{ '& th': { bgcolor: azul.primary, color: '#ffffff', fontWeight: 600, letterSpacing: 0.5, borderRadius: 0 } }}>
+          <TableRow sx={{ '& th': { borderBottom: 'none' } }}>
             {/* Proveedor */}
             <TableCell align="center">
               <Box display="flex" alignItems="center" justifyContent="space-between">

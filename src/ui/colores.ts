@@ -40,7 +40,7 @@ export const azul = {
   headerBg: '#0f2a44',
   headerText: '#e1ecf4',
   headerBorder: '#2d5aa0',
-  toolbarBg: '#e8f1f8',
+  toolbarBg: '#FFFFFF',
   toolbarBorder: '#b8d4ea',
   borderOuter: '#2d5aa0',
   borderInner: '#b8d4ea',
@@ -49,9 +49,11 @@ export const azul = {
   textStrong: '#0a1929',
   chipBg: '#b8d4ea',
   chipText: '#0a1929',
-  rowHover: '#e8f1f8',
+  rowHover: '#FFFFFF',
   alternateRow: '#f0f7ff',
   actionHover: '#cce7ff',
+  tableHeader: '#4FC3F7', // Celeste claro más blanco/fuerte
+  tableStriped: '#e1f5fe', // Celeste pastel sutil
 };
 
 export type PaletaAzul = typeof azul;
