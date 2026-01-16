@@ -349,7 +349,7 @@ const TablaProveedores = forwardRef<TablaProveedoresHandle, Props>(({
             fontSize: '0.85rem', // Larger for readability (60+ yo target)
             px: 2,
             py: 1.5,
-            borderBottom: '1px solid #f0f0f0',
+            borderBottom: '1px solid #FFFFFF',
             color: '#37474f', // High contrast dark gray
           },
           '& .MuiTableBody-root .MuiTableRow-root:nth-of-type(even)': {
@@ -361,7 +361,7 @@ const TablaProveedores = forwardRef<TablaProveedoresHandle, Props>(({
           '& .MuiTableCell-head': {
             fontSize: '0.8rem',
             fontWeight: 700,
-            bgcolor: '#f5f7fa', // Very light gray header instead of dark blue for modern cleaner look? Or keep blue? User liked blue modals. Let's stick to Blue header but flat.
+            bgcolor: '#FFFFFF', // Very light gray header instead of dark blue for modern cleaner look? Or keep blue? User liked blue modals. Let's stick to Blue header but flat.
             color: azul.primary, // Blue text on light bg, or White text on Blue bg? Let's go Clean Light for modernization.
             // Actually user mentioned "like the details/edit modals" which used Blue headers. Let's use Blue Header but Flat.
             // visual continuity with modals.
