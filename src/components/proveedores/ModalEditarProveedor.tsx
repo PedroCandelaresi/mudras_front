@@ -633,7 +633,7 @@ const ModalEditarProveedor = ({ open, onClose, proveedor, onProveedorGuardado }:
                       fullWidth
                       disabled={saving}
                       sx={fieldSx}
-                      InputProps={{ readOnly: esEdicion }}
+
                     // Removed type="number" or input props restrictions if any were present implicitly
                     />
                   </Box>
