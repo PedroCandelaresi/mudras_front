@@ -114,7 +114,9 @@ const ReadOnlyField = ({ label, value }: { label: string, value: string | number
 );
 
 const ModalDetallesProveedor = ({ open, onClose, proveedor, accentColor }: ModalDetallesProveedorProps) => {
-  // Estado de filtros/paginación
+  const COLORS = useMemo(() => makeColors(accentColor || azul.primary), [accentColor]);
+
+  // Estado de filtros/paginación (igual al patrón de ModalDetallesRubro)
   const [filtroInput, setFiltroInput] = useState('');
   const [busquedaPersonalizada, setBusquedaPersonalizada] = useState('');
   const [paginacion, setPaginacion] = useState({ pagina: 0, limite: PAGINAS_OPCIONES[0] });
@@ -154,22 +156,78 @@ const ModalDetallesProveedor = ({ open, onClose, proveedor, accentColor }: Modal
     const rubros = proveedorCompleto?.rubros || [];
     return rubros.map((r: any) => ({
       nombre: r.Rubro || r.nombre || 'Sin nombre',
-      cantidad: null,
+      cantidad: null, // We don't have article count in this view, simpler display
       rubroId: r.Id || r.id
     }));
   }, [proveedorCompleto?.rubros]);
 
   const cantidadRubros = rubrosRelacionados.length;
+  const rubrosTooltipTitle = loadingRubros
+    ? 'Cargando rubros asociados…'
+    : errorRubros
+      ? 'No pudimos obtener los rubros asociados.'
+      : cantidadRubros > 0
+        ? rubrosRelacionados
+          .map(({ nombre, cantidad }) =>
+            cantidad != null ? `• ${nombre} (${cantidad} artículos)` : `• ${nombre}`,
+          )
+          .join('\n')
+        : 'Este proveedor aún no está asociado a rubros.';
+
   const rubroFiltroId = rubroFiltro?.id ?? null;
   const rubroFiltroNombre = rubroFiltro?.nombre ?? null;
 
+  const totalArticulosProveedor = useMemo(() => {
+    const relaciones = rubrosData?.rubrosPorProveedor ?? [];
+    const sum = relaciones.reduce((acc, item) => {
+      const cantidad = item.cantidadArticulos != null ? Number(item.cantidadArticulos) : 0;
+      return acc + (Number.isFinite(cantidad) ? cantidad : 0);
+    }, 0);
+    if (sum > 0) return sum;
+    if (Array.isArray(proveedorCompleto?.articulos)) {
+      return proveedorCompleto.articulos.length;
+    }
+    return estadoTabla.total;
+  }, [rubrosData?.rubrosPorProveedor, proveedorCompleto?.articulos, estadoTabla.total]);
+
   const porcentajeRecargoProveedor = Number(proveedorCompleto?.PorcentajeRecargoProveedor ?? 0);
   const porcentajeDescuentoProveedor = Number(proveedorCompleto?.PorcentajeDescuentoProveedor ?? 0);
+  const tieneRecargo = Math.abs(porcentajeRecargoProveedor) > 0.0001;
+  const tieneDescuento = Math.abs(porcentajeDescuentoProveedor) > 0.0001;
+  const recargoTooltipTitle = tieneRecargo
+    ? `Aplicado sobre el precio base de artículos: ${formatPercentage(porcentajeRecargoProveedor)}`
+    : 'Configurá un recargo personalizado para este proveedor.';
+  const descuentoTooltipTitle = tieneDescuento
+    ? `Se descuenta tras aplicar el recargo: ${formatPercentage(porcentajeDescuentoProveedor)}`
+    : 'Podés definir un descuento en el precio final de los articulos de este proveedor.';
 
+  const contactoTooltipTitle = (() => {
+    const detalles: string[] = [];
+    if (proveedorCompleto?.Mail) detalles.push(`Email: ${proveedorCompleto.Mail}`);
+    if (proveedorCompleto?.Telefono || proveedorCompleto?.Celular) {
+      const tel = [proveedorCompleto.Telefono, proveedorCompleto.Celular].filter(Boolean).join(' / ');
+      detalles.push(`Teléfono: ${tel}`);
+    }
+    const localidad = [proveedorCompleto?.Localidad, proveedorCompleto?.Provincia].filter(Boolean).join(', ');
+    const direccion = [proveedorCompleto?.Direccion, localidad].filter(Boolean).join(' · ');
+    if (direccion) detalles.push(`Dirección: ${direccion}${proveedorCompleto?.CP ? ` (CP ${proveedorCompleto.CP})` : ''}`);
+    return detalles.length ? detalles.join('\n') : 'Sin datos de contacto adicionales.';
+  })();
+
+  const renderTooltip = useCallback(
+    (text: string) => (
+      <Box sx={{ whiteSpace: 'pre-line', lineHeight: 1.4, maxWidth: 280 }}>
+        {text}
+      </Box>
+    ),
+    [],
+  );
+
+  const totalArticulos = estadoTabla.total;
   const loadingArticulos = estadoTabla.loading;
   const errorArticulos = estadoTabla.error;
 
-  // columnas para la TablaArticulos
+  // columnas para la TablaArticulos (mismas claves que en rubro)
   const columnasTabla = useMemo<ColumnasTablaArticulos>(() => ([
     { key: 'codigo', header: 'Código', width: '18%' },
     { key: 'descripcion', header: 'Descripción', width: '36%' },
@@ -236,6 +294,20 @@ const ModalDetallesProveedor = ({ open, onClose, proveedor, accentColor }: Modal
     });
   }, []);
 
+  const handleSeleccionarRubro = useCallback(
+    (entrada?: { rubroId: number | null; nombre: string | null }) => {
+      setRubroFiltro((prev) => {
+        if (!entrada) return null;
+        const next = { id: entrada.rubroId ?? null, nombre: entrada.nombre ?? null };
+        const same = prev?.id === next.id && prev?.nombre === next.nombre;
+        return same ? null : next;
+      });
+      setPaginacion((prev) => ({ pagina: 0, limite: prev.limite }));
+      setReloadKey((prev) => prev + 1);
+    },
+    [],
+  );
+
   const onCerrar = () => {
     setFiltroInput('');
     setBusquedaPersonalizada('');
@@ -254,38 +326,38 @@ const ModalDetallesProveedor = ({ open, onClose, proveedor, accentColor }: Modal
       maxWidth="lg"
       fullWidth
       PaperProps={{
-        elevation: 0,
+        elevation: 4,
         sx: {
-          borderRadius: 0,
-          border: '1px solid #e0e0e0',
+          borderRadius: 0, // Strict square aesthetic
           bgcolor: '#ffffff',
           maxHeight: `${VH_MAX}vh`,
         },
+        square: true,
       }}
     >
       <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%', maxHeight: `${VH_MAX}vh` }}>
         {/* Header */}
         <Box sx={{
-          bgcolor: '#f5f5f5',
-          color: '#000',
+          bgcolor: COLORS.primary,
+          color: '#ffffff',
           px: 3,
           py: 2,
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
-          borderBottom: '1px solid #e0e0e0',
+          borderBottom: `4px solid ${COLORS.secondary}`,
           borderRadius: 0,
           flexShrink: 0,
         }}>
           <Box display="flex" alignItems="center" gap={2}>
-            <Icon icon="mdi:card-account-details-outline" width={24} height={24} color="#546e7a" />
+            <Icon icon="mdi:card-account-details-outline" width={24} height={24} />
             <Box>
-              <Typography variant="h6" fontWeight={700} letterSpacing={0}>
-                {headerTitle}
+              <Typography variant="h6" fontWeight={600} letterSpacing={0.5}>
+                {headerTitle.toUpperCase()}
               </Typography>
             </Box>
           </Box>
-          <IconButton onClick={onCerrar} size="small" sx={{ color: 'text.secondary', '&:hover': { bgcolor: 'rgba(0,0,0,0.05)' } }}>
+          <IconButton onClick={onCerrar} size="small" sx={{ color: 'white', '&:hover': { bgcolor: 'rgba(255,255,255,0.1)' } }}>
             <Icon icon="mdi:close" width={24} />
           </IconButton>
         </Box>
@@ -293,8 +365,8 @@ const ModalDetallesProveedor = ({ open, onClose, proveedor, accentColor }: Modal
         <DialogContent
           dividers
           sx={{
-            p: 3,
-            bgcolor: '#ffffff',
+            p: 4,
+            bgcolor: '#f8f9fa',
             borderTop: 0,
             borderBottom: 0,
           }}
@@ -303,10 +375,10 @@ const ModalDetallesProveedor = ({ open, onClose, proveedor, accentColor }: Modal
 
             {/* General Info */}
             <Box>
-              <Typography variant="subtitle2" fontWeight={700} color="text.secondary" sx={{ mb: 1, textTransform: 'uppercase', fontSize: '0.75rem', letterSpacing: 0.5 }}>
+              <Typography variant="subtitle2" fontWeight={700} color={COLORS.secondary} sx={{ mb: 2, textTransform: 'uppercase', letterSpacing: 1 }}>
                 Datos Generales
               </Typography>
-              <Paper variant="outlined" sx={{ p: 2, borderRadius: 0, borderColor: '#e0e0e0', bgcolor: '#f8f9fa' }}>
+              <Paper variant="outlined" sx={{ p: 3, borderRadius: 0, borderColor: '#e0e0e0', bgcolor: 'white' }}>
                 <Box display="flex" flexWrap="wrap" gap={2}>
                   <Box width={{ xs: '100%', md: '25%' }}>
                     <ReadOnlyField label="Código" value={proveedorCompleto?.Codigo} />
@@ -323,10 +395,10 @@ const ModalDetallesProveedor = ({ open, onClose, proveedor, accentColor }: Modal
 
             {/* Contact Info */}
             <Box>
-              <Typography variant="subtitle2" fontWeight={700} color="text.secondary" sx={{ mb: 1, textTransform: 'uppercase', fontSize: '0.75rem', letterSpacing: 0.5 }}>
+              <Typography variant="subtitle2" fontWeight={700} color={COLORS.secondary} sx={{ mb: 2, textTransform: 'uppercase', letterSpacing: 1 }}>
                 Información de Contacto
               </Typography>
-              <Paper variant="outlined" sx={{ p: 2, borderRadius: 0, borderColor: '#e0e0e0', bgcolor: '#f8f9fa' }}>
+              <Paper variant="outlined" sx={{ p: 3, borderRadius: 0, borderColor: '#e0e0e0', bgcolor: 'white' }}>
                 <Box display="flex" flexWrap="wrap" gap={2}>
                   <Box width={{ xs: '100%', md: 'calc(50% - 8px)' }}>
                     <ReadOnlyField label="Teléfono" value={proveedorCompleto?.Telefono} />
@@ -349,10 +421,10 @@ const ModalDetallesProveedor = ({ open, onClose, proveedor, accentColor }: Modal
 
             {/* Location */}
             <Box>
-              <Typography variant="subtitle2" fontWeight={700} color="text.secondary" sx={{ mb: 1, textTransform: 'uppercase', fontSize: '0.75rem', letterSpacing: 0.5 }}>
+              <Typography variant="subtitle2" fontWeight={700} color={COLORS.secondary} sx={{ mb: 2, textTransform: 'uppercase', letterSpacing: 1 }}>
                 Ubicación
               </Typography>
-              <Paper variant="outlined" sx={{ p: 2, borderRadius: 0, borderColor: '#e0e0e0', bgcolor: '#f8f9fa' }}>
+              <Paper variant="outlined" sx={{ p: 3, borderRadius: 0, borderColor: '#e0e0e0', bgcolor: 'white' }}>
                 <Box display="flex" flexWrap="wrap" gap={2}>
                   <Box width="100%">
                     <ReadOnlyField label="Dirección" value={proveedorCompleto?.Direccion} />
@@ -375,10 +447,10 @@ const ModalDetallesProveedor = ({ open, onClose, proveedor, accentColor }: Modal
 
             {/* Fiscal Data */}
             <Box>
-              <Typography variant="subtitle2" fontWeight={700} color="text.secondary" sx={{ mb: 1, textTransform: 'uppercase', fontSize: '0.75rem', letterSpacing: 0.5 }}>
+              <Typography variant="subtitle2" fontWeight={700} color={COLORS.secondary} sx={{ mb: 2, textTransform: 'uppercase', letterSpacing: 1 }}>
                 Datos Fiscales
               </Typography>
-              <Paper variant="outlined" sx={{ p: 2, borderRadius: 0, borderColor: '#e0e0e0', bgcolor: '#f8f9fa' }}>
+              <Paper variant="outlined" sx={{ p: 3, borderRadius: 0, borderColor: '#e0e0e0', bgcolor: 'white' }}>
                 <Box display="flex" flexWrap="wrap" gap={2}>
                   <Box width={{ xs: '100%', md: 'calc(50% - 8px)' }}>
                     <ReadOnlyField label="CUIT" value={proveedorCompleto?.CUIT} />
@@ -395,10 +467,10 @@ const ModalDetallesProveedor = ({ open, onClose, proveedor, accentColor }: Modal
 
             {/* Commercial & Rubros */}
             <Box>
-              <Typography variant="subtitle2" fontWeight={700} color="text.secondary" sx={{ mb: 1, textTransform: 'uppercase', fontSize: '0.75rem', letterSpacing: 0.5 }}>
+              <Typography variant="subtitle2" fontWeight={700} color={COLORS.secondary} sx={{ mb: 2, textTransform: 'uppercase', letterSpacing: 1 }}>
                 Comercial y Rubros
               </Typography>
-              <Paper variant="outlined" sx={{ p: 2, borderRadius: 0, borderColor: '#e0e0e0', bgcolor: '#f8f9fa' }}>
+              <Paper variant="outlined" sx={{ p: 3, borderRadius: 0, borderColor: '#e0e0e0', bgcolor: 'white' }}>
                 <Box display="flex" flexWrap="wrap" gap={2}>
                   <Box width={{ xs: '100%', md: 'calc(50% - 8px)' }}>
                     <ReadOnlyField label="Recargo Proveedor (%)" value={proveedorCompleto?.PorcentajeRecargoProveedor} />
@@ -422,7 +494,7 @@ const ModalDetallesProveedor = ({ open, onClose, proveedor, accentColor }: Modal
                             key={nombre}
                             label={`${nombre} (${cantidad || 0})`}
                             variant="outlined"
-                            sx={{ borderRadius: 0, borderColor: '#bdbdbd', color: '#616161', fontWeight: 500 }}
+                            sx={{ borderRadius: 0, borderColor: COLORS.inputBorder, color: COLORS.textStrong, fontWeight: 500 }}
                           />
                         ))}
                       </Box>
@@ -439,11 +511,11 @@ const ModalDetallesProveedor = ({ open, onClose, proveedor, accentColor }: Modal
               <Box
                 sx={{
                   border: '1px solid #e0e0e0',
-                  borderRadius: 0,
-                  bgcolor: '#f5f5f5',
-                  px: 2,
-                  py: 1.5,
-                  mb: 2,
+                  borderRadius: 0, // Sharp corners
+                  background: '#fff',
+                  px: 3,
+                  py: 2.25,
+                  mb: 2.5,
                   display: 'flex',
                   justifyContent: 'space-between',
                   alignItems: 'center',
@@ -451,7 +523,7 @@ const ModalDetallesProveedor = ({ open, onClose, proveedor, accentColor }: Modal
                   gap: 2
                 }}
               >
-                <Typography variant="subtitle1" fontWeight={700} color="text.primary">
+                <Typography variant="h6" fontWeight={700} color={COLORS.textStrong}>
                   Artículos del proveedor
                 </Typography>
                 <TextField
@@ -470,21 +542,23 @@ const ModalDetallesProveedor = ({ open, onClose, proveedor, accentColor }: Modal
                   InputProps={{
                     startAdornment: (
                       <InputAdornment position="start">
-                        <Icon icon="mdi:magnify" color="#757575" />
+                        <Icon icon="mdi:magnify" color={COLORS.primary} />
                       </InputAdornment>
                     ),
                     sx: {
                       '& .MuiOutlinedInput-root': {
-                        borderRadius: 0,
+                        borderRadius: 0, // Sharp corners
                         backgroundColor: '#fff',
                         '& fieldset': { borderColor: '#e0e0e0' },
+                        '&:hover fieldset': { borderColor: '#bdc3c7' },
+                        '&.Mui-focused fieldset': { borderColor: COLORS.primary },
                       },
                     },
                   }}
                 />
               </Box>
 
-              <Box mt={0}>
+              <Box mt={2}>
                 <TablaArticulos
                   key={`${proveedorId ?? 'prov'}-${rubroFiltro?.id ?? rubroFiltro?.nombre ?? 'all'}-${reloadKey}`}
                   columns={columnasTabla}
@@ -513,19 +587,20 @@ const ModalDetallesProveedor = ({ open, onClose, proveedor, accentColor }: Modal
           </Box>
         </DialogContent>
 
-        <DialogActions sx={{ p: 2, bgcolor: '#f5f5f5', borderTop: '1px solid #e0e0e0', gap: 2, borderRadius: 0 }}>
+        <DialogActions sx={{ p: 2, bgcolor: '#f1f2f6', borderTop: '1px solid #e0e0e0', gap: 2, borderRadius: 0 }}>
           <Button
             onClick={onCerrar}
             variant="contained"
             disableElevation
             sx={{
-              bgcolor: '#5d4037', // Brownish neutral
-              '&:hover': { bgcolor: '#4e342e' },
+              flex: 1,
+              bgcolor: COLORS.primary,
+              '&:hover': { bgcolor: COLORS.primaryHover },
               px: 4,
               py: 1,
               textTransform: 'none',
               fontWeight: 600,
-              borderRadius: 0
+              borderRadius: 0 // Sharp corners
             }}
           >
             Cerrar
