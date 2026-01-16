@@ -169,7 +169,6 @@ const ModalDetallesArticulo = ({
           borderRadius: 0,
           bgcolor: '#ffffff',
           boxShadow: 'none',
-          border: '1px solid #e0e0e0',
           overflow: 'hidden',
           maxHeight: `${VH_MAX}vh`,
         },

@@ -43,7 +43,7 @@ export default function ArticulosPage() {
           {activeTab === 'articulos' && (
             <Box sx={{
               borderRadius: 0,
-              bgcolor: verdeMilitar.toolbarBg,
+              bgcolor: '#ffffff',
               transition: 'background-color .2s ease',
             }}>
               <TablaArticulos
@@ -78,7 +78,7 @@ export default function ArticulosPage() {
           {activeTab === 'rubros' && (
             <Box sx={{
               borderRadius: 0,
-              bgcolor: verdeMilitar.toolbarBg,
+              bgcolor: '#ffffff',
               transition: 'background-color .2s ease',
             }}>
               <TablaRubros puedeCrear={userRole === 'admin' || userRole === 'diseñadora'} />
@@ -88,7 +88,7 @@ export default function ArticulosPage() {
           {activeTab === 'movimientos' && (
             <Box sx={{
               borderRadius: 0,
-              bgcolor: verdeMilitar.toolbarBg,
+              bgcolor: '#ffffff',
               transition: 'background-color .2s ease',
             }}>
               <TablaMovimientosStock />

@@ -609,7 +609,7 @@ const TablaArticulos: React.FC<ArticulosTableProps> = ({
               '&:hover': { bgcolor: verdeMilitar.primaryHover }
             }}
           >
-            {`Nuevo Proveedor`}
+            {`Nuevo artículo`}
           </Button>
         )}
       </Box>
