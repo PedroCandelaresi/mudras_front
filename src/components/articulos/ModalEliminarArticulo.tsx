@@ -3,6 +3,7 @@ import React, { useMemo } from 'react';
 import {
   Box,
   Dialog,
+  DialogTitle,
   DialogContent,
   DialogActions,
   Typography,
@@ -35,6 +36,7 @@ export default function ModalEliminarArticulo({ open, onClose, articulo, textoCo
   const textoValido = textoConfirmacion === palabraCorrecta;
   const articuloId = useMemo(() => (articulo?.id != null ? Number(articulo.id) : null), [articulo?.id]);
   const [eliminarArticulo, { loading }] = useMutation(ELIMINAR_ARTICULO);
+  const [error, setError] = React.useState('');
 
   const handleConfirm = async () => {
     if (!textoValido || articuloId == null) return;
@@ -42,133 +44,241 @@ export default function ModalEliminarArticulo({ open, onClose, articulo, textoCo
       await eliminarArticulo({ variables: { id: articuloId } });
       onSuccess?.();
       onClose();
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error al eliminar artículo:', err);
+      setError(err.message || 'Error al eliminar artículo');
     }
+  };
+
+  const cerrarModalEliminar = () => {
+    setTextoConfirmacion('');
+    setError('');
+    onClose();
   };
 
   return (
     <Dialog
       open={open}
-      onClose={onClose}
+      onClose={cerrarModalEliminar}
       maxWidth="sm"
       fullWidth
       PaperProps={{
-        elevation: 0,
         sx: {
           borderRadius: 0,
-          border: '1px solid #e0e0e0',
-          bgcolor: '#ffffff',
-        },
+          border: '3px solid #d32f2f',
+          boxShadow: '0 0 30px rgba(211, 47, 47, 0.3), 0 8px 32px rgba(0,0,0,0.12)',
+          background: 'linear-gradient(135deg, #ffebee 0%, #fff 100%)'
+        }
       }}
     >
-      <Box sx={{
-        bgcolor: '#f5f5f5',
-        px: 3,
-        py: 2,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        borderBottom: '1px solid #e0e0e0'
-      }}>
-        <Box display="flex" alignItems="center" gap={2}>
-          <IconAlertTriangle size={24} color={PELIGRO_BASE} />
-          <Typography variant="h6" fontWeight={700} color={PELIGRO_BASE}>
-            Zona de Peligro
+      <DialogTitle
+        sx={{
+          background: 'linear-gradient(135deg, #d32f2f 0%, #b71c1c 100%)',
+          color: 'white',
+          display: 'flex',
+          alignItems: 'center',
+          gap: 2,
+          py: 3,
+          position: 'relative',
+          overflow: 'hidden',
+          '&::before': {
+            content: '""',
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: 'repeating-linear-gradient(45deg, transparent, transparent 10px, rgba(255,255,255,0.1) 10px, rgba(255,255,255,0.1) 20px)',
+            animation: 'slide 2s linear infinite'
+          },
+          '@keyframes slide': {
+            '0%': { transform: 'translateX(-20px)' },
+            '100%': { transform: 'translateX(20px)' }
+          }
+        }}
+      >
+        <Box
+          sx={{
+            bgcolor: 'rgba(255,255,255,0.2)',
+            borderRadius: '50%',
+            p: 1.5,
+            display: 'flex',
+            animation: 'pulse 1.5s ease-in-out infinite alternate',
+            '@keyframes pulse': {
+              '0%': { transform: 'scale(1)' },
+              '100%': { transform: 'scale(1.1)' }
+            }
+          }}
+        >
+          <IconAlertTriangle size={28} />
+        </Box>
+        <Box sx={{ zIndex: 1, flex: 1 }}>
+          <Typography variant="h6" sx={{ fontWeight: 700, mb: 0.5, textShadow: '0 1px 2px rgba(0,0,0,0.3)' }}>
+            ⚠️ ZONA DE PELIGRO ⚠️
+          </Typography>
+          <Typography variant="body2" sx={{ opacity: 0.95, fontWeight: 500 }}>
+            Eliminación Permanente de Artículo
           </Typography>
         </Box>
-        <IconButton onClick={onClose} size="small" sx={{ color: 'text.secondary', '&:hover': { bgcolor: 'rgba(0,0,0,0.05)' } }}>
+        <IconButton
+          onClick={cerrarModalEliminar}
+          size="small"
+          sx={{
+            color: 'white',
+            bgcolor: 'rgba(255,255,255,0.2)',
+            '&:hover': { bgcolor: 'rgba(255,255,255,0.3)' },
+            zIndex: 2
+          }}
+        >
           <IconX size={20} />
         </IconButton>
-      </Box>
+      </DialogTitle>
 
-      <DialogContent sx={{ p: 4, bgcolor: '#ffffff' }}>
-        <Box display="flex" flexDirection="column" gap={3}>
-          <Alert severity="error" sx={{ borderRadius: 0 }} icon={<IconAlertTriangle fontSize="inherit" />}>
-            <Typography variant="subtitle2" fontWeight={700} gutterBottom>
-              ¡Atención! Esta acción es irreversible
+      <DialogContent sx={{ mt: 4, p: 5, pt: 4, bgcolor: '#fff' }}>
+        {error && (
+          <Alert severity="error" sx={{ mb: 3 }}>
+            {error}
+          </Alert>
+        )}
+
+        <Box display="flex" flexDirection="column" gap={4}>
+          <Box
+            sx={{
+              p: 3,
+              borderRadius: 2,
+              bgcolor: '#ffebee',
+              border: '2px dashed #d32f2f',
+              textAlign: 'center'
+            }}
+          >
+            <IconAlertTriangle size={48} color="#d32f2f" style={{ marginBottom: 16 }} />
+            <Typography variant="h6" sx={{ color: '#d32f2f', fontWeight: 700, mb: 2 }}>
+              ¡ATENCIÓN! Esta acción es IRREVERSIBLE
             </Typography>
-            <Typography variant="body2" sx={{ mb: 1 }}>
+            <Typography variant="body1" sx={{ mb: 2, fontWeight: 500 }}>
               Está a punto de eliminar permanentemente el artículo:
             </Typography>
-            <Typography variant="body2" fontWeight={700}>
-              {articulo ? `"${articulo.Descripcion ?? ''}"` : ''}
-            </Typography>
-            {articulo?.Codigo && (
-              <Typography variant="caption" display="block">
-                Código: {articulo.Codigo}
+            <Box
+              sx={{
+                p: 2,
+                bgcolor: 'white',
+                borderRadius: 1,
+                border: '1px solid #d32f2f',
+                display: 'inline-block'
+              }}
+            >
+              <Typography variant="h6" sx={{ color: '#d32f2f', fontWeight: 700 }}>
+                &quot;{articulo?.Descripcion || 'Sin descripción'}&quot;
               </Typography>
-            )}
-            <Typography variant="body2" sx={{ mt: 1 }}>
-              Se perderán todas las referencias asociadas.
+              {articulo?.Codigo && (
+                <Typography variant="body2" sx={{ color: '#666' }}>
+                  Código: {articulo.Codigo}
+                </Typography>
+              )}
+            </Box>
+          </Box>
+
+          <Alert
+            severity="error"
+            sx={{
+              borderRadius: 2,
+              '& .MuiAlert-icon': {
+                fontSize: 28
+              }
+            }}
+          >
+            <Typography variant="body2" sx={{ fontWeight: 600 }}>
+              ⚠️ CONSECUENCIAS DE ESTA ACCIÓN:
+            </Typography>
+            <Typography variant="body2" component="ul" sx={{ mt: 1, pl: 2 }}>
+              <li>¿Estás seguro de que deseas eliminar el artículo &quot;{articulo?.Descripcion}&quot;?</li>
+              <li>Todas las referencias en ventas y stock se perderán o quedarán huérfanas</li>
+              <li>Esta acción NO se puede deshacer</li>
             </Typography>
           </Alert>
 
           <Box>
-            <Typography variant="body2" fontWeight={600} gutterBottom sx={{ color: 'text.secondary', textTransform: 'uppercase', fontSize: '0.75rem' }}>
-              Confirmación
+            <Typography variant="h6" sx={{ mb: 3, textAlign: 'center', color: '#d32f2f', fontWeight: 700 }}>
+              ELIMINAR
             </Typography>
             <TextField
-              placeholder="Escribí ELIMINAR para confirmar"
+              placeholder="Escriba la palabra de confirmación"
               value={textoConfirmacion}
               onChange={(e) => setTextoConfirmacion(e.target.value.toUpperCase())}
               fullWidth
               variant="outlined"
+              error={textoConfirmacion !== '' && textoConfirmacion !== 'ELIMINAR'}
+              helperText={textoConfirmacion !== '' && textoConfirmacion !== 'ELIMINAR' ? '❌ Debe escribir exactamente "ELIMINAR"' : textoConfirmacion === 'ELIMINAR' ? '✅ Confirmación correcta' : ''}
               sx={{
                 '& .MuiOutlinedInput-root': {
                   borderRadius: 0,
-                  bgcolor: '#fff',
+                  bgcolor: textoConfirmacion === 'ELIMINAR' ? '#e8f5e8' : '#ffebee',
+                  '& fieldset': {
+                    borderColor: textoConfirmacion === 'ELIMINAR' ? '#4caf50' : '#d32f2f',
+                    borderWidth: 2
+                  },
+                  '&:hover fieldset': {
+                    borderColor: textoConfirmacion === 'ELIMINAR' ? '#4caf50' : '#d32f2f'
+                  },
                   '&.Mui-focused fieldset': {
-                    borderColor: textoValido ? '#2e7d32' : PELIGRO_BASE,
+                    borderColor: textoConfirmacion === 'ELIMINAR' ? '#4caf50' : '#d32f2f'
                   }
                 }
               }}
               InputProps={{
                 startAdornment: (
                   <InputAdornment position="start">
-                    <IconAlertTriangle size={20} color={textoValido ? '#2e7d32' : PELIGRO_BASE} />
+                    <IconAlertTriangle size={20} color="#d32f2f" />
                   </InputAdornment>
-                )
+                ),
+                style: {
+                  fontSize: '1.1rem',
+                  fontWeight: 600,
+                  textAlign: 'center'
+                }
               }}
             />
-            {textoValido && (
-              <Typography variant="caption" color="success.main" sx={{ mt: 0.5, fontWeight: 600 }}>
-                ✅ Confirmación correcta
-              </Typography>
-            )}
           </Box>
         </Box>
       </DialogContent>
 
-      <DialogActions sx={{ p: 2, bgcolor: '#f5f5f5', borderTop: '1px solid #e0e0e0', gap: 2 }}>
+      <DialogActions sx={{ p: 2, bgcolor: '#f1f2f6', borderTop: '1px solid #e0e0e0', gap: 2, borderRadius: 0 }}>
         <Button
-          onClick={onClose}
+          onClick={cerrarModalEliminar}
+          variant="outlined"
+          disabled={loading}
           sx={{
-            color: 'text.secondary',
+            flex: 1,
+            borderColor: '#b0bec5',
+            color: '#546e7a',
+            '&:hover': { borderColor: '#78909c', bgcolor: '#eceff1', color: '#37474f' },
+            px: 4,
+            py: 1,
             textTransform: 'none',
             fontWeight: 600,
             borderRadius: 0,
-            px: 3
           }}
         >
           Cancelar
         </Button>
         <Button
           onClick={handleConfirm}
-          disabled={!textoValido || loading}
           variant="contained"
           disableElevation
+          disabled={!textoValido || loading}
           sx={{
-            bgcolor: PELIGRO_BASE,
+            flex: 1,
+            bgcolor: '#d32f2f',
             '&:hover': { bgcolor: '#b71c1c' },
             px: 4,
             py: 1,
             textTransform: 'none',
             fontWeight: 600,
-            borderRadius: 0
+            borderRadius: 0,
+            boxShadow: 'none',
           }}
         >
-          Eliminar Artículo
+          {loading ? 'Eliminando...' : 'Eliminar Permanentemente'}
         </Button>
       </DialogActions>
     </Dialog>

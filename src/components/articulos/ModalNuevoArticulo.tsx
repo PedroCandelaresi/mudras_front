@@ -29,7 +29,7 @@ import { Icon } from '@iconify/react';
 import type { Articulo } from '@/app/interfaces/mudras.types';
 import { CREAR_ARTICULO, ACTUALIZAR_ARTICULO } from '@/components/articulos/graphql/mutations';
 import ModalSubirImagen from './ModalSubirImagen';
-import { verde as verdePalette } from '@/ui/colores';
+import { verdeMilitar } from '@/ui/colores';
 import { GET_RUBROS } from '@/components/rubros/graphql/queries';
 import { GET_PROVEEDORES } from '@/components/proveedores/graphql/queries';
 import MenuItem from '@mui/material/MenuItem';
@@ -67,7 +67,7 @@ interface ModalNuevoArticuloProps {
 }
 
 const makeColors = (base?: string) => {
-  const primary = base || verdePalette.primary || '#2b4735';
+  const primary = base || verdeMilitar.primary;
   return {
     primary,
     primaryHover: darken(primary, 0.12),
@@ -91,7 +91,7 @@ const INITIAL_STATE: FormState = {
 };
 
 // Medidas y layout heredados de ModalDetallesArticulo
-const VH_MAX = 85;
+const VH_MAX = 78;
 const HEADER_H = 60;
 const FOOTER_H = 60;
 const DIV_H = 3;
@@ -526,7 +526,7 @@ const ModalNuevoArticulo = ({ open, onClose, articulo, onSuccess, accentColor }:
               required
               sx={{
                 '& .MuiOutlinedInput-root': {
-                  borderRadius: 2,
+                  borderRadius: 0,
                   background: '#ffffff',
                   '& fieldset': { borderColor: COLORS.inputBorder },
                   '&:hover fieldset': { borderColor: COLORS.inputBorderHover },
@@ -543,7 +543,7 @@ const ModalNuevoArticulo = ({ open, onClose, articulo, onSuccess, accentColor }:
               placeholder="Opcional"
               sx={{
                 '& .MuiOutlinedInput-root': {
-                  borderRadius: 2,
+                  borderRadius: 0,
                   background: '#ffffff',
                   '& fieldset': { borderColor: COLORS.inputBorder },
                   '&:hover fieldset': { borderColor: COLORS.inputBorderHover },
@@ -554,7 +554,7 @@ const ModalNuevoArticulo = ({ open, onClose, articulo, onSuccess, accentColor }:
 
             <Box sx={{ gridColumn: { xs: '1 / -1', sm: '1 / -1' }, display: 'flex', alignItems: 'center', gap: 2 }}>
               {form.imagenUrl ? (
-                <Box sx={{ position: 'relative', width: 80, height: 80, borderRadius: 2, overflow: 'hidden', border: '1px solid #ddd' }}>
+                <Box sx={{ position: 'relative', width: 80, height: 80, borderRadius: 0, overflow: 'hidden', border: '1px solid #ddd' }}>
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     src={(() => {
@@ -572,7 +572,7 @@ const ModalNuevoArticulo = ({ open, onClose, articulo, onSuccess, accentColor }:
                   />
                 </Box>
               ) : (
-                <Box sx={{ width: 80, height: 80, borderRadius: 2, bgcolor: '#eee', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <Box sx={{ width: 80, height: 80, borderRadius: 0, bgcolor: '#eee', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                   <Icon icon="mdi:image-off-outline" color="#aaa" width={24} />
                 </Box>
               )}
@@ -580,7 +580,7 @@ const ModalNuevoArticulo = ({ open, onClose, articulo, onSuccess, accentColor }:
                 variant="outlined"
                 onClick={() => setModalUploadOpen(true)}
                 startIcon={<Icon icon="mdi:camera" />}
-                sx={{ borderRadius: 2, textTransform: 'none' }}
+                sx={{ borderRadius: 0, textTransform: 'none' }}
               >
                 {form.imagenUrl ? 'Cambiar Imagen' : 'Agregar Imagen'}
               </Button>
@@ -616,7 +616,7 @@ const ModalNuevoArticulo = ({ open, onClose, articulo, onSuccess, accentColor }:
                     placeholder="Empezá a escribir para buscar"
                     sx={{
                       '& .MuiOutlinedInput-root': {
-                        borderRadius: 2,
+                        borderRadius: 0,
                         background: '#ffffff',
                         '& fieldset': { borderColor: COLORS.inputBorder },
                         '&:hover fieldset': { borderColor: COLORS.inputBorderHover },
@@ -656,7 +656,7 @@ const ModalNuevoArticulo = ({ open, onClose, articulo, onSuccess, accentColor }:
                     placeholder="Empezá a escribir para buscar"
                     sx={{
                       '& .MuiOutlinedInput-root': {
-                        borderRadius: 2,
+                        borderRadius: 0,
                         background: '#ffffff',
                         '& fieldset': { borderColor: COLORS.inputBorder },
                         '&:hover fieldset': { borderColor: COLORS.inputBorderHover },
@@ -678,7 +678,7 @@ const ModalNuevoArticulo = ({ open, onClose, articulo, onSuccess, accentColor }:
                 inputProps={{ min: 0, step: 0.01 }}
                 sx={{
                   '& .MuiOutlinedInput-root': {
-                    borderRadius: 2,
+                    borderRadius: 0,
                     background: '#ffffff',
                     '& fieldset': { borderColor: COLORS.inputBorder },
                     '&:hover fieldset': { borderColor: COLORS.inputBorderHover },
@@ -696,7 +696,7 @@ const ModalNuevoArticulo = ({ open, onClose, articulo, onSuccess, accentColor }:
                 inputProps={{ step: 0.1 }}
                 sx={{
                   '& .MuiOutlinedInput-root': {
-                    borderRadius: 2,
+                    borderRadius: 0,
                     background: '#ffffff',
                     '& fieldset': { borderColor: COLORS.inputBorder },
                     '&:hover fieldset': { borderColor: COLORS.inputBorderHover },
@@ -714,7 +714,7 @@ const ModalNuevoArticulo = ({ open, onClose, articulo, onSuccess, accentColor }:
                 fullWidth
                 sx={{
                   '& .MuiOutlinedInput-root': {
-                    borderRadius: 2,
+                    borderRadius: 0,
                     background: '#ffffff',
                     '& fieldset': { borderColor: COLORS.inputBorder },
                     '&:hover fieldset': { borderColor: COLORS.inputBorderHover },
@@ -730,7 +730,7 @@ const ModalNuevoArticulo = ({ open, onClose, articulo, onSuccess, accentColor }:
               </TextField>
               <Box
                 sx={{
-                  borderRadius: 2,
+                  borderRadius: 0,
                   background: 'rgba(255,255,255,0.9)',
                   border: `1px solid ${alpha(COLORS.primary, 0.2)}`,
                   boxShadow: 'inset 0 1px 3px rgba(255,255,255,0.6)',
@@ -771,7 +771,7 @@ const ModalNuevoArticulo = ({ open, onClose, articulo, onSuccess, accentColor }:
                 inputProps={{ min: 0, step: 0.01 }}
                 sx={{
                   '& .MuiOutlinedInput-root': {
-                    borderRadius: 2,
+                    borderRadius: 0,
                     background: '#ffffff',
                     '& fieldset': { borderColor: COLORS.inputBorder },
                     '&:hover fieldset': { borderColor: COLORS.inputBorderHover },
@@ -789,7 +789,7 @@ const ModalNuevoArticulo = ({ open, onClose, articulo, onSuccess, accentColor }:
                 inputProps={{ min: 0, step: 0.01 }}
                 sx={{
                   '& .MuiOutlinedInput-root': {
-                    borderRadius: 2,
+                    borderRadius: 0,
                     background: '#ffffff',
                     '& fieldset': { borderColor: COLORS.inputBorder },
                     '&:hover fieldset': { borderColor: COLORS.inputBorderHover },
@@ -830,7 +830,7 @@ const ModalNuevoArticulo = ({ open, onClose, articulo, onSuccess, accentColor }:
                   <CircularProgress size={24} />
                 </Box>
               ) : (
-                <TableContainer component={Paper} elevation={0} sx={{ border: `1px solid ${COLORS.inputBorder}`, borderRadius: 2 }}>
+                <TableContainer component={Paper} elevation={0} sx={{ border: `1px solid ${COLORS.inputBorder}`, borderRadius: 0 }}>
                   <Table size="small">
                     <TableHead sx={{ bgcolor: alpha(COLORS.primary, 0.05) }}>
                       <TableRow>

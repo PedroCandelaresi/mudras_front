@@ -34,7 +34,7 @@ import { BUSCAR_ARTICULOS, GET_ESTADISTICAS_ARTICULOS } from '@/components/artic
 import type { Articulo } from '@/app/interfaces/mudras.types';
 import { abrevUnidad, type UnidadMedida } from '@/app/utils/unidades';
 import { Paper } from '@mui/material';
-import { azul, verde } from '@/ui/colores';
+import { azul, verde, verdeMilitar } from '@/ui/colores';
 import ModalDetallesArticulo from '@/components/articulos/ModalDetallesArticulo';
 import ModalEliminarArticulo from '@/components/articulos/ModalEliminarArticulo';
 import { calcularPrecioDesdeArticulo } from '@/utils/precioVenta';
@@ -116,7 +116,7 @@ type ArticulosTableProps = {
 };
 
 /* ======================== Estética ======================== */
-const headerBg = verde.primary; // Flat Green Header
+const headerBg = verdeMilitar.primary; // Flat Green Header
 const tableBodyBg = '#ffffff';
 const tableBodyAlt = '#f8f9fa';
 const colorAccionEliminar = '#b71c1c';
@@ -489,8 +489,8 @@ const TablaArticulos: React.FC<ArticulosTableProps> = ({
         label={a.Rubro || 'Sin rubro'}
         size="small"
         sx={{
-          bgcolor: alpha(verde.primary, 0.1),
-          color: verde.primary,
+          bgcolor: alpha(verdeMilitar.primary, 0.1),
+          color: verdeMilitar.primary,
           fontWeight: 600,
           height: 24,
           borderRadius: 0,
@@ -557,7 +557,7 @@ const TablaArticulos: React.FC<ArticulosTableProps> = ({
         )}
         {onEdit && (
           <Tooltip title="Editar">
-            <IconButton size="small" onClick={() => onEdit(a)} sx={{ color: verde.primary, '&:hover': { bgcolor: alpha(verde.primary, 0.1) } }}>
+            <IconButton size="small" onClick={() => onEdit(a)} sx={{ color: verdeMilitar.primary, '&:hover': { bgcolor: alpha(verdeMilitar.primary, 0.1) } }}>
               <IconEdit size={20} />
             </IconButton>
           </Tooltip>
@@ -584,14 +584,38 @@ const TablaArticulos: React.FC<ArticulosTableProps> = ({
     <Box
       sx={{
         display: 'flex',
-        justifyContent: 'flex-start',
+        justifyContent: 'space-between', // Space between Left (Actions) and Right (Search)
         alignItems: 'center',
         mb: 3,
         p: 2,
         bgcolor: '#ffffff',
       }}
     >
-      <Box display="flex" alignItems="center" gap={2} flexWrap="wrap">
+      {/* Left Side: Actions */}
+      <Box display="flex" alignItems="center" gap={2}>
+        {allowCreate && (
+          <Button
+            variant="contained"
+            startIcon={<IconPlus size={18} />}
+            onClick={onCreateClick}
+            disableElevation
+            sx={{
+              borderRadius: 0,
+              textTransform: 'none',
+              bgcolor: verdeMilitar.primary,
+              fontWeight: 600,
+              px: 3,
+              py: 1,
+              '&:hover': { bgcolor: verdeMilitar.primaryHover }
+            }}
+          >
+            {`Nuevo Proveedor`}
+          </Button>
+        )}
+      </Box>
+
+      {/* Right Side: Search & Filters */}
+      <Box display="flex" alignItems="center" gap={2}>
         <TextField
           placeholder="Buscar descripción, código o proveedor…"
           size="small"
@@ -614,7 +638,7 @@ const TablaArticulos: React.FC<ArticulosTableProps> = ({
               bgcolor: '#f5f5f5',
               '& fieldset': { borderColor: '#e0e0e0' },
               '&:hover fieldset': { borderColor: '#bdbdbd' },
-              '&.Mui-focused fieldset': { borderColor: verde.primary },
+              '&.Mui-focused fieldset': { borderColor: verdeMilitar.primary },
             }
           }}
         />
@@ -623,28 +647,17 @@ const TablaArticulos: React.FC<ArticulosTableProps> = ({
           variant="outlined"
           startIcon={<IconRefresh size={18} />}
           onClick={limpiarFiltros}
-          sx={{ borderRadius: 0, textTransform: 'none', color: '#757575', borderColor: '#e0e0e0', '&:hover': { borderColor: '#bdbdbd', bgcolor: '#f5f5f5' } }}
+          sx={{
+            borderRadius: 0,
+            textTransform: 'none',
+            color: '#757575',
+            borderColor: '#e0e0e0',
+            height: 40,
+            '&:hover': { borderColor: '#bdbdbd', bgcolor: '#f5f5f5' }
+          }}
         >
           Limpiar
         </Button>
-
-        {allowCreate && (
-          <Button
-            variant="contained"
-            startIcon={<IconPlus size={18} />}
-            onClick={onCreateClick}
-            disableElevation
-            sx={{
-              borderRadius: 0,
-              textTransform: 'none',
-              bgcolor: verde.primary,
-              fontWeight: 600,
-              '&:hover': { bgcolor: verde.primaryHover }
-            }}
-          >
-            {`Nuevo artículo`}
-          </Button>
-        )}
       </Box>
     </Box>
   );
@@ -677,21 +690,21 @@ const TablaArticulos: React.FC<ArticulosTableProps> = ({
             color: '#37474f',
           },
           '& .MuiTableBody-root .MuiTableRow-root:nth-of-type(even)': {
-            bgcolor: alpha(verde.primary, 0.03), // Subtle Green Zebra
+            bgcolor: verdeMilitar.tableStriped,
           },
           '& .MuiTableBody-root .MuiTableRow-root:hover': {
-            bgcolor: alpha(verde.primary, 0.12),
+            bgcolor: alpha(verdeMilitar.primary, 0.12),
           },
           '& .MuiTableCell-head': {
             fontSize: '0.8rem',
             fontWeight: 700,
-            bgcolor: '#f5f7fa',
-            color: verde.primary,
+            bgcolor: verdeMilitar.tableHeader,
+            color: '#ffffff',
           },
         }}
       >
         <TableHead>
-          <TableRow sx={{ '& th': { bgcolor: verde.primary, color: '#ffffff', fontWeight: 600, letterSpacing: 0.5, borderRadius: 0 } }}>
+          <TableRow sx={{ '& th': { bgcolor: verdeMilitar.tableHeader, color: '#ffffff', fontWeight: 600, letterSpacing: 0.5, borderRadius: 0 } }}>
             {columns.map((column) => {
               const displayedHeader = (column.header === 'STOCK TOTAL' || column.key === 'stock') ? 'Global' : (column.header ?? column.key.toUpperCase());
               return (

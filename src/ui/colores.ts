@@ -134,6 +134,28 @@ export const grisVerdoso = {
 
 export type PaletaGrisVerdoso = typeof grisVerdoso;
 
+export const verdeMilitar = {
+  headerBg: '#33401c',
+  headerText: '#f1f8e9',
+  headerBorder: '#556b2f',
+  toolbarBg: '#f6f9f4',
+  toolbarBorder: '#c5e1a5',
+  borderOuter: '#556b2f',
+  borderInner: '#dcedc8',
+  primary: '#556b2f',
+  primaryHover: '#33401c',
+  textStrong: '#33401c',
+  chipBg: '#dcedc8',
+  chipText: '#33401c',
+  rowHover: '#f6f9f4',
+  alternateRow: '#f1f8e9',
+  actionHover: '#c5e1a5',
+  tableHeader: '#68823b', // Lighter military green for table headers
+  tableStriped: '#f6f9f4',
+};
+
+export type PaletaVerdeMilitar = typeof verdeMilitar;
+
 // Depósitos = gris rojizo oscuro
 export const grisRojizo = {
   headerBg: '#3e2d2d',

@@ -27,7 +27,7 @@ import { es } from 'date-fns/locale';
 import { GET_ARTICULO } from '@/components/articulos/graphql/queries';
 import type { Articulo } from '@/app/interfaces/mudras.types';
 
-import { verde as verdePalette } from '@/ui/colores';
+import { azul } from '@/ui/colores';
 import { calcularPrecioDesdeArticulo } from '@/utils/precioVenta';
 
 /* ======================== Props ======================== */
@@ -53,7 +53,7 @@ const currency = (v?: number | null) =>
     : '—';
 
 const makeColors = (base?: string) => {
-  const primary = base || verdePalette.primary;
+  const primary = base || azul.primary;
   return {
     primary,
     primaryHover: darken(primary, 0.12),
@@ -63,7 +63,7 @@ const makeColors = (base?: string) => {
 };
 
 /* ======================== Layout ======================== */
-const VH_MAX = 85;
+const VH_MAX = 78;
 const HEADER_H = 60;      // Igual al modal de proveedores
 const FOOTER_H = 60;
 const DIV_H = 3;
