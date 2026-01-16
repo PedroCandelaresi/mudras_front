@@ -91,6 +91,7 @@ export const teal = {
   textStrong: '#0b3a39',
   rowHover: '#e6faf8',
   alternateRow: '#f0fcf9', // ✅ agregado
+  actionHover: '#dfece0',
 };
 
 export type PaletaTeal = typeof teal;
@@ -109,6 +110,7 @@ export const violeta = {
   textStrong: '#4a148c',
   rowHover: '#f5e9fb',
   alternateRow: '#f9f1fc', // ✅ agregado
+  actionHover: '#f3e5f5',
 };
 
 export type PaletaVioleta = typeof violeta;
@@ -155,6 +157,27 @@ export const verdeMilitar = {
 };
 
 export type PaletaVerdeMilitar = typeof verdeMilitar;
+
+// Rojo = Eliminar / Peligro
+export const rojo = {
+  headerBg: '#c62828',
+  headerText: '#ffebee',
+  headerBorder: '#b71c1c',
+  toolbarBg: '#ffebee',
+  toolbarBorder: '#ffcdd2',
+  borderOuter: '#b71c1c',
+  borderInner: '#ffcdd2',
+  primary: '#d32f2f',
+  primaryHover: '#b71c1c',
+  textStrong: '#b71c1c',
+  chipBg: '#ffcdd2',
+  chipText: '#b71c1c',
+  rowHover: '#ffebee',
+  alternateRow: '#fff5f5',
+  actionHover: '#ffcdd2',
+};
+
+export type PaletaRojo = typeof rojo;
 
 // Depósitos = gris rojizo oscuro
 export const grisRojizo = {

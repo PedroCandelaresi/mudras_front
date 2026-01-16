@@ -37,7 +37,7 @@ import {
 } from '@tabler/icons-react';
 import { BUSCAR_RUBROS } from '@/components/rubros/graphql/queries';
 import type { BuscarRubrosResponse, RubroConEstadisticas } from '@/app/interfaces/graphql.types';
-import { verde, azul } from '@/ui/colores';
+import { verdeMilitar, azul, rojo } from '@/ui/colores';
 import ModalEditarRubro from './ModalEditarRubro';
 import ModalDetallesRubro from './ModalDetallesRubro';
 import ModalEliminarRubro from './ModalEliminarRubro';
@@ -65,20 +65,12 @@ type RubroParaModal = {
   porcentajeDescuento?: number;
   cantidadArticulos?: number;
   cantidadProveedores?: number;
+  unidadMedida?: string;
 };
-
-/* ======================== Estética ======================== */
-// Diseño plano y limpio
-const tableBodyBg = '#ffffff';
-const tableBodyAlt = '#f8f9fa';
-
-/* ======================== Tipos de filtros por columna ======================== */
 
 /* ======================== Tipos de filtros por columna ======================== */
 type ColKey = 'nombre' | 'codigo';
 type ColFilters = Partial<Record<ColKey, string>>;
-
-const colorAccionEliminar = '#c62828';
 
 const TablaRubros: React.FC<Props> = ({ onNuevoRubro, puedeCrear = true }) => {
   /* ---------- Estado de tabla / filtros ---------- */
@@ -152,6 +144,7 @@ const TablaRubros: React.FC<Props> = ({ onNuevoRubro, puedeCrear = true }) => {
       porcentajeDescuento: rubro.porcentajeDescuento,
       cantidadArticulos: rubro.cantidadArticulos,
       cantidadProveedores: rubro.cantidadProveedores,
+      unidadMedida: (rubro as any).unidadMedida,
     });
     setModalDetallesOpen(true);
   };
@@ -165,6 +158,7 @@ const TablaRubros: React.FC<Props> = ({ onNuevoRubro, puedeCrear = true }) => {
       porcentajeDescuento: rubro.porcentajeDescuento,
       cantidadArticulos: rubro.cantidadArticulos,
       cantidadProveedores: rubro.cantidadProveedores,
+      unidadMedida: (rubro as any).unidadMedida,
     });
     setModalEditarOpen(true);
   };
@@ -178,6 +172,7 @@ const TablaRubros: React.FC<Props> = ({ onNuevoRubro, puedeCrear = true }) => {
       porcentajeDescuento: rubro.porcentajeDescuento,
       cantidadArticulos: rubro.cantidadArticulos,
       cantidadProveedores: rubro.cantidadProveedores,
+      unidadMedida: (rubro as any).unidadMedida,
     });
     setTextoConfirmacion('');
     setModalEliminarOpen(true);
@@ -199,6 +194,7 @@ const TablaRubros: React.FC<Props> = ({ onNuevoRubro, puedeCrear = true }) => {
   const confirmarEliminacion = async () => {
     if (rubroSeleccionado && textoConfirmacion === 'ELIMINAR') {
       // acá iría tu mutation de eliminar rubro
+      // TODO: Add mutation logic if missing
       cerrarModales();
       refetch();
     }
@@ -254,10 +250,25 @@ const TablaRubros: React.FC<Props> = ({ onNuevoRubro, puedeCrear = true }) => {
       }}
     >
       <Box display="flex" alignItems="center" gap={1}>
-        <IconCategory size={24} color={verde.primary} />
-        <Typography variant="h5" fontWeight={700} color={verde.primary}>
-          Rubros y Categorías
-        </Typography>
+        {puedeCrear && (
+          <Button
+            variant="contained"
+            startIcon={<IconPlus size={18} />}
+            onClick={onNuevoRubro || handleNuevoRubro}
+            disableElevation
+            sx={{
+              borderRadius: 0,
+              textTransform: 'none',
+              bgcolor: verdeMilitar.primary,
+              fontWeight: 600,
+              px: 3,
+              py: 1,
+              '&:hover': { bgcolor: verdeMilitar.primaryHover }
+            }}
+          >
+            Nuevo Rubro
+          </Button>
+        )}
       </Box>
 
       <Box display="flex" alignItems="center" gap={2}>
@@ -286,7 +297,7 @@ const TablaRubros: React.FC<Props> = ({ onNuevoRubro, puedeCrear = true }) => {
               bgcolor: '#f5f5f5',
               '& fieldset': { borderColor: '#e0e0e0' },
               '&:hover fieldset': { borderColor: '#bdbdbd' },
-              '&.Mui-focused fieldset': { borderColor: verde.primary },
+              '&.Mui-focused fieldset': { borderColor: verdeMilitar.primary },
             }
           }}
         />
@@ -299,24 +310,6 @@ const TablaRubros: React.FC<Props> = ({ onNuevoRubro, puedeCrear = true }) => {
         >
           Limpiar
         </Button>
-
-        {puedeCrear && (
-          <Button
-            variant="contained"
-            startIcon={<IconPlus size={18} />}
-            onClick={onNuevoRubro || handleNuevoRubro}
-            disableElevation
-            sx={{
-              borderRadius: 0,
-              textTransform: 'none',
-              bgcolor: verde.primary,
-              fontWeight: 600,
-              '&:hover': { bgcolor: verde.primaryHover }
-            }}
-          >
-            Nuevo Rubro
-          </Button>
-        )}
       </Box>
     </Box>
   );
@@ -350,24 +343,24 @@ const TablaRubros: React.FC<Props> = ({ onNuevoRubro, puedeCrear = true }) => {
             color: '#37474f',
           },
           '& .MuiTableBody-root .MuiTableRow-root:nth-of-type(even)': {
-            bgcolor: alpha(verde.primary, 0.03), // Subtle Green Zebra
+            bgcolor: verdeMilitar.tableStriped || '#f6f9f4',
           },
           '& .MuiTableBody-root .MuiTableRow-root:hover': {
-            bgcolor: alpha(verde.primary, 0.12),
+            bgcolor: alpha(verdeMilitar.primary, 0.12),
           },
           '& .MuiTableCell-head': {
             fontSize: '0.8rem',
             fontWeight: 700,
-            bgcolor: '#f5f7fa',
-            color: verde.primary,
+            bgcolor: verdeMilitar.tableHeader || '#68823b',
+            color: '#ffffff', // White text
           },
         }}
       >
         <TableHead>
-          <TableRow sx={{ '& th': { bgcolor: verde.primary, color: '#ffffff', fontWeight: 600, letterSpacing: 0.5, borderRadius: 0 } }}>
+          <TableRow sx={{ '& th': { bgcolor: verdeMilitar.tableHeader || '#68823b', color: '#ffffff', fontWeight: 600, letterSpacing: 0.5, borderRadius: 0 } }}>
             {/* Nombre + menú de filtro como Proveedores */}
-            <TableCell align="center">
-              <Box display="flex" alignItems="center" justifyContent="space-between">
+            <TableCell align="left">
+              <Box display="flex" alignItems="center" gap={1}>
                 Nombre
                 <Tooltip title="Filtrar columna">
                   <IconButton
@@ -375,6 +368,7 @@ const TablaRubros: React.FC<Props> = ({ onNuevoRubro, puedeCrear = true }) => {
                     aria-label="Filtrar columna nombre"
                     aria-haspopup="menu"
                     onClick={abrirMenuColumna('nombre')}
+                    sx={{ color: 'rgba(255,255,255,0.7)', '&:hover': { color: '#fff' } }}
                   >
                     <IconDotsVertical size={16} />
                   </IconButton>
@@ -383,8 +377,8 @@ const TablaRubros: React.FC<Props> = ({ onNuevoRubro, puedeCrear = true }) => {
             </TableCell>
 
             {/* Código + menú de filtro */}
-            <TableCell align="center">
-              <Box display="flex" alignItems="center" justifyContent="space-between">
+            <TableCell align="left">
+              <Box display="flex" alignItems="center" gap={1}>
                 Código
                 <Tooltip title="Filtrar columna">
                   <IconButton
@@ -392,6 +386,7 @@ const TablaRubros: React.FC<Props> = ({ onNuevoRubro, puedeCrear = true }) => {
                     aria-label="Filtrar columna código"
                     aria-haspopup="menu"
                     onClick={abrirMenuColumna('codigo')}
+                    sx={{ color: 'rgba(255,255,255,0.7)', '&:hover': { color: '#fff' } }}
                   >
                     <IconDotsVertical size={16} />
                   </IconButton>
@@ -414,7 +409,7 @@ const TablaRubros: React.FC<Props> = ({ onNuevoRubro, puedeCrear = true }) => {
                     label={<IconCategory size={18} />}
                     size="medium"
                     sx={{
-                      bgcolor: verde.primary,
+                      bgcolor: verdeMilitar.primary,
                       borderRadius: 0, // Flat Chip
                       color: '#fff',
                       height: 32,
@@ -446,7 +441,7 @@ const TablaRubros: React.FC<Props> = ({ onNuevoRubro, puedeCrear = true }) => {
                     <IconButton
                       size="small"
                       onClick={() => handleEditRubro(rubro as RubroConEstadisticas)}
-                      sx={{ color: verde.primary, '&:hover': { bgcolor: alpha(verde.primary, 0.1) } }}
+                      sx={{ color: verdeMilitar.primary, '&:hover': { bgcolor: alpha(verdeMilitar.primary, 0.1) } }}
                     >
                       <IconEdit size={20} />
                     </IconButton>
@@ -455,7 +450,7 @@ const TablaRubros: React.FC<Props> = ({ onNuevoRubro, puedeCrear = true }) => {
                     <IconButton
                       size="small"
                       onClick={() => handleDeleteRubro(rubro as RubroConEstadisticas)}
-                      sx={{ color: colorAccionEliminar, '&:hover': { bgcolor: alpha(colorAccionEliminar, 0.1) } }}
+                      sx={{ color: rojo.primary || '#d32f2f', '&:hover': { bgcolor: alpha(rojo.primary || '#d32f2f', 0.1) } }}
                     >
                       <IconTrash size={20} />
                     </IconButton>
@@ -512,7 +507,7 @@ const TablaRubros: React.FC<Props> = ({ onNuevoRubro, puedeCrear = true }) => {
               size="small"
               variant="contained"
               onClick={aplicarFiltroColumna}
-              sx={{ borderRadius: 0, bgcolor: verde.primary, textTransform: 'none', '&:hover': { bgcolor: verde.primaryHover } }}
+              sx={{ borderRadius: 0, bgcolor: verdeMilitar.primary, textTransform: 'none', '&:hover': { bgcolor: verdeMilitar.primaryHover } }}
             >
               Aplicar
             </Button>
@@ -548,11 +543,11 @@ const TablaRubros: React.FC<Props> = ({ onNuevoRubro, puedeCrear = true }) => {
                 px: 1,
                 borderRadius: 0,
                 borderColor: Number(num) === paginaActual ? 'transparent' : '#e0e0e0',
-                bgcolor: Number(num) === paginaActual ? verde.primary : 'transparent',
+                bgcolor: Number(num) === paginaActual ? verdeMilitar.primary : 'transparent',
                 color: Number(num) === paginaActual ? '#fff' : 'text.primary',
                 '&:hover': {
-                  borderColor: verde.primary,
-                  bgcolor: Number(num) === paginaActual ? verde.primaryHover : alpha(verde.primary, 0.05)
+                  borderColor: verdeMilitar.primary,
+                  bgcolor: Number(num) === paginaActual ? verdeMilitar.primaryHover : alpha(verdeMilitar.primary, 0.05)
                 }
               }}
               onClick={() => handleChangePage(null as unknown as Event, Number(num) - 1)}
@@ -617,7 +612,7 @@ const TablaRubros: React.FC<Props> = ({ onNuevoRubro, puedeCrear = true }) => {
         onClose={cerrarModales}
         rubro={rubroSeleccionado}
         onSuccess={refetch}
-        accentColor={verde.primary}
+        accentColor={verdeMilitar.primary}
       />
 
       <ModalDetallesRubro open={modalDetallesOpen} onClose={cerrarModales} rubro={rubroSeleccionado} />

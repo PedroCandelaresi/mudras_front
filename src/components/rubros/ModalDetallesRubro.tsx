@@ -13,6 +13,7 @@ import { ProveedoresPorRubroResponse } from '@/interfaces/rubros';
 import { TablaArticulos } from '@/components/articulos';
 import { ModalEliminarArticuloRubro } from '@/components/rubros/ModalEliminarArticuloRubro';
 import { ELIMINAR_ARTICULO_DE_RUBRO } from '@/components/rubros/graphql/mutations';
+import { azul } from '@/ui/colores';
 
 interface Rubro {
   id: number;
@@ -50,7 +51,7 @@ const NBSP = '\u00A0';
 const formatCount = (n: number, singular: string, plural?: string) =>
   `${n.toLocaleString('es-AR')}${NBSP}${n === 1 ? singular : (plural ?? `${singular}s`)}`;
 
-const VH_MAX = 85;
+const VH_MAX = 78;
 
 const ModalDetallesRubro = ({ open, onClose, rubro, accentColor }: ModalDetallesRubroProps) => {
   const [filtroInput, setFiltroInput] = useState('');
@@ -210,10 +211,10 @@ const ModalDetallesRubro = ({ open, onClose, rubro, accentColor }: ModalDetalles
         elevation: 0,
         sx: {
           borderRadius: 0,
-          border: '1px solid #e0e0e0',
           bgcolor: '#ffffff',
           maxHeight: `${VH_MAX}vh`,
           overflow: 'hidden',
+          boxShadow: 'none',
         },
       }}
     >
@@ -221,37 +222,36 @@ const ModalDetallesRubro = ({ open, onClose, rubro, accentColor }: ModalDetalles
 
         {/* ===== HEADER ===== */}
         <Box sx={{
-          bgcolor: '#f5f5f5',
-          color: '#000',
+          bgcolor: azul.primary,
+          color: '#fff',
           px: 3,
           py: 2,
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
-          borderBottom: '1px solid #e0e0e0',
           borderRadius: 0,
           flexShrink: 0,
         }}>
           <Box display="flex" alignItems="center" gap={2}>
-            <Icon icon="mdi:tag-multiple" width={24} height={24} color="#546e7a" />
+            <Icon icon="mdi:tag-multiple" width={24} height={24} color="#fff" />
             <Box>
               <Typography variant="h6" fontWeight={700} letterSpacing={0}>
                 {rubroNombre}
               </Typography>
               <Box display="flex" alignItems="center" gap={1} mt={0}>
                 {!!rubroCodigo && (
-                  <Typography variant="caption" color="text.secondary">
+                  <Typography variant="caption" sx={{ opacity: 0.8 }}>
                     CÓD: {rubroCodigo}
                   </Typography>
                 )}
-                {!!rubroCodigo && <Typography variant="caption" color="text.disabled">|</Typography>}
-                <Typography variant="caption" color="text.secondary">
+                {!!rubroCodigo && <Typography variant="caption" sx={{ opacity: 0.6 }}>|</Typography>}
+                <Typography variant="caption" sx={{ opacity: 0.8 }}>
                   {formatCount(totalArticulosRubro, 'ARTÍCULO', 'ARTÍCULOS')}
                 </Typography>
               </Box>
             </Box>
           </Box>
-          <IconButton onClick={onCerrar} size="small" sx={{ color: 'text.secondary', '&:hover': { bgcolor: 'rgba(0,0,0,0.05)' } }}>
+          <IconButton onClick={onCerrar} size="small" sx={{ color: '#fff', '&:hover': { bgcolor: 'rgba(255,255,255,0.2)' } }}>
             <Icon icon="mdi:close" width={24} />
           </IconButton>
         </Box>
@@ -340,10 +340,10 @@ const ModalDetallesRubro = ({ open, onClose, rubro, accentColor }: ModalDetalles
                     }}
                     sx={{
                       borderRadius: 0, fontWeight: 600,
-                      bgcolor: proveedorSeleccionadoId === null ? '#455a64' : 'transparent', // Blue/Grey
-                      color: proveedorSeleccionadoId === null ? '#fff' : '#455a64',
-                      borderColor: '#455a64',
-                      '&:hover': { bgcolor: proveedorSeleccionadoId === null ? '#37474f' : '#eceff1' }
+                      bgcolor: proveedorSeleccionadoId === null ? azul.primary : 'transparent',
+                      color: proveedorSeleccionadoId === null ? '#fff' : azul.primary,
+                      borderColor: azul.primary,
+                      '&:hover': { bgcolor: proveedorSeleccionadoId === null ? azul.primaryHover : azul.actionHover }
                     }}
                   />
                   {proveedores.map((p) => {
@@ -361,10 +361,10 @@ const ModalDetallesRubro = ({ open, onClose, rubro, accentColor }: ModalDetalles
                         }}
                         sx={{
                           borderRadius: 0, fontWeight: 600,
-                          bgcolor: seleccionado ? '#455a64' : 'transparent',
-                          color: seleccionado ? '#fff' : '#455a64',
-                          borderColor: '#455a64',
-                          '&:hover': { bgcolor: seleccionado ? '#37474f' : '#eceff1' }
+                          bgcolor: seleccionado ? azul.primary : 'transparent',
+                          color: seleccionado ? '#fff' : azul.primary,
+                          borderColor: azul.primary,
+                          '&:hover': { bgcolor: seleccionado ? azul.primaryHover : azul.actionHover }
                         }}
                       />
                     );
@@ -400,7 +400,7 @@ const ModalDetallesRubro = ({ open, onClose, rubro, accentColor }: ModalDetalles
                   borderRadius: 0,
                   bgcolor: '#fff',
                   '& fieldset': { borderColor: '#e0e0e0' },
-                  '&.Mui-focused fieldset': { borderColor: '#455a64', borderWidth: 2 },
+                  '&.Mui-focused fieldset': { borderColor: azul.primary, borderWidth: 2 },
                   '&:hover fieldset': { borderColor: '#b0bec5' },
                 }
               }}
@@ -442,21 +442,21 @@ const ModalDetallesRubro = ({ open, onClose, rubro, accentColor }: ModalDetalles
         </DialogContent>
 
         {/* ===== FOOTER ===== */}
-        <DialogActions sx={{ p: 2, bgcolor: '#f5f5f5', borderTop: '1px solid #e0e0e0', gap: 2, borderRadius: 0, flexShrink: 0 }}>
+        <DialogActions sx={{ p: 2, bgcolor: '#f1f2f6', borderTop: '1px solid #e0e0e0', gap: 2, borderRadius: 0, flexShrink: 0 }}>
           <Box flex={1} />
           <Button
             onClick={onCerrar}
             variant="contained"
             disableElevation
             sx={{
-              bgcolor: '#5d4037', // Brownish
+              bgcolor: azul.primary,
               color: '#fff',
               px: 4,
               py: 1,
               fontWeight: 600,
               textTransform: 'none',
               borderRadius: 0,
-              '&:hover': { bgcolor: '#4e342e' }
+              '&:hover': { bgcolor: azul.primaryHover }
             }}
           >
             Cerrar

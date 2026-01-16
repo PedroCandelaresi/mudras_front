@@ -15,7 +15,7 @@ import { alpha, darken } from '@mui/material/styles';
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useMutation } from '@apollo/client/react';
 
-import { marron } from '@/components/rubros/colores-marron';
+import { verdeMilitar } from '@/ui/colores';
 import { ACTUALIZAR_RUBRO, CREAR_RUBRO } from '@/components/rubros/graphql/mutations';
 
 interface Rubro {
@@ -37,10 +37,10 @@ interface ModalEditarRubroProps {
   accentColor?: string;
 }
 
-const VH_MAX = 85;
+const VH_MAX = 78;
 
 const makeColors = (base?: string) => {
-  const primary = base || marron.primary || '#5D4037';
+  const primary = base || verdeMilitar.primary;
   return {
     primary,
     primaryHover: darken(primary, 0.12),
@@ -134,7 +134,6 @@ const ModalEditarRubro = ({ open, onClose, rubro, onSuccess, accentColor }: Moda
         sx: {
           borderRadius: 0,
           boxShadow: 'none',
-          border: '1px solid #e0e0e0',
           overflow: 'hidden',
           maxHeight: `${VH_MAX}vh`,
         },
