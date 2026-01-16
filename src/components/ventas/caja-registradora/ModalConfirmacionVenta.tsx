@@ -359,7 +359,7 @@ export const ModalConfirmacionVenta: React.FC<ModalConfirmacionVentaProps> = ({
 
       <DialogContent sx={{ p: 3, bgcolor: '#ffffff', overflowY: 'auto' }}>
         <Grid container spacing={3}>
-          <Grid item xs={12} md={6}>
+          <Grid size={{ xs: 12, md: 6 }}>
             <Card elevation={0} sx={{ border: '1px solid #e0e0e0', borderRadius: 0, mb: 2 }}>
               <CardContent sx={{ p: 2 }}>
                 <Box display="flex" alignItems="center" gap={1} mb={2}>
@@ -370,7 +370,7 @@ export const ModalConfirmacionVenta: React.FC<ModalConfirmacionVentaProps> = ({
                 </Box>
 
                 <Grid container spacing={2}>
-                  <Grid item xs={12}>
+                  <Grid size={{ xs: 12 }}>
                     <Autocomplete
                       value={usuarioSeleccionado}
                       onChange={(_, value) => setUsuarioSeleccionado(value)}
@@ -402,7 +402,7 @@ export const ModalConfirmacionVenta: React.FC<ModalConfirmacionVentaProps> = ({
                     />
                   </Grid>
 
-                  <Grid item xs={12}>
+                  <Grid size={{ xs: 12 }}>
                     <TextField
                       fullWidth
                       size="small"
@@ -470,7 +470,7 @@ export const ModalConfirmacionVenta: React.FC<ModalConfirmacionVentaProps> = ({
             </Card>
           </Grid>
 
-          <Grid item xs={12} md={6}>
+          <Grid size={{ xs: 12, md: 6 }}>
             <Card elevation={0} sx={{ border: '1px solid #e0e0e0', borderRadius: 0, height: '100%' }}>
               <CardContent sx={{ p: 2, display: 'flex', flexDirection: 'column', gap: 2 }}>
                 <Box display="flex" alignItems="center" gap={1}>
@@ -488,7 +488,7 @@ export const ModalConfirmacionVenta: React.FC<ModalConfirmacionVentaProps> = ({
                   }}
                 >
                   <Grid container spacing={2} alignItems="center">
-                    <Grid item xs={12} sm={6}>
+                    <Grid size={{ xs: 12, sm: 6 }}>
                       <FormControl fullWidth size="small">
                         <InputLabel>Método</InputLabel>
                         <Select
@@ -510,7 +510,7 @@ export const ModalConfirmacionVenta: React.FC<ModalConfirmacionVentaProps> = ({
                         </Select>
                       </FormControl>
                     </Grid>
-                    <Grid item xs={12} sm={4}>
+                    <Grid size={{ xs: 12, sm: 4 }}>
                       <TextField
                         fullWidth
                         size="small"
@@ -524,7 +524,7 @@ export const ModalConfirmacionVenta: React.FC<ModalConfirmacionVentaProps> = ({
                         inputProps={{ min: 0, step: 0.01 }}
                       />
                     </Grid>
-                    <Grid item xs={12} sm={2}>
+                    <Grid size={{ xs: 12, sm: 2 }}>
                       <Button
                         variant="contained"
                         color="primary"

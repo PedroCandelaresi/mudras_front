@@ -100,7 +100,7 @@ export function ModalEliminarRubro({ open, onClose, onConfirm, rubro, textoConfi
 
           <Box>
             <Typography variant="caption" fontWeight={600} mb={1} display="block" color={PELIGRO_BASE}>
-              Escriba "ELIMINAR" para confirmar
+              Escriba &quot;ELIMINAR&quot; para confirmar
             </Typography>
             <TextField
               value={textoConfirmacion}

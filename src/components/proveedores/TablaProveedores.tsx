@@ -454,4 +454,6 @@ const TablaProveedores = forwardRef<TablaProveedoresHandle, Props>(({
   );
 });
 
+TablaProveedores.displayName = 'TablaProveedores';
+
 export default TablaProveedores;

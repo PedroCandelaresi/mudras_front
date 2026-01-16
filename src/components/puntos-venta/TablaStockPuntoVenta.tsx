@@ -223,7 +223,7 @@ const TablaStockPuntoVenta: React.FC<Props> = ({
                             />
                           </Box>
                         ) : (
-                          <Box width={40} height={40} bgcolor="#f5f5f5" border="1px solid #e0e0e0" display="grid" placeItems="center">
+                          <Box width={40} height={40} bgcolor="#f5f5f5" border="1px solid #e0e0e0" display="grid" sx={{ placeItems: 'center' }}>
                             <Icon icon="mdi:image-off-outline" color="#bdbdbd" />
                           </Box>
                         )}

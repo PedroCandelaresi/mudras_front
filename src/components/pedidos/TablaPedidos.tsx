@@ -6,7 +6,7 @@ import {
   Typography, TextField, InputAdornment, Stack, Chip, Tooltip, IconButton, Paper, Button, MenuItem
 } from "@mui/material";
 import {
-  IconReceipt, IconCalendar, IconUser, IconEye, IconMagnifyingGlass, IconX, IconPlus
+  IconReceipt, IconCalendar, IconUser, IconEye, IconSearch, IconX, IconPlus
 } from "@tabler/icons-react";
 import { ModalBase } from "@/ui/ModalBase";
 
@@ -83,7 +83,7 @@ export function TablaPedidos({ items = [], puedeCrear = false, onNuevoPedido }: 
             InputProps={{
               startAdornment: (
                 <InputAdornment position="start">
-                  <IconMagnifyingGlass size={18} color="#757575" />
+                  <IconSearch size={18} color="#757575" />
                 </InputAdornment>
               ),
               endAdornment: busqueda && (
