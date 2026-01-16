@@ -48,7 +48,7 @@ const ModalEliminarProveedor = ({ open, onClose, proveedor, onProveedorEliminado
     try {
       await eliminarProveedor({
         variables: {
-          id: proveedor.IdProveedor
+          id: Number(proveedor.IdProveedor)
         },
         refetchQueries: ['GetProveedores']
       });

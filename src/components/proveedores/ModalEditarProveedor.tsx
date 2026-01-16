@@ -415,10 +415,12 @@ const ModalEditarProveedor = ({ open, onClose, proveedor, onProveedorGuardado }:
     // Format as XX-XXXXXXXX-X
     let formatted = value;
     if (value.length > 2) {
-      formatted = `${value.slice(0, 2)}-${value.slice(2)}`;
+      // First 2 digits + dash + next 8 digits (max)
+      formatted = `${value.slice(0, 2)}-${value.slice(2, 10)}`;
     }
     if (value.length > 10) {
-      formatted = `${formatted.slice(0, 13)}-${value.slice(10)}`;
+      // Previous part + dash + last digit
+      formatted = `${formatted}-${value.slice(10, 11)}`;
     }
 
     setFormData((prev) => ({
