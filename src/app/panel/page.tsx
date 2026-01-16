@@ -1,9 +1,7 @@
 'use client'
-import { useState, useEffect, PropsWithChildren, useMemo } from 'react';
+import { useState, useEffect, useMemo, PropsWithChildren } from 'react';
 import PageContainer from '@/components/container/PageContainer';
-import { Grid, Box, Typography, Card } from '@mui/material';
-import { Icon } from '@iconify/react';
-import StylizedTabbedPanel, { type StylizedTabDefinition } from '@/components/ui/StylizedTabbedPanel';
+import { Grid, Box, Typography, Card, Paper } from '@mui/material';
 import { oroBlanco } from '@/ui/colores';
 import EstadisticasCards from '@/app/components/dashboards/mudras/EstadisticasCards';
 import VentasCards from '@/app/components/dashboards/mudras/VentasCards';
@@ -13,15 +11,6 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContaine
 import { useQuery } from '@apollo/client/react';
 import { GET_DASHBOARD_STATS } from '@/components/dashboards/mudras/graphql/queries';
 import { DashboardStatsResponse } from '@/app/interfaces/graphql.types';
-
-const tabs: StylizedTabDefinition[] = [
-  {
-    key: 'resumen',
-    label: 'Resumen',
-    icon: <Icon icon="mdi:view-dashboard-variant" />,
-    color: oroBlanco.primary,
-  },
-];
 
 function SquareCard({
   title,
@@ -34,7 +23,6 @@ function SquareCard({
       sx={{
         position: 'relative',
         width: '100%',
-        // Cuadrado en md+; en mobile que fluya en altura
         aspectRatio: { xs: 'auto', md: '1 / 1' },
       }}
     >
@@ -43,8 +31,9 @@ function SquareCard({
           position: { md: 'absolute' },
           inset: { md: 0 },
           p: 2,
-          borderRadius: 2,
-          boxShadow: 2,
+          borderRadius: 0,
+          boxShadow: 1,
+          border: '1px solid #e0e0e0',
           ...cardSx,
         }}
       >
@@ -62,15 +51,13 @@ function SquareCard({
 export default function Dashboard() {
   const [isLoading, setLoading] = useState(true);
   const { data } = useQuery<DashboardStatsResponse>(GET_DASHBOARD_STATS);
-  
+
   useEffect(() => {
     setLoading(false);
   }, []);
 
-  // Agregaciones reales desde BD: Artículos (Deposito/StockMinimo) agrupados por Rubro
   const { barrasPorRubro, donutEstadoStock, totalArticulos } = useMemo(() => {
     const articulos = data?.articulos ?? [];
-    // Agrupar por rubro
     const porRubro = new Map<string, { rubro: string; stock: number; minimo: number }>();
     for (const art of articulos as any[]) {
       const rubro = String(art.Rubro || 'Sin rubro');
@@ -81,12 +68,10 @@ export default function Dashboard() {
       acc.minimo += minimo;
       porRubro.set(rubro, acc);
     }
-    // Ordenar por mayor stock y tomar top 8 para visual
     const barras = Array.from(porRubro.values())
       .sort((a, b) => b.stock - a.stock)
       .slice(0, 8);
 
-    // Donut: distribución por estado del stock
     let sin = 0, bajo = 0, ok = 0;
     for (const art of articulos as any[]) {
       const stock = parseFloat(String(art.totalStock ?? 0)) || 0;
@@ -104,58 +89,41 @@ export default function Dashboard() {
     return { barrasPorRubro: barras, donutEstadoStock: donut, totalArticulos: articulos.length };
   }, [data]);
 
-  const [activeTab, setActiveTab] = useState('resumen');
-
   return (
     <PageContainer title="Mudras Gestión" description="Sistema completo de gestión comercial y tienda online">
-      <StylizedTabbedPanel
-        tabs={tabs}
-        activeKey={activeTab}
-        onChange={setActiveTab}
-        hideTabs
-      >
       <Box mt={1} mx={2}>
-        {/* Título Principal */}
         <Box mb={4} textAlign="center">
-          <Typography 
-            variant="h4" 
-            fontWeight={700} 
-            sx={{ 
-              background: 'linear-gradient(45deg, #e4d5b8 20%, #c2b79b 80%)',
-              backgroundClip: 'text',
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent',
-              mb: 0
-            }}
+          <Typography
+            variant="h4"
+            fontWeight={700}
+            color="primary.main"
           >
             ✨ Mudras Gestión
           </Typography>
         </Box>
 
         <Grid container spacing={3}>
-          {/* Columna izquierda - Gráficas (más ancha) */}
           <Grid size={{ xs: 12, md: 5 }}>
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-              {/* Stacked Bar: Stock vs. Stock Mínimo por Rubro (Top 8) */}
-              <Card 
-                sx={{ 
+              <Card
+                sx={{
                   p: 2,
-                  bgcolor: '#F8F9FA',
-                  borderRadius: 2,
-                  boxShadow: 2,
-                  border: '1px solid #E9ECEF',
-                  height: '200px'
+                  bgcolor: '#ffffff',
+                  borderRadius: 0,
+                  boxShadow: 1,
+                  border: '1px solid #e0e0e0',
+                  height: '240px'
                 }}
               >
-                <Typography 
-                  variant="h6" 
-                  fontWeight={600} 
-                  mb={1} 
+                <Typography
+                  variant="h6"
+                  fontWeight={600}
+                  mb={1}
                   sx={{ color: '#495057', fontSize: '1.1rem' }}
                 >
                   Stock por Rubro (Unidades)
                 </Typography>
-                <Box sx={{ height: '150px', width: '100%' }}>
+                <Box sx={{ height: '190px', width: '100%' }}>
                   <ResponsiveContainer width="100%" height="100%">
                     <BarChart data={barrasPorRubro} margin={{ top: 5, right: 10, left: 0, bottom: 0 }}>
                       <defs>
@@ -169,16 +137,15 @@ export default function Dashboard() {
                         </linearGradient>
                       </defs>
                       <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                      <XAxis 
-                        dataKey="rubro" 
+                      <XAxis
+                        dataKey="rubro"
                         axisLine={false}
                         tickLine={false}
                         tick={{ fontSize: 11, fill: '#666' }}
                       />
                       <YAxis tick={{ fontSize: 10, fill: '#777' }} axisLine={false} tickLine={false} />
-                      <Tooltip contentStyle={{ backgroundColor: '#fff', border: '1px solid #ccc', borderRadius: 6, fontSize: 12 }} />
+                      <Tooltip contentStyle={{ backgroundColor: '#fff', border: '1px solid #ccc', borderRadius: 0, fontSize: 12 }} />
                       <Legend wrapperStyle={{ fontSize: 11 }} />
-                      {/* Barras agrupadas: mínimo vs stock */}
                       <Bar dataKey="minimo" name="Stock mínimo" fill="url(#gradMin)" radius={[4, 4, 0, 0]} />
                       <Bar dataKey="stock" name="Stock disponible" fill="url(#gradStock)" radius={[4, 4, 0, 0]} />
                     </BarChart>
@@ -186,59 +153,42 @@ export default function Dashboard() {
                 </Box>
               </Card>
 
-              {/* Donut: Estado de Stock (Sin, Bajo, OK) */}
-              <Card 
-                sx={{ 
+              <Card
+                sx={{
                   p: 2,
-                  bgcolor: '#F3E5F5',
-                  borderRadius: 2,
-                  boxShadow: 2,
-                  border: '1px solid #E1BEE7',
-                  height: '200px'
+                  bgcolor: '#ffffff',
+                  borderRadius: 0,
+                  boxShadow: 1,
+                  border: '1px solid #e0e0e0',
+                  height: '240px'
                 }}
               >
-                <Typography 
-                  variant="h6" 
-                  fontWeight={600} 
-                  mb={1} 
+                <Typography
+                  variant="h6"
+                  fontWeight={600}
+                  mb={1}
                   sx={{ color: '#7B1FA2', fontSize: '1.1rem' }}
                 >
                   Estado de Stock
                 </Typography>
-                <Box sx={{ position: 'relative', height: '150px', width: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+                <Box sx={{ position: 'relative', height: '190px', width: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
                   <ResponsiveContainer width="100%" height="100%">
                     <PieChart>
-                      <defs>
-                        <linearGradient id="gradSin" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="0%" stopColor="#FF7043" />
-                          <stop offset="100%" stopColor="#FF8A65" />
-                        </linearGradient>
-                        <linearGradient id="gradBajo" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="0%" stopColor="#FFA726" />
-                          <stop offset="100%" stopColor="#FFCC80" />
-                        </linearGradient>
-                        <linearGradient id="gradOk" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="0%" stopColor="#66BB6A" />
-                          <stop offset="100%" stopColor="#A5D6A7" />
-                        </linearGradient>
-                      </defs>
                       <Pie
                         data={donutEstadoStock}
                         cx="50%"
                         cy="50%"
-                        innerRadius={30}
-                        outerRadius={55}
-                        paddingAngle={3}
+                        innerRadius={40}
+                        outerRadius={70}
+                        paddingAngle={2}
                         dataKey="value"
                         label={(props: any) => `${Math.round((props.percent || 0) * 100)}%`}
                       >
-                        {donutEstadoStock.map((entry) => {
-                          const key = entry.name;
-                          const fill = key === 'Sin stock' ? 'url(#gradSin)' : key === 'Stock bajo' ? 'url(#gradBajo)' : 'url(#gradOk)';
-                          return <Cell key={key} fill={fill} />;
-                        })}
+                        {donutEstadoStock.map((entry) => (
+                          <Cell key={entry.name} fill={entry.color} />
+                        ))}
                       </Pie>
-                      <Tooltip contentStyle={{ backgroundColor: '#fff', border: '1px solid #ccc', borderRadius: 6, fontSize: 12 }} />
+                      <Tooltip contentStyle={{ backgroundColor: '#fff', border: '1px solid #ccc', borderRadius: 0, fontSize: 12 }} />
                       <Legend wrapperStyle={{ fontSize: 11 }} />
                     </PieChart>
                   </ResponsiveContainer>
@@ -251,7 +201,6 @@ export default function Dashboard() {
             </Box>
           </Grid>
 
-          {/* Columna derecha - Cards 2x2 (más angosta) */}
           <Grid size={{ xs: 12, md: 7 }}>
             <Grid container spacing={2}>
               <Grid size={{ xs: 12, md: 6 }}>
@@ -260,11 +209,11 @@ export default function Dashboard() {
               <Grid size={{ xs: 12, md: 6 }}>
                 <VentasCards />
               </Grid>
-              
+
               <Grid size={{ xs: 12, md: 6 }}>
                 <ProveedoresCards />
               </Grid>
-              
+
               <Grid size={{ xs: 12, md: 6 }}>
                 <AlertasCards />
               </Grid>
@@ -272,7 +221,6 @@ export default function Dashboard() {
           </Grid>
         </Grid>
       </Box>
-      </StylizedTabbedPanel>
     </PageContainer>
   );
 }

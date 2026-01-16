@@ -1,13 +1,12 @@
 'use client';
 
 import { useState, useMemo, useEffect, useCallback } from 'react';
-import { Alert, Box, LinearProgress, Tab, Tabs, Typography } from '@mui/material';
+import { Alert, Box, LinearProgress, Tab, Tabs, Typography, Paper } from '@mui/material';
 import { alpha } from '@mui/material/styles';
 import { useQuery } from '@apollo/client/react';
 import { Icon } from '@iconify/react';
 
 import PageContainer from '@/components/container/PageContainer';
-import { TexturedPanel } from '@/components/ui/TexturedFrame/TexturedPanel';
 import TablaStockPuntoVenta from '@/components/puntos-venta/TablaStockPuntoVenta';
 import ModalModificarStockPunto from '@/components/stock/ModalModificarStockPunto';
 import ModalNuevaAsignacionStock from '@/components/stock/ModalNuevaAsignacionStock';
@@ -21,17 +20,7 @@ import {
   type ArticuloConStockPuntoMudras,
 } from '@/components/puntos-mudras/graphql/queries';
 
-const depositTheme = {
-  // Azul zafiro para depósitos
-  accent: '#0f3d73',
-  woodTintExterior: '#d1e0f5',
-  woodTintInterior: '#bed2ee',
-  tableBodyBg: 'rgba(224, 236, 251, 0.78)',
-  tableBodyAlt: 'rgba(189, 210, 238, 0.42)',
-  headerBg: '#0b2a4d',
-  panelOverlay: '#edf3fb',
-  buttonColor: '#1565c0',
-};
+const depositColor = '#0f3d73';
 
 export default function DepositosPage() {
   const [activeKey, setActiveKey] = useState<string>('empty');
@@ -174,31 +163,31 @@ export default function DepositosPage() {
         </Alert>
       )}
 
-      <TexturedPanel accent={depositTheme.accent} radius={14} contentPadding={12} bgTintPercent={22} bgAlpha={0.98}>
-        <Box sx={{ px: 2, py: 1.5 }}>
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 3 }}>
+        <Icon icon="mdi:warehouse" width={32} height={32} color={depositColor} />
+        <Typography variant="h4" fontWeight={600} color={depositColor}>
+          Gestión de Depósitos
+        </Typography>
+      </Box>
+
+      <Paper elevation={0} sx={{ border: '1px solid #e0e0e0', borderRadius: 0, overflow: 'hidden' }}>
+        <Box sx={{ borderBottom: 1, borderColor: 'divider', bgcolor: '#f5f5f5', px: 2 }}>
           <Tabs
             value={tabValue}
             onChange={(_, key) => setActiveKey(String(key))}
             variant="scrollable"
             scrollButtons="auto"
             aria-label="Depósitos tabs"
-            TabIndicatorProps={{ sx: { display: 'none' } }}
             sx={{
-              '& .MuiTabs-flexContainer': { gap: 1 },
+              '& .MuiTabs-indicator': { backgroundColor: depositColor },
               '& .MuiTab-root': {
                 textTransform: 'none',
                 fontWeight: 600,
-                minHeight: 40,
-                px: 2,
-                borderRadius: 1.5,
-                bgcolor: alpha(depositTheme.accent, 0.85),
-                color: 'white',
-                '&:hover': { bgcolor: depositTheme.accent },
-              },
-              '& .MuiTab-root.Mui-selected': {
-                bgcolor: depositTheme.accent,
-                color: 'common.white',
-              },
+                fontSize: '1rem',
+                color: 'text.secondary',
+                '&.Mui-selected': { color: depositColor },
+                py: 2
+              }
             }}
           >
             {depositos.map((deposito) => (
@@ -222,11 +211,13 @@ export default function DepositosPage() {
           </Tabs>
         </Box>
 
-        <Box sx={{ px: 2, pb: 2 }}>
+        <Box sx={{ p: 0 }}>
           {!depositoSeleccionado ? (
-            <Alert severity="info" sx={{ mt: 2 }}>
-              Seleccioná un depósito para ver su stock.
-            </Alert>
+            <Box p={3}>
+              <Alert severity="info">
+                Seleccioná un depósito para ver su stock.
+              </Alert>
+            </Box>
           ) : (
             <TablaStockPuntoVenta
               articulos={articulosDelDeposito}
@@ -236,11 +227,10 @@ export default function DepositosPage() {
               onEditStock={handleAbrirModalStock}
               onViewDetails={handleVerDetalles}
               onNewAssignment={handleNuevaAsignacion}
-              themeOverride={depositTheme}
             />
           )}
         </Box>
-      </TexturedPanel>
+      </Paper>
 
       {modalStockOpen && articuloSeleccionado && depositoSeleccionadoId && (
         <ModalModificarStockPunto
@@ -267,7 +257,7 @@ export default function DepositosPage() {
         onClose={handleCerrarDetalles}
         articulo={articuloDetalles}
         stockContext={stockContext ?? undefined}
-        accentColor={depositTheme.accent}
+        accentColor={depositColor}
       />
     </PageContainer>
   );

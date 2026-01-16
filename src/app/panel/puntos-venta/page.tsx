@@ -1,12 +1,12 @@
 "use client";
 
 import { useState, useMemo, useEffect, useCallback } from 'react';
-import { Alert, LinearProgress } from '@mui/material';
+import { Alert, LinearProgress, Box, Tabs, Tab, Paper, Typography } from '@mui/material';
 import { IconShoppingBag } from '@tabler/icons-react';
 import { useQuery } from '@apollo/client/react';
+import { Icon } from '@iconify/react';
 
 import PageContainer from '@/components/container/PageContainer';
-import StylizedTabbedPanel, { type StylizedTabDefinition } from '@/components/ui/StylizedTabbedPanel';
 import TablaStockPuntoVenta from '@/components/puntos-venta/TablaStockPuntoVenta';
 import ModalModificarStockPunto from '@/components/stock/ModalModificarStockPunto';
 import ModalNuevaAsignacionStock from '@/components/stock/ModalNuevaAsignacionStock';
@@ -21,7 +21,7 @@ import {
 } from '@/components/puntos-mudras/graphql/queries';
 
 // Verde primaveral para los tabs de puntos de venta
-const tabPalette = ['#66BB6A', '#5CAF63', '#57B15D', '#6ECB73', '#63C26B', '#5AB962'];
+const puntoVentaColor = '#57B15D';
 
 type ObtenerStockPuntoMudrasResponse = {
   obtenerStockPuntoMudras: ArticuloConStockPuntoMudras[];
@@ -145,22 +145,19 @@ export default function PuntosVentaPage() {
     setDetallesStockContext(null);
   }, []);
 
-  const tabsMeta = useMemo<StylizedTabDefinition[]>(
-    () =>
-      puntosVenta.map((punto, idx) => ({
-        key: String(punto.id),
-        label: punto.nombre,
-        icon: <IconShoppingBag size={18} />,
-        color: tabPalette[idx % tabPalette.length],
-      })),
-    [puntosVenta]
-  );
-
   const estaCargandoStock = loadingStock;
   const articulosDelPunto = puntoSeleccionado ? stockData?.obtenerStockPuntoMudras ?? [] : [];
 
   return (
     <PageContainer title="Puntos de Venta" description="Consulta rápida del stock en cada punto de venta">
+
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 3 }}>
+        <Icon icon="mdi:store-check-outline" width={32} height={32} color={puntoVentaColor} />
+        <Typography variant="h4" fontWeight={600} color={puntoVentaColor}>
+          Puntos de Venta
+        </Typography>
+      </Box>
+
       {loadingPuntos && <LinearProgress sx={{ mb: 2 }} />}
 
       {errorPuntos && (
@@ -176,27 +173,56 @@ export default function PuntosVentaPage() {
       )}
 
       {puntosVenta.length > 0 && activeKey && (
-        <StylizedTabbedPanel
-          tabs={tabsMeta}
-          activeKey={activeKey}
-          onChange={(key) => {
-            setActiveKey(key);
-          }}
-        >
-          {!puntoSeleccionado ? (
-            <Alert severity="info">Seleccioná un punto de venta para ver su stock.</Alert>
-          ) : (
-            <TablaStockPuntoVenta
-              articulos={articulosDelPunto}
-              loading={estaCargandoStock}
-              error={errorStock}
-              puntoNombre={puntoSeleccionado?.nombre}
-              onEditStock={puntoSeleccionadoId ? handleAbrirModalStock : undefined}
-              onViewDetails={handleVerDetalles}
-              onNewAssignment={puntoSeleccionado ? handleNuevaAsignacion : undefined}
-            />
-          )}
-        </StylizedTabbedPanel>
+        <Paper elevation={0} sx={{ border: '1px solid #e0e0e0', borderRadius: 0, overflow: 'hidden' }}>
+          <Box sx={{ borderBottom: 1, borderColor: 'divider', bgcolor: '#f5f5f5', px: 2 }}>
+            <Tabs
+              value={activeKey}
+              onChange={(_, key) => setActiveKey(key)}
+              variant="scrollable"
+              scrollButtons="auto"
+              aria-label="Puntos Venta tabs"
+              sx={{
+                '& .MuiTabs-indicator': { backgroundColor: puntoVentaColor },
+                '& .MuiTab-root': {
+                  textTransform: 'none',
+                  fontWeight: 600,
+                  fontSize: '1rem',
+                  color: 'text.secondary',
+                  '&.Mui-selected': { color: puntoVentaColor },
+                  py: 2
+                }
+              }}
+            >
+              {puntosVenta.map((punto) => (
+                <Tab
+                  key={punto.id}
+                  value={String(punto.id)}
+                  icon={<IconShoppingBag size={20} />}
+                  label={punto.nombre}
+                  iconPosition="start"
+                />
+              ))}
+            </Tabs>
+          </Box>
+
+          <Box sx={{ p: 0 }}>
+            {!puntoSeleccionado ? (
+              <Box p={3}>
+                <Alert severity="info">Seleccioná un punto de venta para ver su stock.</Alert>
+              </Box>
+            ) : (
+              <TablaStockPuntoVenta
+                articulos={articulosDelPunto}
+                loading={estaCargandoStock}
+                error={errorStock}
+                puntoNombre={puntoSeleccionado?.nombre}
+                onEditStock={puntoSeleccionadoId ? handleAbrirModalStock : undefined}
+                onViewDetails={handleVerDetalles}
+                onNewAssignment={puntoSeleccionado ? handleNuevaAsignacion : undefined}
+              />
+            )}
+          </Box>
+        </Paper>
       )}
 
       {modalStockOpen && articuloSeleccionado && puntoSeleccionadoId && (

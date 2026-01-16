@@ -1,37 +1,27 @@
 'use client';
 
 import { useState } from 'react';
-import { Alert, Box } from '@mui/material';
+import { Alert, Box, Paper, Typography } from '@mui/material';
 import { Icon } from '@iconify/react';
 import PageContainer from '@/components/container/PageContainer';
-import StylizedTabbedPanel, { type StylizedTabDefinition } from '@/components/ui/StylizedTabbedPanel';
 import { marron } from '@/ui/colores';
 
-const tabs: StylizedTabDefinition[] = [
-  {
-    key: 'compras',
-    label: 'Compras',
-    icon: <Icon icon="mdi:cart-arrow-down" />,
-    color: marron.primary,
-  },
-];
-
 export default function ComprasPage() {
-  const [activeTab, setActiveTab] = useState('compras');
-
   return (
     <PageContainer title="Compras - Mudras" description="Gestión de órdenes de compra">
-      <StylizedTabbedPanel
-        tabs={tabs}
-        activeKey={activeTab}
-        onChange={setActiveTab}
-      >
-        <Box mt={2}>
+      <Box>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 3 }}>
+          <Icon icon="mdi:cart-arrow-down" width={32} height={32} color={marron.primary} />
+          <Typography variant="h4" fontWeight={600} color="primary.main">
+            Compras
+          </Typography>
+        </Box>
+        <Paper elevation={0} sx={{ p: 3, border: '1px solid #e0e0e0', borderRadius: 0 }}>
           <Alert severity="info">
             La sección de órdenes de compra se encuentra temporalmente deshabilitada.
           </Alert>
-        </Box>
-      </StylizedTabbedPanel>
+        </Paper>
+      </Box>
     </PageContainer>
   );
 }
