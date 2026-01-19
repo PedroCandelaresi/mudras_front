@@ -102,7 +102,7 @@ export default function ModalEliminarUsuario({ open, usuario, onClose, onSuccess
         </Alert>
 
         <Typography variant="body2" sx={{ mb: 1, fontWeight: 600, color: grisNeutro.textStrong }}>
-          Escribe "ELIMINAR" para confirmar:
+          Escribe &quot;ELIMINAR&quot; para confirmar:
         </Typography>
         <TextField
           fullWidth
