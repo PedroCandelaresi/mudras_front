@@ -25,9 +25,11 @@ export const CREAR_PROVEEDOR = gql`
       Pais
       Fax
       FechaModif
-      rubros {
-        Id
-        Rubro
+      proveedorRubros {
+        rubro {
+          Id
+          Rubro
+        }
       }
     }
   }
@@ -58,9 +60,11 @@ export const ACTUALIZAR_PROVEEDOR = gql`
       Pais
       Fax
       FechaModif
-      rubros {
-        Id
-        Rubro
+      proveedorRubros {
+        rubro {
+          Id
+          Rubro
+        }
       }
     }
   }

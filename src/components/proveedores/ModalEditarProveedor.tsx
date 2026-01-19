@@ -299,10 +299,10 @@ const ModalEditarProveedor = ({ open, onClose, proveedor, onProveedorGuardado }:
     }
 
     if (datosProveedor) {
-      // Fix: Check both casing possibilities for rubro ID
-      const rubrosAsignados = datosProveedor.rubros
-        ? datosProveedor.rubros.map((r: any) => Number(r.id || r.Id))
-        : [];
+      // Fix: Check derived rubros from proveedorRubros
+      const rubrosAsignados = datosProveedor.proveedorRubros
+        ? datosProveedor.proveedorRubros.map((pr: any) => Number(pr.rubro?.id || pr.rubro?.Id))
+        : (datosProveedor.rubros ? datosProveedor.rubros.map((r: any) => Number(r.id || r.Id)) : []);
       setFormData({
         Codigo: datosProveedor.Codigo?.toString() ?? '',
         Nombre: datosProveedor.Nombre ?? '',

@@ -25,6 +25,12 @@ export interface Proveedor {
     Id: number;
     Rubro: string;
   }[];
+  proveedorRubros?: {
+    rubro: {
+      Id: number;
+      Rubro: string;
+    }
+  }[];
   PorcentajeRecargoProveedor?: number;
   PorcentajeDescuentoProveedor?: number;
   Saldo?: number;
