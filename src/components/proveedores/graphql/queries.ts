@@ -25,9 +25,11 @@ export const GET_PROVEEDORES = gql`
       Pais
       Fax
       FechaModif
-      rubros {
-        Id
-        Rubro
+      proveedorRubros {
+        rubro {
+          Id
+          Rubro
+        }
       }
     }
   }
@@ -65,9 +67,11 @@ export const GET_PROVEEDOR = gql`
       PorcentajeRecargoProveedor
       PorcentajeDescuentoProveedor
       rubroId
-      rubros {
-        Id
-        Rubro
+      proveedorRubros {
+        rubro {
+          Id
+          Rubro
+        }
       }
       rubro {
         Id
