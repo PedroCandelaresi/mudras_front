@@ -139,3 +139,43 @@ export const GET_MOVIMIENTOS_STOCK = gql`
     }
   }
 `;
+
+export const GET_MOVIMIENTOS_STOCK_FULL = gql`
+  query GetMovimientosStockFull($input: FiltrosMovimientosInput, $puntoMudrasId: Int) {
+    movimientosStockFull(input: $input, puntoMudrasId: $puntoMudrasId) {
+      total
+      movimientos {
+        id
+        fechaMovimiento
+        tipoMovimiento
+        cantidad
+        cantidadAnterior
+        cantidadNueva
+        motivo
+        puntoOrigen {
+          id
+          nombre
+          tipo
+        }
+        puntoDestino {
+          id
+          nombre
+          tipo
+        }
+        articulo {
+          id
+          Codigo
+          Descripcion
+          ImagenUrl
+          Rubro
+        }
+        usuario {
+          id
+          nombre
+          apellido
+          username
+        }
+      }
+    }
+  }
+`;

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useMemo, useRef, useState, useEffect } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   Box,
   Typography,
@@ -10,555 +10,427 @@ import {
   TableContainer,
   TableHead,
   TableRow,
-  TextField,
-  InputAdornment,
+  Avatar,
   Chip,
   Tooltip,
   IconButton,
-  Menu,
-  Button,
-  Divider,
+  Paper,
   Stack,
   Skeleton,
+  TextField,
+  MenuItem,
+  Button
 } from '@mui/material';
 import { alpha } from '@mui/material/styles';
 import { useQuery } from '@apollo/client/react';
 import {
-  IconSearch,
-  IconTrendingUp,
-  IconRefresh,
   IconEye,
-  IconEdit,
-  IconTrash,
-  IconDotsVertical,
-  IconArrowUp,
-  IconArrowDown,
+  IconArrowRight,
+  IconBuildingWarehouse,
+  IconBuildingStore,
+  IconUser,
+  IconCalendar,
+  IconPackage,
+  IconNotes
 } from '@tabler/icons-react';
 import { Icon } from '@iconify/react';
 
-import { GET_MOVIMIENTOS_STOCK, GET_ARTICULOS } from '@/components/articulos/graphql/queries';
-import { Stock } from '@/app/interfaces/mudras.types';
-import { MovimientosStockResponse } from '@/app/interfaces/graphql.types';
-import { verde, azul } from '@/ui/colores';
+import { GET_MOVIMIENTOS_STOCK_FULL } from '@/components/articulos/graphql/queries';
+import { borgoña } from '@/ui/colores';
 import SearchToolbar from '@/components/ui/SearchToolbar';
 
-/* ======================== Estética (verde oliva, como Artículos) ======================== */
-const accentExterior = verde.primary;
-const accentInterior = verde.borderInner ?? '#2b4735';
-const colorAccionEliminar = '#b71c1c';
+// -- Interfaces locales para la respuesta de la query nueva --
+interface PuntoResumen {
+  id: number;
+  nombre: string;
+  tipo: string;
+}
 
-const ARG_TIMEZONE = 'America/Argentina/Buenos_Aires';
-const formatearFechaHora = (valor?: string | Date | null, opciones?: Intl.DateTimeFormatOptions) => {
-  if (!valor) return '—';
-  const fecha = new Date(valor);
-  if (Number.isNaN(fecha.getTime())) return '—';
-  const formatter = new Intl.DateTimeFormat('es-AR', {
-    timeZone: ARG_TIMEZONE,
-    day: '2-digit',
-    month: 'long',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-    hour12: false,
-    ...opciones,
-  });
-  return formatter.format(fecha);
+interface MovimientoFull {
+  id: number;
+  fechaMovimiento: string;
+  tipoMovimiento: string;
+  cantidad: number;
+  cantidadAnterior?: number;
+  cantidadNueva?: number;
+  motivo?: string;
+  puntoOrigen?: PuntoResumen;
+  puntoDestino?: PuntoResumen;
+  articulo?: {
+    id: number;
+    Codigo: string;
+    Descripcion: string;
+    ImagenUrl?: string;
+    Rubro?: string;
+  };
+  usuario?: {
+    id: number;
+    nombre: string;
+    apellido: string;
+    username: string;
+  };
+}
+
+interface MovimientosFullData {
+  movimientosStockFull: {
+    total: number;
+    movimientos: MovimientoFull[];
+  };
+}
+
+// -- Configuración de Tema --
+const theme = borgoña; // Usamos borgoña para Logs/Stock Movimientos
+
+// -- Helpers de Formateo --
+const formatearFecha = (fechaISO: string) => {
+  if (!fechaISO) return '—';
+  try {
+    return new Intl.DateTimeFormat('es-AR', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    }).format(new Date(fechaISO));
+  } catch {
+    return '—';
+  }
 };
 
-/* ======================== Componente ======================== */
-const TablaMovimientosStock = () => {
-  const { data, loading, error, refetch } = useQuery<MovimientosStockResponse>(GET_MOVIMIENTOS_STOCK, {
-    fetchPolicy: 'cache-first',
-    errorPolicy: 'all',
-  });
-  const { data: dataArticulos } = useQuery<any>(GET_ARTICULOS, { fetchPolicy: 'cache-first' });
+const getTipoLabel = (tipo: string) => {
+  switch (tipo) {
+    case 'venta': return 'VENTA';
+    case 'entrada': return 'ENTRADA';
+    case 'salida': return 'SALIDA';
+    case 'transferencia': return 'TRANSFERENCIA';
+    case 'ajuste': return 'AJUSTE';
+    case 'devolucion': return 'DEVOLUCIÓN';
+    default: return tipo.toUpperCase();
+  }
+};
 
-  // Estado general
+const getTipoColor = (tipo: string) => {
+  switch (tipo) {
+    case 'venta': return { bg: '#e8f5e9', text: '#2e7d32' }; // Verde éxito
+    case 'entrada': return { bg: '#e3f2fd', text: '#1565c0' }; // Azul entrada
+    case 'salida': return { bg: '#ffebee', text: '#c62828' }; // Rojo salida
+    case 'transferencia': return { bg: '#e0f7fa', text: '#006064' }; // Cyan transf
+    case 'ajuste': return { bg: '#fff3e0', text: '#e65100' }; // Naranja ajuste
+    case 'devolucion': return { bg: '#f3e5f5', text: '#7b1fa2' }; // Violeta devol
+    default: return { bg: '#f5f5f5', text: '#616161' };
+  }
+};
+
+const TablaMovimientosStock = () => {
+  // Estado de filtros y paginación
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(50);
-  const [filtro, setFiltro] = useState('');
+  const [filtroBusqueda, setFiltroBusqueda] = useState('');
+  const [filtroTipo, setFiltroTipo] = useState<string>(''); // '' = todos
 
-  // Filtros por columna (mismo patrón de Proveedores)
-  const [menuAnchor, setMenuAnchor] = useState<null | HTMLElement>(null);
-  const [columnaActiva, setColumnaActiva] = useState<null | 'descripcion' | 'usuario'>(null);
-  const [filtrosColumna, setFiltrosColumna] = useState<{ descripcion?: string; usuario?: string }>({});
-  const [filtroColInput, setFiltroColInput] = useState('');
-
-  // Reintento si hay error de fecha
-  const reintentoHecho = useRef(false);
-  useEffect(() => {
-    if (error && !reintentoHecho.current) {
-      const msg = String(error.message || '').toLowerCase();
-      if (msg.includes('toisostring')) {
-        reintentoHecho.current = true;
-        setTimeout(() => {
-          try { void refetch(); } catch { }
-        }, 200);
+  // Query Apollo
+  const { data, loading, error, refetch } = useQuery<MovimientosFullData>(GET_MOVIMIENTOS_STOCK_FULL, {
+    variables: {
+      input: {
+        offset: page * rowsPerPage,
+        limite: rowsPerPage,
+        // No enviamos 'busqueda' porque el input FiltrosMovimientosInput no tiene busqueda texto general,
+        // suele filtrar por articuloId o fechas.
+        // Si queremos filtrar por texto, idealmente el backend debe soportarlo.
+        // Por ahora, asumimos filtro en cliente o que 'busqueda' no está implementada en backend para movimientos.
+        // Re-check FiltrosMovimientosInput: tiene tipoMovimiento, fechaDesde, fechaHasta, articuloId. NO TIENE busqueda texto.
+        // TODO: Implementar búsqueda por texto en backend si es crítico. Por ahora filtramos en cliente lo que llega (limitado a página actual no es ideal).
+        // Sin embargo, mostraremos los datos tal cual vienen paginados.
+        tipoMovimiento: filtroTipo || undefined,
       }
-    }
-  }, [error, refetch]);
-
-  // Datos
-  const movimientos: Stock[] = Array.isArray(data?.movimientosStock) ? (data!.movimientosStock as Stock[]) : [];
-  const articulos = useMemo(() => {
-    const list = dataArticulos?.articulos;
-    return Array.isArray(list) ? (list as any[]) : [];
-  }, [dataArticulos?.articulos]);
-
-  const mapaDescripcionPorCodigo = useMemo(() => {
-    const mapa = new Map<string, { descripcion: string, imagen: string | null }>();
-    for (const articulo of articulos) {
-      if (articulo?.Codigo) {
-        mapa.set(String(articulo.Codigo), {
-          descripcion: articulo?.Descripcion ?? '',
-          imagen: articulo?.ImagenUrl ?? null
-        });
-      }
-    }
-    return mapa;
-  }, [articulos]);
-
-  // Filtrado (general + por columna)
-  const movimientosFiltrados = movimientos.filter((movimiento) => {
-    const info = mapaDescripcionPorCodigo.get(String(movimiento?.Codigo ?? ''));
-    const desc = (info?.descripcion ?? '').toLowerCase();
-    const usuarioTxt = String(movimiento?.Usuario ?? '').toLowerCase();
-    const q = filtro.toLowerCase();
-
-    const pasaTexto = !q || desc.includes(q) || usuarioTxt.includes(q);
-    const pasaDesc = filtrosColumna.descripcion ? desc.includes(filtrosColumna.descripcion.toLowerCase()) : true;
-    const pasaUsuario = filtrosColumna.usuario ? usuarioTxt.includes(filtrosColumna.usuario.toLowerCase()) : true;
-    return pasaTexto && pasaDesc && pasaUsuario;
+    },
+    fetchPolicy: 'cache-and-network',
   });
 
-  const totalPaginas = Math.ceil(movimientosFiltrados.length / rowsPerPage);
-  const paginaActual = page + 1;
-  const movimientosPaginados = movimientosFiltrados.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
+  const movimientos = data?.movimientosStockFull?.movimientos || [];
+  const totalPaginas = Math.ceil((data?.movimientosStockFull?.total || 0) / rowsPerPage);
 
-  // Helpers
-  const getTipoMovimiento = (stockActual: number, stockAnterior: number) => {
-    if (stockActual > stockAnterior) return 'entrada';
-    if (stockActual < stockAnterior) return 'salida';
-    return 'ajuste';
-  };
-  const getDiferencia = (stockActual: number, stockAnterior: number) => stockActual - stockAnterior;
+  // Manejadores
+  const handleChangePage = (newPage: number) => setPage(newPage);
 
-  // Acciones placeholder
-  const handleViewMovimiento = (movimiento: Stock) => { console.log('Ver movimiento:', movimiento); };
-  const handleEditMovimiento = (movimiento: Stock) => { console.log('Editar movimiento:', movimiento); };
-  const handleDeleteMovimiento = (movimiento: Stock) => { console.log('Eliminar movimiento:', movimiento); };
-
-  // Paginación
-  const handleChangePage = (_: unknown, newPage: number) => setPage(newPage);
-  const handleChangeRowsPerPage = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setRowsPerPage(parseInt(event.target.value, 10));
-    setPage(0);
+  const handleRefresh = () => {
+    void refetch();
   };
 
-  // Toolbar unificada con SearchToolbar
-  const toolbar = (
-    <SearchToolbar
-      title="Movimientos de Stock"
-      icon={<IconTrendingUp style={{ marginRight: 8, verticalAlign: 'middle' }} />}
-      baseColor={accentExterior}
-      placeholder="Buscar por descripción o usuario…"
-      searchValue={filtro}
-      onSearchValueChange={setFiltro}
-      onSubmitSearch={() => { setPage(0); void refetch(); }}
-      onClear={() => { setFiltro(''); setFiltrosColumna({}); setPage(0); void refetch(); }}
-      searchDisabled={loading}
-    />
-  );
-
-  // Header filters (UX igual que Proveedores)
-  const abrirMenuColumna = (col: 'descripcion' | 'usuario') => (e: React.MouseEvent<HTMLElement>) => {
-    setColumnaActiva(col);
-    setFiltroColInput(filtrosColumna[col] || '');
-    setMenuAnchor(e.currentTarget);
-  };
-  const cerrarMenuColumna = () => {
-    setMenuAnchor(null);
-    setColumnaActiva(null);
-    setFiltroColInput('');
-  };
-  const aplicarFiltroColumna = () => {
-    if (!columnaActiva) return;
-    setFiltrosColumna((prev) => ({ ...prev, [columnaActiva]: filtroColInput }));
-    setPage(0);
-    cerrarMenuColumna();
-  };
-  const limpiarFiltroColActual = () => {
-    if (!columnaActiva) return;
-    setFiltroColInput('');
-    setFiltrosColumna((prev) => ({ ...prev, [columnaActiva]: '' }));
-  };
-
-  // Paginador: números
-  const generarNumerosPaginas = () => {
-    const paginas: (number | '...')[] = [];
-    const maxVisible = 7;
-    if (totalPaginas <= maxVisible) {
-      for (let i = 1; i <= totalPaginas; i++) paginas.push(i);
-    } else if (page + 1 <= 4) {
-      for (let i = 1; i <= 5; i++) paginas.push(i);
-      paginas.push('...', totalPaginas);
-    } else if (page + 1 >= totalPaginas - 3) {
-      paginas.push(1, '...');
-      for (let i = totalPaginas - 4; i <= totalPaginas; i++) paginas.push(i);
-    } else {
-      paginas.push(1, '...', page, page + 1, page + 2, '...', totalPaginas);
-    }
-    return paginas;
-  };
-
-  /* ======================== Tabla ======================== */
-  const tabla = (
-    <TableContainer
-      component={Box} // Usamos Box para mayor control
-      sx={{
-        borderRadius: 0,
-        border: '1px solid #e0e0e0',
-        bgcolor: '#ffffff',
-        overflow: 'auto',
-      }}
-    >
-      <Table
-        stickyHeader
-        size="small"
-        sx={{
-          minWidth: 700,
-          '& .MuiTableRow-root': { minHeight: 56 }, // Compact
-          '& .MuiTableCell-root': {
-            fontSize: '0.85rem',
-            px: 2,
-            py: 1.5,
-            borderBottom: '1px solid #f0f0f0',
-            color: '#37474f',
-          },
-          '& .MuiTableBody-root .MuiTableRow-root:nth-of-type(even)': {
-            bgcolor: alpha(verde.primary, 0.03), // Zebra
-          },
-          '& .MuiTableBody-root .MuiTableRow-root:hover': {
-            bgcolor: alpha(verde.primary, 0.12),
-          },
-          '& .MuiTableCell-head': {
-            fontSize: '0.8rem',
-            fontWeight: 700,
-            bgcolor: '#f5f7fa',
-            color: verde.primary,
-            textTransform: 'uppercase',
-          },
-        }}
-      >
-        <TableHead>
-          <TableRow>
-            <TableCell>Fecha</TableCell>
-            <TableCell>Img</TableCell>
-            <TableCell>Código</TableCell>
-
-            {/* Descripción con filtro en header */}
-            <TableCell>
-              <Box display="flex" alignItems="center" justifyContent="space-between">
-                Descripción
-                <Tooltip title="Filtrar columna">
-                  <IconButton size="small" color="inherit" onClick={abrirMenuColumna('descripcion')}>
-                    <IconDotsVertical size={16} />
-                  </IconButton>
-                </Tooltip>
-              </Box>
-            </TableCell>
-
-            {/* Labels acortados para no romper en dos renglones */}
-            <TableCell align="right">Anterior</TableCell>
-            <TableCell align="right">Actual</TableCell>
-
-            <TableCell align="right">Diferencia</TableCell>
-            <TableCell align="center">Tipo</TableCell>
-
-            {/* Usuario con filtro en header */}
-            <TableCell align="center">
-              <Box display="flex" alignItems="center" justifyContent="space-between">
-                Usuario
-                <Tooltip title="Filtrar columna">
-                  <IconButton size="small" color="inherit" onClick={abrirMenuColumna('usuario')}>
-                    <IconDotsVertical size={16} />
-                  </IconButton>
-                </Tooltip>
-              </Box>
-            </TableCell>
-
-            <TableCell align="center">Acciones</TableCell>
-          </TableRow>
-        </TableHead>
-
-        <TableBody>
-          {movimientosPaginados.length === 0 ? (
-            <TableRow>
-              <TableCell colSpan={9}>
-                <Box textAlign="center" py={4}>
-                  <Typography variant="subtitle1" color={verde.textStrong} fontWeight={600}>
-                    No se encontraron movimientos
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    Ajustá los filtros de búsqueda para ver otros registros.
-                  </Typography>
-                </Box>
-              </TableCell>
-            </TableRow>
-          ) : (
-            movimientosPaginados.map((mov) => {
-              const info = mapaDescripcionPorCodigo.get(String(mov.Codigo ?? ''));
-              const desc = info?.descripcion || '—';
-              const imagenUrl = info?.imagen;
-              const tipo = getTipoMovimiento(mov.Stock ?? 0, mov.StockAnterior ?? 0);
-              const diferencia = getDiferencia(mov.Stock ?? 0, mov.StockAnterior ?? 0);
-              const esEntrada = tipo === 'entrada';
-              const esSalida = tipo === 'salida';
-
-              return (
-                <TableRow
-                  key={`${mov.Id}-${mov.Fecha}`}
-                  hover
-                >
-                  <TableCell>
-                    <Typography variant="body2" fontWeight={600}>
-                      {formatearFechaHora(mov.Fecha)}
-                    </Typography>
-                  </TableCell>
-
-                  <TableCell>
-                    <Box sx={{ width: 36, height: 36, borderRadius: 0, overflow: 'hidden', border: '1px solid #e0e0e0', bgcolor: '#fff' }}>
-                      {imagenUrl ? (
-                        <img src={imagenUrl.startsWith('http') ? imagenUrl : `http://localhost:4000${imagenUrl}`} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                      ) : (
-                        <Box sx={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                          <Icon icon="mdi:image-off-outline" color="#ccc" width={20} style={{ opacity: 0.5 }} />
-                        </Box>
-                      )}
-                    </Box>
-                  </TableCell>
-
-                  <TableCell>
-                    <Chip
-                      label={mov.Codigo ?? '—'}
-                      size="small"
-                      sx={{
-                        bgcolor: alpha(accentExterior, 0.1),
-                        color: verde.textStrong,
-                        height: 24,
-                        borderRadius: 0,
-                        '& .MuiChip-label': { px: 1, fontWeight: 600 },
-                      }}
-                    />
-                  </TableCell>
-
-                  <TableCell>
-                    <Typography variant="body2" color="text.secondary">{desc}</Typography>
-                  </TableCell>
-
-                  <TableCell align="right">
-                    <Typography variant="body2" color="text.secondary">{mov.StockAnterior ?? 0}</Typography>
-                  </TableCell>
-
-                  <TableCell align="right">
-                    <Typography variant="body2" fontWeight={600}>{mov.Stock ?? 0}</Typography>
-                  </TableCell>
-
-                  <TableCell align="right">
-                    <Stack direction="row" spacing={0.5} alignItems="center" justifyContent="flex-end">
-                      {diferencia >= 0 ? <IconArrowUp size={16} color={verde.primary} /> : <IconArrowDown size={16} color="#ff7043" />}
-                      <Typography variant="body2" fontWeight={600} color={diferencia >= 0 ? verde.textStrong : '#ff7043'}>
-                        {diferencia > 0 ? `+${diferencia}` : diferencia}
-                      </Typography>
-                    </Stack>
-                  </TableCell>
-
-                  <TableCell align="center">
-                    <Chip
-                      label={tipo.toUpperCase()}
-                      size="small"
-                      sx={{
-                        height: 24,
-                        borderRadius: 0,
-                        fontWeight: 600,
-                        bgcolor: esEntrada ? alpha('#2e7d32', 0.1) : esSalida ? alpha('#d32f2f', 0.1) : alpha('#ed6c02', 0.1),
-                        color: esEntrada ? '#1b5e20' : esSalida ? '#c62828' : '#e65100',
-                      }}
-                    />
-                  </TableCell>
-
-                  <TableCell align="center">
-                    <Typography variant="body2" color="text.secondary">{mov.Usuario ?? '—'}</Typography>
-                  </TableCell>
-
-                  <TableCell align="center">
-                    <Stack direction="row" spacing={1} justifyContent="center">
-                      <Tooltip title="Ver detalle">
-                        <IconButton size="small" onClick={() => handleViewMovimiento(mov)} sx={{ color: azul.primary, '&:hover': { bgcolor: alpha(azul.primary, 0.1) } }}>
-                          <IconEye size={18} />
-                        </IconButton>
-                      </Tooltip>
-                      <Tooltip title="Editar">
-                        <IconButton size="small" onClick={() => handleEditMovimiento(mov)} sx={{ color: verde.primary, '&:hover': { bgcolor: alpha(verde.primary, 0.1) } }}>
-                          <IconEdit size={18} />
-                        </IconButton>
-                      </Tooltip>
-                      <Tooltip title="Eliminar">
-                        <IconButton size="small" onClick={() => handleDeleteMovimiento(mov)} sx={{ color: colorAccionEliminar, '&:hover': { bgcolor: alpha(colorAccionEliminar, 0.1) } }}>
-                          <IconTrash size={18} />
-                        </IconButton>
-                      </Tooltip>
-                    </Stack>
-                  </TableCell>
-                </TableRow>
-              );
-            })
-          )}
-        </TableBody>
-      </Table>
-    </TableContainer>
-  );
-
-  /* ======================== Menú de filtros por columna ======================== */
-  const menuFiltros = (
-    <Menu
-      anchorEl={menuAnchor}
-      open={Boolean(menuAnchor)}
-      onClose={cerrarMenuColumna}
-      anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
-      transformOrigin={{ vertical: 'top', horizontal: 'right' }}
-      slotProps={{ paper: { sx: { p: 1.5, minWidth: 260, borderRadius: 0, boxShadow: '0 4px 12px rgba(0,0,0,0.1)' } } as any }}
-    >
-      <Typography variant="subtitle2" sx={{ px: 1, pb: 1, fontWeight: 600 }}>
-        {columnaActiva === 'descripcion' && 'Filtrar por Descripción'}
-        {columnaActiva === 'usuario' && 'Filtrar por Usuario'}
-      </Typography>
-      <Divider sx={{ mb: 1 }} />
-
-      {columnaActiva && (
-        <Box px={1} pb={1}>
-          <TextField
-            size="small"
-            fullWidth
-            autoFocus
-            placeholder="Escribe para filtrar…"
-            value={filtroColInput}
-            onChange={(e) => setFiltroColInput(e.target.value)}
-            onKeyDown={(e) => { if (e.key === 'Enter') aplicarFiltroColumna(); }}
-            InputProps={{ sx: { borderRadius: 0 } }}
-          />
-          <Stack direction="row" justifyContent="flex-end" spacing={1} mt={1}>
-            <Button size="small" onClick={limpiarFiltroColActual} sx={{ color: 'text.secondary', textTransform: 'none' }}>
-              Limpiar
-            </Button>
-            <Button
-              size="small"
-              onClick={aplicarFiltroColumna}
-              sx={{ bgcolor: accentExterior, color: '#fff', '&:hover': { bgcolor: alpha(accentExterior, 0.9) }, borderRadius: 0, textTransform: 'none' }}
-            >
-              Aplicar
-            </Button>
-          </Stack>
-        </Box>
-      )}
-    </Menu>
-  );
-
-  /* ======================== Paginador ======================== */
-  const paginador = (
-    <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mt: 3, px: 1 }}>
-      <Typography variant="caption" color="text.secondary">
-        Mostrando {Math.min(movimientosPaginados.length, rowsPerPage)} de {movimientosFiltrados.length} movimientos
-      </Typography>
-      <Stack direction="row" spacing={1} alignItems="center">
-        <Typography variant="caption" color="text.secondary">Filas por pág:</Typography>
-        <TextField
-          select
-          size="small"
-          value={String(rowsPerPage)}
-          onChange={handleChangeRowsPerPage}
-          sx={{ minWidth: 70, '& .MuiOutlinedInput-root': { borderRadius: 0 } }}
-        >
-          {[50, 100, 150].map((option) => (
-            <option key={option} value={option}>{option}</option>
-          ))}
-        </TextField>
-
-        <Box display="flex" gap={0.5}>
-          {generarNumerosPaginas().map((num, idx) =>
-            num === '...' ? (
-              <Box key={`ellipsis-${idx}`} px={1} display="flex" alignItems="center">...</Box>
-            ) : (
-              <Button
-                key={`page-${num}`}
-                onClick={() => handleChangePage(null as unknown as Event, (num as number) - 1)}
-                disabled={num === paginaActual}
-                sx={{
-                  minWidth: 32,
-                  height: 32,
-                  p: 0,
-                  borderRadius: 0,
-                  fontWeight: num === paginaActual ? 700 : 500,
-                  bgcolor: num === paginaActual ? accentExterior : 'transparent',
-                  color: num === paginaActual ? '#fff' : 'text.primary',
-                  border: num === paginaActual ? 'none' : '1px solid #e0e0e0',
-                  '&:hover': {
-                    bgcolor: num === paginaActual ? accentExterior : '#f5f5f5',
-                  }
-                }}
-              >
-                {num}
-              </Button>
-            )
-          )}
-        </Box>
-      </Stack>
-    </Box>
-  );
-
-  /* ======================== Loading / Error ======================== */
-  if (loading) {
+  if (loading && !data) {
     return (
-      <Box p={3} bgcolor="#fff" border="1px solid #e0e0e0">
-        <Skeleton variant="rectangular" height={48} sx={{ mb: 3 }} />
-        <Skeleton variant="rectangular" height={320} />
+      <Box p={3}>
+        <Skeleton variant="rectangular" height={60} sx={{ mb: 2 }} />
+        <Skeleton variant="rectangular" height={400} />
       </Box>
     );
   }
 
   if (error) {
     return (
-      <Box p={3} bgcolor="#fff" border="1px solid #e0e0e0">
-        {toolbar}
-        <Box sx={{ p: 4, textAlign: 'center' }}>
-          <Typography color="error" variant="h6" mb={1}>
-            Error al cargar movimientos de stock
-          </Typography>
-          <Typography color="text.secondary" mb={2}>
-            {error.message}
-          </Typography>
-          <Button
-            variant="contained"
-            startIcon={<IconRefresh />}
-            onClick={() => refetch()}
-            sx={{ bgcolor: accentExterior, color: '#fff', borderRadius: 0, boxShadow: 'none' }}
-          >
-            Reintentar
-          </Button>
-        </Box>
+      <Box p={4} textAlign="center">
+        <Typography color="error" gutterBottom>Ocurrió un error al cargar los movimientos.</Typography>
+        <Button onClick={handleRefresh} variant="outlined">Reintentar</Button>
       </Box>
     );
   }
 
-  /* ======================== Render ======================== */
   return (
-    <Box sx={{ p: 3, bgcolor: '#f9f9fab', minHeight: '100vh' }}>
-      {toolbar}
-      <Box mt={3}>
-        {tabla}
-      </Box>
-      {paginador}
-      {menuFiltros}
+    <Box sx={{ p: 0 }}>
+      {/* Header / Toolbar */}
+      <Paper
+        elevation={0}
+        sx={{
+          p: 2,
+          mb: 2,
+          border: `1px solid ${theme.borderInner}`,
+          borderRadius: 0,
+          bgcolor: theme.toolbarBg,
+          display: 'flex',
+          alignItems: 'center',
+          gap: 2,
+          flexWrap: 'wrap'
+        }}
+      >
+        <Box display="flex" alignItems="center" gap={1} flexGrow={1}>
+          <IconNotes size={24} color={theme.primary} />
+          <Typography variant="h6" color={theme.textStrong} fontWeight={700}>
+            MOVIMIENTOS DE STOCK
+          </Typography>
+        </Box>
+
+        <Box display="flex" gap={2} alignItems="center">
+          {/* Filtro Tipo */}
+          <TextField
+            select
+            size="small"
+            label="Tipo de Movimiento"
+            value={filtroTipo}
+            onChange={(e) => { setFiltroTipo(e.target.value); setPage(0); }}
+            sx={{ minWidth: 180, '& .MuiOutlinedInput-root': { borderRadius: 0, bgcolor: '#fff' } }}
+          >
+            <MenuItem value="">Todos</MenuItem>
+            <MenuItem value="venta">Venta</MenuItem>
+            <MenuItem value="entrada">Entrada</MenuItem>
+            <MenuItem value="salida">Salida</MenuItem>
+            <MenuItem value="transferencia">Transferencia</MenuItem>
+            <MenuItem value="ajuste">Ajuste</MenuItem>
+            <MenuItem value="devolucion">Devolución</MenuItem>
+          </TextField>
+
+          <Button
+            variant="contained"
+            startIcon={<IconNotes size={18} />}
+            onClick={handleRefresh}
+            sx={{
+              bgcolor: theme.primary,
+              color: '#fff',
+              borderRadius: 0,
+              textTransform: 'none',
+              boxShadow: 'none',
+              height: 40,
+              '&:hover': { bgcolor: theme.primaryHover }
+            }}
+          >
+            Actualizar
+          </Button>
+        </Box>
+      </Paper>
+
+      {/* Tabla */}
+      <Paper elevation={0} sx={{ border: '1px solid #e0e0e0', borderRadius: 0, overflow: 'hidden' }}>
+        <TableContainer sx={{ maxHeight: 'calc(100vh - 240px)' }}>
+          <Table stickyHeader size="small">
+            <TableHead>
+              <TableRow>
+                {['FECHA', 'TIPO', 'ARTÍCULO', 'ORIGEN', '', 'DESTINO', 'CANTIDAD', 'USUARIO', 'ACCIONES'].map((head, idx) => (
+                  <TableCell
+                    key={idx}
+                    align={head === 'CANTIDAD' ? 'right' : head === '' ? 'center' : 'left'}
+                    sx={{
+                      bgcolor: theme.headerBg,
+                      color: theme.headerText,
+                      fontWeight: 700,
+                      fontSize: '0.75rem',
+                      textTransform: 'uppercase',
+                      py: 1.5,
+                      borderBottom: `2px solid ${theme.headerBorder}`,
+                      letterSpacing: '0.5px'
+                    }}
+                  >
+                    {head}
+                  </TableCell>
+                ))}
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {movimientos.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={9} align="center" sx={{ py: 6 }}>
+                    <Typography variant="body2" color="text.secondary">No hay movimientos registrados.</Typography>
+                  </TableCell>
+                </TableRow>
+              ) : (
+                movimientos.map((mov) => {
+                  const tipoStyle = getTipoColor(mov.tipoMovimiento);
+
+                  return (
+                    <TableRow key={mov.id} hover sx={{ '&:nth-of-type(even)': { bgcolor: theme.alternateRow } }}>
+                      {/* Fecha */}
+                      <TableCell sx={{ whiteSpace: 'nowrap', fontSize: '0.8rem', color: theme.textStrong }}>
+                        <Stack direction="row" spacing={1} alignItems="center">
+                          <IconCalendar size={16} style={{ opacity: 0.6 }} />
+                          <span>{formatearFecha(mov.fechaMovimiento)}</span>
+                        </Stack>
+                      </TableCell>
+
+                      {/* Tipo */}
+                      <TableCell>
+                        <Chip
+                          label={getTipoLabel(mov.tipoMovimiento)}
+                          size="small"
+                          sx={{
+                            bgcolor: tipoStyle.bg,
+                            color: tipoStyle.text,
+                            fontWeight: 700,
+                            fontSize: '0.7rem',
+                            borderRadius: 1,
+                            height: 22
+                          }}
+                        />
+                      </TableCell>
+
+                      {/* Artículo */}
+                      <TableCell sx={{ minWidth: 200 }}>
+                        {mov.articulo ? (
+                          <Stack direction="row" spacing={1.5} alignItems="center">
+                            <Box
+                              sx={{
+                                width: 32,
+                                height: 32,
+                                borderRadius: 0.5,
+                                overflow: 'hidden',
+                                border: '1px solid #eee',
+                                flexShrink: 0
+                              }}
+                            >
+                              {mov.articulo.ImagenUrl ? (
+                                <img src={mov.articulo.ImagenUrl.startsWith('http') ? mov.articulo.ImagenUrl : `http://localhost:4000${mov.articulo.ImagenUrl}`} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                              ) : (
+                                <Box display="flex" alignItems="center" justifyContent="center" width="100%" height="100%" bgcolor="#f5f5f5">
+                                  <IconPackage size={16} color="#bbb" />
+                                </Box>
+                              )}
+                            </Box>
+                            <Box>
+                              <Typography variant="caption" display="block" color="text.secondary" fontWeight={600} fontFamily="monospace">
+                                {mov.articulo.Codigo}
+                              </Typography>
+                              <Typography variant="body2" sx={{ lineHeight: 1.1, fontSize: '0.8rem' }}>
+                                {mov.articulo.Descripcion}
+                              </Typography>
+                            </Box>
+                          </Stack>
+                        ) : (
+                          <Typography variant="caption" color="text.disabled">Artículo eliminado</Typography>
+                        )}
+                      </TableCell>
+
+                      {/* Origen */}
+                      <TableCell>
+                        {mov.puntoOrigen ? (
+                          <Stack direction="row" spacing={1} alignItems="center">
+                            {mov.puntoOrigen.tipo === 'deposito' ? <IconBuildingWarehouse size={16} color="#795548" /> : <IconBuildingStore size={16} color="#2e7d32" />}
+                            <Typography variant="body2" fontSize="0.8rem">{mov.puntoOrigen.nombre}</Typography>
+                          </Stack>
+                        ) : (
+                          <Typography variant="caption" color="text.secondary">—</Typography>
+                        )}
+                      </TableCell>
+
+                      {/* Flecha */}
+                      <TableCell align="center">
+                        <IconArrowRight size={14} color="#bdbdbd" />
+                      </TableCell>
+
+                      {/* Destino */}
+                      <TableCell>
+                        {mov.puntoDestino ? (
+                          <Stack direction="row" spacing={1} alignItems="center">
+                            {mov.puntoDestino.tipo === 'deposito' ? <IconBuildingWarehouse size={16} color="#795548" /> : <IconBuildingStore size={16} color="#2e7d32" />}
+                            <Typography variant="body2" fontSize="0.8rem">{mov.puntoDestino.nombre}</Typography>
+                          </Stack>
+                        ) : (
+                          <Typography variant="caption" color="text.secondary">—</Typography>
+                        )}
+                      </TableCell>
+
+                      {/* Cantidad */}
+                      <TableCell align="right">
+                        <Typography variant="body2" fontWeight={700} color={mov.articulo ? '#000' : 'text.disabled'}>
+                          {mov.cantidad}
+                        </Typography>
+                      </TableCell>
+
+                      {/* Usuario */}
+                      <TableCell>
+                        {mov.usuario ? (
+                          <Stack direction="row" spacing={1} alignItems="center">
+                            <Avatar sx={{ width: 22, height: 22, fontSize: '0.7rem', bgcolor: theme.primary }}>
+                              {mov.usuario.nombre[0]}{mov.usuario.apellido[0]}
+                            </Avatar>
+                            <Typography variant="body2" fontSize="0.8rem">
+                              {mov.usuario.username || mov.usuario.nombre}
+                            </Typography>
+                          </Stack>
+                        ) : (
+                          <Typography variant="caption" color="text.secondary">—</Typography>
+                        )}
+                      </TableCell>
+
+                      {/* Acciones */}
+                      <TableCell align="center">
+                        <Tooltip title="Ver detalles y motivo">
+                          <IconButton size="small" sx={{ color: theme.primary, '&:hover': { bgcolor: theme.actionHover } }}>
+                            <IconEye size={18} />
+                          </IconButton>
+                        </Tooltip>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })
+              )}
+            </TableBody>
+          </Table>
+        </TableContainer>
+
+        {/* Footer Paginación custom para mantener estética */}
+        <Box display="flex" justifyContent="flex-end" alignItems="center" p={2} gap={2} bgcolor="#fcfcfc" borderTop="1px solid #eee">
+          <Typography variant="caption" color="text.secondary">
+            Página {page + 1} de {totalPaginas > 0 ? totalPaginas : 1} ({data?.movimientosStockFull?.total || 0} registros)
+          </Typography>
+          <Stack direction="row" spacing={1}>
+            <Button
+              size="small"
+              disabled={page === 0}
+              onClick={() => handleChangePage(page - 1)}
+              variant="outlined"
+              sx={{ borderRadius: 0, textTransform: 'none' }}
+            >
+              Anterior
+            </Button>
+            <Button
+              size="small"
+              disabled={page >= totalPaginas - 1}
+              onClick={() => handleChangePage(page + 1)}
+              variant="outlined"
+              sx={{ borderRadius: 0, textTransform: 'none' }}
+            >
+              Siguiente
+            </Button>
+          </Stack>
+        </Box>
+      </Paper>
     </Box>
   );
 };
