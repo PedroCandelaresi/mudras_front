@@ -101,8 +101,6 @@ export default function ModalConfigurarRubrosProveedor({ open, onClose, proveedo
                     descuento: rubro.porcentajeDescuento
                 }
             });
-            // Show ephemeral success or just stop loading? 
-            // We'll rely on the loading state clearing to indicate success.
         } catch (err: any) {
             console.error(err);
             setGlobalError(`Error al guardar ${rubro.rubroNombre}: ${err.message}`);
@@ -118,8 +116,11 @@ export default function ModalConfigurarRubrosProveedor({ open, onClose, proveedo
         }
     }, [open, refetch]);
 
+    // Match styles from ModalEditarProveedor
     const COLORS = {
-        header: azul.primary,
+        primary: '#2e7d32', // Green
+        secondary: '#546e7a',
+        header: '#2e7d32',
         bg: '#f8f9fa'
     };
 
@@ -130,26 +131,41 @@ export default function ModalConfigurarRubrosProveedor({ open, onClose, proveedo
             maxWidth="md"
             fullWidth
             PaperProps={{
-                elevation: 0,
+                elevation: 4,
+                square: true,
                 sx: {
                     borderRadius: 0,
-                    border: '1px solid #e0e0e0'
+                    bgcolor: '#ffffff',
+                    // Removed the 1px solid #e0e0e0 border as requested
                 }
             }}
         >
-            <DialogTitle sx={{ bgcolor: COLORS.header, color: 'white', py: 2 }}>
+            <Box sx={{
+                bgcolor: COLORS.primary,
+                color: '#ffffff',
+                px: 3,
+                py: 2,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                borderBottom: `4px solid ${COLORS.secondary}`,
+                borderRadius: 0,
+            }}>
                 <Box display="flex" alignItems="center" gap={2}>
                     <Icon icon="mdi:tune-vertical" width={24} height={24} />
                     <Box>
-                        <Typography variant="h6" fontWeight={600}>
-                            Configurar Rubros
+                        <Typography variant="h6" fontWeight={600} letterSpacing={0.5}>
+                            CONFIGURAR RUBROS
                         </Typography>
-                        <Typography variant="caption" sx={{ opacity: 0.9 }}>
+                        <Typography variant="caption" sx={{ opacity: 0.8, letterSpacing: 0.5 }}>
                             {proveedorNombre}
                         </Typography>
                     </Box>
                 </Box>
-            </DialogTitle>
+                <IconButton onClick={onClose} size="small" sx={{ color: 'white', '&:hover': { bgcolor: 'rgba(255,255,255,0.1)' } }}>
+                    <Icon icon="mdi:close" width={24} />
+                </IconButton>
+            </Box>
 
             <DialogContent sx={{ bgcolor: COLORS.bg, p: 3 }}>
                 {loading && <Box p={4} textAlign="center"><CircularProgress /></Box>}
@@ -168,8 +184,8 @@ export default function ModalConfigurarRubrosProveedor({ open, onClose, proveedo
 
                 {!loading && rubros.length > 0 && (
                     <Box display="flex" flexDirection="column" gap={2}>
-                        <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
-                            Ajustá los porcentajes de recargo o descuento para cada rubro específico de este proveedor.
+                        <Typography variant="body2" color="text.secondary" sx={{ mb: 1, textTransform: 'uppercase', fontWeight: 600, letterSpacing: 0.5 }}>
+                            Ajustes por Rubro
                         </Typography>
 
                         {rubros.map((rubro) => {
@@ -185,12 +201,13 @@ export default function ModalConfigurarRubrosProveedor({ open, onClose, proveedo
                                         alignItems: 'center',
                                         gap: 2,
                                         flexWrap: 'wrap',
-                                        borderColor: loadingIds.includes(rubro.rubroId) ? azul.primary : '#e0e0e0',
-                                        transition: 'border-color 0.3s'
+                                        borderColor: loadingIds.includes(rubro.rubroId) ? COLORS.primary : '#e0e0e0',
+                                        transition: 'border-color 0.3s',
+                                        bgcolor: '#ffffff'
                                     }}
                                 >
                                     <Box flex={1} minWidth={200}>
-                                        <Typography variant="subtitle1" fontWeight={600}>
+                                        <Typography variant="subtitle1" fontWeight={600} color="#37474f">
                                             {rubro.rubroNombre}
                                         </Typography>
                                     </Box>
@@ -205,7 +222,12 @@ export default function ModalConfigurarRubrosProveedor({ open, onClose, proveedo
                                             InputProps={{
                                                 endAdornment: <InputAdornment position="end">%</InputAdornment>,
                                             }}
-                                            sx={{ width: 130, '& .MuiOutlinedInput-root': { borderRadius: 0 } }}
+                                            sx={{
+                                                width: 130,
+                                                '& .MuiOutlinedInput-root': { borderRadius: 0 },
+                                                '& .MuiInputLabel-root.Mui-focused': { color: COLORS.primary },
+                                                '& .MuiOutlinedInput-root.Mui-focused fieldset': { borderColor: COLORS.primary }
+                                            }}
                                         />
 
                                         <TextField
@@ -217,17 +239,22 @@ export default function ModalConfigurarRubrosProveedor({ open, onClose, proveedo
                                             InputProps={{
                                                 endAdornment: <InputAdornment position="end">%</InputAdornment>,
                                             }}
-                                            sx={{ width: 130, '& .MuiOutlinedInput-root': { borderRadius: 0 } }}
+                                            sx={{
+                                                width: 130,
+                                                '& .MuiOutlinedInput-root': { borderRadius: 0 },
+                                                '& .MuiInputLabel-root.Mui-focused': { color: COLORS.primary },
+                                                '& .MuiOutlinedInput-root.Mui-focused fieldset': { borderColor: COLORS.primary }
+                                            }}
                                         />
 
                                         <Tooltip title="Guardar cambios para este rubro">
                                             <IconButton
                                                 onClick={() => handleSaveLine(rubro)}
                                                 disabled={isSaving}
-                                                color="primary"
                                                 sx={{
-                                                    bgcolor: isSaving ? 'transparent' : alpha(azul.primary, 0.1),
-                                                    '&:hover': { bgcolor: alpha(azul.primary, 0.2) },
+                                                    color: COLORS.primary,
+                                                    bgcolor: isSaving ? 'transparent' : alpha(COLORS.primary, 0.1),
+                                                    '&:hover': { bgcolor: alpha(COLORS.primary, 0.2) },
                                                     borderRadius: 0,
                                                     width: 40,
                                                     height: 40
@@ -244,8 +271,20 @@ export default function ModalConfigurarRubrosProveedor({ open, onClose, proveedo
                 )}
             </DialogContent>
 
-            <DialogActions sx={{ p: 2, borderTop: '1px solid #e0e0e0' }}>
-                <Button onClick={onClose} variant="outlined" color="inherit" sx={{ borderRadius: 0 }}>
+            <DialogActions sx={{ p: 2, borderTop: '1px solid #e0e0e0', bgcolor: '#f8f9fa' }}>
+                <Button
+                    onClick={onClose}
+                    variant="outlined"
+                    sx={{
+                        borderRadius: 0,
+                        textTransform: 'none',
+                        color: COLORS.secondary,
+                        borderColor: COLORS.secondary,
+                        '&:hover': {
+                            borderColor: COLORS.secondary,
+                            bgcolor: alpha(COLORS.secondary, 0.1)
+                        }
+                    }}>
                     Cerrar
                 </Button>
             </DialogActions>
