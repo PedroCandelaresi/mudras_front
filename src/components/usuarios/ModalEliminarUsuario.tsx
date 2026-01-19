@@ -15,7 +15,7 @@ import {
   Button,
 } from '@mui/material';
 import { IconAlertTriangle, IconX } from '@tabler/icons-react';
-import { useMutation } from '@apollo/client';
+import { useMutation } from '@apollo/client/react';
 import { grisNeutro, rojo } from '@/ui/colores';
 import { UsuarioListado } from './TablaUsuarios';
 import { ELIMINAR_USUARIO_ADMIN_MUTATION } from './graphql/mutations';

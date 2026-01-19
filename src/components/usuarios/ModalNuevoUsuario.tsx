@@ -19,7 +19,7 @@ import { useForm } from 'react-hook-form';
 import { IconEye, IconEyeOff, IconUserPlus } from '@tabler/icons-react';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useMutation } from '@apollo/client';
+import { useMutation } from '@apollo/client/react';
 import { grisNeutro } from '@/ui/colores';
 import { CREAR_USUARIO_ADMIN_MUTATION } from './graphql/mutations';
 

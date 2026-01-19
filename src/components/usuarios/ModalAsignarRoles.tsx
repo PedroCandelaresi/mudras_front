@@ -15,7 +15,7 @@ import {
   Chip
 } from '@mui/material';
 import { IconUserShield } from '@tabler/icons-react';
-import { useQuery, useMutation } from '@apollo/client';
+import { useQuery, useMutation } from '@apollo/client/react';
 import { grisNeutro, azul } from '@/ui/colores';
 import { UsuarioListado } from './TablaUsuarios';
 import { ASIGNAR_ROLES_USUARIO_ADMIN_MUTATION, OBTENER_ROLES_QUERY } from './graphql/mutations';
