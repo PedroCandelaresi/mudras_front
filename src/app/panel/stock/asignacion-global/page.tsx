@@ -27,7 +27,6 @@ import { IconArrowsLeftRight } from '@tabler/icons-react';
 import { verde } from '@/ui/colores';
 
 import PageContainer from '@/components/container/PageContainer';
-import Breadcrumb from '@/app/panel/layout/shared/breadcrumb/Breadcrumb';
 import TransferirStockModal from '@/components/stock/TransferirStockModal';
 import IngresoStockModal from '@/components/stock/IngresoStockModal';
 import ModalNuevaAsignacionStockOptimizado from '@/components/stock/ModalNuevaAsignacionStockOptimizado';
@@ -95,8 +94,6 @@ export default function GlobalStockAssignmentPage() {
 
     return (
         <PageContainer title="Asignación Global de Stock" description="Gestiona el stock de todos los puntos">
-            <Breadcrumb title="Asignación Global" items={[{ to: '/panel', title: 'Inicio' }, { title: 'Stock' }]} />
-
             <Paper elevation={0} sx={{ p: 3, borderRadius: 0, border: '1px solid #e0e0e0' }}>
                 <Box display="flex" justifyContent="space-between" alignItems="center" mb={3} flexWrap="wrap" gap={2}>
                     <Box display="flex" alignItems="center" gap={1}>
