@@ -324,4 +324,27 @@ export const verdeOliva = {
   actionHover: '#c5e1a5',
 };
 
-export type PaletaVerdeOliva = typeof verdeOliva;
+
+// Gris Neutro (Usuarios)
+export const grisNeutro = {
+  headerBg: '#424242',
+  headerText: '#f5f5f5',
+  headerBorder: '#616161',
+  toolbarBg: '#f5f5f5',
+  toolbarBorder: '#e0e0e0',
+  borderOuter: '#616161',
+  borderInner: '#e0e0e0',
+  primary: '#616161',
+  primaryHover: '#424242',
+  textStrong: '#212121',
+  chipBg: '#e0e0e0',
+  chipText: '#212121',
+  rowHover: '#eeeeee',
+  alternateRow: '#fafafa',
+  actionHover: '#bdbdbd',
+  tableHeader: '#757575',
+  tableStriped: '#fafafa',
+};
+
+export type PaletaGrisNeutro = typeof grisNeutro;
+

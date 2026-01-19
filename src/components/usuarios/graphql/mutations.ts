@@ -7,8 +7,11 @@ export const CREAR_USUARIO_ADMIN_MUTATION = gql`
       username
       displayName
       email
+      userType
       isActive
       roles
+      createdAt
+      updatedAt
     }
   }
 `;
@@ -20,8 +23,11 @@ export const ACTUALIZAR_USUARIO_ADMIN_MUTATION = gql`
       username
       displayName
       email
+      userType
       isActive
       roles
+      createdAt
+      updatedAt
     }
   }
 `;
