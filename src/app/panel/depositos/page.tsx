@@ -195,7 +195,7 @@ export default function DepositosPage() {
           activeKey={activeKey}
           onChange={setActiveKey}
         >
-          <Box sx={{ p: 0 }}>
+          <Box sx={{ p: 3 }}>
             {!depositoSeleccionado ? (
               <Box p={3}>
                 <Alert severity="info">

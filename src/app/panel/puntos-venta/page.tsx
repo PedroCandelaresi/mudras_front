@@ -191,7 +191,7 @@ export default function PuntosVentaPage() {
           activeKey={activeKey}
           onChange={setActiveKey}
         >
-          <Box sx={{ p: 0 }}>
+          <Box sx={{ p: 3 }}>
             {!puntoSeleccionado ? (
               <Box p={3}>
                 <Alert severity="info">Seleccioná un punto de venta para ver su stock.</Alert>
