@@ -34,6 +34,7 @@ import { CREAR_PROVEEDOR, ACTUALIZAR_PROVEEDOR } from '@/components/proveedores/
 import { GET_PROVEEDORES, GET_PROVEEDOR } from '@/components/proveedores/graphql/queries';
 import { GET_RUBROS } from '@/components/rubros/graphql/queries';
 import { Proveedor, CreateProveedorInput, UpdateProveedorInput } from '@/interfaces/proveedores';
+import ModalConfigurarRubrosProveedor from './ModalConfigurarRubrosProveedor';
 
 // ... (previous imports)
 
@@ -259,6 +260,9 @@ const ModalEditarProveedor = ({ open, onClose, proveedor, onProveedorGuardado }:
   const [error, setError] = useState('');
   const [validationErrors, setValidationErrors] = useState<string[]>([]);
   const [saving, setSaving] = useState(false);
+
+  // New state for rubric config modal
+  const [configRubrosOpen, setConfigRubrosOpen] = useState(false);
 
   const { data: rubrosData, loading: loadingRubros } = useQuery<{ obtenerRubros: any[] }>(GET_RUBROS);
   const allRubros = useMemo(() => rubrosData?.obtenerRubros || [], [rubrosData]);
@@ -865,9 +869,22 @@ const ModalEditarProveedor = ({ open, onClose, proveedor, onProveedorGuardado }:
                     />
                   </Box>
                   <Box width="100%">
-                    <Typography variant="subtitle2" gutterBottom sx={{ color: '#546e7a', fontWeight: 600 }}>
-                      Rubros Asociados
-                    </Typography>
+                    <Box display="flex" justifyContent="space-between" alignItems="center" mb={1}>
+                      <Typography variant="subtitle2" sx={{ color: '#546e7a', fontWeight: 600 }}>
+                        Rubros Asociados
+                      </Typography>
+                      {esEdicion && proveedor && (
+                        <Button
+                          startIcon={<Icon icon="mdi:tune-vertical" />}
+                          onClick={() => setConfigRubrosOpen(true)}
+                          variant="outlined"
+                          size="small"
+                          sx={{ borderRadius: 0, textTransform: 'none', borderColor: COLORS.secondary, color: COLORS.secondary }}
+                        >
+                          Configurar Ajustes
+                        </Button>
+                      )}
+                    </Box>
                     <Divider sx={{ mb: 2 }} />
                     <RubrosTransferList
                       allRubros={allRubros}
@@ -940,6 +957,15 @@ const ModalEditarProveedor = ({ open, onClose, proveedor, onProveedorGuardado }:
             {saving ? 'Guardando...' : 'Guardar Datos'}
           </Button>
         </DialogActions>
+        {/* Configuration Modal */}
+        {esEdicion && proveedor && (
+          <ModalConfigurarRubrosProveedor
+            open={configRubrosOpen}
+            onClose={() => setConfigRubrosOpen(false)}
+            proveedorId={Number(proveedor.IdProveedor)}
+            proveedorNombre={proveedor.Nombre || ''}
+          />
+        )}
       </Box>
     </Dialog>
   );

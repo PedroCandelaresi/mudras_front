@@ -16,20 +16,22 @@ import {
   Tooltip
 } from '@mui/material';
 import { Icon } from '@iconify/react';
-import { verde } from '@/ui/colores';
+import { grisVerdoso } from '@/ui/colores';
 
 interface Props {
   open: boolean;
   onClose: () => void;
   articulo: any;
   onStockActualizado: () => void;
+  theme?: any;
 }
 
-export default function ModalModificarStockPunto({ 
-  open, 
-  onClose, 
-  articulo, 
-  onStockActualizado 
+export default function ModalModificarStockPunto({
+  open,
+  onClose,
+  articulo,
+  onStockActualizado,
+  theme = grisVerdoso
 }: Props) {
   const [nuevaCantidad, setNuevaCantidad] = useState<string>('');
   const [loading, setLoading] = useState(false);
@@ -72,9 +74,8 @@ export default function ModalModificarStockPunto({
       });
 
       const result = await response.json();
-      
+
       if (result.data?.modificarStockPunto) {
-        console.log(`✅ Stock actualizado para ${articulo.nombre}`);
         onStockActualizado();
         handleClose();
       } else {
@@ -103,17 +104,29 @@ export default function ModalModificarStockPunto({
   if (!articulo) return null;
 
   return (
-    <Dialog open={open} onClose={handleClose} maxWidth="sm" fullWidth>
-      <DialogTitle>
+    <Dialog
+      open={open}
+      onClose={handleClose}
+      maxWidth="sm"
+      fullWidth
+      PaperProps={{
+        elevation: 0,
+        sx: {
+          borderRadius: 0,
+          border: '1px solid #e0e0e0'
+        }
+      }}
+    >
+      <DialogTitle sx={{ bgcolor: theme.headerBg, color: theme.headerText, py: 2 }}>
         <Box display="flex" alignItems="center" gap={2}>
-          <Icon icon="mdi:package-variant" color={verde.primary} width={24} />
-          <Typography variant="h6" fontWeight={600}>
+          <Icon icon="mdi:package-variant" color="inherit" width={24} />
+          <Typography variant="h6" fontWeight={600} color="inherit">
             Modificar Stock
           </Typography>
         </Box>
       </DialogTitle>
 
-      <DialogContent>
+      <DialogContent sx={{ mt: 2 }}>
         <Box mb={3}>
           <Typography variant="subtitle2" color="text.secondary" gutterBottom>
             Artículo
@@ -122,11 +135,10 @@ export default function ModalModificarStockPunto({
             <Typography variant="body1" fontWeight={600}>
               {articulo.nombre}
             </Typography>
-            <Chip 
-              label={articulo.codigo} 
-              size="small" 
-              variant="outlined"
-              sx={{ fontFamily: 'monospace' }}
+            <Chip
+              label={articulo.codigo}
+              size="small"
+              sx={{ borderRadius: 0, fontFamily: 'monospace', bgcolor: '#e0e0e0', fontWeight: 600 }}
             />
           </Box>
           <Typography variant="body2" color="text.secondary">
@@ -141,7 +153,7 @@ export default function ModalModificarStockPunto({
             <Typography variant="subtitle2" color="text.secondary" gutterBottom>
               Stock Actual
             </Typography>
-            <Typography variant="h4" fontWeight={600} color={verde.textStrong}>
+            <Typography variant="h4" fontWeight={600} color={theme.textStrong}>
               {articulo.stockAsignado || 0}
             </Typography>
           </Box>
@@ -167,7 +179,10 @@ export default function ModalModificarStockPunto({
             placeholder="Ingresa la nueva cantidad"
             inputProps={{ min: 0, step: 1 }}
             size="medium"
-            sx={{ mb: 2 }}
+            sx={{
+              mb: 2,
+              '& .MuiOutlinedInput-root': { borderRadius: 0 }
+            }}
           />
 
           <Box display="flex" gap={1} flexWrap="wrap">
@@ -175,37 +190,37 @@ export default function ModalModificarStockPunto({
               Ajustes rápidos:
             </Typography>
             <Tooltip title="Restar 10">
-              <IconButton 
-                size="small" 
+              <IconButton
+                size="small"
                 onClick={() => handleAjusteRapido(-10)}
-                sx={{ bgcolor: 'error.light', color: 'white', '&:hover': { bgcolor: 'error.main' } }}
+                sx={{ borderRadius: 0, bgcolor: '#ffcdd2', color: '#c62828', '&:hover': { bgcolor: '#ef9a9a' } }}
               >
                 <Typography variant="caption" fontWeight={600}>-10</Typography>
               </IconButton>
             </Tooltip>
             <Tooltip title="Restar 1">
-              <IconButton 
-                size="small" 
+              <IconButton
+                size="small"
                 onClick={() => handleAjusteRapido(-1)}
-                sx={{ bgcolor: 'error.light', color: 'white', '&:hover': { bgcolor: 'error.main' } }}
+                sx={{ borderRadius: 0, bgcolor: '#ffcdd2', color: '#c62828', '&:hover': { bgcolor: '#ef9a9a' } }}
               >
                 <Typography variant="caption" fontWeight={600}>-1</Typography>
               </IconButton>
             </Tooltip>
             <Tooltip title="Sumar 1">
-              <IconButton 
-                size="small" 
+              <IconButton
+                size="small"
                 onClick={() => handleAjusteRapido(1)}
-                sx={{ bgcolor: verde.primary, color: 'white', '&:hover': { bgcolor: verde.primaryHover } }}
+                sx={{ borderRadius: 0, bgcolor: theme.chipBg, color: theme.textStrong, '&:hover': { bgcolor: theme.actionHover } }}
               >
                 <Typography variant="caption" fontWeight={600}>+1</Typography>
               </IconButton>
             </Tooltip>
             <Tooltip title="Sumar 10">
-              <IconButton 
-                size="small" 
+              <IconButton
+                size="small"
                 onClick={() => handleAjusteRapido(10)}
-                sx={{ bgcolor: verde.primary, color: 'white', '&:hover': { bgcolor: verde.primaryHover } }}
+                sx={{ borderRadius: 0, bgcolor: theme.chipBg, color: theme.textStrong, '&:hover': { bgcolor: theme.actionHover } }}
               >
                 <Typography variant="caption" fontWeight={600}>+10</Typography>
               </IconButton>
@@ -214,23 +229,26 @@ export default function ModalModificarStockPunto({
         </Box>
 
         {error && (
-          <Alert severity="error" sx={{ mt: 2 }}>
+          <Alert severity="error" sx={{ mt: 2, borderRadius: 0 }}>
             {error}
           </Alert>
         )}
       </DialogContent>
 
-      <DialogActions>
-        <Button onClick={handleClose} disabled={loading}>
+      <DialogActions sx={{ p: 2, borderTop: '1px solid #e0e0e0' }}>
+        <Button onClick={handleClose} disabled={loading} color="inherit">
           Cancelar
         </Button>
         <Button
           variant="contained"
+          disableElevation
           onClick={handleSubmit}
           disabled={loading || !nuevaCantidad}
           sx={{
-            bgcolor: verde.primary,
-            '&:hover': { bgcolor: verde.primaryHover }
+            borderRadius: 0,
+            bgcolor: theme.primary,
+            '&:hover': { bgcolor: theme.primaryHover },
+            fontWeight: 700
           }}
         >
           {loading ? 'Actualizando...' : 'Actualizar Stock'}

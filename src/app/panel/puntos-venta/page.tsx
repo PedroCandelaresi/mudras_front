@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useMemo, useEffect, useCallback } from 'react';
-import { Alert, LinearProgress, Box, Tabs, Tab, Paper, Typography } from '@mui/material';
+import { Alert, LinearProgress, Box, Typography } from '@mui/material';
 import { IconShoppingBag } from '@tabler/icons-react';
 import { useQuery } from '@apollo/client/react';
 import { Icon } from '@iconify/react';
@@ -11,6 +11,9 @@ import TablaStockPuntoVenta from '@/components/puntos-venta/TablaStockPuntoVenta
 import ModalModificarStockPunto from '@/components/stock/ModalModificarStockPunto';
 import ModalNuevaAsignacionStock from '@/components/stock/ModalNuevaAsignacionStock';
 import ModalDetallesArticulo from '@/components/articulos/ModalDetallesArticulo';
+import StylizedTabbedPanel, { StylizedTabDefinition } from '@/components/ui/StylizedTabbedPanel';
+import { grisVerdoso } from '@/ui/colores';
+
 import type { Articulo } from '@/app/interfaces/mudras.types';
 import {
   OBTENER_PUNTOS_MUDRAS,
@@ -19,9 +22,6 @@ import {
   type ObtenerPuntosMudrasResponse,
   type ArticuloConStockPuntoMudras,
 } from '@/components/puntos-mudras/graphql/queries';
-
-// Verde primaveral para los tabs de puntos de venta
-const puntoVentaColor = '#57B15D';
 
 type ObtenerStockPuntoMudrasResponse = {
   obtenerStockPuntoMudras: ArticuloConStockPuntoMudras[];
@@ -44,8 +44,11 @@ export default function PuntosVentaPage() {
     fetchPolicy: 'cache-and-network',
   });
 
+  // Filtrar y ordenar puntos de venta (más viejo primero -> ID ASC)
   const puntosVenta = useMemo<PuntoMudras[]>(
-    () => (puntosData?.obtenerPuntosMudras ?? []).filter((p) => p.tipo === 'venta'),
+    () => (puntosData?.obtenerPuntosMudras ?? [])
+      .filter((p) => p.tipo === 'venta')
+      .sort((a, b) => Number(a.id) - Number(b.id)),
     [puntosData]
   );
 
@@ -148,12 +151,22 @@ export default function PuntosVentaPage() {
   const estaCargandoStock = loadingStock;
   const articulosDelPunto = puntoSeleccionado ? stockData?.obtenerStockPuntoMudras ?? [] : [];
 
+  // Definición de Tabs para StylizedTabbedPanel
+  const tabsDefinition: StylizedTabDefinition[] = useMemo(() => {
+    return puntosVenta.map((punto) => ({
+      key: String(punto.id),
+      label: punto.nombre,
+      icon: <IconShoppingBag size={20} />,
+      color: grisVerdoso.primary,
+    }));
+  }, [puntosVenta]);
+
   return (
     <PageContainer title="Puntos de Venta" description="Consulta rápida del stock en cada punto de venta">
 
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 3 }}>
-        <Icon icon="mdi:store-check-outline" width={32} height={32} color={puntoVentaColor} />
-        <Typography variant="h4" fontWeight={600} color={puntoVentaColor}>
+        <Icon icon="mdi:store-check-outline" width={32} height={32} color={grisVerdoso.primary} />
+        <Typography variant="h4" fontWeight={600} color={grisVerdoso.primary}>
           Puntos de Venta
         </Typography>
       </Box>
@@ -173,38 +186,11 @@ export default function PuntosVentaPage() {
       )}
 
       {puntosVenta.length > 0 && activeKey && (
-        <Paper elevation={0} sx={{ border: '1px solid #e0e0e0', borderRadius: 0, overflow: 'hidden' }}>
-          <Box sx={{ borderBottom: 1, borderColor: 'divider', bgcolor: '#f5f5f5', px: 2 }}>
-            <Tabs
-              value={activeKey}
-              onChange={(_, key) => setActiveKey(key)}
-              variant="scrollable"
-              scrollButtons="auto"
-              aria-label="Puntos Venta tabs"
-              sx={{
-                '& .MuiTabs-indicator': { backgroundColor: puntoVentaColor },
-                '& .MuiTab-root': {
-                  textTransform: 'none',
-                  fontWeight: 600,
-                  fontSize: '1rem',
-                  color: 'text.secondary',
-                  '&.Mui-selected': { color: puntoVentaColor },
-                  py: 2
-                }
-              }}
-            >
-              {puntosVenta.map((punto) => (
-                <Tab
-                  key={punto.id}
-                  value={String(punto.id)}
-                  icon={<IconShoppingBag size={20} />}
-                  label={punto.nombre}
-                  iconPosition="start"
-                />
-              ))}
-            </Tabs>
-          </Box>
-
+        <StylizedTabbedPanel
+          tabs={tabsDefinition}
+          activeKey={activeKey}
+          onChange={setActiveKey}
+        >
           <Box sx={{ p: 0 }}>
             {!puntoSeleccionado ? (
               <Box p={3}>
@@ -222,7 +208,7 @@ export default function PuntosVentaPage() {
               />
             )}
           </Box>
-        </Paper>
+        </StylizedTabbedPanel>
       )}
 
       {modalStockOpen && articuloSeleccionado && puntoSeleccionadoId && (

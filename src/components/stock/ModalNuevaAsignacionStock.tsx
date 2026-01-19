@@ -16,18 +16,12 @@ import {
   Paper,
   Chip,
   IconButton,
-  Tooltip,
   InputAdornment,
   Alert,
   Autocomplete,
   Snackbar,
-  MenuItem,
-  Select,
   Checkbox,
-  Divider,
-  Button,
-  FormControl,
-  InputLabel
+  Button
 } from '@mui/material';
 import { Icon } from '@iconify/react';
 import { useQuery, useLazyQuery, useMutation } from '@apollo/client/react';
@@ -45,6 +39,7 @@ import {
   type ObtenerRelacionesProveedorRubroResponse,
 } from '@/components/puntos-mudras/graphql/queries';
 import { ASIGNAR_STOCK_MASIVO } from '@/components/puntos-mudras/graphql/mutations';
+import { oroNegro } from '@/ui/colores';
 
 interface AsignacionStock {
   articuloId: number;
@@ -421,38 +416,38 @@ export default function ModalNuevaAsignacionStock({ open, onClose, destinoId, on
         elevation: 0,
         sx: {
           borderRadius: 0,
-          border: '1px solid #e0e0e0',
+          border: 'none', // Removed white border
           bgcolor: '#ffffff',
           maxHeight: '90vh',
         },
       }}
     >
-      {/* Header */}
+      {/* Header - Oro Negro */}
       <Box sx={{
-        bgcolor: '#f5f5f5',
-        color: '#000',
+        bgcolor: oroNegro.headerBg,
+        color: oroNegro.headerText,
         px: 3,
         py: 2,
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
-        borderBottom: '1px solid #e0e0e0',
+        borderBottom: `1px solid ${oroNegro.headerBorder}`,
         borderRadius: 0,
       }}>
         <Box display="flex" alignItems="center" gap={2}>
-          <Icon icon="mdi:package-variant-plus" width={24} height={24} color="#546e7a" />
+          <Icon icon="mdi:package-variant-plus" width={24} height={24} color={oroNegro.primary} />
           <Box>
             <Typography variant="h6" fontWeight={700} letterSpacing={0}>
               {titulo || 'Asignar stock'}
             </Typography>
             {destinoSeleccionado && (
-              <Typography variant="caption" color="text.secondary">
+              <Typography variant="caption" sx={{ color: oroNegro.primary, opacity: 0.8 }}>
                 Destino: {puntosDisponibles.find(p => p.id === destinoSeleccionado)?.nombre}
               </Typography>
             )}
           </Box>
         </Box>
-        <IconButton onClick={handleCerrar} size="small" sx={{ color: 'text.secondary', '&:hover': { bgcolor: 'rgba(0,0,0,0.05)' } }}>
+        <IconButton onClick={handleCerrar} size="small" sx={{ color: oroNegro.actionHover, '&:hover': { bgcolor: 'rgba(255,255,255,0.05)' } }}>
           <Icon icon="mdi:close" width={24} />
         </IconButton>
       </Box>
@@ -484,7 +479,7 @@ export default function ModalNuevaAsignacionStock({ open, onClose, destinoId, on
                 }}
                 disabled={Boolean(proveedorSeleccionado || rubroSeleccionado)}
                 InputProps={{
-                  startAdornment: <InputAdornment position="start"><Icon icon="mdi:barcode-scan" /></InputAdornment>,
+                  startAdornment: <InputAdornment position="start"><Icon icon="mdi:barcode-scan" color={oroNegro.primary} /></InputAdornment>,
                   sx: { borderRadius: 0 }
                 }}
                 helperText="Enter para buscar"
@@ -494,11 +489,18 @@ export default function ModalNuevaAsignacionStock({ open, onClose, destinoId, on
                 onClick={() => void buscarArticulos()}
                 disabled={!busqueda.trim() && !proveedorSeleccionado && !rubroSeleccionado}
                 disableElevation
-                sx={{ borderRadius: 0, fontWeight: 700, px: 3, bgcolor: '#5d4037', '&:hover': { bgcolor: '#4e342e' } }}
+                sx={{
+                  borderRadius: 0,
+                  fontWeight: 700,
+                  px: 3,
+                  bgcolor: oroNegro.primary,
+                  color: oroNegro.textStrong,
+                  '&:hover': { bgcolor: oroNegro.primaryHover }
+                }}
               >
                 Buscar
               </Button>
-              <IconButton onClick={limpiarFiltros} title="Limpiar filtros" sx={{ borderRadius: 0, border: '1px solid #e0e0e0' }}>
+              <IconButton onClick={limpiarFiltros} title="Limpiar filtros" sx={{ borderRadius: 0, border: '1px solid #e0e0e0', color: oroNegro.primary }}>
                 <Icon icon="mdi:trash-can-outline" />
               </IconButton>
             </Box>
@@ -539,12 +541,14 @@ export default function ModalNuevaAsignacionStock({ open, onClose, destinoId, on
               <Table stickyHeader size="small">
                 <TableHead>
                   <TableRow>
-                    <TableCell padding="checkbox" sx={{ bgcolor: '#f5f5f5' }} />
-                    <TableCell sx={{ bgcolor: '#f5f5f5', fontWeight: 700 }}>CÓDIGO</TableCell>
-                    <TableCell sx={{ bgcolor: '#f5f5f5', fontWeight: 700 }}>DESCRIPCIÓN</TableCell>
-                    <TableCell sx={{ bgcolor: '#f5f5f5', fontWeight: 700 }}>RUBRO</TableCell>
-                    <TableCell align="right" sx={{ bgcolor: '#f5f5f5', fontWeight: 700 }}>STOCK DEST.</TableCell>
-                    <TableCell align="right" sx={{ bgcolor: '#f5f5f5', fontWeight: 700 }}>ASIGNAR</TableCell>
+                    <TableCell padding="checkbox" sx={{ bgcolor: oroNegro.toolbarBg, borderBottom: `1px solid ${oroNegro.headerBorder}` }}>
+                      {/* Checkbox Header */}
+                    </TableCell>
+                    <TableCell sx={{ bgcolor: oroNegro.toolbarBg, fontWeight: 700, color: oroNegro.primary, borderBottom: `1px solid ${oroNegro.headerBorder}` }}>CÓDIGO</TableCell>
+                    <TableCell sx={{ bgcolor: oroNegro.toolbarBg, fontWeight: 700, color: oroNegro.primary, borderBottom: `1px solid ${oroNegro.headerBorder}` }}>DESCRIPCIÓN</TableCell>
+                    <TableCell sx={{ bgcolor: oroNegro.toolbarBg, fontWeight: 700, color: oroNegro.primary, borderBottom: `1px solid ${oroNegro.headerBorder}` }}>RUBRO</TableCell>
+                    <TableCell align="right" sx={{ bgcolor: oroNegro.toolbarBg, fontWeight: 700, color: oroNegro.primary, borderBottom: `1px solid ${oroNegro.headerBorder}` }}>STOCK DEST.</TableCell>
+                    <TableCell align="right" sx={{ bgcolor: oroNegro.toolbarBg, fontWeight: 700, color: oroNegro.primary, borderBottom: `1px solid ${oroNegro.headerBorder}` }}>ASIGNAR</TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
@@ -559,13 +563,21 @@ export default function ModalNuevaAsignacionStock({ open, onClose, destinoId, on
                             checked={seleccionado}
                             onChange={(e) => toggleSeleccion(articulo, e.target.checked)}
                             size="small"
+                            sx={{
+                              color: oroNegro.primary,
+                              '&.Mui-checked': { color: oroNegro.primary }
+                            }}
                           />
                         </TableCell>
                         <TableCell sx={{ fontFamily: 'monospace' }}>{articulo.codigo}</TableCell>
                         <TableCell>{articulo.nombre}</TableCell>
                         <TableCell>{(articulo as any)?.rubro || '—'}</TableCell>
                         <TableCell align="right">
-                          <Chip size="small" label={articulo.stockEnDestino ?? 0} sx={{ borderRadius: 0 }} />
+                          <Chip
+                            size="small"
+                            label={articulo.stockEnDestino ?? 0}
+                            sx={{ borderRadius: 0, bgcolor: oroNegro.chipBg, color: oroNegro.chipText }}
+                          />
                         </TableCell>
                         <TableCell align="right">
                           <TextField
@@ -591,7 +603,7 @@ export default function ModalNuevaAsignacionStock({ open, onClose, destinoId, on
 
           {/* Summary */}
           {asignaciones.length > 0 && (
-            <Alert severity="info" sx={{ borderRadius: 0 }}>
+            <Alert severity="info" sx={{ borderRadius: 0, '& .MuiAlert-icon': { color: oroNegro.primary } }}>
               <Typography variant="subtitle2" fontWeight={700}>Resumen de asignaciones</Typography>
               <Typography variant="body2">
                 Total Artículos: <strong>{asignaciones.length}</strong> | Unidades Total: <strong>{totalAsignaciones}</strong>
@@ -608,7 +620,14 @@ export default function ModalNuevaAsignacionStock({ open, onClose, destinoId, on
           disabled={loading || asignaciones.length === 0}
           variant="contained"
           disableElevation
-          sx={{ bgcolor: '#5d4037', borderRadius: 0, px: 3, fontWeight: 700, '&:hover': { bgcolor: '#4e342e' } }}
+          sx={{
+            bgcolor: oroNegro.primary,
+            color: oroNegro.textStrong,
+            borderRadius: 0,
+            px: 3,
+            fontWeight: 700,
+            '&:hover': { bgcolor: oroNegro.primaryHover }
+          }}
         >
           CONFIRMAR ASIGNACIÓN
         </Button>
@@ -624,7 +643,18 @@ export default function ModalNuevaAsignacionStock({ open, onClose, destinoId, on
           </Typography>
           <Box display="flex" justifyContent="flex-end" gap={2}>
             <Button onClick={() => setConfirmOpen(false)}>Cancelar</Button>
-            <Button onClick={aplicarAsignaciones} variant="contained" disableElevation sx={{ bgcolor: '#5d4037', borderRadius: 0, '&:hover': { bgcolor: '#4e342e' } }}>
+            <Button
+              onClick={aplicarAsignaciones}
+              variant="contained"
+              disableElevation
+              sx={{
+                bgcolor: oroNegro.primary,
+                color: oroNegro.textStrong,
+                fontWeight: 700,
+                borderRadius: 0,
+                '&:hover': { bgcolor: oroNegro.primaryHover }
+              }}
+            >
               Confirmar
             </Button>
           </Box>
