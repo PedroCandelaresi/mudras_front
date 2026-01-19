@@ -219,11 +219,14 @@ const TablaStockPuntoVenta: React.FC<Props> = ({
                       key={idx}
                       align={['PRECIO', 'STOCK'].includes(head) ? 'right' : head === 'ACCIONES' ? 'center' : 'left'}
                       sx={{
-                        bgcolor: '#ffffff',
+                        bgcolor: theme.headerBg,
                         fontWeight: 700,
-                        color: theme.textStrong,
-                        borderBottom: `2px solid ${theme.borderInner}`,
-                        fontSize: '0.75rem'
+                        color: theme.headerText,
+                        borderBottom: `2px solid ${theme.headerBorder}`, // Usar headerBorder para consistencia
+                        fontSize: '0.8rem',
+                        textTransform: 'uppercase',
+                        letterSpacing: '0.5px',
+                        py: 1.5
                       }}
                     >
                       {head}

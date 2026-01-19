@@ -12,7 +12,7 @@ import ModalModificarStockPunto from '@/components/stock/ModalModificarStockPunt
 import ModalNuevaAsignacionStock from '@/components/stock/ModalNuevaAsignacionStock';
 import ModalDetallesArticulo from '@/components/articulos/ModalDetallesArticulo';
 import StylizedTabbedPanel, { StylizedTabDefinition } from '@/components/ui/StylizedTabbedPanel';
-import { grisVerdoso } from '@/ui/colores';
+import { grisVerdoso, verdeOliva } from '@/ui/colores';
 
 import type { Articulo } from '@/app/interfaces/mudras.types';
 import {
@@ -157,7 +157,7 @@ export default function PuntosVentaPage() {
       key: String(punto.id),
       label: punto.nombre,
       icon: <IconShoppingBag size={20} />,
-      color: grisVerdoso.primary,
+      color: verdeOliva.primary,
     }));
   }, [puntosVenta]);
 
@@ -165,8 +165,8 @@ export default function PuntosVentaPage() {
     <PageContainer title="Puntos de Venta" description="Consulta rápida del stock en cada punto de venta">
 
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 3 }}>
-        <Icon icon="mdi:store-check-outline" width={32} height={32} color={grisVerdoso.primary} />
-        <Typography variant="h4" fontWeight={600} color={grisVerdoso.primary}>
+        <Icon icon="mdi:store-check-outline" width={32} height={32} color={verdeOliva.primary} />
+        <Typography variant="h4" fontWeight={600} color={verdeOliva.primary}>
           Puntos de Venta
         </Typography>
       </Box>
@@ -205,6 +205,7 @@ export default function PuntosVentaPage() {
                 onEditStock={puntoSeleccionadoId ? handleAbrirModalStock : undefined}
                 onViewDetails={handleVerDetalles}
                 onNewAssignment={puntoSeleccionado ? handleNuevaAsignacion : undefined}
+                theme={verdeOliva}
               />
             )}
           </Box>

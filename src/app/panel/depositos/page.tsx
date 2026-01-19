@@ -4,7 +4,7 @@ import { useState, useMemo, useEffect, useCallback } from 'react';
 import { Alert, Box, LinearProgress, Typography, Paper } from '@mui/material';
 import { useQuery } from '@apollo/client/react';
 import { Icon } from '@iconify/react';
-import { grisRojizo } from '@/ui/colores';
+import { grisRojizo, azulMarino } from '@/ui/colores';
 
 import PageContainer from '@/components/container/PageContainer';
 import TablaStockPuntoVenta from '@/components/puntos-venta/TablaStockPuntoVenta';
@@ -170,8 +170,8 @@ export default function DepositosPage() {
   return (
     <PageContainer title="Depósitos - Mudras" description="Gestión de stock en depósitos">
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 3 }}>
-        <Icon icon="mdi:warehouse" width={32} height={32} color={grisRojizo.primary} />
-        <Typography variant="h4" fontWeight={600} color={grisRojizo.primary}>
+        <Icon icon="mdi:warehouse" width={32} height={32} color={azulMarino.primary} />
+        <Typography variant="h4" fontWeight={600} color={azulMarino.primary}>
           Gestión de Depósitos
         </Typography>
       </Box>
@@ -211,7 +211,7 @@ export default function DepositosPage() {
                 onEditStock={handleAbrirModalStock}
                 onViewDetails={handleVerDetalles}
                 onNewAssignment={handleNuevaAsignacion}
-                theme={grisRojizo} // Dynamic theme
+                theme={azulMarino} // Dynamic theme
               />
             )}
           </Box>
@@ -224,7 +224,7 @@ export default function DepositosPage() {
           onClose={handleCerrarModalStock}
           articulo={{ ...articuloSeleccionado, puntoVentaId: depositoSeleccionadoId }}
           onStockActualizado={handleStockActualizado}
-          theme={grisRojizo} // Dynamic theme
+          theme={azulMarino} // Dynamic theme
         />
       )}
 

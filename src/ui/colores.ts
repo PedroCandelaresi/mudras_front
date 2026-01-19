@@ -283,3 +283,45 @@ export const oroBlanco = {
 };
 
 export type PaletaOroBlanco = typeof oroBlanco;
+
+// Azul Marino (Depósitos)
+export const azulMarino = {
+  headerBg: '#0d47a1', // Azul fuerte para header
+  headerText: '#e3f2fd', // Celeste muy claro para texto header
+  headerBorder: '#1565c0',
+  toolbarBg: '#e3f2fd',
+  toolbarBorder: '#bbdefb',
+  borderOuter: '#1565c0',
+  borderInner: '#bbdefb',
+  primary: '#1565c0',
+  primaryHover: '#0d47a1',
+  textStrong: '#0d47a1',
+  chipBg: '#bbdefb',
+  chipText: '#0d47a1',
+  rowHover: '#e3f2fd',
+  alternateRow: '#f5faff',
+  actionHover: '#bbdefb',
+};
+
+export type PaletaAzulMarino = typeof azulMarino;
+
+// Verde Oliva (Puntos de Venta)
+export const verdeOliva = {
+  headerBg: '#556b2f', // Olive green para header
+  headerText: '#f1f8e9', // Verde muy claro para texto header
+  headerBorder: '#6b8e23',
+  toolbarBg: '#f9fbe7',
+  toolbarBorder: '#dcedc8',
+  borderOuter: '#6b8e23',
+  borderInner: '#dcedc8',
+  primary: '#6b8e23', // Olive drab
+  primaryHover: '#556b2f',
+  textStrong: '#33691e',
+  chipBg: '#dcedc8',
+  chipText: '#33691e',
+  rowHover: '#f9fbe7',
+  alternateRow: '#f1f8e9',
+  actionHover: '#c5e1a5',
+};
+
+export type PaletaVerdeOliva = typeof verdeOliva;
