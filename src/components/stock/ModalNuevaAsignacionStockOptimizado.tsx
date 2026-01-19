@@ -371,22 +371,42 @@ export default function ModalNuevaAsignacionStockOptimizado({ open, onClose, pun
       maxWidth="lg"
       fullWidth
       PaperProps={{
+        elevation: 4,
         sx: {
           borderRadius: 0,
-          boxShadow: 'none',
-          border: '1px solid #e0e0e0',
+          bgcolor: '#ffffff',
           minHeight: '80vh',
           maxHeight: '90vh',
         },
       }}
     >
       {/* HEADER */}
-      <DialogTitle sx={{ p: 2, bgcolor: verde.primary, color: '#fff', display: 'flex', alignItems: 'center', gap: 1 }}>
-        <Icon icon="mdi:package-variant-plus" width={24} height={24} />
-        <Typography variant="h6" fontWeight={700}>
-          Asignar Stock {puntoVentaProp ? `a ${puntoVentaProp.nombre}` : ''}
-        </Typography>
-      </DialogTitle>
+      <Box sx={{
+        bgcolor: verde.primary,
+        color: '#ffffff',
+        px: 3,
+        py: 2,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        borderBottom: `4px solid ${verde.headerBorder}`,
+        borderRadius: 0,
+      }}>
+        <Box display="flex" alignItems="center" gap={2}>
+          <Icon icon="mdi:package-variant-plus" width={24} height={24} />
+          <Box>
+            <Typography variant="h6" fontWeight={600} letterSpacing={0.5}>
+              ASIGNACIÓN DE STOCK
+            </Typography>
+            <Typography variant="caption" sx={{ opacity: 0.8, letterSpacing: 0.5 }}>
+              {puntoVentaProp ? puntoVentaProp.nombre : 'Masiva'}
+            </Typography>
+          </Box>
+        </Box>
+        <IconButton onClick={handleCerrar} size="small" sx={{ color: 'white', '&:hover': { bgcolor: 'rgba(255,255,255,0.1)' } }}>
+          <Icon icon="mdi:close" width={24} />
+        </IconButton>
+      </Box>
 
       <DialogContent sx={{ p: 3, bgcolor: '#f9fafb' }}>
         <Box display="flex" flexDirection="column" gap={3}>
@@ -528,7 +548,7 @@ export default function ModalNuevaAsignacionStockOptimizado({ open, onClose, pun
       </DialogContent>
 
       <DialogActions sx={{ p: 2, bgcolor: '#f5f5f5', borderTop: '1px solid #e0e0e0' }}>
-        <Button onClick={handleCerrar} color="inherit" sx={{ fontWeight: 600 }}>Cancelar</Button>
+        <Button onClick={handleCerrar} variant="outlined" color="inherit" sx={{ borderRadius: 0, textTransform: 'none' }}>Cancelar</Button>
         <Button
           onClick={handleConfirmarAsignaciones}
           disabled={loading || asignaciones.length === 0}

@@ -24,6 +24,7 @@ import {
 } from '@mui/material';
 import { Icon } from '@iconify/react';
 import { IconArrowsLeftRight } from '@tabler/icons-react';
+import { verde } from '@/ui/colores';
 
 import PageContainer from '@/components/container/PageContainer';
 import Breadcrumb from '@/app/panel/layout/shared/breadcrumb/Breadcrumb';
@@ -99,10 +100,10 @@ export default function GlobalStockAssignmentPage() {
             <Paper elevation={0} sx={{ p: 3, borderRadius: 0, border: '1px solid #e0e0e0' }}>
                 <Box display="flex" justifyContent="space-between" alignItems="center" mb={3} flexWrap="wrap" gap={2}>
                     <Box display="flex" alignItems="center" gap={1}>
-                        <Box sx={{ width: 40, height: 40, bgcolor: '#5d4037', color: '#fff', display: 'grid', placeItems: 'center' }}>
+                        <Box sx={{ width: 40, height: 40, bgcolor: verde.primary, color: '#fff', display: 'grid', placeItems: 'center' }}>
                             <Icon icon="mdi:clipboard-list" width={24} />
                         </Box>
-                        <Typography variant="h5" fontWeight={700}>
+                        <Typography variant="h5" fontWeight={700} color={verde.textStrong}>
                             Matriz de Stock
                         </Typography>
                     </Box>
@@ -128,10 +129,16 @@ export default function GlobalStockAssignmentPage() {
                         />
                         <Button
                             variant="outlined"
-                            color="primary"
+                            sx={{
+                                borderRadius: 0,
+                                textTransform: 'none',
+                                fontWeight: 600,
+                                color: verde.primary,
+                                borderColor: verde.primary,
+                                '&:hover': { borderColor: verde.primaryHover, bgcolor: verde.toolbarBg }
+                            }}
                             startIcon={<Icon icon="mdi:refresh" />}
                             onClick={() => refetch()}
-                            sx={{ borderRadius: 0, textTransform: 'none', fontWeight: 600 }}
                         >
                             Actualizar
                         </Button>
@@ -140,7 +147,7 @@ export default function GlobalStockAssignmentPage() {
                             disableElevation
                             startIcon={<Icon icon="mdi:plus" />}
                             onClick={() => setModalOptimizadoOpen(true)}
-                            sx={{ bgcolor: '#5d4037', borderRadius: 0, fontWeight: 700, '&:hover': { bgcolor: '#4e342e' } }}
+                            sx={{ bgcolor: verde.primary, borderRadius: 0, fontWeight: 700, '&:hover': { bgcolor: verde.primaryHover } }}
                         >
                             Asignación Masiva
                         </Button>
@@ -151,27 +158,27 @@ export default function GlobalStockAssignmentPage() {
 
                 {loadingMatriz || loadingPuntos ? (
                     <Box display="flex" justifyContent="center" p={5}>
-                        <CircularProgress sx={{ color: '#5d4037' }} />
+                        <CircularProgress sx={{ color: verde.primary }} />
                     </Box>
                 ) : (
                     <TableContainer sx={{ border: '1px solid #e0e0e0', borderRadius: 0 }}>
                         <Table stickyHeader size="small">
                             <TableHead>
                                 <TableRow>
-                                    <TableCell sx={{ bgcolor: '#f5f5f5', fontWeight: 700, color: 'text.secondary' }}>CÓDIGO</TableCell>
-                                    <TableCell sx={{ bgcolor: '#f5f5f5', fontWeight: 700, color: 'text.secondary' }}>ARTÍCULO</TableCell>
-                                    <TableCell align="center" sx={{ bgcolor: '#f5f5f5', fontWeight: 700, color: 'text.secondary' }}>TOTAL GLOBAL</TableCell>
+                                    <TableCell sx={{ bgcolor: verde.headerBg, fontWeight: 700, color: verde.headerText }}>CÓDIGO</TableCell>
+                                    <TableCell sx={{ bgcolor: verde.headerBg, fontWeight: 700, color: verde.headerText }}>ARTÍCULO</TableCell>
+                                    <TableCell align="center" sx={{ bgcolor: verde.headerBg, fontWeight: 700, color: verde.headerText }}>TOTAL GLOBAL</TableCell>
                                     {puntos.map((punto: any) => (
-                                        <TableCell key={punto.id} align="center" sx={{ bgcolor: '#f5f5f5', fontWeight: 700, color: 'text.secondary' }}>
+                                        <TableCell key={punto.id} align="center" sx={{ bgcolor: verde.headerBg, fontWeight: 700, color: verde.headerText }}>
                                             <Box display="flex" flexDirection="column" alignItems="center">
                                                 <span>{punto.nombre}</span>
-                                                <Typography variant="caption" sx={{ opacity: 0.8, fontWeight: 400, textTransform: 'none' }}>
+                                                <Typography variant="caption" sx={{ opacity: 0.8, fontWeight: 400, textTransform: 'none', color: '#e0e0e0' }}>
                                                     {punto.tipo === 'deposito' ? '(Depósito)' : '(Venta)'}
                                                 </Typography>
                                             </Box>
                                         </TableCell>
                                     ))}
-                                    <TableCell align="center" sx={{ bgcolor: '#f5f5f5', fontWeight: 700, color: 'text.secondary' }}>ACCIONES</TableCell>
+                                    <TableCell align="center" sx={{ bgcolor: verde.headerBg, fontWeight: 700, color: verde.headerText }}>ACCIONES</TableCell>
                                 </TableRow>
                             </TableHead>
                             <TableBody>
@@ -218,7 +225,7 @@ export default function GlobalStockAssignmentPage() {
                                                                 <IconButton
                                                                     size="small"
                                                                     onClick={() => handleOpenTransferencia(articulo, punto.id)}
-                                                                    sx={{ color: '#5d4037', padding: 0.5 }}
+                                                                    sx={{ color: verde.primary, padding: 0.5 }}
                                                                 >
                                                                     <IconArrowsLeftRight size={16} />
                                                                 </IconButton>
@@ -232,7 +239,7 @@ export default function GlobalStockAssignmentPage() {
                                             <Tooltip title="Transferir Stock (Origen a elección)">
                                                 <IconButton
                                                     onClick={() => handleOpenTransferencia(articulo)}
-                                                    sx={{ color: '#2e7d32' }}
+                                                    sx={{ color: verde.primary }}
                                                 >
                                                     <IconArrowsLeftRight size={20} />
                                                 </IconButton>
