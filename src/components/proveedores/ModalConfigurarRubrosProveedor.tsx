@@ -28,7 +28,6 @@ import { azul } from '@/ui/colores';
 const GET_RUBROS_PROVEEDOR = gql`
   query ObtenerRubrosPorProveedor($proveedorId: ID!) {
     rubrosPorProveedor(proveedorId: $proveedorId) {
-      id
       rubroId
       rubroNombre
       porcentajeRecargo
@@ -44,7 +43,6 @@ const CONFIGURAR_RUBRO_PROVEEDOR = gql`
 `;
 
 interface RubroConfig {
-    id: number; // ID of the relation (optional usage)
     rubroId: number;
     rubroNombre: string;
     porcentajeRecargo: number;
