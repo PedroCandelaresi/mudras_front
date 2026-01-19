@@ -202,7 +202,7 @@ const TablaStockPuntoVenta: React.FC<Props> = ({
         </Alert>
       ) : (
         <>
-          <Paper elevation={0} sx={{ border: '1px solid #e0e0e0', borderRadius: 0, overflow: 'hidden', mb: 2 }}>
+          <Paper elevation={0} sx={{ borderRadius: 0, overflow: 'hidden', mb: 2 }}>
             <Box px={2} py={1.5} bgcolor={theme.headerBg} display="flex" justifyContent="space-between" alignItems="center">
               <Typography variant="subtitle2" fontWeight={700} color={theme.headerText}>
                 {puntoNombre ? `STOCK EN: ${puntoNombre.toUpperCase()}` : 'STOCK DEL PUNTO DE VENTA'}
