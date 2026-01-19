@@ -163,7 +163,7 @@ export default function DepositosPage() {
     return depositos.map(p => ({
       key: String(p.id),
       label: p.nombre,
-      icon: 'mdi:warehouse'
+      icon: <Icon icon="mdi:warehouse" width={20} height={20} />
     }));
   }, [depositos]);
 
