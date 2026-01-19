@@ -24,7 +24,7 @@ import {
 } from '@mui/material';
 import { alpha } from '@mui/material/styles';
 import { useMemo, useState } from 'react';
-import { useQuery } from '@apollo/client/react';
+import { useQuery, useMutation } from '@apollo/client/react';
 import {
   IconSearch,
   IconCategory,
@@ -36,6 +36,7 @@ import {
   IconDotsVertical,
 } from '@tabler/icons-react';
 import { BUSCAR_RUBROS } from '@/components/rubros/graphql/queries';
+import { ELIMINAR_RUBRO } from '@/components/rubros/graphql/mutations';
 import type { BuscarRubrosResponse, RubroConEstadisticas } from '@/app/interfaces/graphql.types';
 import { verdeMilitar, azul, rojo } from '@/ui/colores';
 import ModalEditarRubro from './ModalEditarRubro';
@@ -108,6 +109,8 @@ const TablaRubros: React.FC<Props> = ({ onNuevoRubro, puedeCrear = true }) => {
     variables: { pagina: page, limite: rowsPerPage, busqueda: busquedaServidor },
     fetchPolicy: 'cache-and-network',
   });
+
+  const [eliminarRubro] = useMutation(ELIMINAR_RUBRO);
 
   /* ---------- Handlers de header filters (como Proveedores) ---------- */
   const abrirMenuColumna = (col: ColKey) => (e: React.MouseEvent<HTMLElement>) => {
@@ -193,10 +196,14 @@ const TablaRubros: React.FC<Props> = ({ onNuevoRubro, puedeCrear = true }) => {
 
   const confirmarEliminacion = async () => {
     if (rubroSeleccionado && textoConfirmacion === 'ELIMINAR') {
-      // acá iría tu mutation de eliminar rubro
-      // TODO: Add mutation logic if missing
-      cerrarModales();
-      refetch();
+      try {
+        await eliminarRubro({ variables: { id: rubroSeleccionado.id } });
+        cerrarModales();
+        refetch();
+      } catch (err: any) {
+        console.error('Error al eliminar rubro:', err);
+        alert('Ocurrió un error al eliminar el rubro: ' + (err.message || 'Desconocido'));
+      }
     }
   };
 
