@@ -399,6 +399,7 @@ const ModalNuevoArticulo = ({ open, onClose, articulo, onSuccess, accentColor }:
       const idProveedor = form.idProveedor !== '' && !Number.isNaN(Number(form.idProveedor)) ? Number(form.idProveedor) : undefined;
       const stock = form.stock !== '' && !Number.isNaN(Number(form.stock)) ? Number(form.stock) : 0;
       const stockMinimo = form.stockMinimo !== '' && !Number.isNaN(Number(form.stockMinimo)) ? Number(form.stockMinimo) : 0;
+      const rubroIdNumber = form.rubroId !== '' && !Number.isNaN(Number(form.rubroId)) ? Number(form.rubroId) : undefined;
       const precioVentaCalculado = precioCalculado > 0 ? precioCalculado : costo;
 
       const shouldSendPrecioCompra = !editando || Math.abs(costo - costoReferenciaOriginal) > 0.0001;
@@ -418,6 +419,7 @@ const ModalNuevoArticulo = ({ open, onClose, articulo, onSuccess, accentColor }:
         AlicuotaIva: Number(iva),
         ImpuestoPorcentual: true,
         ...(rubroNombre ? { Rubro: rubroNombre } : {}),
+        ...(typeof rubroIdNumber === 'number' ? { rubroId: rubroIdNumber } : {}),
         ...(typeof idProveedor === 'number' ? { idProveedor } : {}),
       } as const;
 
