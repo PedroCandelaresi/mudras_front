@@ -94,98 +94,129 @@ export default function GlobalStockAssignmentPage() {
 
     return (
         <PageContainer title="Asignación Global de Stock" description="Gestiona el stock de todos los puntos">
-            <Paper elevation={0} sx={{ p: 3, borderRadius: 0, border: '1px solid #e0e0e0' }}>
-                <Box display="flex" justifyContent="space-between" alignItems="center" mb={3} flexWrap="wrap" gap={2}>
-                    <Box display="flex" alignItems="center" gap={1}>
-                        <Box sx={{ width: 40, height: 40, bgcolor: verde.primary, color: '#fff', display: 'grid', placeItems: 'center' }}>
-                            <Icon icon="mdi:clipboard-list" width={24} />
-                        </Box>
-                        <Typography variant="h5" fontWeight={700} color={verde.textStrong}>
-                            Matriz de Stock
-                        </Typography>
-                    </Box>
-                    <Box display="flex" flexDirection={{ xs: 'column', md: 'row' }} gap={2} alignItems="center">
-                        <TextField
-                            placeholder="Buscar artículo..."
-                            size="small"
-                            value={busqueda}
-                            onChange={(e) => setBusqueda(e.target.value)}
-                            onKeyDown={(e) => e.key === 'Enter' && refetch()}
-                            sx={{ minWidth: 300 }}
-                            InputProps={{
-                                startAdornment: <InputAdornment position="start"><Icon icon="mdi:magnify" /></InputAdornment>,
-                                endAdornment: busqueda && (
-                                    <InputAdornment position="end">
-                                        <IconButton size="small" onClick={() => { setBusqueda(''); setTimeout(refetch, 0); }}>
-                                            <Icon icon="mdi:close" />
-                                        </IconButton>
-                                    </InputAdornment>
-                                ),
-                                sx: { borderRadius: 0 }
-                            }}
-                        />
-                        <Button
-                            variant="outlined"
-                            sx={{
-                                borderRadius: 0,
-                                textTransform: 'none',
-                                fontWeight: 600,
-                                color: verde.primary,
-                                borderColor: verde.primary,
-                                '&:hover': { borderColor: verde.primaryHover, bgcolor: verde.toolbarBg }
-                            }}
-                            startIcon={<Icon icon="mdi:refresh" />}
-                            onClick={() => refetch()}
-                        >
-                            Actualizar
-                        </Button>
-                        <Button
-                            variant="contained"
-                            disableElevation
-                            startIcon={<Icon icon="mdi:plus" />}
-                            onClick={() => setModalOptimizadoOpen(true)}
-                            sx={{ bgcolor: verde.primary, borderRadius: 0, fontWeight: 700, '&:hover': { bgcolor: verde.primaryHover } }}
-                        >
-                            Asignación Masiva
-                        </Button>
-                    </Box>
+            {/* Toolbar */}
+            <Paper
+                elevation={0}
+                sx={{
+                    p: 2,
+                    mb: 2,
+                    border: `1px solid ${verde.borderInner}`,
+                    borderRadius: 0,
+                    bgcolor: verde.toolbarBg,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    flexWrap: 'wrap',
+                    gap: 2
+                }}
+            >
+                <Box display="flex" alignItems="center" gap={1}>
+                    <Icon icon="mdi:clipboard-list" width={24} color={verde.primary} />
+                    <Typography variant="h6" fontWeight={700} color={verde.textStrong}>
+                        MATRIZ DE STOCK
+                    </Typography>
                 </Box>
 
-                {error && <Alert severity="error" sx={{ mb: 2, borderRadius: 0 }}>Error al cargar datos: {error.message}</Alert>}
+                <Box display="flex" gap={2} alignItems="center">
+                    <TextField
+                        placeholder="Buscar artículo..."
+                        size="small"
+                        value={busqueda}
+                        onChange={(e) => setBusqueda(e.target.value)}
+                        onKeyDown={(e) => e.key === 'Enter' && refetch()}
+                        sx={{
+                            minWidth: 300,
+                            '& .MuiOutlinedInput-root': {
+                                borderRadius: 0,
+                                bgcolor: '#ffffff',
+                                '& fieldset': { borderColor: '#e0e0e0' },
+                                '&:hover fieldset': { borderColor: '#bdbdbd' },
+                                '&.Mui-focused fieldset': { borderColor: verde.primary },
+                            }
+                        }}
+                        InputProps={{
+                            startAdornment: <InputAdornment position="start"><Icon icon="mdi:magnify" color="#757575" /></InputAdornment>,
+                            endAdornment: busqueda && (
+                                <InputAdornment position="end">
+                                    <IconButton size="small" onClick={() => { setBusqueda(''); setTimeout(refetch, 0); }}>
+                                        <Icon icon="mdi:close" />
+                                    </IconButton>
+                                </InputAdornment>
+                            ),
+                        }}
+                    />
+                    <Button
+                        variant="outlined"
+                        startIcon={<Icon icon="mdi:refresh" />}
+                        onClick={() => refetch()}
+                        sx={{
+                            borderRadius: 0,
+                            textTransform: 'none',
+                            color: '#757575',
+                            borderColor: '#e0e0e0',
+                            height: 40,
+                            bgcolor: '#ffffff',
+                            '&:hover': { borderColor: '#bdbdbd', bgcolor: '#f5f5f5' }
+                        }}
+                    >
+                        Actualizar
+                    </Button>
+                    <Button
+                        variant="contained"
+                        disableElevation
+                        startIcon={<Icon icon="mdi:plus" />}
+                        onClick={() => setModalOptimizadoOpen(true)}
+                        sx={{
+                            bgcolor: verde.primary,
+                            borderRadius: 0,
+                            fontWeight: 600,
+                            textTransform: 'none',
+                            height: 40,
+                            '&:hover': { bgcolor: verde.primaryHover }
+                        }}
+                    >
+                        Asignación Masiva
+                    </Button>
+                </Box>
+            </Paper>
 
-                {loadingMatriz || loadingPuntos ? (
-                    <Box display="flex" justifyContent="center" p={5}>
-                        <CircularProgress sx={{ color: verde.primary }} />
-                    </Box>
-                ) : (
-                    <TableContainer sx={{ border: '1px solid #e0e0e0', borderRadius: 0 }}>
+            {error && <Alert severity="error" sx={{ mb: 2, borderRadius: 0 }}>Error al cargar datos: {error.message}</Alert>}
+
+            {/* Table */}
+            <Paper elevation={0} sx={{ border: '1px solid #e0e0e0', borderRadius: 0, overflow: 'hidden' }}>
+                <TableContainer sx={{ maxHeight: 'calc(100vh - 240px)' }}>
+                    {loadingMatriz || loadingPuntos ? (
+                        <Box display="flex" justifyContent="center" p={8}>
+                            <CircularProgress sx={{ color: verde.primary }} />
+                        </Box>
+                    ) : (
                         <Table stickyHeader size="small">
                             <TableHead>
                                 <TableRow>
-                                    <TableCell sx={{ bgcolor: verde.headerBg, fontWeight: 700, color: verde.headerText }}>CÓDIGO</TableCell>
-                                    <TableCell sx={{ bgcolor: verde.headerBg, fontWeight: 700, color: verde.headerText }}>ARTÍCULO</TableCell>
-                                    <TableCell align="center" sx={{ bgcolor: verde.headerBg, fontWeight: 700, color: verde.headerText }}>TOTAL GLOBAL</TableCell>
+                                    <TableCell sx={{ bgcolor: verde.tableHeader, fontWeight: 700, color: '#ffffff', borderBottom: `2px solid ${verde.headerBorder}`, letterSpacing: '0.5px' }}>CÓDIGO</TableCell>
+                                    <TableCell sx={{ bgcolor: verde.tableHeader, fontWeight: 700, color: '#ffffff', borderBottom: `2px solid ${verde.headerBorder}`, letterSpacing: '0.5px' }}>ARTÍCULO</TableCell>
+                                    <TableCell align="center" sx={{ bgcolor: verde.tableHeader, fontWeight: 700, color: '#ffffff', borderBottom: `2px solid ${verde.headerBorder}`, letterSpacing: '0.5px' }}>TOTAL GLOBAL</TableCell>
                                     {puntos.map((punto: any) => (
-                                        <TableCell key={punto.id} align="center" sx={{ bgcolor: verde.headerBg, fontWeight: 700, color: verde.headerText }}>
+                                        <TableCell key={punto.id} align="center" sx={{ bgcolor: verde.tableHeader, fontWeight: 700, color: '#ffffff', borderBottom: `2px solid ${verde.headerBorder}` }}>
                                             <Box display="flex" flexDirection="column" alignItems="center">
                                                 <span>{punto.nombre}</span>
-                                                <Typography variant="caption" sx={{ opacity: 0.8, fontWeight: 400, textTransform: 'none', color: '#e0e0e0' }}>
+                                                <Typography variant="caption" sx={{ opacity: 0.8, fontWeight: 400, textTransform: 'none', color: '#e8f5e9' }}>
                                                     {punto.tipo === 'deposito' ? '(Depósito)' : '(Venta)'}
                                                 </Typography>
                                             </Box>
                                         </TableCell>
                                     ))}
-                                    <TableCell align="center" sx={{ bgcolor: verde.headerBg, fontWeight: 700, color: verde.headerText }}>ACCIONES</TableCell>
+                                    <TableCell align="center" sx={{ bgcolor: verde.tableHeader, fontWeight: 700, color: '#ffffff', borderBottom: `2px solid ${verde.headerBorder}`, letterSpacing: '0.5px' }}>ACCIONES</TableCell>
                                 </TableRow>
                             </TableHead>
                             <TableBody>
                                 {articulos.map((articulo: any) => (
-                                    <TableRow key={articulo.id} hover>
+                                    <TableRow key={articulo.id} hover sx={{ '&:nth-of-type(even)': { bgcolor: verde.tableStriped } }}>
                                         <TableCell>
                                             <Chip
                                                 label={articulo.codigo ?? 'Sin código'}
                                                 size="small"
-                                                sx={{ borderRadius: 0, bgcolor: '#e0e0e0', fontWeight: 600, color: 'text.primary' }}
+                                                sx={{ borderRadius: 0, bgcolor: '#f5f5f5', fontWeight: 600, color: '#424242', border: '1px solid #e0e0e0' }}
                                             />
                                         </TableCell>
                                         <TableCell>
@@ -222,7 +253,7 @@ export default function GlobalStockAssignmentPage() {
                                                                 <IconButton
                                                                     size="small"
                                                                     onClick={() => handleOpenTransferencia(articulo, punto.id)}
-                                                                    sx={{ color: verde.primary, padding: 0.5 }}
+                                                                    sx={{ color: verde.primary, padding: 0.5, '&:hover': { bgcolor: verde.actionHover } }}
                                                                 >
                                                                     <IconArrowsLeftRight size={16} />
                                                                 </IconButton>
@@ -236,7 +267,7 @@ export default function GlobalStockAssignmentPage() {
                                             <Tooltip title="Transferir Stock (Origen a elección)">
                                                 <IconButton
                                                     onClick={() => handleOpenTransferencia(articulo)}
-                                                    sx={{ color: verde.primary }}
+                                                    sx={{ color: verde.primary, '&:hover': { bgcolor: verde.actionHover } }}
                                                 >
                                                     <IconArrowsLeftRight size={20} />
                                                 </IconButton>
@@ -255,8 +286,8 @@ export default function GlobalStockAssignmentPage() {
                                 )}
                             </TableBody>
                         </Table>
-                    </TableContainer>
-                )}
+                    )}
+                </TableContainer>
             </Paper>
 
             {/* Modales */}

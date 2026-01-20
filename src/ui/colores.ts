@@ -31,6 +31,8 @@ export const verde = {
   rowHover: '#eaf3ea',
   actionHover: '#c8e6c9',
   alternateRow: '#f1f8e9',
+  tableHeader: '#388e3c', // Lighter green for table headers
+  tableStriped: '#f1f8e9',
 };
 
 export type Paleta = typeof marron | typeof verde;
