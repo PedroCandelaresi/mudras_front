@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import {
     Dialog,
     DialogTitle,
@@ -12,19 +12,16 @@ import {
     TextField,
     Paper,
     IconButton,
-    Tooltip,
     CircularProgress,
     Alert,
-    Divider,
     InputAdornment
 } from '@mui/material';
 import { alpha } from '@mui/material/styles';
 import { Icon } from '@iconify/react';
-import { useQuery, useMutation } from '@apollo/client/react'; // Ensure hooks are imported from react package if @apollo/client doesn't expose them directly in this setup
+import { useQuery, useMutation } from '@apollo/client/react';
 import { gql } from '@apollo/client';
-import { azul } from '@/ui/colores';
+import { LoadingButton } from '@mui/lab';
 
-// GraphQL Queries & Mutations
 const GET_RUBROS_PROVEEDOR = gql`
   query ObtenerRubrosPorProveedor($proveedorId: ID!) {
     rubrosPorProveedor(proveedorId: $proveedorId) {
@@ -47,6 +44,7 @@ interface RubroConfig {
     rubroNombre: string;
     porcentajeRecargo: number;
     porcentajeDescuento: number;
+    isModified?: boolean;
 }
 
 interface Props {
@@ -58,10 +56,11 @@ interface Props {
 
 export default function ModalConfigurarRubrosProveedor({ open, onClose, proveedorId, proveedorNombre }: Props) {
     const [rubros, setRubros] = useState<RubroConfig[]>([]);
-    const [loadingIds, setLoadingIds] = useState<number[]>([]); // Track which items are saving
+    const [isSaving, setIsSaving] = useState(false);
     const [globalError, setGlobalError] = useState<string>('');
+    const [successMessage, setSuccessMessage] = useState<string>('');
 
-    const { data, loading, error, refetch } = useQuery<{ rubrosPorProveedor: any[] }>(GET_RUBROS_PROVEEDOR, {
+    const { data, loading, refetch } = useQuery<{ rubrosPorProveedor: any[] }>(GET_RUBROS_PROVEEDOR, {
         variables: { proveedorId },
         skip: !open || !proveedorId,
         fetchPolicy: 'network-only'
@@ -72,7 +71,8 @@ export default function ModalConfigurarRubrosProveedor({ open, onClose, proveedo
             setRubros(data.rubrosPorProveedor.map((r: any) => ({
                 ...r,
                 porcentajeRecargo: r.porcentajeRecargo || 0,
-                porcentajeDescuento: r.porcentajeDescuento || 0
+                porcentajeDescuento: r.porcentajeDescuento || 0,
+                isModified: false
             })));
         }
     }, [data]);
@@ -84,28 +84,47 @@ export default function ModalConfigurarRubrosProveedor({ open, onClose, proveedo
         if (isNaN(numValue) && value !== '') return;
 
         setRubros(prev => prev.map(r =>
-            r.rubroId === id ? { ...r, [field]: value === '' ? 0 : numValue } : r
+            r.rubroId === id ? { ...r, [field]: value === '' ? 0 : numValue, isModified: true } : r
         ));
     };
 
-    const handleSaveLine = async (rubro: RubroConfig) => {
-        setLoadingIds(prev => [...prev, rubro.rubroId]);
+    const handleSaveAll = async () => {
+        const modifiedRubros = rubros.filter(r => r.isModified);
+        if (modifiedRubros.length === 0) {
+            onClose();
+            return;
+        }
+
+        setIsSaving(true);
         setGlobalError('');
+        setSuccessMessage('');
 
         try {
-            await configurarRubro({
-                variables: {
-                    proveedorId: Number(proveedorId),
-                    rubroId: rubro.rubroId,
-                    recargo: rubro.porcentajeRecargo,
-                    descuento: rubro.porcentajeDescuento
-                }
-            });
+            // Save sequentially to avoid overwhelming the server if logic is heavy (recalculation)
+            for (const rubro of modifiedRubros) {
+                await configurarRubro({
+                    variables: {
+                        proveedorId: Number(proveedorId),
+                        rubroId: rubro.rubroId,
+                        recargo: rubro.porcentajeRecargo,
+                        descuento: rubro.porcentajeDescuento
+                    }
+                });
+            }
+
+            setSuccessMessage('Rubros configurados correctamente y precios actualizados.');
+            // Update modified flags
+            setRubros(prev => prev.map(r => ({ ...r, isModified: false })));
+
+            // Optionally close after short delay or let user close
+            setTimeout(() => {
+                onClose();
+            }, 1000);
+
         } catch (err: any) {
             console.error(err);
-            setGlobalError(`Error al guardar ${rubro.rubroNombre}: ${err.message}`);
-        } finally {
-            setLoadingIds(prev => prev.filter(id => id !== rubro.rubroId));
+            setGlobalError(`Error al guardar: ${err.message}`);
+            setIsSaving(false);
         }
     };
 
@@ -113,31 +132,30 @@ export default function ModalConfigurarRubrosProveedor({ open, onClose, proveedo
     useEffect(() => {
         if (open) {
             refetch().catch(console.error);
+            setGlobalError('');
+            setSuccessMessage('');
         }
     }, [open, refetch]);
 
-    // Match styles from ModalEditarProveedor
     const COLORS = {
-        primary: '#2e7d32', // Green
+        primary: '#2e7d32',
         secondary: '#546e7a',
         header: '#2e7d32',
         bg: '#f8f9fa'
     };
 
+    const hasChanges = rubros.some(r => r.isModified);
+
     return (
         <Dialog
             open={open}
-            onClose={onClose}
+            onClose={!isSaving ? onClose : undefined}
             maxWidth="md"
             fullWidth
             PaperProps={{
                 elevation: 4,
                 square: true,
-                sx: {
-                    borderRadius: 0,
-                    bgcolor: '#ffffff',
-                    // Removed the 1px solid #e0e0e0 border as requested
-                }
+                sx: { borderRadius: 0, bgcolor: '#ffffff' }
             }}
         >
             <Box sx={{
@@ -162,7 +180,7 @@ export default function ModalConfigurarRubrosProveedor({ open, onClose, proveedo
                         </Typography>
                     </Box>
                 </Box>
-                <IconButton onClick={onClose} size="small" sx={{ color: 'white', '&:hover': { bgcolor: 'rgba(255,255,255,0.1)' } }}>
+                <IconButton onClick={onClose} disabled={isSaving} size="small" sx={{ color: 'white', '&:hover': { bgcolor: 'rgba(255,255,255,0.1)' } }}>
                     <Icon icon="mdi:close" width={24} />
                 </IconButton>
             </Box>
@@ -173,6 +191,12 @@ export default function ModalConfigurarRubrosProveedor({ open, onClose, proveedo
                 {globalError && (
                     <Alert severity="error" sx={{ mb: 2, borderRadius: 0 }} onClose={() => setGlobalError('')}>
                         {globalError}
+                    </Alert>
+                )}
+
+                {successMessage && (
+                    <Alert severity="success" sx={{ mb: 2, borderRadius: 0 }}>
+                        {successMessage}
                     </Alert>
                 )}
 
@@ -188,85 +212,68 @@ export default function ModalConfigurarRubrosProveedor({ open, onClose, proveedo
                             Ajustes por Rubro
                         </Typography>
 
-                        {rubros.map((rubro) => {
-                            const isSaving = loadingIds.includes(rubro.rubroId);
-                            return (
-                                <Paper
-                                    key={rubro.rubroId}
-                                    variant="outlined"
-                                    sx={{
-                                        p: 2,
-                                        borderRadius: 0,
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        gap: 2,
-                                        flexWrap: 'wrap',
-                                        borderColor: loadingIds.includes(rubro.rubroId) ? COLORS.primary : '#e0e0e0',
-                                        transition: 'border-color 0.3s',
-                                        bgcolor: '#ffffff'
-                                    }}
-                                >
-                                    <Box flex={1} minWidth={200}>
-                                        <Typography variant="subtitle1" fontWeight={600} color="#37474f">
-                                            {rubro.rubroNombre}
-                                        </Typography>
-                                    </Box>
+                        {rubros.map((rubro) => (
+                            <Paper
+                                key={rubro.rubroId}
+                                variant="outlined"
+                                sx={{
+                                    p: 2,
+                                    borderRadius: 0,
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: 2,
+                                    flexWrap: 'wrap',
+                                    borderColor: rubro.isModified ? COLORS.primary : '#e0e0e0',
+                                    borderLeft: rubro.isModified ? `4px solid ${COLORS.primary}` : '1px solid #e0e0e0',
+                                    transition: 'border-color 0.3s',
+                                    bgcolor: '#ffffff'
+                                }}
+                            >
+                                <Box flex={1} minWidth={200}>
+                                    <Typography variant="subtitle1" fontWeight={600} color="#37474f">
+                                        {rubro.rubroNombre}
+                                    </Typography>
+                                </Box>
 
-                                    <Box display="flex" gap={2} alignItems="center">
-                                        <TextField
-                                            label="Recargo (%)"
-                                            type="number"
-                                            size="small"
-                                            value={rubro.porcentajeRecargo}
-                                            onChange={(e) => handleUpdateValue(rubro.rubroId, 'porcentajeRecargo', e.target.value)}
-                                            InputProps={{
-                                                endAdornment: <InputAdornment position="end">%</InputAdornment>,
-                                            }}
-                                            sx={{
-                                                width: 130,
-                                                '& .MuiOutlinedInput-root': { borderRadius: 0 },
-                                                '& .MuiInputLabel-root.Mui-focused': { color: COLORS.primary },
-                                                '& .MuiOutlinedInput-root.Mui-focused fieldset': { borderColor: COLORS.primary }
-                                            }}
-                                        />
+                                <Box display="flex" gap={2} alignItems="center">
+                                    <TextField
+                                        label="Recargo (%)"
+                                        type="number"
+                                        size="small"
+                                        disabled={isSaving}
+                                        value={rubro.porcentajeRecargo}
+                                        onChange={(e) => handleUpdateValue(rubro.rubroId, 'porcentajeRecargo', e.target.value)}
+                                        InputProps={{
+                                            endAdornment: <InputAdornment position="end">%</InputAdornment>,
+                                        }}
+                                        sx={{
+                                            width: 130,
+                                            '& .MuiOutlinedInput-root': { borderRadius: 0 },
+                                            '& .MuiInputLabel-root.Mui-focused': { color: COLORS.primary },
+                                            '& .MuiOutlinedInput-root.Mui-focused fieldset': { borderColor: COLORS.primary }
+                                        }}
+                                    />
 
-                                        <TextField
-                                            label="Descuento (%)"
-                                            type="number"
-                                            size="small"
-                                            value={rubro.porcentajeDescuento}
-                                            onChange={(e) => handleUpdateValue(rubro.rubroId, 'porcentajeDescuento', e.target.value)}
-                                            InputProps={{
-                                                endAdornment: <InputAdornment position="end">%</InputAdornment>,
-                                            }}
-                                            sx={{
-                                                width: 130,
-                                                '& .MuiOutlinedInput-root': { borderRadius: 0 },
-                                                '& .MuiInputLabel-root.Mui-focused': { color: COLORS.primary },
-                                                '& .MuiOutlinedInput-root.Mui-focused fieldset': { borderColor: COLORS.primary }
-                                            }}
-                                        />
-
-                                        <Tooltip title="Guardar cambios para este rubro">
-                                            <IconButton
-                                                onClick={() => handleSaveLine(rubro)}
-                                                disabled={isSaving}
-                                                sx={{
-                                                    color: COLORS.primary,
-                                                    bgcolor: isSaving ? 'transparent' : alpha(COLORS.primary, 0.1),
-                                                    '&:hover': { bgcolor: alpha(COLORS.primary, 0.2) },
-                                                    borderRadius: 0,
-                                                    width: 40,
-                                                    height: 40
-                                                }}
-                                            >
-                                                {isSaving ? <CircularProgress size={20} /> : <Icon icon="mdi:content-save" />}
-                                            </IconButton>
-                                        </Tooltip>
-                                    </Box>
-                                </Paper>
-                            );
-                        })}
+                                    <TextField
+                                        label="Descuento (%)"
+                                        type="number"
+                                        size="small"
+                                        disabled={isSaving}
+                                        value={rubro.porcentajeDescuento}
+                                        onChange={(e) => handleUpdateValue(rubro.rubroId, 'porcentajeDescuento', e.target.value)}
+                                        InputProps={{
+                                            endAdornment: <InputAdornment position="end">%</InputAdornment>,
+                                        }}
+                                        sx={{
+                                            width: 130,
+                                            '& .MuiOutlinedInput-root': { borderRadius: 0 },
+                                            '& .MuiInputLabel-root.Mui-focused': { color: COLORS.primary },
+                                            '& .MuiOutlinedInput-root.Mui-focused fieldset': { borderColor: COLORS.primary }
+                                        }}
+                                    />
+                                </Box>
+                            </Paper>
+                        ))}
                     </Box>
                 )}
             </DialogContent>
@@ -275,6 +282,7 @@ export default function ModalConfigurarRubrosProveedor({ open, onClose, proveedo
                 <Button
                     onClick={onClose}
                     variant="outlined"
+                    disabled={isSaving}
                     sx={{
                         borderRadius: 0,
                         textTransform: 'none',
@@ -285,8 +293,25 @@ export default function ModalConfigurarRubrosProveedor({ open, onClose, proveedo
                             bgcolor: alpha(COLORS.secondary, 0.1)
                         }
                     }}>
-                    Cerrar
+                    Cancelar
                 </Button>
+                <LoadingButton
+                    onClick={handleSaveAll}
+                    loading={isSaving}
+                    variant="contained"
+                    disabled={!hasChanges && !isSaving}
+                    sx={{
+                        borderRadius: 0,
+                        bgcolor: COLORS.primary,
+                        color: '#fff',
+                        textTransform: 'none',
+                        '&:hover': {
+                            bgcolor: alpha(COLORS.primary, 0.9)
+                        }
+                    }}
+                >
+                    Guardar Cambios
+                </LoadingButton>
             </DialogActions>
         </Dialog>
     );
