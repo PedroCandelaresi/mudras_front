@@ -870,14 +870,7 @@ const TablaArticulos: React.FC<ArticulosTableProps> = ({
       <Box sx={{ width: '100%' }}>
         {showToolbar && toolbar}
 
-        {/* Resumen */}
-        <Box px={1} pb={2} display="flex" justifyContent="flex-end">
-          <Typography variant="body2" color="text.secondary" fontWeight={500}>
-            {`${total} artículos • ${numberFormatter.format(
-              statsData?.estadisticasArticulos?.totalUnidades ?? articulos.reduce((acc, it) => acc + Number(obtenerStockTotal(it) || 0), 0)
-            )} unidades`}
-          </Typography>
-        </Box>
+
 
         {tabla}
         {paginador}
