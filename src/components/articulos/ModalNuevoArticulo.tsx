@@ -376,7 +376,16 @@ const ModalNuevoArticulo = ({ open, onClose, articulo, onSuccess, accentColor }:
   }, [proveedorInput, proveedores, selectedProveedor]);
 
   const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = event.target;
+    let { name, value } = event.target;
+
+    if (name === 'codigo') {
+      value = value.toUpperCase();
+    } else if (name === 'descripcion') {
+      if (value.length > 0) {
+        value = value.charAt(0).toUpperCase() + value.slice(1);
+      }
+    }
+
     setForm((prev) => ({ ...prev, [name]: value }));
   };
 

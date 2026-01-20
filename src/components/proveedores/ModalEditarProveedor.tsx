@@ -382,8 +382,46 @@ const ModalEditarProveedor = ({ open, onClose, proveedor, onProveedorGuardado }:
   const handleInputChange = useCallback(
     (field: keyof FormData) => (event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
       let { value } = event.target;
-      if (UPPERCASE_FIELDS.has(field)) {
+
+      if (UPPERCASE_FIELDS.has(field) || field === 'Codigo' || field === 'Rubro' || field === 'Web' || field === 'Mail') {
+        // Special handling for Web/Mail if needed, but user asked for "everything with name/desc/code".
+        // Actually Web/Mail should usually be lowercase or as typed.
+        // BUT user said "absolutamente todo lo que lleve nombre o descripcion".
+        // Let's stick to Uppercase for Code, Rubro (user said AA11 for code).
+        // And Capitalize for Names/Descriptions.
+
+        if (field === 'Codigo') {
+          value = value.toUpperCase();
+        } else if (UPPERCASE_FIELDS.has(field) || field === 'Rubro') {
+          // Names/Descriptions/Addresses -> Capitalize Words or First Letter? 
+          // User said: "Pedro... debe guardar Pedro". This implies Capitalize First Letter.
+          // "Names of articles, rubros, providers... start with uppercase always".
+          if (value.length > 0) {
+            // Capitalize first letter logic
+            value = value.charAt(0).toUpperCase() + value.slice(1);
+
+            // Optional: If user wants "Pedro Gomez", typically each word is capitalized in names.
+            // But "Start with uppercase" might just be the sentence case.
+            // "Pedro" example is simple.
+            // "aa11" -> "AA11" (Code)
+
+            // Let's apply Capitalize First Letter for now as strictly requested "empezar con mayuscula".
+            // However, for consistency, let's Uppercase Codes.
+          }
+        }
+      }
+
+      // Re-evaluating based on specific user request:
+      // "nombres ... descripcion ... debe empezar con mayuscula siempre"
+      // "codigos ... deben ser todas mayusculas"
+
+      if (field === 'Codigo') {
         value = value.toUpperCase();
+      } else if (field === 'Nombre' || field === 'Contacto' || field === 'Direccion' || field === 'Localidad' || field === 'Provincia' || field === 'Pais' || field === 'Rubro' || field === 'Observaciones') {
+        if (value.length > 0) {
+          // Enforce first letter uppercase
+          value = value.charAt(0).toUpperCase() + value.slice(1);
+        }
       }
 
       setFormData((prev) => ({

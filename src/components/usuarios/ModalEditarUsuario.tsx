@@ -44,7 +44,7 @@ interface Props {
 }
 
 export default function ModalEditarUsuario({ open, usuario, onClose, onSuccess }: Props) {
-  const { register, handleSubmit, reset, control, formState: { errors } } = useForm<EditarUsuarioForm>({
+  const { register, handleSubmit, reset, control, setValue, formState: { errors } } = useForm<EditarUsuarioForm>({
     resolver: zodResolver(schema),
   });
 
@@ -134,6 +134,11 @@ export default function ModalEditarUsuario({ open, usuario, onClose, onSuccess }
           <TextField
             label="Nombre a mostrar"
             {...register('displayName')}
+            onChange={(e) => {
+              const val = e.target.value;
+              const finalVal = val.length > 0 ? val.charAt(0).toUpperCase() + val.slice(1) : val;
+              setValue('displayName', finalVal, { shouldValidate: true });
+            }}
             size="small"
             error={!!errors.displayName}
             helperText={errors.displayName?.message || ''}

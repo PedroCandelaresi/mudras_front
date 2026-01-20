@@ -164,7 +164,10 @@ const ModalEditarRubro = ({ open, onClose, rubro, onSuccess, accentColor }: Moda
                   fullWidth
                   variant="outlined"
                   value={nombre}
-                  onChange={(e) => setNombre(e.target.value)}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    setNombre(val.length > 0 ? val.charAt(0).toUpperCase() + val.slice(1) : val);
+                  }}
                   placeholder="Ej: Bebidas, Limpieza..."
                   error={Boolean(error && !nombre.trim())}
                   size="small"
@@ -180,7 +183,7 @@ const ModalEditarRubro = ({ open, onClose, rubro, onSuccess, accentColor }: Moda
                   fullWidth
                   variant="outlined"
                   value={codigo}
-                  onChange={(e) => setCodigo(e.target.value)}
+                  onChange={(e) => setCodigo(e.target.value.toUpperCase())}
                   placeholder="Ej: BO-001"
                   size="small"
                   InputProps={{ sx: { borderRadius: 0 } }}

@@ -130,9 +130,16 @@ export const ModalPuntoMudras = ({
     event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) => {
     const target = event.target as HTMLInputElement;
-    const valor = target.type === 'checkbox'
+    let valor: any = target.type === 'checkbox'
       ? target.checked
       : target.value;
+
+    // Enforce Capitalization for text fields
+    if (typeof valor === 'string' && (campo === 'nombre' || campo === 'direccion' || campo === 'descripcion')) {
+      if (valor.length > 0) {
+        valor = valor.charAt(0).toUpperCase() + valor.slice(1);
+      }
+    }
 
     setFormulario(prev => ({
       ...prev,

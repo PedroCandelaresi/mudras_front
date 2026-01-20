@@ -54,7 +54,7 @@ const schema = z.object({
 });
 
 export default function ModalNuevoUsuario({ open, onClose, onSuccess }: Props) {
-  const { register, handleSubmit, reset, formState: { errors } } = useForm<CrearUsuarioForm>({
+  const { register, handleSubmit, reset, setValue, formState: { errors } } = useForm<CrearUsuarioForm>({
     defaultValues: { isActive: true },
     resolver: zodResolver(schema),
   });
@@ -124,6 +124,18 @@ export default function ModalNuevoUsuario({ open, onClose, onSuccess }: Props) {
           <TextField
             label="Usuario"
             {...register('username')}
+            onChange={(e) => {
+              const val = e.target.value;
+              const finalVal = val.length > 0 ? val.charAt(0).toUpperCase() + val.slice(1) : val;
+              // We need to call the original register onChange if we want standard behavior, 
+              // but setValue works if we manage it. 
+              // Creating a wrapper around register is safer but overriding onChange works if we use setValue with validate.
+              // However, simply passing onChange AFTER register overrides the hook form on change.
+              // Let's use setValue directly and assume it updates the state.
+              // Actually, the best way with RHF is to let it handle it, or use Controller.
+              // But simplified:
+              setValue('username', finalVal, { shouldValidate: true });
+            }}
             size="small"
             error={!!errors.username}
             helperText={errors.username?.message}
@@ -142,6 +154,11 @@ export default function ModalNuevoUsuario({ open, onClose, onSuccess }: Props) {
           <TextField
             label="Nombre a mostrar"
             {...register('displayName')}
+            onChange={(e) => {
+              const val = e.target.value;
+              const finalVal = val.length > 0 ? val.charAt(0).toUpperCase() + val.slice(1) : val;
+              setValue('displayName', finalVal, { shouldValidate: true });
+            }}
             size="small"
             error={!!errors.displayName}
             helperText={errors.displayName?.message}
