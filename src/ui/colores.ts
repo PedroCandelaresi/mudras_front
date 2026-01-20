@@ -217,6 +217,8 @@ export const borgoña = {
   rowHover: '#F7EAEA',
   alternateRow: '#FAF0F0',
   actionHover: '#F2D8D8',
+  tableHeader: '#8b2639', // Lighter burgundy for table headers
+  tableStriped: '#FAF0F0',
 };
 
 export type PaletaBorgoña = typeof borgoña;
