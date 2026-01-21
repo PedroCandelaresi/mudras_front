@@ -62,10 +62,10 @@ interface ProfileType {
 }
 const profile: ProfileType[] = [
   {
-    href: "/apps/user-profile/profile",
+    href: "#", user- profile / profile",
     title: "Mi Perfil",
-    subtitle: "Configuración de cuenta",
-    icon: "/images/svgs/icon-account.svg",
+  subtitle: "Configuración de cuenta",
+  icon: "/images/svgs/icon-account.svg",
   },
 ];
 
@@ -80,52 +80,52 @@ interface appsLinkType {
 
 const appsLink: appsLinkType[] = [
   {
-    href: "/apps/chats",
+    href: "#", chats",
     title: "Chat Application",
     subtext: "New messages arrived",
     avatar: "/images/svgs/icon-dd-chat.svg",
   },
   {
-    href: "/apps/ecommerce/shop",
+    href: "#", ecommerce/ shop",
     title: "eCommerce App",
-    subtext: "New stock available",
-    avatar: "/images/svgs/icon-dd-cart.svg",
+  subtext: "New stock available",
+  avatar: "/images/svgs/icon-dd-cart.svg",
   },
-  {
-    href: "/apps/notes",
-    title: "Notes App",
+{
+  href: "#", notes",
+  title: "Notes App",
     subtext: "To-do and Daily tasks",
-    avatar: "/images/svgs/icon-dd-invoice.svg",
+      avatar: "/images/svgs/icon-dd-invoice.svg",
   },
-  {
-    href: "/apps/calendar",
-    title: "Calendar App",
+{
+  href: "#", calendar",
+  title: "Calendar App",
     subtext: "Get dates",
-    avatar: "/images/svgs/icon-dd-date.svg",
+      avatar: "/images/svgs/icon-dd-date.svg",
   },
-  {
-    href: "/apps/contacts",
-    title: "Contact Application",
+{
+  href: "#", contacts",
+  title: "Contact Application",
     subtext: "2 Unsaved Contacts",
-    avatar: "/images/svgs/icon-dd-mobile.svg",
+      avatar: "/images/svgs/icon-dd-mobile.svg",
   },
-  {
-    href: "/apps/tickets",
-    title: "Tickets App",
+{
+  href: "#", tickets",
+  title: "Tickets App",
     subtext: "Submit tickets",
-    avatar: "/images/svgs/icon-dd-lifebuoy.svg",
+      avatar: "/images/svgs/icon-dd-lifebuoy.svg",
   },
-  {
-    href: "/apps/email",
-    title: "Email App",
+{
+  href: "#", email",
+  title: "Email App",
     subtext: "Get new emails",
-    avatar: "/images/svgs/icon-dd-message-box.svg",
+      avatar: "/images/svgs/icon-dd-message-box.svg",
   },
-  {
-    href: "/apps/blog/post",
-    title: "Blog App",
+{
+  href: "#", blog / post",
+  title: "Blog App",
     subtext: "added new blog",
-    avatar: "/images/svgs/icon-dd-application.svg",
+      avatar: "/images/svgs/icon-dd-application.svg",
   },
 ];
 
@@ -152,20 +152,20 @@ const pageLinks: LinkType[] = [
     title: "404 Error Page",
   },
   {
-    href: "/apps/note",
+    href: "#", note",
     title: "Notes App",
   },
   {
-    href: "/apps/user-profile/profile",
+    href: "#", user- profile / profile",
     title: "User Application",
   },
-  {
-    href: "/apps/blog/post",
-    title: "Blog Design",
+{
+  href: "#", blog / post",
+  title: "Blog Design",
   },
-  {
-    href: "/apps/ecommerce/checkout",
-    title: "Shopping Cart",
+{
+  href: "#", ecommerce / checkout",
+  title: "Shopping Cart",
   },
 ];
 

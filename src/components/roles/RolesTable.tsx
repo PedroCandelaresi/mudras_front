@@ -2,7 +2,7 @@
 
 import React, { useEffect, useMemo, useState } from 'react';
 import { apiFetch } from '@/lib/api';
-import { Box, Chip, CircularProgress, IconButton, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Tooltip, TextField, Button, Typography, Menu, Divider, Stack } from '@mui/material';
+import { Box, Chip, CircularProgress, IconButton, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Tooltip, TextField, Button, Typography, Popover, Divider, Stack } from '@mui/material';
 import { IconAdjustments, IconPlus } from '@tabler/icons-react';
 
 import SearchToolbar from '@/components/ui/SearchToolbar';
@@ -147,45 +147,46 @@ export function RolesTable({ onAsignarPermisos, onCrear, refetchToken }: Props) 
         </Table>
       </TableContainer>
 
-      {/* Menú filtros por columna */}
-      <Menu
-        anchorEl={menuAnchor}
+      {/* Menú filtros por columna - Usamos Popover para contenido custom que no es lista */}
+      <Popover
         open={Boolean(menuAnchor)}
+        anchorEl={menuAnchor}
         onClose={() => { setMenuAnchor(null); setColumnaActiva(null); }}
         anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
         transformOrigin={{ vertical: 'top', horizontal: 'right' }}
-        slotProps={{ paper: { sx: { p: 1.5, minWidth: 260 } } } as any}
       >
-        <Divider sx={{ mb: 1 }} />
-        {columnaActiva && (
-          <Box px={1} pb={1}>
-            <TextField
-              size="small"
-              fullWidth
-              autoFocus
-              placeholder="Escribe para filtrar..."
-              value={filtroColInput}
-              onChange={(e) => setFiltroColInput(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') {
+        <Box sx={{ p: 1.5, minWidth: 260 }}>
+          <Divider sx={{ mb: 1 }} />
+          {columnaActiva && (
+            <Box px={1} pb={1}>
+              <TextField
+                size="small"
+                fullWidth
+                autoFocus
+                placeholder="Escribe para filtrar..."
+                value={filtroColInput}
+                onChange={(e) => setFiltroColInput(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    setFiltrosColumna((prev) => ({ ...prev, [columnaActiva!]: filtroColInput }));
+                    setMenuAnchor(null);
+                    setColumnaActiva(null);
+                  }
+                }}
+                InputProps={{ sx: { borderRadius: 0 } }}
+              />
+              <Stack direction="row" justifyContent="flex-end" spacing={1} mt={1}>
+                <Button size="small" onClick={() => { setFiltroColInput(''); setFiltrosColumna((prev) => ({ ...prev, [columnaActiva!]: '' })); }} sx={{ borderRadius: 0 }}>Limpiar</Button>
+                <Button size="small" variant="contained" sx={{ borderRadius: 0, bgcolor: '#8d6e63', '&:hover': { bgcolor: '#6d4c41' } }} onClick={() => {
                   setFiltrosColumna((prev) => ({ ...prev, [columnaActiva!]: filtroColInput }));
                   setMenuAnchor(null);
                   setColumnaActiva(null);
-                }
-              }}
-              InputProps={{ sx: { borderRadius: 0 } }}
-            />
-            <Stack direction="row" justifyContent="flex-end" spacing={1} mt={1}>
-              <Button size="small" onClick={() => { setFiltroColInput(''); setFiltrosColumna((prev) => ({ ...prev, [columnaActiva!]: '' })); }} sx={{ borderRadius: 0 }}>Limpiar</Button>
-              <Button size="small" variant="contained" sx={{ borderRadius: 0, bgcolor: '#8d6e63', '&:hover': { bgcolor: '#6d4c41' } }} onClick={() => {
-                setFiltrosColumna((prev) => ({ ...prev, [columnaActiva!]: filtroColInput }));
-                setMenuAnchor(null);
-                setColumnaActiva(null);
-              }}>Aplicar</Button>
-            </Stack>
-          </Box>
-        )}
-      </Menu>
+                }}>Aplicar</Button>
+              </Stack>
+            </Box>
+          )}
+        </Box>
+      </Popover>
     </Paper>
   );
 }

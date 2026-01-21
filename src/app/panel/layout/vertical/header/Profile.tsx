@@ -31,7 +31,7 @@ const Profile = () => {
   const handleLogout = async () => {
     try {
       await fetch('/api/auth/logout', { method: 'POST' });
-    } catch (_) {}
+    } catch (_) { }
     router.replace('/login');
   };
 
@@ -70,7 +70,7 @@ const Profile = () => {
         anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
         transformOrigin={{ horizontal: 'right', vertical: 'top' }}
         sx={{
-          '& .MuiMenu-paper': {
+          '& .MuiPaper-root': {
             width: '280px',
             p: 2,
           },
@@ -88,10 +88,10 @@ const Profile = () => {
           </Box>
         </Stack>
         <Divider />
-        
+
         {/* Mi Perfil */}
         <Box sx={{ py: 1.5, px: 0 }} className="hover-text-primary">
-          <Link href="/apps/user-profile/profile">
+          <Link href="#">
             <Stack direction="row" spacing={2} alignItems="center">
               <Box
                 width="40px"
@@ -125,7 +125,7 @@ const Profile = () => {
         </Box>
 
         <Divider />
-        
+
         {/* Cerrar Sesión */}
         <Box sx={{ py: 1.5, px: 0 }}>
           <Button onClick={handleLogout} variant="text" color="error" sx={{ p: 0, textTransform: 'none', width: '100%' }}>
