@@ -91,7 +91,7 @@ const errorLink = onError((err) => {
     const nextPath = typeof window !== 'undefined' ? window.location.pathname || '/panel' : '/panel';
     const search = typeof window !== 'undefined' ? window.location.search || '' : '';
     const siguiente = encodeURIComponent(`${nextPath}${search}`);
-    window.location.href = `/auth/auth1/login?siguiente=${siguiente}`;
+    window.location.href = `/login?siguiente=${siguiente}`;
   })();
 });
 
@@ -114,11 +114,11 @@ const client = new ApolloClient({
     },
   }),
   defaultOptions: {
-    watchQuery: { 
+    watchQuery: {
       errorPolicy: 'all',
       fetchPolicy: 'cache-and-network'
     },
-    query: { 
+    query: {
       errorPolicy: 'all',
       fetchPolicy: 'cache-first'
     },
