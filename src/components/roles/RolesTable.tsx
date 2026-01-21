@@ -2,7 +2,7 @@
 
 import React, { useEffect, useMemo, useState } from 'react';
 import { apiFetch } from '@/lib/api';
-import { Box, Chip, CircularProgress, IconButton, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Tooltip, TextField, Button, Typography, Popover, Divider, Stack } from '@mui/material';
+import { Box, Chip, CircularProgress, IconButton, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Tooltip, TextField, Button, Popover, Divider, Stack } from '@mui/material';
 import { IconAdjustments, IconPlus } from '@tabler/icons-react';
 
 import SearchToolbar from '@/components/ui/SearchToolbar';
@@ -74,7 +74,7 @@ export function RolesTable({ onAsignarPermisos, onCrear, refetchToken }: Props) 
           mb: 2,
         }}
       >
-        <SearchToolbar
+        {/* <SearchToolbar
           title="Roles"
           baseColor=""
           placeholder="Buscar rol (nombre o slug)"
@@ -86,7 +86,7 @@ export function RolesTable({ onAsignarPermisos, onCrear, refetchToken }: Props) 
           createLabel="Nuevo Rol"
           onCreateClick={onCrear}
           searchDisabled={cargando}
-        />
+        /> */}
         {cargando && (
           <Box display="flex" justifyContent="flex-end" mt={0.5}>
             <CircularProgress size={20} />
