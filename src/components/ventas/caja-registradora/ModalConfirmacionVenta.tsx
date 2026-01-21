@@ -44,6 +44,7 @@ import {
 } from '@/components/ventas/caja-registradora/graphql/mutations';
 import { apiFetch } from '@/lib/api';
 import { USUARIOS_CAJA_AUTH_QUERY } from '@/components/usuarios/graphql/queries';
+import { grisRojizo } from '@/ui/colores';
 
 interface ArticuloVenta {
   id: number;
@@ -319,13 +320,13 @@ export const ModalConfirmacionVenta: React.FC<ModalConfirmacionVentaProps> = ({
       }}
     >
       <Box sx={{
-        bgcolor: '#f5f5f5',
+        bgcolor: grisRojizo.headerBg,
         px: 3,
         py: 2,
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
-        borderBottom: '1px solid #e0e0e0',
+        borderBottom: `1px solid ${grisRojizo.headerBorder}`,
         minHeight: 64,
       }}>
         <Box display="flex" alignItems="center" gap={1}>
@@ -336,24 +337,24 @@ export const ModalConfirmacionVenta: React.FC<ModalConfirmacionVentaProps> = ({
               borderRadius: 0,
               display: 'grid',
               placeItems: 'center',
-              bgcolor: '#5d4037',
+              bgcolor: grisRojizo.primary,
               color: '#fff',
             }}
           >
             <Icon icon="mdi:cash-register" width={22} height={22} />
           </Box>
           <Box>
-            <Typography variant="h6" fontWeight={700}>
+            <Typography variant="h6" fontWeight={700} color={grisRojizo.headerText}>
               Confirmar Venta
             </Typography>
             {descripcionPunto && (
-              <Typography variant="caption" color="text.secondary" fontWeight={500}>
+              <Typography variant="caption" color={grisRojizo.headerText} fontWeight={500} sx={{ opacity: 0.8 }}>
                 Punto de venta: {descripcionPunto}
               </Typography>
             )}
           </Box>
         </Box>
-        <IconButton onClick={handleClose} size="small" sx={{ color: 'text.secondary', '&:hover': { bgcolor: 'rgba(0,0,0,0.05)' } }}>
+        <IconButton onClick={handleClose} size="small" sx={{ color: grisRojizo.headerText, '&:hover': { bgcolor: 'rgba(255,255,255,0.1)' } }}>
           <Icon icon="mdi:close" width={24} />
         </IconButton>
       </Box>
@@ -364,8 +365,8 @@ export const ModalConfirmacionVenta: React.FC<ModalConfirmacionVentaProps> = ({
             <Card elevation={0} sx={{ border: '1px solid #e0e0e0', borderRadius: 0, mb: 2 }}>
               <CardContent sx={{ p: 2 }}>
                 <Box display="flex" alignItems="center" gap={1} mb={2}>
-                  <Icon icon="mdi:cog-outline" width={20} height={20} color="#5d4037" />
-                  <Typography variant="h6" fontWeight={700}>
+                  <Icon icon="mdi:cog-outline" width={20} height={20} color={grisRojizo.primary} />
+                  <Typography variant="h6" fontWeight={700} color={grisRojizo.textStrong}>
                     Configuración de Venta
                   </Typography>
                 </Box>
@@ -421,8 +422,8 @@ export const ModalConfirmacionVenta: React.FC<ModalConfirmacionVentaProps> = ({
             <Card elevation={0} sx={{ border: '1px solid #e0e0e0', borderRadius: 0 }}>
               <CardContent sx={{ p: 2 }}>
                 <Box display="flex" alignItems="center" gap={1} mb={2}>
-                  <Icon icon="mdi:clipboard-list-outline" width={20} height={20} color="#5d4037" />
-                  <Typography variant="h6" fontWeight={700}>
+                  <Icon icon="mdi:clipboard-list-outline" width={20} height={20} color={grisRojizo.primary} />
+                  <Typography variant="h6" fontWeight={700} color={grisRojizo.textStrong}>
                     Artículos ({articulos.length})
                   </Typography>
                 </Box>
@@ -430,16 +431,16 @@ export const ModalConfirmacionVenta: React.FC<ModalConfirmacionVentaProps> = ({
                 <TableContainer sx={{ maxHeight: 200, border: '1px solid #eeeeee' }}>
                   <Table size="small" stickyHeader>
                     <TableHead>
-                      <TableRow sx={{ bgcolor: '#f5f5f5' }}>
-                        <TableCell sx={{ fontWeight: 700, color: 'text.secondary' }}>Artículo</TableCell>
-                        <TableCell align="right" sx={{ fontWeight: 700, color: 'text.secondary' }}>Cant.</TableCell>
-                        <TableCell align="right" sx={{ fontWeight: 700, color: 'text.secondary' }}>Precio</TableCell>
-                        <TableCell align="right" sx={{ fontWeight: 700, color: 'text.secondary' }}>Subtotal</TableCell>
+                      <TableRow sx={{ bgcolor: grisRojizo.headerBg }}>
+                        <TableCell sx={{ fontWeight: 700, color: grisRojizo.headerText, bgcolor: grisRojizo.headerBg }}>Artículo</TableCell>
+                        <TableCell align="right" sx={{ fontWeight: 700, color: grisRojizo.headerText, bgcolor: grisRojizo.headerBg }}>Cant.</TableCell>
+                        <TableCell align="right" sx={{ fontWeight: 700, color: grisRojizo.headerText, bgcolor: grisRojizo.headerBg }}>Precio</TableCell>
+                        <TableCell align="right" sx={{ fontWeight: 700, color: grisRojizo.headerText, bgcolor: grisRojizo.headerBg }}>Subtotal</TableCell>
                       </TableRow>
                     </TableHead>
                     <TableBody>
-                      {articulos.map((articulo) => (
-                        <TableRow key={articulo.id} hover>
+                      {articulos.map((articulo, idx) => (
+                        <TableRow key={articulo.id} hover sx={{ bgcolor: idx % 2 === 1 ? grisRojizo.alternateRow : 'inherit' }}>
                           <TableCell>
                             <Typography variant="body2">
                               {articulo.Codigo} - {articulo.Descripcion}
@@ -463,7 +464,7 @@ export const ModalConfirmacionVenta: React.FC<ModalConfirmacionVentaProps> = ({
                   <Typography variant="subtitle1" fontWeight={700}>
                     TOTAL DE ARTÍCULOS
                   </Typography>
-                  <Typography variant="subtitle1" fontWeight={700} color="#5d4037">
+                  <Typography variant="subtitle1" fontWeight={700} color={grisRojizo.primary}>
                     ${subtotal.toFixed(2)}
                   </Typography>
                 </Box>
@@ -475,8 +476,8 @@ export const ModalConfirmacionVenta: React.FC<ModalConfirmacionVentaProps> = ({
             <Card elevation={0} sx={{ border: '1px solid #e0e0e0', borderRadius: 0, height: '100%' }}>
               <CardContent sx={{ p: 2, display: 'flex', flexDirection: 'column', gap: 2 }}>
                 <Box display="flex" alignItems="center" gap={1}>
-                  <Icon icon="mdi:credit-card-check" width={20} height={20} color="#5d4037" />
-                  <Typography variant="h6" fontWeight={700}>
+                  <Icon icon="mdi:credit-card-check" width={20} height={20} color={grisRojizo.primary} />
+                  <Typography variant="h6" fontWeight={700} color={grisRojizo.textStrong}>
                     Métodos de Pago
                   </Typography>
                 </Box>
@@ -534,7 +535,7 @@ export const ModalConfirmacionVenta: React.FC<ModalConfirmacionVentaProps> = ({
                         size="small"
                         onClick={handleAgregarPago}
                         disabled={(parseFloat(nuevoPago.monto) || 0) <= 0}
-                        sx={{ width: '100%', minHeight: 40, borderRadius: 0, bgcolor: '#5d4037', '&:hover': { bgcolor: '#4e342e' } }}
+                        sx={{ width: '100%', minHeight: 40, borderRadius: 0, bgcolor: grisRojizo.primary, '&:hover': { bgcolor: grisRojizo.primaryHover } }}
                       >
                         <IconPlus size={16} />
                       </Button>
@@ -546,10 +547,10 @@ export const ModalConfirmacionVenta: React.FC<ModalConfirmacionVentaProps> = ({
                   <TableContainer sx={{ mb: 2, border: '1px solid #e0e0e0' }}>
                     <Table size="small">
                       <TableHead>
-                        <TableRow sx={{ bgcolor: '#f5f5f5' }}>
-                          <TableCell sx={{ fontWeight: 700, color: 'text.secondary' }}>Método</TableCell>
-                          <TableCell align="right" sx={{ fontWeight: 700, color: 'text.secondary' }}>Monto</TableCell>
-                          <TableCell align="center" sx={{ fontWeight: 700, color: 'text.secondary' }}>Acciones</TableCell>
+                        <TableRow sx={{ bgcolor: grisRojizo.headerBg }}>
+                          <TableCell sx={{ fontWeight: 700, color: grisRojizo.headerText }}>Método</TableCell>
+                          <TableCell align="right" sx={{ fontWeight: 700, color: grisRojizo.headerText }}>Monto</TableCell>
+                          <TableCell align="center" sx={{ fontWeight: 700, color: grisRojizo.headerText }}>Acciones</TableCell>
                         </TableRow>
                       </TableHead>
                       <TableBody>
@@ -560,7 +561,7 @@ export const ModalConfirmacionVenta: React.FC<ModalConfirmacionVentaProps> = ({
                               <TableCell>
                                 <Box display="flex" alignItems="center" gap={1}>
                                   {metodo && (
-                                    <Icon icon={metodo.icon} width={16} height={16} color="#5d4037" />
+                                    <Icon icon={metodo.icon} width={16} height={16} color={grisRojizo.primary} />
                                   )}
                                   {metodo?.label}
                                 </Box>
@@ -630,7 +631,7 @@ export const ModalConfirmacionVenta: React.FC<ModalConfirmacionVentaProps> = ({
           onClick={handleClose}
           disabled={creandoVenta}
           color="inherit"
-          sx={{ fontWeight: 600 }}
+          sx={{ fontWeight: 600, borderRadius: 0 }}
         >
           Cancelar
         </Button>
@@ -640,11 +641,11 @@ export const ModalConfirmacionVenta: React.FC<ModalConfirmacionVentaProps> = ({
           onClick={handleConfirmarVenta}
           disabled={!puedeConfirmar || creandoVenta}
           sx={{
-            bgcolor: '#5d4037',
+            bgcolor: grisRojizo.primary,
             borderRadius: 0,
             px: 3,
             fontWeight: 700,
-            '&:hover': { bgcolor: '#4e342e' },
+            '&:hover': { bgcolor: grisRojizo.primaryHover },
             '&:disabled': { opacity: 0.6 }
           }}
         >

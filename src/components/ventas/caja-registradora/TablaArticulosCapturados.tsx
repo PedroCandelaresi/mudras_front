@@ -19,6 +19,7 @@ import {
   Divider,
   IconButton,
 } from '@mui/material';
+import { alpha } from '@mui/material/styles';
 import {
   IconTrash,
   IconEdit,
@@ -26,6 +27,7 @@ import {
   IconX,
   IconShoppingCart,
 } from '@tabler/icons-react';
+import { grisRojizo } from "@/ui/colores";
 
 export interface ArticuloCapturado {
   id: number;
@@ -146,14 +148,14 @@ export const TablaArticulosCapturados: React.FC<TablaArticulosCapturadosProps> =
           p: 3,
           borderRadius: 0,
           bgcolor: '#fff',
-          border: '1px solid #e0e0e0',
+          border: `1px solid ${grisRojizo.borderInner}`,
         }}
       >
-        <Typography variant="h6" fontWeight={700} gutterBottom>
+        <Typography variant="h6" fontWeight={700} gutterBottom sx={{ color: grisRojizo.textStrong }}>
           Carrito de Venta
         </Typography>
         <Box textAlign="center" py={6}>
-          <IconShoppingCart size={48} color="#bdbdbd" />
+          <IconShoppingCart size={48} color={grisRojizo.borderInner} />
           <Typography color="text.secondary" sx={{ mt: 2 }}>
             Aún no hay artículos añadidos al carrito
           </Typography>
@@ -172,7 +174,7 @@ export const TablaArticulosCapturados: React.FC<TablaArticulosCapturadosProps> =
         p: 3,
         borderRadius: 0,
         bgcolor: '#fff',
-        border: '1px solid #e0e0e0',
+        border: `1px solid ${grisRojizo.borderInner}`,
         display: 'flex',
         flexDirection: 'column',
         minHeight: 420,
@@ -180,7 +182,7 @@ export const TablaArticulosCapturados: React.FC<TablaArticulosCapturadosProps> =
     >
       <Box display="flex" justifyContent="space-between" alignItems="flex-start" mb={2} gap={2}>
         <Box>
-          <Typography variant="h6" fontWeight={700}>
+          <Typography variant="h6" fontWeight={700} sx={{ color: grisRojizo.textStrong }}>
             Carrito de Venta ({articulos.length})
           </Typography>
           <Typography variant="body2" color="text.secondary">
@@ -191,7 +193,7 @@ export const TablaArticulosCapturados: React.FC<TablaArticulosCapturadosProps> =
           <Typography variant="subtitle2" fontWeight={700} color="text.secondary">
             TOTAL
           </Typography>
-          <Typography variant="h5" fontWeight={800} color="#5d4037">
+          <Typography variant="h5" fontWeight={800} color={grisRojizo.primary}>
             ${totalCarrito.toLocaleString()}
           </Typography>
         </Box>
@@ -199,39 +201,50 @@ export const TablaArticulosCapturados: React.FC<TablaArticulosCapturadosProps> =
 
       <Divider sx={{ mb: 2 }} />
 
-      <TableContainer sx={{ bgcolor: '#fff', borderRadius: 0, border: '1px solid #e0e0e0' }}>
+      <TableContainer sx={{ bgcolor: '#fff', borderRadius: 0, border: `1px solid ${grisRojizo.borderInner}` }}>
         <Table size="small" stickyHeader>
           <TableHead>
             <TableRow>
-              <TableCell padding="checkbox" sx={{ bgcolor: '#f5f5f5' }}>
+              <TableCell padding="checkbox" sx={{ bgcolor: grisRojizo.headerBg }}>
                 <Checkbox
                   indeterminate={haySeleccionados && !todosMarcados}
                   checked={todosMarcados}
                   onChange={() => onToggleSeleccionTodos()}
-                  color="default"
+                  sx={{ color: grisRojizo.headerText, '&.Mui-checked': { color: grisRojizo.headerText }, '&.MuiCheckbox-indeterminate': { color: grisRojizo.headerText } }}
                 />
               </TableCell>
-              <TableCell sx={{ bgcolor: '#f5f5f5', fontWeight: 700, color: 'text.secondary' }}>CÓDIGO</TableCell>
-              <TableCell sx={{ bgcolor: '#f5f5f5', fontWeight: 700, color: 'text.secondary' }}>DESCRIPCIÓN</TableCell>
-              <TableCell align="right" sx={{ bgcolor: '#f5f5f5', fontWeight: 700, color: 'text.secondary' }}>PRECIO</TableCell>
-              <TableCell align="center" sx={{ bgcolor: '#f5f5f5', fontWeight: 700, color: 'text.secondary' }}>STOCK</TableCell>
-              <TableCell align="center" sx={{ bgcolor: '#f5f5f5', fontWeight: 700, color: 'text.secondary' }}>CANTIDAD</TableCell>
-              <TableCell align="right" sx={{ bgcolor: '#f5f5f5', fontWeight: 700, color: 'text.secondary' }}>SUBTOTAL</TableCell>
-              <TableCell align="center" sx={{ bgcolor: '#f5f5f5', fontWeight: 700, color: 'text.secondary' }}>ACCIONES</TableCell>
+              <TableCell sx={{ bgcolor: grisRojizo.headerBg, fontWeight: 700, color: grisRojizo.headerText }}>CÓDIGO</TableCell>
+              <TableCell sx={{ bgcolor: grisRojizo.headerBg, fontWeight: 700, color: grisRojizo.headerText }}>DESCRIPCIÓN</TableCell>
+              <TableCell align="right" sx={{ bgcolor: grisRojizo.headerBg, fontWeight: 700, color: grisRojizo.headerText }}>PRECIO</TableCell>
+              <TableCell align="center" sx={{ bgcolor: grisRojizo.headerBg, fontWeight: 700, color: grisRojizo.headerText }}>STOCK</TableCell>
+              <TableCell align="center" sx={{ bgcolor: grisRojizo.headerBg, fontWeight: 700, color: grisRojizo.headerText }}>CANTIDAD</TableCell>
+              <TableCell align="right" sx={{ bgcolor: grisRojizo.headerBg, fontWeight: 700, color: grisRojizo.headerText }}>SUBTOTAL</TableCell>
+              <TableCell align="center" sx={{ bgcolor: grisRojizo.headerBg, fontWeight: 700, color: grisRojizo.headerText }}>ACCIONES</TableCell>
             </TableRow>
           </TableHead>
 
           <TableBody>
-            {articulosPaginados.map((articulo) => {
+            {articulosPaginados.map((articulo, index) => {
               const alertaStock = articulo.alertaStock || articulo.stockDisponible <= 0;
+              const bgColor = index % 2 === 1 ? grisRojizo.alternateRow : 'inherit';
 
               return (
-                <TableRow key={articulo.id} hover selected={articulo.seleccionado}>
+                <TableRow
+                  key={articulo.id}
+                  hover
+                  selected={articulo.seleccionado}
+                  sx={{
+                    bgcolor: bgColor,
+                    '&:hover': { bgcolor: grisRojizo.rowHover },
+                    '&.Mui-selected': { bgcolor: alpha(grisRojizo.primary, 0.1), '&:hover': { bgcolor: alpha(grisRojizo.primary, 0.2) } }
+                  }}
+                >
                   <TableCell padding="checkbox">
                     <Checkbox
                       checked={articulo.seleccionado}
                       onChange={() => onToggleSeleccion(articulo.id)}
-                      color="default"
+                      color="primary"
+                      sx={{ '&.Mui-checked': { color: grisRojizo.primary } }}
                     />
                   </TableCell>
 
@@ -282,7 +295,7 @@ export const TablaArticulosCapturados: React.FC<TablaArticulosCapturadosProps> =
                           <IconButton
                             onClick={() => confirmarEdicion(articulo.id)}
                             size="small"
-                            sx={{ color: '#2e7d32', bgcolor: '#e8f5e9', '&:hover': { bgcolor: '#c8e6c9' } }}
+                            sx={{ color: '#2e7d32', bgcolor: '#e8f5e9', '&:hover': { bgcolor: '#c8e6c9' }, borderRadius: 0 }}
                           >
                             <IconCheck size={16} />
                           </IconButton>
@@ -291,7 +304,7 @@ export const TablaArticulosCapturados: React.FC<TablaArticulosCapturadosProps> =
                           <IconButton
                             onClick={cancelarEdicion}
                             size="small"
-                            sx={{ color: '#616161', '&:hover': { bgcolor: '#f5f5f5' } }}
+                            sx={{ color: '#616161', '&:hover': { bgcolor: '#f5f5f5' }, borderRadius: 0 }}
                           >
                             <IconX size={16} />
                           </IconButton>
@@ -306,7 +319,7 @@ export const TablaArticulosCapturados: React.FC<TablaArticulosCapturadosProps> =
                           <IconButton
                             onClick={() => manejarEdicion(articulo)}
                             size="small"
-                            sx={{ color: '#5d4037' }}
+                            sx={{ color: grisRojizo.primary }}
                           >
                             <IconEdit size={16} />
                           </IconButton>
@@ -326,7 +339,7 @@ export const TablaArticulosCapturados: React.FC<TablaArticulosCapturadosProps> =
                       <IconButton
                         onClick={() => onEliminarArticulo(articulo.id)}
                         size="small"
-                        sx={{ color: '#d32f2f', '&:hover': { bgcolor: '#ffebee' } }}
+                        sx={{ color: '#d32f2f', '&:hover': { bgcolor: '#ffebee', borderRadius: 0 } }}
                       >
                         <IconTrash size={16} />
                       </IconButton>
@@ -348,7 +361,7 @@ export const TablaArticulosCapturados: React.FC<TablaArticulosCapturadosProps> =
         onRowsPerPageChange={handleChangeRowsPerPage}
         rowsPerPageOptions={[10, 25, 50, 100]}
         labelRowsPerPage="Filas por página"
-        sx={{ mt: 'auto', borderTop: '1px solid #e0e0e0' }}
+        sx={{ mt: 'auto', borderTop: `1px solid ${grisRojizo.borderInner}` }}
       />
     </Paper>
   );

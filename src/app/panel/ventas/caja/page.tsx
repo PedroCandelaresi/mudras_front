@@ -7,7 +7,7 @@ import {
 import { alpha } from '@mui/material/styles';
 
 import PageContainer from '@/components/container/PageContainer';
-import { naranjaCaja } from '@/ui/colores';
+import { grisRojizo } from '@/ui/colores';
 
 import { BusquedaArticulos } from '@/components/ventas/caja-registradora/BusquedaArticulos';
 import {
@@ -211,8 +211,8 @@ export default function CajaRegistradoraPage() {
   return (
     <PageContainer title="Caja - Mudras" description="Caja Registradora">
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 3 }}>
-        <Icon icon="mdi:cash-register" width={32} height={32} color={naranjaCaja.primary} />
-        <Typography variant="h4" fontWeight={600} color={naranjaCaja.primary}>
+        <Icon icon="mdi:cash-register" width={32} height={32} color={grisRojizo.primary} />
+        <Typography variant="h4" fontWeight={600} color={grisRojizo.textStrong}>
           Caja Registradora
         </Typography>
       </Box>
@@ -272,6 +272,10 @@ export default function CajaRegistradoraPage() {
                     label="Punto de venta"
                     placeholder="Selecciona el punto de venta"
                     size="medium"
+                    InputProps={{
+                      ...params.InputProps,
+                      sx: { borderRadius: 0 }
+                    }}
                     helperText={
                       errorPuntos
                         ? `Error: ${errorPuntos.message}`
@@ -292,8 +296,8 @@ export default function CajaRegistradoraPage() {
                 disabled={totalSeleccionados === 0 || !puntoSeleccionado?.puntoMudrasId}
                 sx={{
                   mt: 2,
-                  bgcolor: naranjaCaja.primary,
-                  '&:hover': { bgcolor: naranjaCaja.primary }, // Simplificado
+                  bgcolor: grisRojizo.primary,
+                  '&:hover': { bgcolor: grisRojizo.primaryHover },
                   borderRadius: 0,
                   py: 1.5,
                   fontWeight: 700
@@ -344,7 +348,7 @@ export default function CajaRegistradoraPage() {
         anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
       >
         {mensaje && (
-          <Alert onClose={handleCerrarMensaje} severity={mensaje.tipo} sx={{ width: '100%' }}>
+          <Alert onClose={handleCerrarMensaje} severity={mensaje.tipo} sx={{ width: '100%', borderRadius: 0 }}>
             {mensaje.texto}
           </Alert>
         )}

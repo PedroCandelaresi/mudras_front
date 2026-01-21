@@ -15,7 +15,7 @@ import {
   type BuscarArticulosCajaResponse,
   type ArticuloCaja,
 } from '@/components/ventas/caja-registradora/graphql/queries';
-import { naranjaCaja } from '@/ui/colores';
+import { grisRojizo } from '@/ui/colores'; // Updated palette
 import { calcularPrecioDesdeArticulo } from '@/utils/precioVenta';
 
 
@@ -82,7 +82,7 @@ export const BusquedaArticulos: React.FC<Props> = ({ puntoMudrasId, onAgregarArt
   return (
     <Box
       sx={{
-        borderRadius: 2,
+        borderRadius: 0,
         border: '1px dashed',
         borderColor: 'divider',
         bgcolor: alpha('#ffffff', 0.5),
@@ -109,11 +109,11 @@ export const BusquedaArticulos: React.FC<Props> = ({ puntoMudrasId, onAgregarArt
                   transition: 'background .2s ease, box-shadow .2s ease, border-color .2s ease',
                   backgroundColor: 'transparent',
                   backgroundImage: 'none',
-                  borderRadius: 2,
-                  '& fieldset': { borderColor: alpha(naranjaCaja.borderInner, 0.2) },
+                  borderRadius: 0,
+                  '& fieldset': { borderColor: alpha(grisRojizo.borderInner, 0.2) },
                 },
                 '& .MuiOutlinedInput-input': {
-                  color: alpha(naranjaCaja.textStrong, 0.92),
+                  color: alpha(grisRojizo.textStrong, 0.92),
                   fontWeight: 700,
                 },
               }}
@@ -186,12 +186,12 @@ export const BusquedaArticulos: React.FC<Props> = ({ puntoMudrasId, onAgregarArt
                   sx={{
                     '& .MuiOutlinedInput-root': {
                       // estética similar a la anterior (fondo muy claro + borde sutil)
-                      backgroundColor: alpha('#fffaf3', 0.72),
+                      backgroundColor: alpha('#fffafa', 0.72), // reddish tint for grisRojizo
                       backdropFilter: 'saturate(120%) blur(1px)',
-                      borderRadius: 2,
-                      '& fieldset': { borderColor: alpha(naranjaCaja.borderInner, 0.28) },
-                      '&:hover fieldset': { borderColor: alpha(naranjaCaja.borderInner, 0.42) },
-                      '&.Mui-focused fieldset': { borderColor: naranjaCaja.primary },
+                      borderRadius: 0,
+                      '& fieldset': { borderColor: alpha(grisRojizo.borderInner, 0.28) },
+                      '&:hover fieldset': { borderColor: alpha(grisRojizo.borderInner, 0.42) },
+                      '&.Mui-focused fieldset': { borderColor: grisRojizo.primary },
                     },
                   }}
                 />
@@ -200,7 +200,7 @@ export const BusquedaArticulos: React.FC<Props> = ({ puntoMudrasId, onAgregarArt
             slotProps={{
               paper: {
                 sx: {
-                  borderRadius: 1.5,
+                  borderRadius: 0,
                   border: '1px solid',
                   borderColor: 'divider',
                   overflow: 'hidden',
