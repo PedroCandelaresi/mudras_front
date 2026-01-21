@@ -2,7 +2,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Dialog, DialogContent, DialogActions, TextField, MenuItem, Box, Typography, Button, IconButton } from '@mui/material';
 import { useQuery, useMutation } from '@apollo/client/react';
-import { GET_CATEGORIAS_GASTO, type CategoriasGastoResponse, type CategoriaGasto } from '@/components/gastos/graphql/queries';
+import { GET_CATEGORIAS_GASTO, GET_GASTOS, type CategoriasGastoResponse, type CategoriaGasto } from '@/components/gastos/graphql/queries';
 import { GET_PROVEEDORES, type GetProveedoresResponse, type ProveedorBasico } from '@/components/proveedores/graphql/queries';
 import { CREAR_GASTO } from '@/components/gastos/graphql/mutations';
 import { Icon } from '@iconify/react';
@@ -14,7 +14,9 @@ const ModalNuevoGasto: React.FC<Props> = ({ open, onClose, onSuccess }) => {
   const categorias: CategoriaGasto[] = catsData?.categoriasGasto ?? [];
   const { data: provData } = useQuery<GetProveedoresResponse>(GET_PROVEEDORES, { fetchPolicy: 'cache-and-network' });
   const proveedores: ProveedorBasico[] = provData?.proveedores ?? [];
-  const [crear, { loading }] = useMutation(CREAR_GASTO);
+  const [crear, { loading }] = useMutation(CREAR_GASTO, {
+    refetchQueries: [{ query: GET_GASTOS }],
+  });
 
   const [fecha, setFecha] = useState('');
   const [monto, setMonto] = useState('');

@@ -22,6 +22,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation } from '@apollo/client/react';
 import { grisNeutro } from '@/ui/colores';
 import { CREAR_USUARIO_ADMIN_MUTATION } from './graphql/mutations';
+import { USUARIOS_ADMIN_QUERY } from './graphql/queries';
 
 
 
@@ -60,7 +61,9 @@ export default function ModalNuevoUsuario({ open, onClose, onSuccess }: Props) {
   });
   const [mostrarPassword, setMostrarPassword] = React.useState(false);
 
-  const [crearUsuario, { loading }] = useMutation(CREAR_USUARIO_ADMIN_MUTATION);
+  const [crearUsuario, { loading }] = useMutation(CREAR_USUARIO_ADMIN_MUTATION, {
+    refetchQueries: [{ query: USUARIOS_ADMIN_QUERY }],
+  });
 
   // Reset form when modal opens
   React.useEffect(() => {

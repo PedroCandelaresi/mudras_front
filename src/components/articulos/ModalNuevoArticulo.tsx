@@ -28,6 +28,7 @@ import { useMutation, useQuery, useApolloClient } from '@apollo/client/react';
 import { Icon } from '@iconify/react';
 import type { Articulo } from '@/app/interfaces/mudras.types';
 import { CREAR_ARTICULO, ACTUALIZAR_ARTICULO } from '@/components/articulos/graphql/mutations';
+import { BUSCAR_ARTICULOS } from '@/components/articulos/graphql/queries';
 import ModalSubirImagen from './ModalSubirImagen';
 import { verdeMilitar } from '@/ui/colores';
 import { GET_RUBROS } from '@/components/rubros/graphql/queries';
@@ -150,8 +151,12 @@ const ModalNuevoArticulo = ({ open, onClose, articulo, onSuccess, accentColor }:
   const costo = useMemo(() => parseNumericInput(form.costo), [form.costo]);
   const porcentajeGananciaValor = useMemo(() => parseNumericInput(form.porcentajeGanancia), [form.porcentajeGanancia]);
 
-  const [crearArticulo] = useMutation(CREAR_ARTICULO);
-  const [actualizarArticulo] = useMutation(ACTUALIZAR_ARTICULO);
+  const [crearArticulo] = useMutation(CREAR_ARTICULO, {
+    refetchQueries: [{ query: BUSCAR_ARTICULOS }],
+  });
+  const [actualizarArticulo] = useMutation(ACTUALIZAR_ARTICULO, {
+    refetchQueries: [{ query: BUSCAR_ARTICULOS }],
+  });
   const [modificarStockPunto] = useMutation(MODIFICAR_STOCK_PUNTO);
 
   // Consultar puntos mudras

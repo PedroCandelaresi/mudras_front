@@ -33,7 +33,7 @@ import {
   type CrearPuntoMudrasInput,
   type ActualizarPuntoMudrasInput,
 } from '@/components/puntos-mudras/graphql/mutations';
-import { type PuntoMudras } from '@/components/puntos-mudras/graphql/queries';
+import { type PuntoMudras, OBTENER_PUNTOS_MUDRAS } from '@/components/puntos-mudras/graphql/queries';
 
 export enum TipoPuntoMudras {
   VENTA = 'venta',
@@ -93,8 +93,12 @@ export const ModalPuntoMudras = ({
   const [errores, setErrores] = useState<ErroresFormulario>({});
   const [guardando, setGuardando] = useState(false);
 
-  const [crearPunto] = useMutation(CREAR_PUNTO_MUDRAS);
-  const [actualizarPunto] = useMutation(ACTUALIZAR_PUNTO_MUDRAS);
+  const [crearPunto] = useMutation(CREAR_PUNTO_MUDRAS, {
+    refetchQueries: [{ query: OBTENER_PUNTOS_MUDRAS }],
+  });
+  const [actualizarPunto] = useMutation(ACTUALIZAR_PUNTO_MUDRAS, {
+    refetchQueries: [{ query: OBTENER_PUNTOS_MUDRAS }],
+  });
 
   const esEdicion = Boolean(punto);
   const titulo = esEdicion

@@ -21,6 +21,7 @@ import { IconEdit } from '@tabler/icons-react';
 import { grisNeutro } from '@/ui/colores';
 import { UsuarioListado } from './TablaUsuarios';
 import { ACTUALIZAR_USUARIO_ADMIN_MUTATION } from './graphql/mutations';
+import { USUARIOS_ADMIN_QUERY } from './graphql/queries';
 
 
 
@@ -48,7 +49,9 @@ export default function ModalEditarUsuario({ open, usuario, onClose, onSuccess }
     resolver: zodResolver(schema),
   });
 
-  const [updateUser, { loading }] = useMutation(ACTUALIZAR_USUARIO_ADMIN_MUTATION);
+  const [updateUser, { loading }] = useMutation(ACTUALIZAR_USUARIO_ADMIN_MUTATION, {
+    refetchQueries: [{ query: USUARIOS_ADMIN_QUERY }],
+  });
 
   useEffect(() => {
     if (usuario) {

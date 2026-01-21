@@ -19,6 +19,7 @@ import { useMutation } from '@apollo/client/react';
 import { grisNeutro, rojo } from '@/ui/colores';
 import { UsuarioListado } from './TablaUsuarios';
 import { ELIMINAR_USUARIO_ADMIN_MUTATION } from './graphql/mutations';
+import { USUARIOS_ADMIN_QUERY } from './graphql/queries';
 
 
 
@@ -31,7 +32,9 @@ interface Props {
 
 export default function ModalEliminarUsuario({ open, usuario, onClose, onSuccess }: Props) {
   const [textoConfirmacion, setTextoConfirmacion] = useState('');
-  const [deleteUser, { loading }] = useMutation(ELIMINAR_USUARIO_ADMIN_MUTATION);
+  const [deleteUser, { loading }] = useMutation(ELIMINAR_USUARIO_ADMIN_MUTATION, {
+    refetchQueries: [{ query: USUARIOS_ADMIN_QUERY }],
+  });
 
   useEffect(() => {
     if (open) setTextoConfirmacion('');

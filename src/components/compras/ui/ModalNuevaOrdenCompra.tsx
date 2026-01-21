@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { Dialog, DialogContent, DialogActions, TextField, MenuItem, Box, Typography, Button, IconButton } from '@mui/material';
 import { useQuery, useMutation } from '@apollo/client/react';
 import { GET_PROVEEDORES, type GetProveedoresResponse, type ProveedorBasico } from '@/components/proveedores/graphql/queries';
+import { GET_ORDENES_COMPRA } from '@/components/compras/graphql/queries';
 import { CREAR_ORDEN_COMPRA } from '@/components/compras/graphql/mutations';
 import { Icon } from '@iconify/react';
 
@@ -13,7 +14,9 @@ const ModalNuevaOrdenCompra: React.FC<Props> = ({ open, onClose, onSuccess }) =>
   const proveedores: ProveedorBasico[] = provData?.proveedores ?? [];
   const [proveedorId, setProveedorId] = useState('');
   const [obs, setObs] = useState('');
-  const [crearOrden, { loading: saving }] = useMutation(CREAR_ORDEN_COMPRA);
+  const [crearOrden, { loading: saving }] = useMutation(CREAR_ORDEN_COMPRA, {
+    refetchQueries: [{ query: GET_ORDENES_COMPRA }],
+  });
 
   const handleSave = async () => {
     const id = Number(proveedorId);

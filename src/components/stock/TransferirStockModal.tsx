@@ -48,7 +48,12 @@ export default function TransferirStockModal({
     const [motivo, setMotivo] = useState('');
     const [error, setError] = useState<string | null>(null);
 
-    const [transferirStock, { loading }] = useMutation(TRANSFERIR_STOCK);
+    const [transferirStock, { loading }] = useMutation(TRANSFERIR_STOCK, {
+        refetchQueries: [
+            'ObtenerStockPuntoMudras',
+            'BuscarArticulos'
+        ]
+    });
 
     useEffect(() => {
         if (open) {

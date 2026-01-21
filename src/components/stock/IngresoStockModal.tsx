@@ -68,7 +68,12 @@ export default function IngresoStockModal({
     const [selectedArticle, setSelectedArticle] = useState<any>(null);
     const [searchTerm, setSearchTerm] = useState('');
 
-    const [ajustarStock, { loading: loadingMutation }] = useMutation(AJUSTAR_STOCK);
+    const [ajustarStock, { loading: loadingMutation }] = useMutation(AJUSTAR_STOCK, {
+        refetchQueries: [
+            'ObtenerStockPuntoMudras',
+            'BuscarArticulos'
+        ]
+    });
 
     const { data: dataArticulos, loading: loadingArticulos } = useQuery(BUSCAR_ARTICULOS, {
         variables: { busqueda: searchTerm },

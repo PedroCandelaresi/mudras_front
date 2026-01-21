@@ -17,6 +17,7 @@ import { useMutation } from '@apollo/client/react';
 
 import { verdeMilitar } from '@/ui/colores';
 import { ACTUALIZAR_RUBRO, CREAR_RUBRO } from '@/components/rubros/graphql/mutations';
+import { GET_RUBROS, BUSCAR_RUBROS } from '@/components/rubros/graphql/queries';
 
 interface Rubro {
   id: number;
@@ -62,8 +63,12 @@ const ModalEditarRubro = ({ open, onClose, rubro, onSuccess, accentColor }: Moda
   const [error, setError] = useState('');
   const [saving, setSaving] = useState(false);
 
-  const [actualizarRubroMutation] = useMutation(ACTUALIZAR_RUBRO);
-  const [crearRubroMutation] = useMutation(CREAR_RUBRO);
+  const [actualizarRubroMutation] = useMutation(ACTUALIZAR_RUBRO, {
+    refetchQueries: [{ query: GET_RUBROS }, { query: BUSCAR_RUBROS }],
+  });
+  const [crearRubroMutation] = useMutation(CREAR_RUBRO, {
+    refetchQueries: [{ query: GET_RUBROS }, { query: BUSCAR_RUBROS }],
+  });
 
   const rubroEditando = Boolean(rubro?.id);
   const titulo = rubroEditando ? 'Editar rubro' : 'Nuevo rubro';
