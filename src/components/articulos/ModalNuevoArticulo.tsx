@@ -375,6 +375,14 @@ const ModalNuevoArticulo = ({ open, onClose, articulo, onSuccess, accentColor }:
     return filtered;
   }, [proveedorInput, proveedores, selectedProveedor]);
 
+  const handleNumericChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = event.target;
+    // Permitir solo números y un punto o coma decimal
+    if (value === '' || /^\d+[.,]?\d*$/.test(value)) {
+      setForm((prev) => ({ ...prev, [name]: value }));
+    }
+  };
+
   const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     let { name, value } = event.target;
 
@@ -682,10 +690,9 @@ const ModalNuevoArticulo = ({ open, onClose, articulo, onSuccess, accentColor }:
                 label="Costo / Precio compra"
                 name="costo"
                 value={form.costo}
-                onChange={handleChange}
-                type="number"
+                onChange={handleNumericChange}
+                inputMode="decimal"
                 fullWidth
-                inputProps={{ min: 0, step: 0.01 }}
                 sx={{
                   '& .MuiOutlinedInput-root': {
                     borderRadius: 0,
@@ -700,10 +707,9 @@ const ModalNuevoArticulo = ({ open, onClose, articulo, onSuccess, accentColor }:
                 label="% de ganancia"
                 name="porcentajeGanancia"
                 value={form.porcentajeGanancia}
-                onChange={handleChange}
-                type="number"
+                onChange={handleNumericChange}
+                inputMode="decimal"
                 fullWidth
-                inputProps={{ step: 0.1 }}
                 sx={{
                   '& .MuiOutlinedInput-root': {
                     borderRadius: 0,

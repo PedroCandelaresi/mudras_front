@@ -1,112 +1,145 @@
-"use client";
-import Link from "next/link";
-import Box from "@mui/material/Box";
-import Grid from "@mui/material/GridLegacy";
-import Stack from "@mui/material/Stack";
-import Typography from "@mui/material/Typography";
-import AuthLogin from "../auth/authForms/AuthLogin";
-import Logo from "@/app/components/shared/Logo";
-import PageContainer from "@/components/container/PageContainer";
+'use client';
 
-const Login2 = () => {
+import Link from "next/link";
+import { Grid, Box, Stack, Typography, useTheme, alpha } from "@mui/material";
+import PageContainer from "@/components/container/PageContainer";
+import Logo from "@/app/components/shared/Logo";
+import AuthLogin from "../auth/authForms/AuthLogin"; // Updated import path
+import Image from "next/image";
+
+export default function Login() {
+  const theme = useTheme();
+
   return (
-    <PageContainer title="Login" description="this is Login page">
-      <Box
-        sx={{
-          position: "relative",
-          height: "100vh",
-          overflow: "hidden",
-        }}
+    <PageContainer title="Iniciar Sesión - Mudras" description="Accede a tu cuenta de Mudras">
+      <Grid
+        container
+        spacing={0}
+        justifyContent="center"
+        sx={{ height: "100vh" }}
       >
-        <Grid container sx={{ height: "100%" }}>
-          {/* Logo Section - 60% width */}
-          <Grid
-            item
-            xs={12}
-            md={7}
-            lg={8}
-            sx={{
-              backgroundColor: "primary.main",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              position: "relative",
-              overflow: "hidden",
-            }}
-          >
+        <Grid
+          sx={{
+            position: "relative",
+            "&:before": {
+              content: '""',
+              background: "radial-gradient(#E1BEE7, #D1C4E9, #C8E6C9)",
+              backgroundSize: "400% 400%",
+              animation: "gradient 15s ease infinite",
+              position: "absolute",
+              height: "100%",
+              width: "100%",
+              opacity: "0.4",
+            },
+          }}
+          size={{
+            xs: 12,
+            sm: 12,
+            lg: 7,
+            xl: 8
+          }}>
+          <Box position="relative">
+            <Box px={3} py={2}>
+              <Typography
+                variant="h4"
+                fontWeight={700}
+                sx={{
+                  background: 'linear-gradient(45deg, #7B1FA2 30%, #4A148C 90%)',
+                  backgroundClip: 'text',
+                  WebkitBackgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent',
+                }}
+              >
+                ✨ Mudras
+              </Typography>
+            </Box>
             <Box
+              alignItems="center"
+              justifyContent="center"
+              height={"calc(100vh - 100px)"}
               sx={{
-                position: "relative",
-                zIndex: 2,
-                transform: "scale(2.5)", // Make logo significantly larger
-                display: "flex",
-                justifyContent: "center",
-                alignItems: "center",
-                width: "100%",
+                display: {
+                  xs: "none",
+                  lg: "flex",
+                  "flexDirection": "column"
+                }
               }}
             >
-              <Logo color="#ffffff" />
-            </Box>
-
-            {/* Decorative circles/shapes for texture if needed, kept minimal for now */}
-            <Box
-              sx={{
-                position: "absolute",
-                top: "-50%",
-                left: "-50%",
-                width: "200%",
-                height: "200%",
-                background: "radial-gradient(circle, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0) 70%)",
-                zIndex: 1,
-              }}
-            />
-          </Grid>
-
-          {/* Login Form Section - 40% width */}
-          <Grid
-            item
-            xs={12}
-            md={5}
-            lg={4}
-            sx={{
-              display: "flex",
-              justifyContent: "center",
-              alignItems: "center",
-              backgroundColor: "background.paper",
-            }}
-          >
-            <Box p={4} width="100%" maxWidth="450px">
-              <AuthLogin
-                subtext={
-                  <Typography variant="subtitle1" color="textSecondary" mb={1}>
-                    Ingresa tus credenciales para continuar
+              <Box
+                sx={{
+                  width: "100%",
+                  maxWidth: "400px",
+                  height: "400px",
+                  background: `radial-gradient(circle, ${alpha('#E1BEE7', 0.3)} 0%, ${alpha('#7B1FA2', 0.1)} 70%)`,
+                  borderRadius: 3,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  border: `2px solid ${alpha(theme.palette.primary.main, 0.2)}`,
+                  mb: 3
+                }}
+              >
+                <Stack alignItems="center" spacing={3}>
+                  <Box sx={{ fontSize: '5rem' }}>🔮✨🌙</Box>
+                  <Typography variant="h4" color="primary" fontWeight={700} textAlign="center">
+                    Productos Holísticos
                   </Typography>
-                }
-                subtitle={
-                  <Stack direction="row" spacing={1} mt={3}>
-                    <Typography color="textSecondary" variant="h6" fontWeight="500">
-                      ¿No tienes una cuenta?
-                    </Typography>
-                    <Typography
-                      component={Link}
-                      href="/auth/auth1/register"
-                      fontWeight="500"
-                      sx={{
-                        textDecoration: "none",
-                        color: "primary.main",
-                      }}
-                    >
-                      Crear cuenta
-                    </Typography>
-                  </Stack>
-                }
-              />
+                  <Typography variant="h6" color="text.secondary" textAlign="center">
+                    Eleva tu energía • Armoniza tu espacio
+                  </Typography>
+                </Stack>
+              </Box>
+              <Typography variant="body1" color="text.secondary" textAlign="center" maxWidth="300px">
+                Accede a tu cuenta para gestionar tu tienda de productos holísticos
+              </Typography>
             </Box>
-          </Grid>
+          </Box>
         </Grid>
-      </Box>
+        <Grid
+          display="flex"
+          justifyContent="center"
+          alignItems="center"
+          size={{
+            xs: 12,
+            sm: 12,
+            lg: 5,
+            xl: 4
+          }}>
+          <Box p={4}>
+            <AuthLogin
+              title="Bienvenido a Mudras"
+              subtext={
+                <Typography variant="subtitle1" color="textSecondary" mb={1}>
+                  Accede a tu espacio personal
+                </Typography>
+              }
+            // POR AHORA COMENTAMOS ESTO, NO SE PUEDEN CREAR NUEVAS CUENTAS HASTA QUE EL SISTEMA ESTE FUNCIONANDO CORRECTAMENTE.
+            /* subtitle={
+              <Stack direction="row" spacing={1} mt={3}>
+                <Typography
+                  color="textSecondary"
+                  variant="h6"
+                  fontWeight="500"
+                >
+                  ¿Nuevo en Mudras?
+                </Typography>
+                <Typography
+                  component={Link}
+                  href="/auth/auth1/register"
+                  fontWeight="500"
+                  sx={{
+                    textDecoration: "none",
+                    color: "primary.main",
+                  }}
+                >
+                  Crear cuenta
+                </Typography>
+              </Stack>
+            } */
+            />
+          </Box>
+        </Grid>
+      </Grid>
     </PageContainer>
   );
-};
-
-export default Login2;
+}

@@ -42,8 +42,8 @@ const CONFIGURAR_RUBRO_PROVEEDOR = gql`
 interface RubroConfig {
     rubroId: number;
     rubroNombre: string;
-    porcentajeRecargo: number;
-    porcentajeDescuento: number;
+    porcentajeRecargo: string;
+    porcentajeDescuento: string;
     isModified?: boolean;
 }
 
@@ -70,8 +70,8 @@ export default function ModalConfigurarRubrosProveedor({ open, onClose, proveedo
         if (data?.rubrosPorProveedor) {
             setRubros(data.rubrosPorProveedor.map((r: any) => ({
                 ...r,
-                porcentajeRecargo: r.porcentajeRecargo || 0,
-                porcentajeDescuento: r.porcentajeDescuento || 0,
+                porcentajeRecargo: r.porcentajeRecargo ? String(r.porcentajeRecargo) : '0',
+                porcentajeDescuento: r.porcentajeDescuento ? String(r.porcentajeDescuento) : '0',
                 isModified: false
             })));
         }
@@ -80,11 +80,10 @@ export default function ModalConfigurarRubrosProveedor({ open, onClose, proveedo
     const [configurarRubro] = useMutation(CONFIGURAR_RUBRO_PROVEEDOR);
 
     const handleUpdateValue = (id: number, field: 'porcentajeRecargo' | 'porcentajeDescuento', value: string) => {
-        const numValue = parseFloat(value);
-        if (isNaN(numValue) && value !== '') return;
+        if (value !== '' && !/^\d*[.,]?\d*$/.test(value)) return;
 
         setRubros(prev => prev.map(r =>
-            r.rubroId === id ? { ...r, [field]: value === '' ? 0 : numValue, isModified: true } : r
+            r.rubroId === id ? { ...r, [field]: value, isModified: true } : r
         ));
     };
 
@@ -106,8 +105,8 @@ export default function ModalConfigurarRubrosProveedor({ open, onClose, proveedo
                     variables: {
                         proveedorId: Number(proveedorId),
                         rubroId: rubro.rubroId,
-                        recargo: rubro.porcentajeRecargo,
-                        descuento: rubro.porcentajeDescuento
+                        recargo: parseFloat(rubro.porcentajeRecargo) || 0,
+                        descuento: parseFloat(rubro.porcentajeDescuento) || 0
                     }
                 });
             }
@@ -238,7 +237,6 @@ export default function ModalConfigurarRubrosProveedor({ open, onClose, proveedo
                                 <Box display="flex" gap={2} alignItems="center">
                                     <TextField
                                         label="Recargo (%)"
-                                        type="number"
                                         size="small"
                                         disabled={isSaving}
                                         value={rubro.porcentajeRecargo}
@@ -252,11 +250,11 @@ export default function ModalConfigurarRubrosProveedor({ open, onClose, proveedo
                                             '& .MuiInputLabel-root.Mui-focused': { color: COLORS.primary },
                                             '& .MuiOutlinedInput-root.Mui-focused fieldset': { borderColor: COLORS.primary }
                                         }}
+                                        inputMode="decimal"
                                     />
 
                                     <TextField
                                         label="Descuento (%)"
-                                        type="number"
                                         size="small"
                                         disabled={isSaving}
                                         value={rubro.porcentajeDescuento}
@@ -270,6 +268,7 @@ export default function ModalConfigurarRubrosProveedor({ open, onClose, proveedo
                                             '& .MuiInputLabel-root.Mui-focused': { color: COLORS.primary },
                                             '& .MuiOutlinedInput-root.Mui-focused fieldset': { borderColor: COLORS.primary }
                                         }}
+                                        inputMode="decimal"
                                     />
                                 </Box>
                             </Paper>

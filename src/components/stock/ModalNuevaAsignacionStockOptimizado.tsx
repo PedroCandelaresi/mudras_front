@@ -57,7 +57,7 @@ interface ArticuloFiltrado {
 
 interface AsignacionStock {
   articuloId: number;
-  cantidad: number;
+  cantidad: string;
 }
 
 interface Props {
@@ -287,8 +287,8 @@ export default function ModalNuevaAsignacionStockOptimizado({ open, onClose, pun
     }
   };
 
-  const handleAsignarStock = (articuloId: number, cantidad: number) => {
-    if (cantidad <= 0) return;
+  const handleAsignarStock = (articuloId: number, cantidad: string) => {
+    if (cantidad !== '' && !/^\d*[.,]?\d*$/.test(cantidad)) return;
 
     const asignacionExistente = asignaciones.find(a => a.articuloId === articuloId);
 
@@ -328,7 +328,7 @@ export default function ModalNuevaAsignacionStockOptimizado({ open, onClose, pun
         puntoMudrasId: Number(puntoDestinoId),
         asignaciones: asignaciones.map(a => ({
           articuloId: a.articuloId,
-          cantidad: Number(a.cantidad)
+          cantidad: parseFloat(a.cantidad) || 0
         })),
         motivo: 'Asignación Masiva desde Panel Global'
       };
@@ -355,12 +355,12 @@ export default function ModalNuevaAsignacionStockOptimizado({ open, onClose, pun
     onClose();
   };
 
-  const getCantidadAsignada = (articuloId: number): number => {
+  const getCantidadAsignada = (articuloId: number): string => {
     const asignacion = asignaciones.find(a => a.articuloId === articuloId);
-    return asignacion?.cantidad || 0;
+    return asignacion?.cantidad || '0';
   };
 
-  const totalAsignaciones = asignaciones.reduce((total, a) => total + a.cantidad, 0);
+  const totalAsignaciones = asignaciones.reduce((total, a) => total + (parseFloat(a.cantidad) || 0), 0);
 
 
   /* ======================== Render ======================== */
@@ -512,15 +512,15 @@ export default function ModalNuevaAsignacionStockOptimizado({ open, onClose, pun
                         </TableCell>
                         <TableCell align="center">
                           <TextField
-                            type="number"
                             size="small"
                             value={cantidadAsignada}
-                            onChange={(e) => handleAsignarStock(articulo.id, parseInt(e.target.value) || 0)}
+                            onChange={(e) => handleAsignarStock(articulo.id, e.target.value)}
                             InputProps={{ sx: { borderRadius: 0, textAlign: 'center' } }}
+                            inputMode="decimal"
                           />
                         </TableCell>
                         <TableCell align="center">
-                          {cantidadAsignada > 0 && (
+                          {(parseFloat(String(cantidadAsignada)) || 0) > 0 && (
                             <IconButton size="small" color="error" onClick={() => handleRemoverAsignacion(articulo.id)}>
                               <Icon icon="mdi:delete" />
                             </IconButton>

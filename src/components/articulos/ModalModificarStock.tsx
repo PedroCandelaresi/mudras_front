@@ -37,15 +37,15 @@ const ModalModificarStock = ({
   puntosVenta,
   onStockActualizado,
 }: ModalModificarStockProps) => {
-  const [cantidad, setCantidad] = useState<number>(0);
+  const [cantidad, setCantidad] = useState<string>('0');
   const [puntoVentaId, setPuntoVentaId] = useState<string>('');
-  const [costo, setCosto] = useState<number>(0);
+  const [costo, setCosto] = useState<string>('0');
 
   useEffect(() => {
     if (!open) return;
 
-    setCantidad(0);
-    setCosto(0);
+    setCantidad('0');
+    setCosto('0');
     setPuntoVentaId(puntosVenta[0]?.id ?? '');
   }, [open, puntosVenta]);
 
@@ -89,12 +89,15 @@ const ModalModificarStock = ({
 
           <TextField
             label="Cantidad"
-            type="number"
             value={cantidad}
-            onChange={(event) => setCantidad(Number(event.target.value))}
+            onChange={(event) => {
+              const val = event.target.value;
+              if (val === '' || /^\d*[.,]?\d*$/.test(val)) setCantidad(val);
+            }}
             fullWidth
             size="small"
             sx={{ '& .MuiOutlinedInput-root': { borderRadius: 0 } }}
+            inputMode="decimal"
           />
 
           <TextField
@@ -115,12 +118,15 @@ const ModalModificarStock = ({
 
           <TextField
             label="Costo unitario"
-            type="number"
             value={costo}
-            onChange={(event) => setCosto(Number(event.target.value))}
+            onChange={(event) => {
+              const val = event.target.value;
+              if (val === '' || /^\d*[.,]?\d*$/.test(val)) setCosto(val);
+            }}
             fullWidth
             size="small"
             sx={{ '& .MuiOutlinedInput-root': { borderRadius: 0 } }}
+            inputMode="decimal"
           />
         </Box>
       </DialogContent>

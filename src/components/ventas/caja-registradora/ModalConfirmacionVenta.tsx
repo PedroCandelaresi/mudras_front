@@ -92,9 +92,9 @@ export const ModalConfirmacionVenta: React.FC<ModalConfirmacionVentaProps> = ({
   descripcionPuntoSeleccionado,
 }) => {
   const [pagos, setPagos] = useState<PagoVenta[]>([]);
-  const [nuevoPago, setNuevoPago] = useState<PagoVenta>({
+  const [nuevoPago, setNuevoPago] = useState<{ metodoPago: MetodoPago; monto: string }>({
     metodoPago: 'EFECTIVO',
-    monto: 0,
+    monto: '0',
   });
   const [dniCuit, setDniCuit] = useState<string>('');
   const [usuarios, setUsuarios] = useState<UsuarioOption[]>([]);
@@ -182,7 +182,7 @@ export const ModalConfirmacionVenta: React.FC<ModalConfirmacionVentaProps> = ({
     setPagos([]);
     setNuevoPago({
       metodoPago: 'EFECTIVO',
-      monto: subtotal,
+      monto: String(subtotal),
     });
     setDniCuit('');
     setUsuarioSeleccionado(null);
@@ -217,11 +217,12 @@ export const ModalConfirmacionVenta: React.FC<ModalConfirmacionVentaProps> = ({
   };
 
   const handleAgregarPago = () => {
-    if (nuevoPago.monto > 0) {
-      setPagos(prev => [...prev, { ...nuevoPago }]);
+    const montoNum = parseFloat(nuevoPago.monto) || 0;
+    if (montoNum > 0) {
+      setPagos(prev => [...prev, { metodoPago: nuevoPago.metodoPago, monto: montoNum }]);
       setNuevoPago({
         metodoPago: 'EFECTIVO',
-        monto: Math.max(0, subtotal - totalPagos - nuevoPago.monto),
+        monto: String(Math.max(0, subtotal - totalPagos - montoNum)),
       });
     }
   };
@@ -514,14 +515,16 @@ export const ModalConfirmacionVenta: React.FC<ModalConfirmacionVentaProps> = ({
                       <TextField
                         fullWidth
                         size="small"
-                        type="number"
                         label="Monto"
                         value={nuevoPago.monto}
-                        onChange={(e) =>
-                          setNuevoPago((prev) => ({ ...prev, monto: parseFloat(e.target.value) || 0 }))
-                        }
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          if (val === '' || /^\d*[.,]?\d*$/.test(val)) {
+                            setNuevoPago((prev) => ({ ...prev, monto: val }));
+                          }
+                        }}
                         InputProps={{ sx: { borderRadius: 0, bgcolor: '#fff' }, startAdornment: <InputAdornment position="start">$</InputAdornment> }}
-                        inputProps={{ min: 0, step: 0.01 }}
+                        inputMode="decimal"
                       />
                     </Grid>
                     <Grid size={{ xs: 12, sm: 2 }}>
@@ -530,7 +533,7 @@ export const ModalConfirmacionVenta: React.FC<ModalConfirmacionVentaProps> = ({
                         color="primary"
                         size="small"
                         onClick={handleAgregarPago}
-                        disabled={nuevoPago.monto <= 0}
+                        disabled={(parseFloat(nuevoPago.monto) || 0) <= 0}
                         sx={{ width: '100%', minHeight: 40, borderRadius: 0, bgcolor: '#5d4037', '&:hover': { bgcolor: '#4e342e' } }}
                       >
                         <IconPlus size={16} />

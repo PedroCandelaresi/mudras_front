@@ -173,16 +173,18 @@ export default function ModalModificarStockPunto({
           </Typography>
           <TextField
             fullWidth
-            type="number"
             value={nuevaCantidad}
-            onChange={(e) => setNuevaCantidad(e.target.value)}
+            onChange={(e) => {
+              const val = e.target.value;
+              if (val === '' || /^\d*[.,]?\d*$/.test(val)) setNuevaCantidad(val);
+            }}
             placeholder="Ingresa la nueva cantidad"
-            inputProps={{ min: 0, step: 1 }}
             size="medium"
             sx={{
               mb: 2,
               '& .MuiOutlinedInput-root': { borderRadius: 0 }
             }}
+            inputMode="decimal"
           />
 
           <Box display="flex" gap={1} flexWrap="wrap">

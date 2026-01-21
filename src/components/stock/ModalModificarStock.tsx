@@ -32,7 +32,7 @@ interface StockPorPunto {
   puntoVentaId: number;
   puntoVentaNombre: string;
   stockActual: number;
-  stockNuevo: number;
+  stockNuevo: string; // Cambiado a string para input controlado
 }
 
 interface Props {
@@ -43,14 +43,14 @@ interface Props {
   onStockActualizado: () => void;
 }
 
-export default function ModalModificarStock({ 
-  open, 
-  onClose, 
-  articulo, 
-  puntosVenta, 
-  onStockActualizado 
+export default function ModalModificarStock({
+  open,
+  onClose,
+  articulo,
+  puntosVenta,
+  onStockActualizado
 }: Props) {
-  const [stockGeneral, setStockGeneral] = useState(0);
+  const [stockGeneral, setStockGeneral] = useState<string>('0');
   const [stockPorPuntos, setStockPorPuntos] = useState<StockPorPunto[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -58,32 +58,35 @@ export default function ModalModificarStock({
   useEffect(() => {
     if (articulo && puntosVenta.length > 0) {
       setStockGeneral(articulo.stock || 0);
-      
+
       // Inicializar stock por puntos
       const stockInicial = puntosVenta.map(punto => ({
         puntoVentaId: punto.id,
         puntoVentaNombre: punto.nombre,
         stockActual: articulo.stockPorPuntos?.[punto.id] || 0,
-        stockNuevo: articulo.stockPorPuntos?.[punto.id] || 0
+        stockNuevo: String(articulo.stockPorPuntos?.[punto.id] || 0)
       }));
-      
+
+      setStockGeneral(String(articulo.stock || 0));
       setStockPorPuntos(stockInicial);
     }
   }, [articulo, puntosVenta]);
 
   const calcularStockDistribuido = () => {
-    return stockPorPuntos.reduce((total, punto) => total + punto.stockNuevo, 0);
+    return stockPorPuntos.reduce((total, punto) => total + (parseFloat(punto.stockNuevo) || 0), 0);
   };
 
   const calcularStockDisponible = () => {
-    return stockGeneral - calcularStockDistribuido();
+    return (parseFloat(stockGeneral) || 0) - calcularStockDistribuido();
   };
 
-  const handleStockPuntoChange = (puntoVentaId: number, nuevoStock: number) => {
-    setStockPorPuntos(prev => 
-      prev.map(punto => 
-        punto.puntoVentaId === puntoVentaId 
-          ? { ...punto, stockNuevo: Math.max(0, nuevoStock) }
+  const handleStockPuntoChange = (puntoVentaId: number, nuevoStock: string) => {
+    if (nuevoStock !== '' && !/^\d*[.,]?\d*$/.test(nuevoStock)) return;
+
+    setStockPorPuntos(prev =>
+      prev.map(punto =>
+        punto.puntoVentaId === puntoVentaId
+          ? { ...punto, stockNuevo: nuevoStock }
           : punto
       )
     );
@@ -92,27 +95,28 @@ export default function ModalModificarStock({
   const handleAjusteRapido = (puntoVentaId: number, cantidad: number) => {
     const punto = stockPorPuntos.find(p => p.puntoVentaId === puntoVentaId);
     if (punto) {
-      const nuevoStock = Math.max(0, punto.stockNuevo + cantidad);
-      handleStockPuntoChange(puntoVentaId, nuevoStock);
+      const actual = parseFloat(punto.stockNuevo) || 0;
+      const nuevoStock = Math.max(0, actual + cantidad);
+      handleStockPuntoChange(puntoVentaId, String(nuevoStock));
     }
   };
 
   const handleGuardar = async () => {
     setError('');
-    
+
     // Validaciones
-    if (calcularStockDistribuido() > stockGeneral) {
+    if (calcularStockDistribuido() > (parseFloat(stockGeneral) || 0)) {
       setError('El stock distribuido no puede ser mayor al stock general');
       return;
     }
 
     setLoading(true);
-    
+
     try {
       // Aquí iría la mutation para actualizar el stock
       // Por ahora simulamos la operación
       await new Promise(resolve => setTimeout(resolve, 1000));
-      
+
       onStockActualizado();
       onClose();
     } catch (err: any) {
@@ -133,8 +137,8 @@ export default function ModalModificarStock({
   const stockDistribuido = calcularStockDistribuido();
 
   return (
-    <Dialog 
-      open={open} 
+    <Dialog
+      open={open}
       onClose={handleCerrar}
       maxWidth="md"
       fullWidth
@@ -170,11 +174,16 @@ export default function ModalModificarStock({
             <Grid size={{ xs: 12, sm: 3 }}>
               <TextField
                 label="Stock General"
-                type="number"
                 value={stockGeneral}
-                onChange={(e) => setStockGeneral(Math.max(0, parseInt(e.target.value) || 0))}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  if (val === '' || /^\d*[.,]?\d*$/.test(val)) {
+                    setStockGeneral(val);
+                  }
+                }}
                 fullWidth
                 size="small"
+                inputMode="decimal"
                 InputProps={{
                   startAdornment: <Icon icon="mdi:warehouse" style={{ marginRight: 8, color: verde.primary }} />
                 }}
@@ -195,8 +204,8 @@ export default function ModalModificarStock({
                 <Typography variant="caption" color="text.secondary">
                   Stock Disponible
                 </Typography>
-                <Typography 
-                  variant="h6" 
+                <Typography
+                  variant="h6"
                   fontWeight={600}
                   color={stockDisponible < 0 ? 'error.main' : 'text.primary'}
                 >
@@ -243,7 +252,7 @@ export default function ModalModificarStock({
             </TableHead>
             <TableBody>
               {stockPorPuntos.map((punto) => {
-                const cambio = punto.stockNuevo - punto.stockActual;
+                const cambio = (parseFloat(punto.stockNuevo) || 0) - punto.stockActual;
                 return (
                   <TableRow key={punto.puntoVentaId} hover>
                     <TableCell>
@@ -262,34 +271,34 @@ export default function ModalModificarStock({
                     <TableCell align="center">
                       <Box display="flex" justifyContent="center" gap={0.5}>
                         <Tooltip title="Restar 10">
-                          <IconButton 
-                            size="small" 
+                          <IconButton
+                            size="small"
                             onClick={() => handleAjusteRapido(punto.puntoVentaId, -10)}
-                            disabled={punto.stockNuevo === 0}
+                            disabled={(parseFloat(punto.stockNuevo) || 0) === 0}
                           >
                             <Icon icon="mdi:minus-circle" />
                           </IconButton>
                         </Tooltip>
                         <Tooltip title="Restar 1">
-                          <IconButton 
-                            size="small" 
+                          <IconButton
+                            size="small"
                             onClick={() => handleAjusteRapido(punto.puntoVentaId, -1)}
-                            disabled={punto.stockNuevo === 0}
+                            disabled={(parseFloat(punto.stockNuevo) || 0) === 0}
                           >
                             <Icon icon="mdi:minus" />
                           </IconButton>
                         </Tooltip>
                         <Tooltip title="Sumar 1">
-                          <IconButton 
-                            size="small" 
+                          <IconButton
+                            size="small"
                             onClick={() => handleAjusteRapido(punto.puntoVentaId, 1)}
                           >
                             <Icon icon="mdi:plus" />
                           </IconButton>
                         </Tooltip>
                         <Tooltip title="Sumar 10">
-                          <IconButton 
-                            size="small" 
+                          <IconButton
+                            size="small"
                             onClick={() => handleAjusteRapido(punto.puntoVentaId, 10)}
                           >
                             <Icon icon="mdi:plus-circle" />
@@ -299,17 +308,17 @@ export default function ModalModificarStock({
                     </TableCell>
                     <TableCell align="center">
                       <TextField
-                        type="number"
                         value={punto.stockNuevo}
-                        onChange={(e) => handleStockPuntoChange(punto.puntoVentaId, parseInt(e.target.value) || 0)}
+                        onChange={(e) => handleStockPuntoChange(punto.puntoVentaId, e.target.value)}
                         size="small"
                         sx={{ color: verde.primary }}
-                        inputProps={{ min: 0, style: { textAlign: 'center' } }}
+                        inputMode="decimal"
+                        inputProps={{ style: { textAlign: 'center' } }}
                       />
                     </TableCell>
                     <TableCell align="center">
                       {cambio !== 0 && (
-                        <Chip 
+                        <Chip
                           label={`${cambio > 0 ? '+' : ''}${cambio}`}
                           size="small"
                           color={cambio > 0 ? 'success' : 'error'}
@@ -329,11 +338,11 @@ export default function ModalModificarStock({
         <Button onClick={handleCerrar} disabled={loading}>
           Cancelar
         </Button>
-        <Button 
+        <Button
           onClick={handleGuardar}
           variant="contained"
           disabled={loading || stockDisponible < 0}
-          sx={{ 
+          sx={{
             bgcolor: verde.primary,
             '&:hover': { bgcolor: verde.primaryHover }
           }}

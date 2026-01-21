@@ -185,12 +185,17 @@ export default function TransferirStockModal({
 
                         <TextField
                             label="Cantidad a Transferir"
-                            type="number"
                             value={cantidad}
-                            onChange={(e) => setCantidad(e.target.value)}
+                            onChange={(e) => {
+                                const value = e.target.value;
+                                if (value === '' || /^\d*[.,]?\d*$/.test(value)) {
+                                    setCantidad(value);
+                                }
+                            }}
                             fullWidth
                             helperText={origen ? `Disponible en origen: ${stockEnOrigen}` : ''}
                             InputProps={{ sx: { borderRadius: 0 } }}
+                            inputMode="decimal"
                         />
 
                         <TextField

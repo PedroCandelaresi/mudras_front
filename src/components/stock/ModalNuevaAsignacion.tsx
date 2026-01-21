@@ -50,23 +50,23 @@ interface Props {
 type TipoAsignacion = 'cantidad' | 'porcentaje';
 type TipoAjuste = 'ninguno' | 'descuento' | 'recargo';
 
-function ModalNuevaAsignacion({ 
-  open, 
-  onClose, 
-  puntoVenta, 
-  onAsignacionCreada 
+function ModalNuevaAsignacion({
+  open,
+  onClose,
+  puntoVenta,
+  onAsignacionCreada
 }: Props) {
   const [tabValue, setTabValue] = useState(0);
   const [articuloSeleccionado, setArticuloSeleccionado] = useState<ArticuloDisponible | null>(null);
   const [tipoAsignacion, setTipoAsignacion] = useState<TipoAsignacion>('cantidad');
-  const [cantidad, setCantidad] = useState(0);
-  const [porcentaje, setPorcentaje] = useState(0);
+  const [cantidad, setCantidad] = useState<string>('0');
+  const [porcentaje, setPorcentaje] = useState<string>('0');
   const [tipoAjuste, setTipoAjuste] = useState<TipoAjuste>('ninguno');
-  const [porcentajeAjuste, setPorcentajeAjuste] = useState(0);
+  const [porcentajeAjuste, setPorcentajeAjuste] = useState<string>('0');
   const [precioPersonalizado, setPrecioPersonalizado] = useState(false);
-  const [precioVenta, setPrecioVenta] = useState(0);
-  const [stockMinimo, setStockMinimo] = useState(0);
-  const [stockMaximo, setStockMaximo] = useState(0);
+  const [precioVenta, setPrecioVenta] = useState<string>('0');
+  const [stockMinimo, setStockMinimo] = useState<string>('0');
+  const [stockMaximo, setStockMaximo] = useState<string>('0');
   const [observaciones, setObservaciones] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -89,44 +89,44 @@ function ModalNuevaAsignacion({
 
   useEffect(() => {
     if (articuloSeleccionado) {
-      setPrecioVenta(articuloSeleccionado.PrecioVenta);
+      setPrecioVenta(String(articuloSeleccionado.PrecioVenta));
     }
   }, [articuloSeleccionado]);
 
   const calcularCantidadAsignada = () => {
     if (!articuloSeleccionado) return 0;
-    
+
     if (tipoAsignacion === 'cantidad') {
-      return cantidad;
+      return parseFloat(cantidad) || 0;
     } else {
-      return Math.floor((articuloSeleccionado.stockDisponible * porcentaje) / 100);
+      return Math.floor((articuloSeleccionado.stockDisponible * (parseFloat(porcentaje) || 0)) / 100);
     }
   };
 
   const calcularPrecioFinal = () => {
     if (!articuloSeleccionado) return 0;
-    
-    let precio = precioPersonalizado ? precioVenta : articuloSeleccionado.PrecioVenta;
-    
+
+    let precio = precioPersonalizado ? (parseFloat(precioVenta) || 0) : articuloSeleccionado.PrecioVenta;
+
     if (tipoAjuste === 'descuento') {
-      precio = precio * (1 - porcentajeAjuste / 100);
+      precio = precio * (1 - (parseFloat(porcentajeAjuste) || 0) / 100);
     } else if (tipoAjuste === 'recargo') {
-      precio = precio * (1 + porcentajeAjuste / 100);
+      precio = precio * (1 + (parseFloat(porcentajeAjuste) || 0) / 100);
     }
-    
+
     return precio;
   };
 
   const handleGuardar = async () => {
     setError('');
-    
+
     if (!articuloSeleccionado) {
       setError('Debe seleccionar un artículo');
       return;
     }
 
     const cantidadFinal = calcularCantidadAsignada();
-    
+
     if (cantidadFinal <= 0) {
       setError('La cantidad a asignar debe ser mayor a 0');
       return;
@@ -138,7 +138,7 @@ function ModalNuevaAsignacion({
     }
 
     setLoading(true);
-    
+
     try {
       // Mutation para crear asignación
       await crearAsignacion({
@@ -148,18 +148,18 @@ function ModalNuevaAsignacion({
             puntoVentaId: puntoVenta.id,
             tipoAsignacion: tipoAsignacion,
             cantidad: tipoAsignacion === 'cantidad' ? cantidadFinal : undefined,
-            porcentaje: tipoAsignacion === 'porcentaje' ? porcentaje : undefined,
-            stockMinimo: stockMinimo,
-            stockMaximo: stockMaximo > 0 ? stockMaximo : undefined,
+            porcentaje: tipoAsignacion === 'porcentaje' ? parseFloat(porcentaje) || 0 : undefined,
+            stockMinimo: parseFloat(stockMinimo) || 0,
+            stockMaximo: (parseFloat(stockMaximo) || 0) > 0 ? parseFloat(stockMaximo) || 0 : undefined,
             precioPersonalizado: precioPersonalizado,
             precioVenta: precioPersonalizado ? calcularPrecioFinal() : undefined,
             tipoAjuste: tipoAjuste,
-            porcentajeAjuste: tipoAjuste !== 'ninguno' ? porcentajeAjuste : undefined,
+            porcentajeAjuste: tipoAjuste !== 'ninguno' ? parseFloat(porcentajeAjuste) || 0 : undefined,
             observaciones: observaciones || undefined
           }
         }
       });
-      
+
       onAsignacionCreada();
       handleCerrar();
     } catch (err: any) {
@@ -173,14 +173,14 @@ function ModalNuevaAsignacion({
     setError('');
     setArticuloSeleccionado(null);
     setTipoAsignacion('cantidad');
-    setCantidad(0);
-    setPorcentaje(0);
+    setCantidad('0');
+    setPorcentaje('0');
     setTipoAjuste('ninguno');
-    setPorcentajeAjuste(0);
+    setPorcentajeAjuste('0');
     setPrecioPersonalizado(false);
-    setPrecioVenta(0);
-    setStockMinimo(0);
-    setStockMaximo(0);
+    setPrecioVenta('0');
+    setStockMinimo('0');
+    setStockMaximo('0');
     setObservaciones('');
     setBusquedaArticulos('');
     setTabValue(0);
@@ -193,8 +193,8 @@ function ModalNuevaAsignacion({
   const precioFinal = calcularPrecioFinal();
 
   return (
-    <Dialog 
-      open={open} 
+    <Dialog
+      open={open}
       onClose={handleCerrar}
       maxWidth="md"
       fullWidth
@@ -233,7 +233,7 @@ function ModalNuevaAsignacion({
             <Typography variant="subtitle1" fontWeight={600} gutterBottom>
               Buscar y Seleccionar Artículo
             </Typography>
-            
+
             <Autocomplete
               options={articulos}
               getOptionLabel={(option) => `${option.Codigo} - ${option.Descripcion}`}
@@ -317,14 +317,16 @@ function ModalNuevaAsignacion({
                 <Grid size={{ xs: 12, sm: 6 }}>
                   <TextField
                     label="Cantidad a Asignar"
-                    type="number"
                     value={cantidad}
-                    onChange={(e) => setCantidad(Math.max(0, parseInt(e.target.value) || 0))}
-                    fullWidth
-                    inputProps={{ 
-                      min: 0, 
-                      max: articuloSeleccionado.stockDisponible 
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      if (val === '' || /^\d*[.,]?\d*$/.test(val)) setCantidad(val);
                     }}
+                    fullWidth
+                    inputProps={{
+                      min: 0,
+                    }}
+                    inputMode="decimal"
                     helperText={`Máximo disponible: ${articuloSeleccionado.stockDisponible}`}
                   />
                 </Grid>
@@ -332,14 +334,16 @@ function ModalNuevaAsignacion({
                 <Grid size={{ xs: 12, sm: 6 }}>
                   <TextField
                     label="Porcentaje del Stock"
-                    type="number"
                     value={porcentaje}
-                    onChange={(e) => setPorcentaje(Math.max(0, Math.min(100, parseInt(e.target.value) || 0)))}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      if (val === '' || /^\d*[.,]?\d*$/.test(val)) setPorcentaje(val);
+                    }}
                     fullWidth
                     InputProps={{
                       endAdornment: <InputAdornment position="end">%</InputAdornment>,
                     }}
-                    inputProps={{ min: 0, max: 100 }}
+                    inputMode="decimal"
                     helperText={`Cantidad resultante: ${cantidadAsignada}`}
                   />
                 </Grid>
@@ -348,11 +352,13 @@ function ModalNuevaAsignacion({
               <Grid size={{ xs: 12, sm: 6 }}>
                 <TextField
                   label="Stock Mínimo"
-                  type="number"
                   value={stockMinimo}
-                  onChange={(e) => setStockMinimo(Math.max(0, parseInt(e.target.value) || 0))}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    if (val === '' || /^\d*[.,]?\d*$/.test(val)) setStockMinimo(val);
+                  }}
                   fullWidth
-                  inputProps={{ min: 0 }}
+                  inputMode="decimal"
                   helperText="Alerta cuando el stock baje de este nivel"
                 />
               </Grid>
@@ -360,11 +366,13 @@ function ModalNuevaAsignacion({
               <Grid size={{ xs: 12, sm: 6 }}>
                 <TextField
                   label="Stock Máximo (Opcional)"
-                  type="number"
                   value={stockMaximo}
-                  onChange={(e) => setStockMaximo(Math.max(0, parseInt(e.target.value) || 0))}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    if (val === '' || /^\d*[.,]?\d*$/.test(val)) setStockMaximo(val);
+                  }}
                   fullWidth
-                  inputProps={{ min: 0 }}
+                  inputMode="decimal"
                   helperText="Límite máximo para este punto de venta"
                 />
               </Grid>
@@ -407,11 +415,14 @@ function ModalNuevaAsignacion({
               <Grid size={{ xs: 12, sm: 6 }}>
                 <TextField
                   label="Precio de Venta"
-                  type="number"
                   value={precioVenta}
-                  onChange={(e) => setPrecioVenta(Math.max(0, parseFloat(e.target.value) || 0))}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    if (val === '' || /^\d*[.,]?\d*$/.test(val)) setPrecioVenta(val);
+                  }}
                   fullWidth
                   disabled={!precioPersonalizado}
+                  inputMode="decimal"
                   InputProps={{
                     startAdornment: <InputAdornment position="start">$</InputAdornment>,
                   }}
@@ -438,14 +449,16 @@ function ModalNuevaAsignacion({
                 <Grid size={{ xs: 12, sm: 6 }}>
                   <TextField
                     label={`Porcentaje de ${tipoAjuste}`}
-                    type="number"
                     value={porcentajeAjuste}
-                    onChange={(e) => setPorcentajeAjuste(Math.max(0, Math.min(100, parseFloat(e.target.value) || 0)))}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      if (val === '' || /^\d*[.,]?\d*$/.test(val)) setPorcentajeAjuste(val);
+                    }}
                     fullWidth
                     InputProps={{
                       endAdornment: <InputAdornment position="end">%</InputAdornment>,
                     }}
-                    inputProps={{ min: 0, max: 100, step: 0.1 }}
+                    inputMode="decimal"
                   />
                 </Grid>
               )}
@@ -488,11 +501,11 @@ function ModalNuevaAsignacion({
           Cancelar
         </Button>
         {tabValue < 2 ? (
-          <Button 
+          <Button
             onClick={() => setTabValue(tabValue + 1)}
             variant="contained"
             disabled={tabValue === 0 && !articuloSeleccionado}
-            sx={{ 
+            sx={{
               bgcolor: verde.primary,
               '&:hover': { bgcolor: verde.primaryHover }
             }}
@@ -500,11 +513,11 @@ function ModalNuevaAsignacion({
             Siguiente
           </Button>
         ) : (
-          <Button 
+          <Button
             onClick={handleGuardar}
             variant="contained"
             disabled={loading || !articuloSeleccionado || cantidadAsignada <= 0}
-            sx={{ 
+            sx={{
               bgcolor: verde.primary,
               '&:hover': { bgcolor: verde.primaryHover }
             }}

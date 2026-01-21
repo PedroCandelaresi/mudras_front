@@ -96,21 +96,27 @@ const ModalAgregarDetalleOC: React.FC<Props> = ({ open, onClose, onSuccess, orde
           <Box display="grid" gridTemplateColumns="1fr 1fr" gap={2}>
             <TextField
               label="Cantidad"
-              type="number"
               value={cantidad}
-              onChange={(e) => setCantidad(e.target.value)}
+              onChange={(e) => {
+                const val = e.target.value;
+                if (val === '' || /^\d*[.,]?\d*$/.test(val)) setCantidad(val);
+              }}
               fullWidth
               size="small"
               InputProps={{ sx: { borderRadius: 0 } }}
+              inputMode="decimal"
             />
             <TextField
               label="Precio Unit. (Opcional)"
-              type="number"
               value={precio}
-              onChange={(e) => setPrecio(e.target.value)}
+              onChange={(e) => {
+                const val = e.target.value;
+                if (val === '' || /^\d*[.,]?\d*$/.test(val)) setPrecio(val);
+              }}
               fullWidth
               size="small"
               InputProps={{ sx: { borderRadius: 0 }, startAdornment: <InputAdornment position="start">$</InputAdornment> }}
+              inputMode="decimal"
             />
           </Box>
         </Box>

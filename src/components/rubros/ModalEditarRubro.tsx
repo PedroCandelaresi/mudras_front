@@ -56,8 +56,8 @@ const ModalEditarRubro = ({ open, onClose, rubro, onSuccess, accentColor }: Moda
   const COLORS = useMemo(() => makeColors(accentColor), [accentColor]);
   const [nombre, setNombre] = useState('');
   const [codigo, setCodigo] = useState('');
-  const [porcentajeRecargo, setPorcentajeRecargo] = useState<number>(0);
-  const [porcentajeDescuento, setPorcentajeDescuento] = useState<number>(0);
+  const [porcentajeRecargo, setPorcentajeRecargo] = useState<string>('0');
+  const [porcentajeDescuento, setPorcentajeDescuento] = useState<string>('0');
   const [unidadMedida, setUnidadMedida] = useState<string>('Unidad');
   const [error, setError] = useState('');
   const [saving, setSaving] = useState(false);
@@ -77,8 +77,8 @@ const ModalEditarRubro = ({ open, onClose, rubro, onSuccess, accentColor }: Moda
 
     setNombre(rubro?.nombre ?? '');
     setCodigo(rubro?.codigo ?? '');
-    setPorcentajeRecargo(rubro?.porcentajeRecargo != null ? Number(rubro.porcentajeRecargo) : 0);
-    setPorcentajeDescuento(rubro?.porcentajeDescuento != null ? Number(rubro.porcentajeDescuento) : 0);
+    setPorcentajeRecargo(rubro?.porcentajeRecargo != null ? String(rubro.porcentajeRecargo) : '0');
+    setPorcentajeDescuento(rubro?.porcentajeDescuento != null ? String(rubro.porcentajeDescuento) : '0');
     setUnidadMedida(rubro?.unidadMedida ?? 'Unidad');
     setError('');
     setSaving(false);
@@ -102,8 +102,8 @@ const ModalEditarRubro = ({ open, onClose, rubro, onSuccess, accentColor }: Moda
       const input = {
         nombre: nombre.trim(),
         codigo: codigo.trim() || null,
-        porcentajeRecargo: Number.isFinite(Number(porcentajeRecargo)) ? Number(porcentajeRecargo) : 0,
-        porcentajeDescuento: Number.isFinite(Number(porcentajeDescuento)) ? Number(porcentajeDescuento) : 0,
+        porcentajeRecargo: parseFloat(porcentajeRecargo) || 0,
+        porcentajeDescuento: parseFloat(porcentajeDescuento) || 0,
         unidadMedida: unidadMedida || 'Unidad',
       };
 
@@ -199,12 +199,15 @@ const ModalEditarRubro = ({ open, onClose, rubro, onSuccess, accentColor }: Moda
                 </Typography>
                 <TextField
                   fullWidth
-                  type="number"
                   variant="outlined"
                   value={porcentajeRecargo}
-                  onChange={(e) => setPorcentajeRecargo(Number(e.target.value))}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    if (val === '' || /^\d*[.,]?\d*$/.test(val)) setPorcentajeRecargo(val);
+                  }}
                   size="small"
                   InputProps={{ endAdornment: '%', sx: { borderRadius: 0 } }}
+                  inputMode="decimal"
                 />
               </Box>
 
@@ -214,12 +217,15 @@ const ModalEditarRubro = ({ open, onClose, rubro, onSuccess, accentColor }: Moda
                 </Typography>
                 <TextField
                   fullWidth
-                  type="number"
                   variant="outlined"
                   value={porcentajeDescuento}
-                  onChange={(e) => setPorcentajeDescuento(Number(e.target.value))}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    if (val === '' || /^\d*[.,]?\d*$/.test(val)) setPorcentajeDescuento(val);
+                  }}
                   size="small"
                   InputProps={{ endAdornment: '%', sx: { borderRadius: 0 } }}
+                  inputMode="decimal"
                 />
               </Box>
             </Box>

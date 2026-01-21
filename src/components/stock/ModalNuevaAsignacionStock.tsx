@@ -43,7 +43,7 @@ import { oroNegro } from '@/ui/colores';
 
 interface AsignacionStock {
   articuloId: number;
-  cantidad: number;
+  cantidad: string;
 }
 
 interface Props {
@@ -243,12 +243,10 @@ export default function ModalNuevaAsignacionStock({ open, onClose, destinoId, on
     }
   }, [proveedorSeleccionado]);
 
-  const handleAsignarStock = (articuloId: number, cantidad: number, opts?: { allowZero?: boolean }) => {
+  const handleAsignarStock = (articuloId: number, cantidad: string, opts?: { allowZero?: boolean }) => {
     const allowZero = opts?.allowZero ?? false;
-    if (cantidad <= 0 && !allowZero) {
-      handleRemoverAsignacion(articuloId);
-      return;
-    }
+    // Permitir vacío para edición
+    if (cantidad !== '' && !/^\d*[.,]?\d*$/.test(cantidad)) return;
 
     const asignacionExistente = asignaciones.find(a => a.articuloId === articuloId);
 
@@ -281,7 +279,7 @@ export default function ModalNuevaAsignacionStock({ open, onClose, destinoId, on
     if (checked) {
       const ya = asignaciones.find(a => a.articuloId === articulo.id);
       if (!ya) {
-        setAsignaciones(prev => [...prev, { articuloId: articulo.id, cantidad: articulo.stockDisponible > 0 ? articulo.stockDisponible : 1 }]);
+        setAsignaciones(prev => [...prev, { articuloId: articulo.id, cantidad: String(articulo.stockDisponible > 0 ? articulo.stockDisponible : 1) }]);
         setArticulosSnapshot((prev) => ({ ...prev, [Number(articulo.id)]: { ...articulo } }));
       }
     } else {
@@ -314,7 +312,7 @@ export default function ModalNuevaAsignacionStock({ open, onClose, destinoId, on
         puntoMudrasId: destinoSeleccionado,
         asignaciones: asignaciones.map(a => ({
           articuloId: Number(a.articuloId),
-          cantidad: Number(a.cantidad)
+          cantidad: parseFloat(a.cantidad) || 0
         })),
         motivo: 'Asignación masiva desde panel'
       };
@@ -352,12 +350,12 @@ export default function ModalNuevaAsignacionStock({ open, onClose, destinoId, on
     onClose();
   };
 
-  const getCantidadAsignada = (articuloId: number): number => {
+  const getCantidadAsignada = (articuloId: number): string => {
     const asignacion = asignaciones.find(a => a.articuloId === articuloId);
-    return asignacion?.cantidad || 0;
+    return asignacion?.cantidad || '0';
   };
 
-  const totalAsignaciones = asignaciones.reduce((total, a) => total + a.cantidad, 0);
+  const totalAsignaciones = asignaciones.reduce((total, a) => total + (parseFloat(a.cantidad) || 0), 0);
 
   useEffect(() => {
     if (!open) return;
@@ -581,16 +579,15 @@ export default function ModalNuevaAsignacionStock({ open, onClose, destinoId, on
                         </TableCell>
                         <TableCell align="right">
                           <TextField
-                            type="number"
+                            type="text"
                             size="small"
                             value={cantidadAsignada || ''}
                             onChange={(e) => {
-                              const next = e.target.value;
-                              const parsed = next === '' ? 0 : parseInt(next, 10) || 0;
-                              handleAsignarStock(articulo.id, parsed, { allowZero: next === '' });
+                              handleAsignarStock(articulo.id, e.target.value, { allowZero: true });
                             }}
                             sx={{ width: 80, '& .MuiOutlinedInput-root': { borderRadius: 0 } }}
                             disabled={!seleccionado}
+                            inputMode="decimal"
                           />
                         </TableCell>
                       </TableRow>

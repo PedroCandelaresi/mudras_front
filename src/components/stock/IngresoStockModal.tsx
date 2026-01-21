@@ -260,12 +260,17 @@ export default function IngresoStockModal({
 
                         <TextField
                             label="Nueva Cantidad Total"
-                            type="number"
                             value={cantidad}
-                            onChange={(e) => setCantidad(e.target.value)}
+                            onChange={(e) => {
+                                const value = e.target.value;
+                                if (value === '' || /^\d*[.,]?\d*$/.test(value)) {
+                                    setCantidad(value);
+                                }
+                            }}
                             fullWidth
                             helperText={stockActual !== null ? `Stock actual en este punto: ${stockActual}` : 'Ingrese la cantidad total final que habrá en el punto'}
                             InputProps={{ sx: { borderRadius: 0 } }}
+                            inputMode="decimal"
                         />
 
                         <TextField

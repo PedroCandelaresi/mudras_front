@@ -26,6 +26,7 @@ const ModalRecepcionarOC: React.FC<Props> = ({ open, onClose, ordenId, onSuccess
   }, [open, ordenId]);
 
   const handleChange = (id: number, field: 'cantidad' | 'costo', value: string) => {
+    if (value !== '' && !/^\d*[.,]?\d*$/.test(value)) return;
     setCantidades(prev => ({ ...prev, [id]: { cantidad: prev[id]?.cantidad ?? '', costo: prev[id]?.costo ?? '', [field]: value } }));
   };
 
@@ -102,18 +103,18 @@ const ModalRecepcionarOC: React.FC<Props> = ({ open, onClose, ordenId, onSuccess
                   <TextField
                     size="small"
                     label="Recibido"
-                    type="number"
                     value={cantidades[d.id]?.cantidad ?? ''}
                     onChange={(e) => handleChange(d.id, 'cantidad', e.target.value)}
                     InputProps={{ sx: { borderRadius: 0 } }}
+                    inputMode="decimal"
                   />
                   <TextField
                     size="small"
                     label="Costo Unit."
-                    type="number"
                     value={cantidades[d.id]?.costo ?? ''}
                     onChange={(e) => handleChange(d.id, 'costo', e.target.value)}
                     InputProps={{ sx: { borderRadius: 0 }, startAdornment: <Typography variant="caption" sx={{ mr: 0.5 }}>$</Typography> }}
+                    inputMode="decimal"
                   />
                 </Box>
               ))}

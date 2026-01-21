@@ -104,12 +104,15 @@ const ModalNuevoGasto: React.FC<Props> = ({ open, onClose, onSuccess }) => {
           <Box display="grid" gridTemplateColumns={{ xs: '1fr', sm: '1fr 1fr' }} gap={2}>
             <TextField
               label="Monto neto"
-              type="number"
               value={monto}
-              onChange={(e) => setMonto(e.target.value)}
+              onChange={(e) => {
+                const val = e.target.value;
+                if (val === '' || /^\d*[.,]?\d*$/.test(val)) setMonto(val);
+              }}
               fullWidth
               size="small"
               InputProps={{ sx: { borderRadius: 0 }, startAdornment: <Typography variant="caption" sx={{ mr: 0.5 }}>$</Typography> }}
+              inputMode="decimal"
             />
             <TextField
               select

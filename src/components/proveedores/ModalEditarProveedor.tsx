@@ -424,6 +424,10 @@ const ModalEditarProveedor = ({ open, onClose, proveedor, onProveedorGuardado }:
         }
       }
 
+      if (field === 'PorcentajeRecargoProveedor' || field === 'PorcentajeDescuentoProveedor') {
+        if (value !== '' && !/^\d*[.,]?\d*$/.test(value)) return;
+      }
+
       setFormData((prev) => ({
         ...prev,
         [field]: value,
@@ -877,10 +881,10 @@ const ModalEditarProveedor = ({ open, onClose, proveedor, onProveedorGuardado }:
                       label="Recargo Proveedor (%)"
                       value={formData.PorcentajeRecargoProveedor}
                       onChange={handleInputChange('PorcentajeRecargoProveedor')}
-                      type="number"
                       fullWidth
                       disabled={saving}
                       sx={fieldSx}
+                      inputMode="decimal"
                     />
                   </Box>
                   <Box width={{ xs: '100%', md: 'calc(50% - 8px)' }}>
@@ -888,10 +892,10 @@ const ModalEditarProveedor = ({ open, onClose, proveedor, onProveedorGuardado }:
                       label="Descuento Proveedor (%)"
                       value={formData.PorcentajeDescuentoProveedor}
                       onChange={handleInputChange('PorcentajeDescuentoProveedor')}
-                      type="number"
                       fullWidth
                       disabled={saving}
                       sx={fieldSx}
+                      inputMode="decimal"
                     />
                   </Box>
                   <Box width="100%">

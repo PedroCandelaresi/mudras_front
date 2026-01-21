@@ -45,22 +45,28 @@ interface ModalArticuloProps {
 }
 
 export default function ModalArticulo({ abierto, articulo, onCerrar }: ModalArticuloProps) {
-  const [formData, setFormData] = useState<CrearArticuloDto>({
+  const [formData, setFormData] = useState({
     Codigo: '',
     Descripcion: '',
     Marca: '',
-    precioVenta: 0,
-    PrecioCompra: 0,
-    stock: 0,
-    stockMinimo: 0,
+    precioVenta: '0',
+    PrecioCompra: '0',
+    stock: '0',
+    stockMinimo: '0',
     unidadMedida: 'unidad',
-    cantidadPorEmpaque: 1,
+    cantidadPorEmpaque: '1',
     tipoEmpaque: 'unidad',
-    descuentoPorcentaje: 0,
-    descuentoMonto: 0,
+    descuentoPorcentaje: '0',
+    descuentoMonto: '0',
     EnPromocion: false,
+    fechaInicioPromocion: undefined as string | undefined,
+    fechaFinPromocion: undefined as string | undefined,
     publicadoEnTienda: false,
+    descripcionTienda: '',
+    codigoBarras: '',
     manejaStock: true,
+    idProveedor: undefined as number | undefined,
+    rubroId: undefined as string | undefined,
     estado: EstadoArticulo.ACTIVO
   });
 
@@ -77,15 +83,15 @@ export default function ModalArticulo({ abierto, articulo, onCerrar }: ModalArti
         Codigo: articulo.Codigo,
         Descripcion: articulo.Descripcion,
         Marca: articulo.Marca || '',
-        precioVenta: articulo.precioVenta,
-        PrecioCompra: articulo.PrecioCompra || 0,
-        stock: articulo.stock,
-        stockMinimo: articulo.stockMinimo,
+        precioVenta: String(articulo.precioVenta),
+        PrecioCompra: String(articulo.PrecioCompra || 0),
+        stock: String(articulo.stock),
+        stockMinimo: String(articulo.stockMinimo),
         unidadMedida: articulo.unidadMedida,
-        cantidadPorEmpaque: articulo.cantidadPorEmpaque,
+        cantidadPorEmpaque: String(articulo.cantidadPorEmpaque),
         tipoEmpaque: articulo.tipoEmpaque,
-        descuentoPorcentaje: articulo.descuentoPorcentaje,
-        descuentoMonto: articulo.descuentoMonto,
+        descuentoPorcentaje: String(articulo.descuentoPorcentaje),
+        descuentoMonto: String(articulo.descuentoMonto),
         EnPromocion: articulo.EnPromocion,
         fechaInicioPromocion: articulo.fechaInicioPromocion,
         fechaFinPromocion: articulo.fechaFinPromocion,
@@ -94,7 +100,7 @@ export default function ModalArticulo({ abierto, articulo, onCerrar }: ModalArti
         codigoBarras: articulo.codigoBarras || '',
         manejaStock: articulo.manejaStock,
         idProveedor: articulo.idProveedor,
-        rubroId: articulo.rubroId,
+        rubroId: articulo.rubroId ? String(articulo.rubroId) : undefined,
         estado: articulo.estado
       });
       setImagenesUrls(articulo.imagenesUrls || []);
@@ -104,18 +110,24 @@ export default function ModalArticulo({ abierto, articulo, onCerrar }: ModalArti
         Codigo: '',
         Descripcion: '',
         Marca: '',
-        precioVenta: 0,
-        PrecioCompra: 0,
-        stock: 0,
-        stockMinimo: 0,
+        precioVenta: '0',
+        PrecioCompra: '0',
+        stock: '0',
+        stockMinimo: '0',
         unidadMedida: 'unidad',
-        cantidadPorEmpaque: 1,
+        cantidadPorEmpaque: '1',
         tipoEmpaque: 'unidad',
-        descuentoPorcentaje: 0,
-        descuentoMonto: 0,
+        descuentoPorcentaje: '0',
+        descuentoMonto: '0',
         EnPromocion: false,
+        fechaInicioPromocion: undefined,
+        fechaFinPromocion: undefined,
         publicadoEnTienda: false,
+        descripcionTienda: '',
+        codigoBarras: '',
         manejaStock: true,
+        idProveedor: undefined,
+        rubroId: undefined,
         estado: EstadoArticulo.ACTIVO
       });
       setImagenesUrls([]);
@@ -134,11 +146,11 @@ export default function ModalArticulo({ abierto, articulo, onCerrar }: ModalArti
       errores.push('La descripción es obligatoria');
     }
 
-    if (!(formData.precioVenta ?? 0) || (formData.precioVenta ?? 0) <= 0) {
+    if (!(parseFloat(formData.precioVenta) || 0) || (parseFloat(formData.precioVenta) || 0) <= 0) {
       errores.push('El precio de venta debe ser mayor a 0');
     }
 
-    if ((formData.cantidadPorEmpaque ?? 0) > 0 && (formData.cantidadPorEmpaque ?? 0) <= 0) {
+    if ((parseFloat(formData.cantidadPorEmpaque) || 0) > 0 && (parseFloat(formData.cantidadPorEmpaque) || 0) <= 0) {
       errores.push('La cantidad por empaque debe ser mayor a 0');
     }
 
@@ -162,6 +174,13 @@ export default function ModalArticulo({ abierto, articulo, onCerrar }: ModalArti
       const { rubroId: _rubroId, ...restFormData } = formData;
       const datosEnvio = {
         ...restFormData,
+        precioVenta: parseFloat(formData.precioVenta) || 0,
+        PrecioCompra: parseFloat(formData.PrecioCompra) || 0,
+        stock: parseFloat(formData.stock) || 0,
+        stockMinimo: parseFloat(formData.stockMinimo) || 0,
+        cantidadPorEmpaque: parseFloat(formData.cantidadPorEmpaque) || 1,
+        descuentoPorcentaje: parseFloat(formData.descuentoPorcentaje) || 0,
+        descuentoMonto: parseFloat(formData.descuentoMonto) || 0,
         imagenesUrls: imagenesUrls.length > 0 ? imagenesUrls : undefined
       };
 
@@ -201,25 +220,25 @@ export default function ModalArticulo({ abierto, articulo, onCerrar }: ModalArti
   };
 
   const calcularPrecioConDescuento = () => {
-    let precioFinal = formData.precioVenta ?? 0;
-    
-    if ((formData.descuentoPorcentaje ?? 0) > 0) {
-      precioFinal = precioFinal * (1 - (formData.descuentoPorcentaje ?? 0) / 100);
+    let precioFinal = parseFloat(formData.precioVenta) || 0;
+
+    if ((parseFloat(formData.descuentoPorcentaje) || 0) > 0) {
+      precioFinal = precioFinal * (1 - (parseFloat(formData.descuentoPorcentaje) || 0) / 100);
     }
-    
-    if ((formData.descuentoMonto ?? 0) > 0) {
-      precioFinal = precioFinal - (formData.descuentoMonto ?? 0);
+
+    if ((parseFloat(formData.descuentoMonto) || 0) > 0) {
+      precioFinal = precioFinal - (parseFloat(formData.descuentoMonto) || 0);
     }
-    
+
     return Math.max(0, precioFinal);
   };
 
   return (
     <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={es}>
-      <Dialog 
-        open={abierto} 
-        onClose={onCerrar} 
-        maxWidth="md" 
+      <Dialog
+        open={abierto}
+        onClose={onCerrar}
+        maxWidth="md"
         fullWidth
         PaperProps={{
           sx: { minHeight: '80vh' }
@@ -329,12 +348,15 @@ export default function ModalArticulo({ abierto, articulo, onCerrar }: ModalArti
               <TextField
                 fullWidth
                 label="Precio de Compra"
-                type="number"
                 value={formData.PrecioCompra}
-                onChange={(e) => setFormData({ ...formData, PrecioCompra: parseFloat(e.target.value) || 0 })}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  if (val === '' || /^\d*[.,]?\d*$/.test(val)) setFormData({ ...formData, PrecioCompra: val });
+                }}
                 InputProps={{
                   startAdornment: <InputAdornment position="start">$</InputAdornment>
                 }}
+                inputMode="decimal"
               />
             </Grid>
 
@@ -342,12 +364,15 @@ export default function ModalArticulo({ abierto, articulo, onCerrar }: ModalArti
               <TextField
                 fullWidth
                 label="Precio de Venta *"
-                type="number"
                 value={formData.precioVenta}
-                onChange={(e) => setFormData({ ...formData, precioVenta: parseFloat(e.target.value) || 0 })}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  if (val === '' || /^\d*[.,]?\d*$/.test(val)) setFormData({ ...formData, precioVenta: val });
+                }}
                 InputProps={{
                   startAdornment: <InputAdornment position="start">$</InputAdornment>
                 }}
+                inputMode="decimal"
               />
             </Grid>
 
@@ -391,9 +416,12 @@ export default function ModalArticulo({ abierto, articulo, onCerrar }: ModalArti
               <TextField
                 fullWidth
                 label="Cantidad por Empaque"
-                type="number"
                 value={formData.cantidadPorEmpaque}
-                onChange={(e) => setFormData({ ...formData, cantidadPorEmpaque: parseFloat(e.target.value) || 1 })}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  if (val === '' || /^\d*[.,]?\d*$/.test(val)) setFormData({ ...formData, cantidadPorEmpaque: val });
+                }}
+                inputMode="decimal"
               />
             </Grid>
 
@@ -440,9 +468,12 @@ export default function ModalArticulo({ abierto, articulo, onCerrar }: ModalArti
                   <TextField
                     fullWidth
                     label="Stock Actual"
-                    type="number"
                     value={formData.stock}
-                    onChange={(e) => setFormData({ ...formData, stock: parseFloat(e.target.value) || 0 })}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      if (val === '' || /^\d*[.,]?\d*$/.test(val)) setFormData({ ...formData, stock: val });
+                    }}
+                    inputMode="decimal"
                   />
                 </Grid>
 
@@ -450,9 +481,12 @@ export default function ModalArticulo({ abierto, articulo, onCerrar }: ModalArti
                   <TextField
                     fullWidth
                     label="Stock Mínimo"
-                    type="number"
                     value={formData.stockMinimo}
-                    onChange={(e) => setFormData({ ...formData, stockMinimo: parseFloat(e.target.value) || 0 })}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      if (val === '' || /^\d*[.,]?\d*$/.test(val)) setFormData({ ...formData, stockMinimo: val });
+                    }}
+                    inputMode="decimal"
                   />
                 </Grid>
 
@@ -461,9 +495,9 @@ export default function ModalArticulo({ abierto, articulo, onCerrar }: ModalArti
                     <Typography variant="body2" color="textSecondary">
                       Estado del Stock
                     </Typography>
-                    {(formData.stock ?? 0) <= 0 ? (
+                    {(parseFloat(formData.stock) || 0) <= 0 ? (
                       <Chip label="Sin stock" color="error" />
-                    ) : (formData.stock ?? 0) <= (formData.stockMinimo ?? 0) ? (
+                    ) : (parseFloat(formData.stock) || 0) <= (parseFloat(formData.stockMinimo) || 0) ? (
                       <Chip label="Stock bajo" color="warning" />
                     ) : (
                       <Chip label="Stock OK" color="success" />
@@ -485,12 +519,15 @@ export default function ModalArticulo({ abierto, articulo, onCerrar }: ModalArti
               <TextField
                 fullWidth
                 label="Descuento (%)"
-                type="number"
                 value={formData.descuentoPorcentaje}
-                onChange={(e) => setFormData({ ...formData, descuentoPorcentaje: parseFloat(e.target.value) || 0 })}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  if (val === '' || /^\d*[.,]?\d*$/.test(val)) setFormData({ ...formData, descuentoPorcentaje: val });
+                }}
                 InputProps={{
                   endAdornment: <InputAdornment position="end">%</InputAdornment>
                 }}
+                inputMode="decimal"
               />
             </Grid>
 
@@ -498,12 +535,15 @@ export default function ModalArticulo({ abierto, articulo, onCerrar }: ModalArti
               <TextField
                 fullWidth
                 label="Descuento ($)"
-                type="number"
                 value={formData.descuentoMonto}
-                onChange={(e) => setFormData({ ...formData, descuentoMonto: parseFloat(e.target.value) || 0 })}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  if (val === '' || /^\d*[.,]?\d*$/.test(val)) setFormData({ ...formData, descuentoMonto: val });
+                }}
                 InputProps={{
                   startAdornment: <InputAdornment position="start">$</InputAdornment>
                 }}
+                inputMode="decimal"
               />
             </Grid>
 
@@ -525,9 +565,9 @@ export default function ModalArticulo({ abierto, articulo, onCerrar }: ModalArti
                   <DatePicker
                     label="Fecha Inicio Promoción"
                     value={formData.fechaInicioPromocion ? new Date(formData.fechaInicioPromocion) : null}
-                    onChange={(date) => setFormData({ 
-                      ...formData, 
-                      fechaInicioPromocion: date?.toISOString() 
+                    onChange={(date) => setFormData({
+                      ...formData,
+                      fechaInicioPromocion: date?.toISOString()
                     })}
                     slotProps={{ textField: { fullWidth: true } }}
                   />
@@ -537,9 +577,9 @@ export default function ModalArticulo({ abierto, articulo, onCerrar }: ModalArti
                   <DatePicker
                     label="Fecha Fin Promoción"
                     value={formData.fechaFinPromocion ? new Date(formData.fechaFinPromocion) : null}
-                    onChange={(date) => setFormData({ 
-                      ...formData, 
-                      fechaFinPromocion: date?.toISOString() 
+                    onChange={(date) => setFormData({
+                      ...formData,
+                      fechaFinPromocion: date?.toISOString()
                     })}
                     slotProps={{ textField: { fullWidth: true } }}
                   />

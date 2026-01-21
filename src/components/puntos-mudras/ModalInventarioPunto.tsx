@@ -131,12 +131,17 @@ const ModalInventarioPunto: React.FC<Props> = ({ open, onClose, punto }) => {
                     <Box sx={{ display: 'flex', gap: 1, alignItems: 'center', justifyContent: 'center' }}>
                       <TextField
                         size="small"
-                        type="number"
                         value={ajustes[a.id] ?? ''}
-                        onChange={(e) => setAjustes((p) => ({ ...p, [a.id]: e.target.value }))}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          if (val === '' || /^\d*[.,]?\d*$/.test(val)) {
+                            setAjustes((p) => ({ ...p, [a.id]: val }));
+                          }
+                        }}
                         sx={{ width: 100 }}
                         placeholder="Nueva"
                         InputProps={{ sx: { borderRadius: 0 } }}
+                        inputMode="decimal"
                       />
                       <Button
                         variant="outlined"
@@ -153,12 +158,17 @@ const ModalInventarioPunto: React.FC<Props> = ({ open, onClose, punto }) => {
                     <Box sx={{ display: 'flex', gap: 1, alignItems: 'center', justifyContent: 'center' }}>
                       <TextField
                         size="small"
-                        type="number"
                         value={transferencias[a.id] ?? ''}
-                        onChange={(e) => setTransferencias((p) => ({ ...p, [a.id]: e.target.value }))}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          if (val === '' || /^\d*[.,]?\d*$/.test(val)) {
+                            setTransferencias((p) => ({ ...p, [a.id]: val }));
+                          }
+                        }}
                         sx={{ width: 100 }}
                         placeholder="Cant."
                         InputProps={{ sx: { borderRadius: 0 } }}
+                        inputMode="decimal"
                       />
                       <Button
                         variant="outlined"
