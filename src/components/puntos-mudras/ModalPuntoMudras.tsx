@@ -9,24 +9,20 @@ import {
   DialogActions,
   Button,
   TextField,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
-  Switch,
   FormControlLabel,
+  Switch,
   Box,
   Typography,
   Divider,
   Alert,
-  Stack,
+  IconButton,
+  Grid,
 } from '@mui/material';
 import {
   IconShoppingBag,
   IconBuilding,
-  IconX,
-  IconDeviceFloppy,
 } from '@tabler/icons-react';
+import { Icon } from '@iconify/react';
 import {
   CREAR_PUNTO_MUDRAS,
   ACTUALIZAR_PUNTO_MUDRAS,
@@ -34,6 +30,8 @@ import {
   type ActualizarPuntoMudrasInput,
 } from '@/components/puntos-mudras/graphql/mutations';
 import { type PuntoMudras, OBTENER_PUNTOS_MUDRAS } from '@/components/puntos-mudras/graphql/queries';
+import { grisRojizo } from '@/ui/colores';
+import { alpha } from '@mui/material/styles';
 
 export enum TipoPuntoMudras {
   VENTA = 'venta',
@@ -82,6 +80,14 @@ const formularioInicial: FormularioPunto = {
   },
 };
 
+const COLORS = {
+  primary: grisRojizo.primary,
+  primaryHover: grisRojizo.primaryHover,
+  inputBorder: alpha(grisRojizo.primary, 0.3),
+  inputBorderHover: alpha(grisRojizo.primary, 0.5),
+  bgContent: '#f8fafb',
+};
+
 export const ModalPuntoMudras = ({
   abierto,
   onCerrar,
@@ -105,13 +111,12 @@ export const ModalPuntoMudras = ({
     ? `Editar ${tipo === 'venta' ? 'Punto de Venta' : 'Depósito'}`
     : `Crear ${tipo === 'venta' ? 'Punto de Venta' : 'Depósito'}`;
 
-  const color = tipo === 'venta' ? 'primary' : 'secondary';
   const icono = tipo === 'venta'
-    ? <IconShoppingBag size={24} />
-    : <IconBuilding size={24} />;
+    ? <IconShoppingBag size={24} color="#fff" />
+    : <IconBuilding size={24} color="#fff" />;
 
   useEffect(() => {
-    if (punto) {
+    if (punto && abierto) {
       setFormulario({
         nombre: punto.nombre,
         direccion: punto.direccion || '',
@@ -124,7 +129,7 @@ export const ModalPuntoMudras = ({
           requiereAutorizacion: punto.requiereAutorizacion || false,
         },
       });
-    } else {
+    } else if (abierto) {
       setFormulario(formularioInicial);
     }
     setErrores({});
@@ -138,7 +143,6 @@ export const ModalPuntoMudras = ({
       ? target.checked
       : target.value;
 
-    // Enforce Capitalization for text fields
     if (typeof valor === 'string' && (campo === 'nombre' || campo === 'direccion' || campo === 'descripcion')) {
       if (valor.length > 0) {
         valor = valor.charAt(0).toUpperCase() + valor.slice(1);
@@ -150,7 +154,6 @@ export const ModalPuntoMudras = ({
       [campo]: valor,
     }));
 
-    // Limpiar error del campo
     if (errores[campo as keyof ErroresFormulario]) {
       setErrores(prev => ({
         ...prev,
@@ -209,32 +212,20 @@ export const ModalPuntoMudras = ({
       };
 
       if (esEdicion && punto) {
-        const inputActualizacion: ActualizarPuntoMudrasInput = {
-          id: punto.id,
-          ...inputBase,
-        };
-
         await actualizarPunto({
           variables: {
-            input: inputActualizacion,
+            input: { id: punto.id, ...inputBase },
           },
         });
       } else {
-        const inputCreacion: CrearPuntoMudrasInput = {
-          ...inputBase,
-          tipo,
-        };
-
         await crearPunto({
           variables: {
-            input: inputCreacion,
+            input: { ...inputBase, tipo },
           },
         });
       }
 
       onExito();
-      // Disparar evento para actualizar tabs en otras páginas
-      window.dispatchEvent(new CustomEvent('puntosVentaActualizados'));
       handleCerrar();
     } catch (error: any) {
       console.error('Error al guardar punto:', error);
@@ -248,13 +239,20 @@ export const ModalPuntoMudras = ({
 
   const handleCerrar = () => {
     if (!guardando) {
-      setFormulario(formularioInicial);
-      setErrores({});
       onCerrar();
     }
   };
 
-  /* ======================== Render ======================== */
+  const commonTextFieldSx = {
+    '& .MuiOutlinedInput-root': {
+      borderRadius: 0,
+      background: '#ffffff',
+      '& fieldset': { borderColor: COLORS.inputBorder },
+      '&:hover fieldset': { borderColor: COLORS.inputBorderHover },
+      '&.Mui-focused fieldset': { borderColor: COLORS.primary },
+    },
+  };
+
   return (
     <Dialog
       open={abierto}
@@ -262,38 +260,55 @@ export const ModalPuntoMudras = ({
       maxWidth="md"
       fullWidth
       PaperProps={{
-        sx: { borderRadius: 0, border: '1px solid #e0e0e0', boxShadow: 'none' }
+        sx: {
+          borderRadius: 0,
+          bgcolor: '#ffffff',
+          boxShadow: 'none',
+          overflow: 'hidden',
+        }
       }}
     >
-      <DialogTitle sx={{ p: 2, bgcolor: '#f5f5f5', borderBottom: '1px solid #e0e0e0' }}>
-        <Box display="flex" alignItems="center" gap={2}>
+      <DialogTitle sx={{
+        p: 2,
+        m: 0,
+        minHeight: 60,
+        display: 'flex',
+        alignItems: 'center',
+        bgcolor: COLORS.primary,
+        color: '#fff'
+      }}>
+        <Box sx={{ width: '100%', display: 'flex', alignItems: 'center', gap: 2 }}>
           {icono}
           <Typography variant="h6" fontWeight={700}>
             {titulo}
           </Typography>
+          <Box sx={{ ml: 'auto' }}>
+            <IconButton onClick={handleCerrar} sx={{ color: '#fff' }}>
+              <Icon icon="mdi:close" width={24} />
+            </IconButton>
+          </Box>
         </Box>
       </DialogTitle>
 
-      <DialogContent sx={{ p: 3, bgcolor: '#fff' }}>
-        <Stack spacing={3}>
-          {/* Información básica */}
-          <Box>
-            <Typography variant="subtitle2" fontWeight={700} color="text.secondary" gutterBottom sx={{ textTransform: 'uppercase' }}>
-              Información Básica
-            </Typography>
-          </Box>
+      <Divider />
 
-          <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 3 }}>
-            <TextField
-              fullWidth
-              label="Nombre del punto"
-              value={formulario.nombre}
-              onChange={handleChange('nombre')}
-              error={Boolean(errores.nombre)}
-              helperText={errores.nombre}
-              placeholder={tipo === 'venta' ? 'ej. Tienda Centro' : 'ej. Depósito Principal'}
-              InputProps={{ sx: { borderRadius: 0 } }}
-            />
+      <DialogContent sx={{ p: 0, bgcolor: COLORS.bgContent }}>
+        <Box sx={{ p: { xs: 3, md: 4 }, display: 'grid', gap: 2 }}>
+
+          {/* Fila 1: Nombre */}
+          <TextField
+            fullWidth
+            label="Nombre del punto"
+            value={formulario.nombre}
+            onChange={handleChange('nombre')}
+            error={Boolean(errores.nombre)}
+            helperText={errores.nombre}
+            placeholder={tipo === 'venta' ? 'ej. Tienda Centro' : 'ej. Depósito Principal'}
+            sx={commonTextFieldSx}
+          />
+
+          {/* Fila 2: Dirección y Teléfono */}
+          <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 2 }}>
             <TextField
               fullWidth
               label="Dirección"
@@ -301,43 +316,21 @@ export const ModalPuntoMudras = ({
               onChange={handleChange('direccion')}
               error={Boolean(errores.direccion)}
               helperText={errores.direccion}
-              placeholder="Dirección física o 'Virtual' para online"
-              InputProps={{ sx: { borderRadius: 0 } }}
+              placeholder="Calle 123"
+              sx={commonTextFieldSx}
             />
-          </Box>
-
-          <Box>
-            <TextField
-              fullWidth
-              label="Descripción"
-              value={formulario.descripcion}
-              onChange={handleChange('descripcion')}
-              error={Boolean(errores.descripcion)}
-              helperText={errores.descripcion}
-              multiline
-              rows={3}
-              placeholder="Describe las características y propósito de este punto"
-              InputProps={{ sx: { borderRadius: 0 } }}
-            />
-          </Box>
-
-          {/* Información de contacto */}
-          <Box>
-            <Divider sx={{ mb: 2 }} />
-            <Typography variant="subtitle2" fontWeight={700} color="text.secondary" gutterBottom sx={{ textTransform: 'uppercase' }}>
-              Información de Contacto
-            </Typography>
-          </Box>
-
-          <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 3 }}>
             <TextField
               fullWidth
               label="Teléfono"
               value={formulario.telefono}
               onChange={handleChange('telefono')}
-              placeholder="+54 11 1234-5678"
-              InputProps={{ sx: { borderRadius: 0 } }}
+              placeholder="+54 11 ..."
+              sx={commonTextFieldSx}
             />
+          </Box>
+
+          {/* Fila 3: Email y Activo (Switch) */}
+          <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr auto' }, gap: 2, alignItems: 'start' }}>
             <TextField
               fullWidth
               label="Email"
@@ -347,96 +340,119 @@ export const ModalPuntoMudras = ({
               error={Boolean(errores.email)}
               helperText={errores.email}
               placeholder="contacto@mudras.com"
-              InputProps={{ sx: { borderRadius: 0 } }}
+              sx={commonTextFieldSx}
             />
-          </Box>
-
-          {/* Configuración especial */}
-          <Box>
-            <Divider sx={{ mb: 2 }} />
-            <Typography variant="subtitle2" fontWeight={700} color="text.secondary" gutterBottom sx={{ textTransform: 'uppercase' }}>
-              Configuración Especial
-            </Typography>
-          </Box>
-
-          <Box>
-            <Stack spacing={2}>
+            <Box sx={{ display: 'flex', alignItems: 'center', height: '100%', pt: 1 }}>
               <FormControlLabel
                 control={
                   <Switch
                     checked={formulario.activo}
                     onChange={handleChange('activo')}
-                    color={color}
+                    sx={{
+                      '& .MuiSwitch-switchBase.Mui-checked': {
+                        color: COLORS.primary,
+                        '& + .MuiSwitch-track': { backgroundColor: COLORS.primary },
+                      },
+                    }}
                   />
                 }
                 label="Punto activo"
               />
+            </Box>
+          </Box>
 
-              {tipo === 'venta' && (
-                <FormControlLabel
-                  control={
-                    <Switch
-                      checked={formulario.configuracionEspecial.ventasOnline}
-                      onChange={handleConfiguracionChange('ventasOnline')}
-                      color={color}
-                    />
-                  }
-                  label="Habilitar ventas online"
-                />
-              )}
+          <TextField
+            fullWidth
+            label="Descripción"
+            value={formulario.descripcion}
+            onChange={handleChange('descripcion')}
+            error={Boolean(errores.descripcion)}
+            helperText={errores.descripcion}
+            multiline
+            rows={3}
+            placeholder="Información adicional..."
+            sx={commonTextFieldSx}
+          />
 
+          <Divider sx={{ my: 1 }} />
+
+          <Typography variant="subtitle2" fontWeight={700} color="text.secondary" textTransform="uppercase">
+            Configuración
+          </Typography>
+
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+            {tipo === 'venta' && (
               <FormControlLabel
                 control={
                   <Switch
-                    checked={formulario.configuracionEspecial.requiereAutorizacion}
-                    onChange={handleConfiguracionChange('requiereAutorizacion')}
-                    color={color}
+                    checked={formulario.configuracionEspecial.ventasOnline}
+                    onChange={handleConfiguracionChange('ventasOnline')}
+                    size="small"
+                    sx={{
+                      '& .MuiSwitch-switchBase.Mui-checked': {
+                        color: COLORS.primary,
+                        '& + .MuiSwitch-track': { backgroundColor: COLORS.primary },
+                      },
+                    }}
                   />
                 }
-                label="Requiere autorización para movimientos de stock"
+                label="Habilitar ventas online"
               />
-            </Stack>
+            )}
+
+            <FormControlLabel
+              control={
+                <Switch
+                  checked={formulario.configuracionEspecial.requiereAutorizacion}
+                  onChange={handleConfiguracionChange('requiereAutorizacion')}
+                  size="small"
+                  sx={{
+                    '& .MuiSwitch-switchBase.Mui-checked': {
+                      color: COLORS.primary,
+                      '& + .MuiSwitch-track': { backgroundColor: COLORS.primary },
+                    },
+                  }}
+                />
+              }
+              label="Requiere autorización para movimientos de stock"
+            />
           </Box>
 
-          {/* Error general */}
           {errores.general && (
-            <Box>
-              <Alert severity="error" sx={{ borderRadius: 0 }}>
-                {errores.general}
-              </Alert>
-            </Box>
+            <Alert severity="error" sx={{ borderRadius: 0 }}>
+              {errores.general}
+            </Alert>
           )}
 
-          {/* Información importante */}
-          <Box>
-            <Alert severity="info" sx={{ mt: 1, borderRadius: 0 }}>
-              <Typography variant="body2">
-                <strong>Importante:</strong> Al crear este {tipo === 'venta' ? 'punto de venta' : 'depósito'},
-                se generará automáticamente una tabla de inventario asociada para gestionar el stock
-                específico de este punto.
-              </Typography>
-            </Alert>
-          </Box>
-        </Stack>
+          <Alert severity="info" sx={{ borderRadius: 0, bgcolor: '#e3f2fd', color: '#0d47a1', border: '1px solid #bbdefb' }}>
+            <Typography variant="body2">
+              Al crear este punto, se generará autómaticamente su inventario.
+            </Typography>
+          </Alert>
+
+        </Box>
       </DialogContent>
 
       <DialogActions sx={{ p: 2, bgcolor: '#f5f5f5', borderTop: '1px solid #e0e0e0' }}>
         <Button
           onClick={handleCerrar}
-          startIcon={<IconX size={16} />}
           disabled={guardando}
-          sx={{ color: 'text.secondary', fontWeight: 600 }}
+          sx={{ color: 'text.secondary', fontWeight: 600, textTransform: 'none' }}
         >
           Cancelar
         </Button>
         <Button
           onClick={handleGuardar}
           variant="contained"
-          color={color}
           disableElevation
-          startIcon={<IconDeviceFloppy size={16} />}
           disabled={guardando}
-          sx={{ borderRadius: 0, fontWeight: 700 }}
+          sx={{
+            borderRadius: 0,
+            fontWeight: 700,
+            textTransform: 'none',
+            bgcolor: COLORS.primary,
+            '&:hover': { bgcolor: COLORS.primaryHover }
+          }}
         >
           {guardando ? 'Guardando...' : esEdicion ? 'Actualizar' : 'Crear'}
         </Button>
