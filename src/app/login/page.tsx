@@ -23,13 +23,13 @@ export default function Login() {
             position: "relative",
             "&:before": {
               content: '""',
-              background: "radial-gradient(#E1BEE7, #D1C4E9, #C8E6C9)",
+              background: "radial-gradient(#d2f1df, #d3d7fa, #bad8f4)",
               backgroundSize: "400% 400%",
               animation: "gradient 15s ease infinite",
               position: "absolute",
               height: "100%",
               width: "100%",
-              opacity: "0.4",
+              opacity: "0.3",
             },
           }}
           size={{
@@ -39,59 +39,28 @@ export default function Login() {
             xl: 8
           }}>
           <Box position="relative">
-            <Box px={3} py={2}>
-              <Typography
-                variant="h4"
-                fontWeight={700}
-                sx={{
-                  background: 'linear-gradient(45deg, #7B1FA2 30%, #4A148C 90%)',
-                  backgroundClip: 'text',
-                  WebkitBackgroundClip: 'text',
-                  WebkitTextFillColor: 'transparent',
-                }}
-              >
-                ✨ Mudras
-              </Typography>
+            <Box px={3}>
+              <Logo />
             </Box>
             <Box
               alignItems="center"
               justifyContent="center"
-              height={"calc(100vh - 100px)"}
+              height={"calc(100vh - 75px)"}
               sx={{
                 display: {
                   xs: "none",
                   lg: "flex",
-                  "flexDirection": "column"
-                }
+                },
               }}
             >
-              <Box
-                sx={{
+              <Image
+                src={"/images/backgrounds/login-bg.svg"}
+                alt="bg" width={500} height={500}
+                style={{
                   width: "100%",
-                  maxWidth: "400px",
-                  height: "400px",
-                  background: `radial-gradient(circle, ${alpha('#E1BEE7', 0.3)} 0%, ${alpha('#7B1FA2', 0.1)} 70%)`,
-                  borderRadius: 3,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  border: `2px solid ${alpha(theme.palette.primary.main, 0.2)}`,
-                  mb: 3
+                  maxWidth: "500px", maxHeight: '500px',
                 }}
-              >
-                <Stack alignItems="center" spacing={3}>
-                  <Box sx={{ fontSize: '5rem' }}>🔮✨🌙</Box>
-                  <Typography variant="h4" color="primary" fontWeight={700} textAlign="center">
-                    Productos Holísticos
-                  </Typography>
-                  <Typography variant="h6" color="text.secondary" textAlign="center">
-                    Eleva tu energía • Armoniza tu espacio
-                  </Typography>
-                </Stack>
-              </Box>
-              <Typography variant="body1" color="text.secondary" textAlign="center" maxWidth="300px">
-                Accede a tu cuenta para gestionar tu tienda de productos holísticos
-              </Typography>
+              />
             </Box>
           </Box>
         </Grid>

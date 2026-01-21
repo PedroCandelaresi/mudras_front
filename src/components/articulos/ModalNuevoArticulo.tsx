@@ -778,13 +778,12 @@ const ModalNuevoArticulo = ({ open, onClose, articulo, onSuccess, accentColor }:
                 label="Stock total / Inicial"
                 name="stock"
                 value={form.stock}
-                onChange={handleChange}
-                type="number"
+                onChange={handleNumericChange}
+                inputMode="decimal"
                 fullWidth
                 // Si se quiere bloquear en edición, usar: disabled={editando}
                 // El usuario pidió ingresar cantidad inicial, así que lo habilitamos.
                 helperText="Stock global inicial"
-                inputProps={{ min: 0, step: 0.01 }}
                 sx={{
                   '& .MuiOutlinedInput-root': {
                     borderRadius: 0,
@@ -799,10 +798,9 @@ const ModalNuevoArticulo = ({ open, onClose, articulo, onSuccess, accentColor }:
                 label="Stock mínimo"
                 name="stockMinimo"
                 value={form.stockMinimo}
-                onChange={handleChange}
-                type="number"
+                onChange={handleNumericChange}
+                inputMode="decimal"
                 fullWidth
-                inputProps={{ min: 0, step: 0.01 }}
                 sx={{
                   '& .MuiOutlinedInput-root': {
                     borderRadius: 0,
@@ -877,13 +875,15 @@ const ModalNuevoArticulo = ({ open, onClose, articulo, onSuccess, accentColor }:
                               <TextField
                                 value={form.stockPorPunto[punto.id] || ''}
                                 onChange={(e) => {
-                                  const valStr = e.target.value;
-                                  const val = parseFloat(valStr);
+                                  const val = e.target.value;
+
+                                  // Check regex before updating
+                                  if (val !== '' && !/^\d+[.,]?\d*$/.test(val)) return;
+
+                                  const numVal = parseFloat(val);
 
                                   // Validación: No permitir ingresar más de lo restante
-                                  if (!isNaN(val) && val > restanteGlobal) {
-                                    // Opcional: Permitir pero mostrar error, o bloquear.
-                                    // El usuario dijo "luego me debe permitir repartir ese stock maximo solamente"
+                                  if (!isNaN(numVal) && numVal > restanteGlobal) {
                                     // Implementación: Bloquear si excede.
                                     return;
                                   }
@@ -892,14 +892,13 @@ const ModalNuevoArticulo = ({ open, onClose, articulo, onSuccess, accentColor }:
                                     ...prev,
                                     stockPorPunto: {
                                       ...prev.stockPorPunto,
-                                      [punto.id]: valStr
+                                      [punto.id]: val
                                     }
                                   }));
                                 }}
-                                type="number"
+                                inputMode="decimal"
                                 size="small"
                                 placeholder="0"
-                                inputProps={{ min: 0, max: restanteGlobal }} // Ayuda visual
                                 InputProps={{
                                   sx: {
                                     borderRadius: 1,
