@@ -62,10 +62,10 @@ interface ProfileType {
 }
 const profile: ProfileType[] = [
   {
-    href: "#", user- profile / profile",
+    href: "#",
     title: "Mi Perfil",
-  subtitle: "Configuración de cuenta",
-  icon: "/images/svgs/icon-account.svg",
+    subtitle: "Configuración de cuenta",
+    icon: "/images/svgs/icon-account.svg",
   },
 ];
 
@@ -80,52 +80,52 @@ interface appsLinkType {
 
 const appsLink: appsLinkType[] = [
   {
-    href: "#", chats",
+    href: "#",
     title: "Chat Application",
     subtext: "New messages arrived",
     avatar: "/images/svgs/icon-dd-chat.svg",
   },
   {
-    href: "#", ecommerce/ shop",
+    href: "#",
     title: "eCommerce App",
-  subtext: "New stock available",
-  avatar: "/images/svgs/icon-dd-cart.svg",
+    subtext: "New stock available",
+    avatar: "/images/svgs/icon-dd-cart.svg",
   },
-{
-  href: "#", notes",
-  title: "Notes App",
+  {
+    href: "#",
+    title: "Notes App",
     subtext: "To-do and Daily tasks",
-      avatar: "/images/svgs/icon-dd-invoice.svg",
+    avatar: "/images/svgs/icon-dd-invoice.svg",
   },
-{
-  href: "#", calendar",
-  title: "Calendar App",
+  {
+    href: "#",
+    title: "Calendar App",
     subtext: "Get dates",
-      avatar: "/images/svgs/icon-dd-date.svg",
+    avatar: "/images/svgs/icon-dd-date.svg",
   },
-{
-  href: "#", contacts",
-  title: "Contact Application",
+  {
+    href: "#",
+    title: "Contact Application",
     subtext: "2 Unsaved Contacts",
-      avatar: "/images/svgs/icon-dd-mobile.svg",
+    avatar: "/images/svgs/icon-dd-mobile.svg",
   },
-{
-  href: "#", tickets",
-  title: "Tickets App",
+  {
+    href: "#",
+    title: "Tickets App",
     subtext: "Submit tickets",
-      avatar: "/images/svgs/icon-dd-lifebuoy.svg",
+    avatar: "/images/svgs/icon-dd-lifebuoy.svg",
   },
-{
-  href: "#", email",
-  title: "Email App",
+  {
+    href: "#",
+    title: "Email App",
     subtext: "Get new emails",
-      avatar: "/images/svgs/icon-dd-message-box.svg",
+    avatar: "/images/svgs/icon-dd-message-box.svg",
   },
-{
-  href: "#", blog / post",
-  title: "Blog App",
+  {
+    href: "#",
+    title: "Blog App",
     subtext: "added new blog",
-      avatar: "/images/svgs/icon-dd-application.svg",
+    avatar: "/images/svgs/icon-dd-application.svg",
   },
 ];
 
@@ -152,20 +152,20 @@ const pageLinks: LinkType[] = [
     title: "404 Error Page",
   },
   {
-    href: "#", note",
+    href: "#",
     title: "Notes App",
   },
   {
-    href: "#", user- profile / profile",
+    href: "#",
     title: "User Application",
   },
-{
-  href: "#", blog / post",
-  title: "Blog Design",
+  {
+    href: "#",
+    title: "Blog Design",
   },
-{
-  href: "#", ecommerce / checkout",
-  title: "Shopping Cart",
+  {
+    href: "#",
+    title: "Shopping Cart",
   },
 ];
 
