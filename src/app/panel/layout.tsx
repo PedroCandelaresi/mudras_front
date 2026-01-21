@@ -45,11 +45,34 @@ export default function RootLayout({
     let cancelled = false;
     const verificar = async () => {
       try {
-        const res = await fetch("/api/auth/perfil", {
+        // Initial check
+        let res = await fetch("/api/auth/perfil", {
           method: "GET",
           credentials: "include",
           cache: "no-store",
         });
+
+        // If unauthorized, try to silent refresh
+        if (!res.ok && (res.status === 401 || res.status === 403)) {
+          try {
+            const refreshRes = await fetch("/api/auth/refresh", {
+              method: "POST",
+              credentials: "include",
+            });
+
+            if (refreshRes.ok) {
+              // Retry profile check with new token
+              res = await fetch("/api/auth/perfil", {
+                method: "GET",
+                credentials: "include",
+                cache: "no-store",
+              });
+            }
+          } catch {
+            // If refresh fails (network, etc), we proceed to handle the original 401
+          }
+        }
+
         if (!res.ok) {
           if (res.status === 401 || res.status === 403) {
             if (cancelled) return;
