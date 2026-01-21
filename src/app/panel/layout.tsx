@@ -54,7 +54,7 @@ export default function RootLayout({
           if (res.status === 401 || res.status === 403) {
             if (cancelled) return;
             const siguiente = encodeURIComponent(pathname || "/panel");
-            router.replace(`/auth/auth1/login?siguiente=${siguiente}`);
+            router.replace(`/login?siguiente=${siguiente}`);
             return;
           }
           const texto = await res.text();

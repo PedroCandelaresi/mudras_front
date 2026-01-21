@@ -478,13 +478,13 @@ export const Menuitems = [
             id: uniqueId(),
             title: "Login",
             icon: IconLogin,
-            href: "/auth/auth1/login",
+            href: "/login",
             children: [
               {
                 id: uniqueId(),
                 title: "Side Login",
                 icon: IconPoint,
-                href: "/auth/auth1/login",
+                href: "/login",
               },
               {
                 id: uniqueId(),
@@ -498,13 +498,13 @@ export const Menuitems = [
             id: uniqueId(),
             title: "Register",
             icon: IconUserPlus,
-            href: "/auth/auth1/register",
+            href: "/login",
             children: [
               {
                 id: uniqueId(),
                 title: "Side Register",
                 icon: IconPoint,
-                href: "/auth/auth1/register",
+                href: "/login",
               },
               {
                 id: uniqueId(),

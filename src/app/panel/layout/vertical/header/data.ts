@@ -140,11 +140,11 @@ const pageLinks: LinkType[] = [
     title: "Pricing Page",
   },
   {
-    href: "/auth/auth1/login",
+    href: "/login",
     title: "Authentication Design",
   },
   {
-    href: "/auth/auth1/register",
+    href: "/login",
     title: "Register Now",
   },
   {
