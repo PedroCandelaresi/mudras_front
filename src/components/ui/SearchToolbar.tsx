@@ -89,19 +89,20 @@ const SearchToolbarInner: React.FC<SearchToolbarProps> = ({
       sx={{ px: 1, py: 1, mb: 2 }}
     >
       {title ? (
-        <Typography
-          variant="h6"
-          fontWeight={700}
+        <Box
+          component="div"
           sx={{
             display: 'flex',
             alignItems: 'center',
             gap: 1,
-            color: 'text.primary'
+            color: 'text.primary',
+            typography: 'h6',
+            fontWeight: 700
           }}
         >
           {icon && <Box component="span" sx={{ display: 'flex', color: baseColor }}>{icon}</Box>}
           {title}
-        </Typography>
+        </Box>
       ) : (
         <span />
       )}
