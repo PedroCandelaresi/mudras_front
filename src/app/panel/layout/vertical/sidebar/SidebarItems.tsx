@@ -23,7 +23,6 @@ const SidebarItems = () => {
   const lgUp = useMediaQuery((theme) => theme.breakpoints.up('lg'));
   const hideMenu = lgUp ? isCollapse == "mini-sidebar" && !isSidebarHover : '';
 
-  /* eslint-disable-next-line @typescript-eslint/no-unused-vars */
   const { esAdmin, cargando: perfilCargando, tienePermiso } = usePermisos();
 
   const itemsFiltrados = useMemo(() => {
