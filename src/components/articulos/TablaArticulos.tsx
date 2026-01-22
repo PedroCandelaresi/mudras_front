@@ -31,6 +31,8 @@ import {
 } from '@tabler/icons-react';
 import { Icon } from '@iconify/react';
 import { BUSCAR_ARTICULOS, GET_ESTADISTICAS_ARTICULOS } from '@/components/articulos/graphql/queries';
+import { GET_RUBROS } from '@/components/rubros/graphql/queries';
+import { GET_PROVEEDORES } from '@/components/proveedores/graphql/queries';
 import type { Articulo } from '@/app/interfaces/mudras.types';
 import { abrevUnidad, type UnidadMedida } from '@/app/utils/unidades';
 import { Paper } from '@mui/material';
@@ -197,8 +199,8 @@ const TablaArticulos: React.FC<ArticulosTableProps> = ({
   const [menuAnchor, setMenuAnchor] = useState<null | HTMLElement>(null);
   const [activeCol, setActiveCol] = useState<ColumnDef['key'] | null>(null);
   const [colInput, setColInput] = useState('');
-  const [filtrosColumna, setFiltrosColumna] = useState<ColFilters>({});
-  const [filtroColInput, setFiltroColInput] = useState('');
+  // const [filtrosColumna, setFiltrosColumna] = useState<ColFilters>({}); // Unused
+  // const [filtroColInput, setFiltroColInput] = useState(''); // Unused
 
   const controlledEstado = controlledFilters?.estado;
   const estadoSeleccionado = useMemo(
@@ -253,7 +255,77 @@ const TablaArticulos: React.FC<ArticulosTableProps> = ({
     fetchPolicy: 'cache-and-network',
   });
 
-  const { data: statsData } = useQuery<{ estadisticasArticulos?: { totalUnidades?: number } }>(GET_ESTADISTICAS_ARTICULOS, { fetchPolicy: 'cache-first' });
+  // --- Fix Contexto Precios ---
+  // Traemos rubros y proveedores para tener los recargos correctos si no vienen en el artículo
+  const { data: rubrosData } = useQuery(GET_RUBROS, { fetchPolicy: 'cache-first' });
+  const { data: proveedoresData } = useQuery(GET_PROVEEDORES, { fetchPolicy: 'cache-first' });
+
+  const rubroMap = useMemo(() => {
+    const rubros = (rubrosData as any)?.obtenerRubros || [];
+    return new Map<string, { porcentajeRecargo?: number; porcentajeDescuento?: number }>(
+      rubros.map((r: any) => [
+        (r.nombre || '').toLowerCase(),
+        {
+          porcentajeRecargo: r.porcentajeRecargo,
+          porcentajeDescuento: r.porcentajeDescuento,
+        }
+      ])
+    );
+  }, [rubrosData]);
+
+  const proveedorMap = useMemo(() => {
+    const provs = (proveedoresData as any)?.proveedores || [];
+    return new Map<number, { porcentajeRecargo?: number; porcentajeDescuento?: number }>(
+      provs.map((p: any) => [
+        Number(p.IdProveedor),
+        {
+          porcentajeRecargo: p.PorcentajeRecargoProveedor,
+          porcentajeDescuento: p.PorcentajeDescuentoProveedor,
+        }
+      ])
+    );
+  }, [proveedoresData]);
+
+  const obtenerPrecioHydrated = useCallback((articulo: Articulo) => {
+    // Intentar hidratar rubro si le falta info
+    let rubroHydrated = articulo.rubro;
+    if (!rubroHydrated?.PorcentajeRecargo && articulo.Rubro) {
+      const match = rubroMap.get(articulo.Rubro.toLowerCase());
+      if (match) {
+        rubroHydrated = {
+          ...rubroHydrated,
+          Id: rubroHydrated?.Id || 0,
+          Rubro: articulo.Rubro,
+          PorcentajeRecargo: match.porcentajeRecargo,
+          PorcentajeDescuento: match.porcentajeDescuento,
+        };
+      }
+    }
+
+    // Intentar hidratar proveedor
+    let proveedorHydrated = articulo.proveedor;
+    if (!proveedorHydrated?.PorcentajeRecargoProveedor && articulo.idProveedor) {
+      const match = proveedorMap.get(articulo.idProveedor);
+      if (match) {
+        proveedorHydrated = {
+          ...proveedorHydrated,
+          IdProveedor: articulo.idProveedor,
+          PorcentajeRecargoProveedor: match.porcentajeRecargo,
+          PorcentajeDescuentoProveedor: match.porcentajeDescuento,
+        };
+      }
+    }
+
+    const ctx = {
+      ...articulo,
+      rubro: rubroHydrated,
+      proveedor: proveedorHydrated,
+    };
+    return obtenerPrecioCalculado(ctx as Articulo);
+  }, [rubroMap, proveedorMap]);
+  // ----------------------------
+
+  // const { data: statsData } = useQuery<{ estadisticasArticulos?: { totalUnidades?: number } }>(GET_ESTADISTICAS_ARTICULOS, { fetchPolicy: 'cache-first' });
 
   const articulosRaw: Articulo[] = (data?.buscarArticulos?.articulos ?? []).filter((a): a is Articulo => !!a);
   const searchTerm = (variablesQuery.filtros.busqueda || '').toString().trim().toLowerCase();
@@ -507,7 +579,7 @@ const TablaArticulos: React.FC<ArticulosTableProps> = ({
       );
     },
     precio: (a) => {
-      const precio = obtenerPrecioCalculado(a);
+      const precio = obtenerPrecioHydrated(a); // Usamos la versión hidratada
       return (
         <Typography variant="body2" fontWeight={700} color="text.primary">
           {formatCurrency(precio)}

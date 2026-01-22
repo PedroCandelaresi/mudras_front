@@ -61,6 +61,7 @@ const MudrasMenuItems: NavGroup[] = [
     title: "Inicio",
     icon: IconHome,
     href: "/panel",
+    requiredPermission: "dashboard:read",
   },
 
   {
@@ -72,30 +73,35 @@ const MudrasMenuItems: NavGroup[] = [
     title: "Artículos",
     icon: IconPackage,
     href: "/panel/articulos",
+    requiredPermission: "productos:read",
   },
   {
     id: uniqueId(),
     title: "Proveedores",
     icon: IconUsers,
     href: "/panel/proveedores",
+    requiredPermission: "proveedores:read",
   },
   {
     id: uniqueId(),
     title: "Puntos de Venta",
     icon: IconShoppingBag,
     href: "/panel/puntos-venta",
+    requiredPermission: "puntos_venta:read",
   },
   {
     id: uniqueId(),
     title: "Depósitos",
     icon: IconBoxSeam,
     href: "/panel/depositos",
+    requiredPermission: "depositos:read",
   },
   {
     id: uniqueId(),
     title: "Asignación Global",
     icon: IconChartPie,
     href: "/panel/stock/asignacion-global",
+    requiredPermission: "stock:update",
   },
 
   {
@@ -107,30 +113,35 @@ const MudrasMenuItems: NavGroup[] = [
     title: "Caja",
     icon: IconCash,
     href: "/panel/ventas/caja",
+    requiredPermission: "caja:read",
   },
   {
     id: uniqueId(),
     title: "Ventas",
     icon: IconShoppingCart,
     href: "/panel/ventas",
+    requiredPermission: "ventas:read",
   },
   {
     id: uniqueId(),
     title: "Tienda Online",
     icon: IconWorld,
     href: "/panel/tienda",
+    requiredPermission: "tienda_online:read",
   },
   {
     id: uniqueId(),
     title: "Promociones",
     icon: IconStar,
     href: "/panel/promociones",
+    requiredPermission: "promociones:read",
   },
   {
     id: uniqueId(),
     title: "Pedidos",
     icon: IconReceipt,
     href: "/panel/pedidos",
+    requiredPermission: "pedidos:read",
   },
 
   {
@@ -142,12 +153,14 @@ const MudrasMenuItems: NavGroup[] = [
     title: "Usuarios",
     icon: IconUser,
     href: "/panel/usuarios",
+    requiredPermission: "usuarios:read",
   },
   {
     id: uniqueId(),
     title: "Puntos Mudras",
     icon: IconBoxSeam,
     href: "/panel/puntos-mudras",
+    requiredPermission: "puntos_mudras:read",
   },
 ];
 

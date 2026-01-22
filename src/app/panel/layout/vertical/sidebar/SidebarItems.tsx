@@ -23,17 +23,28 @@ const SidebarItems = () => {
   const lgUp = useMediaQuery((theme) => theme.breakpoints.up('lg'));
   const hideMenu = lgUp ? isCollapse == "mini-sidebar" && !isSidebarHover : '';
 
-  const { esAdmin, cargando: perfilCargando } = usePermisos();
+  /* eslint-disable-next-line @typescript-eslint/no-unused-vars */
+  const { esAdmin, cargando: perfilCargando, tienePermiso } = usePermisos();
 
   const itemsFiltrados = useMemo(() => {
     // Mientras el perfil no esté cargado, no ocultamos nada para evitar falsos negativos
     if (perfilCargando) return Menuitems;
+
     return Menuitems.filter((item) => {
-      // 'Usuarios' siempre visible para facilitar acceso al CRUD; 'Roles' y 'Permisos' solo para admin
-      if (!esAdmin && (item.title === 'Roles' || item.title === 'Permisos')) return false;
+      // 1. Filtrado para Admin: Ve todo
+      if (esAdmin) return true;
+
+      // 2. Filtrado legacy específico
+      if (item.title === 'Roles' || item.title === 'Permisos') return false;
+
+      // 3. Filtrado por permiso explícito
+      if (item.requiredPermission) {
+        if (!tienePermiso(item.requiredPermission)) return false;
+      }
+
       return true;
     });
-  }, [esAdmin, perfilCargando]);
+  }, [esAdmin, perfilCargando, tienePermiso]);
 
   return (
     <Box sx={{ px: 1.5 }}>
