@@ -191,33 +191,19 @@ const ModalNuevoArticulo = ({ open, onClose, articulo, onSuccess, accentColor }:
   );
   const selectedRubro = useMemo(() => {
     const id = Number(form.rubroId);
-    if (Number.isFinite(id)) {
-      const byId = rubros.find((r) => r.id === id);
-      if (byId) return byId;
-    }
-    const nombreFallback = (articulo as any)?.rubro?.Rubro || (articulo as any)?.Rubro;
-    if (nombreFallback) {
-      const lower = nombreFallback.toString().toLowerCase();
-      const byName = rubros.find((r) => r.nombre.toLowerCase() === lower);
-      if (byName) return byName;
+    if (Number.isFinite(id) && id > 0) {
+      return rubros.find((r) => r.id === id);
     }
     return undefined;
-  }, [form.rubroId, rubros, articulo]);
+  }, [form.rubroId, rubros]);
 
   const selectedProveedor = useMemo(() => {
     const id = Number(form.idProveedor);
-    if (Number.isFinite(id)) {
-      const byId = proveedores.find((p) => p.IdProveedor === id);
-      if (byId) return byId;
-    }
-    const nombreFallback = (articulo as any)?.proveedor?.Nombre;
-    if (nombreFallback) {
-      const lower = nombreFallback.toString().toLowerCase();
-      const byName = proveedores.find((p) => (p.Nombre ?? '').toLowerCase() === lower);
-      if (byName) return byName;
+    if (Number.isFinite(id) && id > 0) {
+      return proveedores.find((p) => p.IdProveedor === id);
     }
     return undefined;
-  }, [form.idProveedor, proveedores, articulo]);
+  }, [form.idProveedor, proveedores]);
 
   const precioCalculado = useMemo(
     () =>
@@ -259,18 +245,28 @@ const ModalNuevoArticulo = ({ open, onClose, articulo, onSuccess, accentColor }:
       imagenUrl: (articulo.ImagenUrl ?? '').toString(),
       costo: costoReferencia ? String(costoReferencia) : '',
       porcentajeGanancia: articulo.PorcentajeGanancia != null ? String(articulo.PorcentajeGanancia) : '0',
-      rubroId:
-        (articulo as any)?.rubro?.Id != null
-          ? String((articulo as any).rubro.Id)
-          : (articulo as any)?.rubroId != null
-            ? String((articulo as any).rubroId)
-            : '',
-      idProveedor:
-        articulo.idProveedor != null
-          ? String(articulo.idProveedor)
-          : (articulo as any)?.proveedor?.IdProveedor != null
-            ? String((articulo as any).proveedor.IdProveedor)
-            : '',
+      rubroId: (() => {
+        if ((articulo as any)?.rubro?.Id != null) return String((articulo as any).rubro.Id);
+        if ((articulo as any)?.rubroId != null) return String((articulo as any).rubroId);
+        // Fallback name lookup
+        const nombreR = (articulo as any)?.rubro?.Rubro || (articulo as any)?.Rubro;
+        if (nombreR && rubros.length > 0) {
+          const match = rubros.find(r => r.nombre.toLowerCase() === nombreR.toString().toLowerCase());
+          if (match) return String(match.id);
+        }
+        return '';
+      })(),
+      idProveedor: (() => {
+        if (articulo.idProveedor != null) return String(articulo.idProveedor);
+        if ((articulo as any)?.proveedor?.IdProveedor != null) return String((articulo as any).proveedor.IdProveedor);
+        // Fallback name lookup
+        const nombreP = (articulo as any)?.proveedor?.Nombre;
+        if (nombreP && proveedores.length > 0) {
+          const match = proveedores.find(p => (p.Nombre || '').toLowerCase() === nombreP.toString().toLowerCase());
+          if (match) return String(match.IdProveedor);
+        }
+        return '';
+      })(),
       stock: stockActual != null ? String(stockActual) : '0',
       stockMinimo: stockMinimoActual != null ? String(stockMinimoActual) : '0',
       stockPorPunto: {}, // TODO: Cargar stock real por punto si es edición
@@ -338,7 +334,7 @@ const ModalNuevoArticulo = ({ open, onClose, articulo, onSuccess, accentColor }:
     }
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open, articulo?.id, puntosMudras]); // Agregamos puntosMudras a la dependencia
+  }, [open, articulo?.id, puntosMudras, rubros, proveedores]); // Agregamos puntosMudras, rubros, proveedores a la dependencia
 
   useEffect(() => {
     if (!open) return;
