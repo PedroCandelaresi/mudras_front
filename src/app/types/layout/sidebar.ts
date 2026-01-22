@@ -11,6 +11,8 @@ export type NavGroup = {
   href?: string;
   children?: NavGroup[];
   chip?: string;
+  chipColor?: string;
+  variant?: string;
   external?: boolean;
   level?: number;
   onClick?: (event: MouseEvent<HTMLElement>) => void;
