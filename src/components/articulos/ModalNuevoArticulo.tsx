@@ -347,7 +347,7 @@ const ModalNuevoArticulo = ({ open, onClose, articulo, onSuccess, accentColor }:
       if (label && label !== rubroInput) setRubroInput(label);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open, selectedRubro?.id, selectedRubro?.nombre, selectedRubro?.codigo, rubroInput]);
+  }, [open, selectedRubro?.id, selectedRubro?.nombre, selectedRubro?.codigo]);
 
   useEffect(() => {
     if (!open) return;
@@ -356,7 +356,7 @@ const ModalNuevoArticulo = ({ open, onClose, articulo, onSuccess, accentColor }:
       if (label && label !== proveedorInput) setProveedorInput(label);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open, selectedProveedor?.IdProveedor, selectedProveedor?.Nombre, proveedorInput]);
+  }, [open, selectedProveedor?.IdProveedor, selectedProveedor?.Nombre]);
 
   const rubroOptions = useMemo(() => {
     const min = rubroInput.trim().length >= 1;
