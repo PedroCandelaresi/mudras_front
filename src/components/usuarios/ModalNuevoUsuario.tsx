@@ -13,18 +13,23 @@ import {
   IconButton,
   InputAdornment,
   Box,
-  Typography
+  Typography,
+  Chip,
+  FormControl,
+  InputLabel,
+  MenuItem,
+  OutlinedInput,
+  Select
 } from '@mui/material';
-import { useForm } from 'react-hook-form';
+import { Controller, useForm } from 'react-hook-form';
 import { IconEye, IconEyeOff, IconUserPlus } from '@tabler/icons-react';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation } from '@apollo/client/react';
-import { grisNeutro } from '@/ui/colores';
-import { CREAR_USUARIO_ADMIN_MUTATION } from './graphql/mutations';
+import { azul } from '@/ui/colores';
+import { CREAR_USUARIO_ADMIN_MUTATION, OBTENER_ROLES_QUERY } from './graphql/mutations';
 import { USUARIOS_ADMIN_QUERY } from './graphql/queries';
-
-
+import { useQuery } from '@apollo/client/react';
 
 export interface CrearUsuarioForm {
   username: string;
@@ -32,6 +37,7 @@ export interface CrearUsuarioForm {
   displayName: string;
   passwordTemporal: string;
   isActive: boolean;
+  roles?: string[];
 }
 
 interface Props {
@@ -52,11 +58,12 @@ const schema = z.object({
     .regex(/\d/, 'Debe incluir al menos un número')
     .regex(/[^A-Za-z0-9]/, 'Debe incluir al menos un símbolo'),
   isActive: z.boolean(),
+  roles: z.array(z.string()).optional(),
 });
 
 export default function ModalNuevoUsuario({ open, onClose, onSuccess }: Props) {
-  const { register, handleSubmit, reset, setValue, formState: { errors } } = useForm<CrearUsuarioForm>({
-    defaultValues: { isActive: true },
+  const { register, handleSubmit, reset, setValue, control, formState: { errors } } = useForm<CrearUsuarioForm>({
+    defaultValues: { isActive: true, roles: [] },
     resolver: zodResolver(schema),
   });
   const [mostrarPassword, setMostrarPassword] = React.useState(false);
@@ -65,10 +72,12 @@ export default function ModalNuevoUsuario({ open, onClose, onSuccess }: Props) {
     refetchQueries: [{ query: USUARIOS_ADMIN_QUERY }],
   });
 
+  const { data: rolesData } = useQuery<{ roles: { id: string; nombre: string; slug: string }[] }>(OBTENER_ROLES_QUERY);
+
   // Reset form when modal opens
   React.useEffect(() => {
     if (open) {
-      reset({ isActive: true, username: '', email: '', displayName: '', passwordTemporal: '' });
+      reset({ isActive: true, username: '', email: '', displayName: '', passwordTemporal: '', roles: [] });
     }
   }, [open, reset]);
 
@@ -81,7 +90,8 @@ export default function ModalNuevoUsuario({ open, onClose, onSuccess }: Props) {
             email: data.email || null,
             displayName: data.displayName,
             passwordTemporal: data.passwordTemporal,
-            isActive: data.isActive
+            isActive: data.isActive,
+            roles: data.roles
           }
         }
       });
@@ -102,16 +112,16 @@ export default function ModalNuevoUsuario({ open, onClose, onSuccess }: Props) {
       PaperProps={{
         sx: {
           borderRadius: 0,
-          border: `1px solid ${grisNeutro.borderOuter}`,
+          border: `1px solid ${azul.borderOuter}`,
           boxShadow: '0 4px 20px rgba(0,0,0,0.1)'
         }
       }}
     >
       <DialogTitle
         sx={{
-          bgcolor: grisNeutro.headerBg,
-          color: grisNeutro.headerText,
-          borderBottom: `1px solid ${grisNeutro.headerBorder}`,
+          bgcolor: azul.headerBg,
+          color: azul.headerText,
+          borderBottom: `1px solid ${azul.headerBorder}`,
           fontWeight: 700,
           display: 'flex',
           alignItems: 'center',
@@ -130,13 +140,6 @@ export default function ModalNuevoUsuario({ open, onClose, onSuccess }: Props) {
             onChange={(e) => {
               const val = e.target.value;
               const finalVal = val.length > 0 ? val.charAt(0).toUpperCase() + val.slice(1) : val;
-              // We need to call the original register onChange if we want standard behavior, 
-              // but setValue works if we manage it. 
-              // Creating a wrapper around register is safer but overriding onChange works if we use setValue with validate.
-              // However, simply passing onChange AFTER register overrides the hook form on change.
-              // Let's use setValue directly and assume it updates the state.
-              // Actually, the best way with RHF is to let it handle it, or use Controller.
-              // But simplified:
               setValue('username', finalVal, { shouldValidate: true });
             }}
             size="small"
@@ -187,15 +190,44 @@ export default function ModalNuevoUsuario({ open, onClose, onSuccess }: Props) {
               ),
             }}
           />
+
           <FormControlLabel
-            control={<Checkbox defaultChecked {...register('isActive')} sx={{ color: grisNeutro.primary, '&.Mui-checked': { color: grisNeutro.primary } }} />}
+            control={<Checkbox defaultChecked {...register('isActive')} sx={{ color: azul.primary, '&.Mui-checked': { color: azul.primary } }} />}
             label="Usuario Activo"
           />
+
+          <FormControl fullWidth size="small">
+            <InputLabel>Roles</InputLabel>
+            <Controller
+              control={control}
+              name="roles"
+              render={({ field }) => (
+                <Select
+                  {...field}
+                  multiple
+                  input={<OutlinedInput label="Roles" />}
+                  renderValue={(selected) => (
+                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                      {(selected as string[]).map((value) => (
+                        <Chip key={value} label={value} size="small" />
+                      ))}
+                    </Box>
+                  )}
+                >
+                  {rolesData?.roles?.map((r: any) => (
+                    <MenuItem key={r.id} value={r.slug}>
+                      {r.nombre} ({r.slug})
+                    </MenuItem>
+                  ))}
+                </Select>
+              )}
+            />
+          </FormControl>
         </Box>
       </DialogContent>
 
-      <DialogActions sx={{ p: 2, bgcolor: grisNeutro.toolbarBg, borderTop: `1px solid ${grisNeutro.toolbarBorder}` }}>
-        <Button onClick={onClose} sx={{ borderRadius: 0, fontWeight: 600, color: grisNeutro.textStrong }}>
+      <DialogActions sx={{ p: 2, bgcolor: azul.toolbarBg, borderTop: `1px solid ${azul.toolbarBorder}` }}>
+        <Button onClick={onClose} sx={{ borderRadius: 0, fontWeight: 600, color: azul.textStrong }}>
           Cancelar
         </Button>
         <Button
@@ -206,8 +238,8 @@ export default function ModalNuevoUsuario({ open, onClose, onSuccess }: Props) {
           sx={{
             borderRadius: 0,
             fontWeight: 600,
-            bgcolor: grisNeutro.primary,
-            '&:hover': { bgcolor: grisNeutro.primaryHover }
+            bgcolor: azul.primary,
+            '&:hover': { bgcolor: azul.primaryHover }
           }}
         >
           {loading ? 'Creando...' : 'Crear Usuario'}

@@ -16,7 +16,7 @@ import {
 } from '@mui/material';
 import { IconUserShield } from '@tabler/icons-react';
 import { useQuery, useMutation } from '@apollo/client/react';
-import { grisNeutro, azul } from '@/ui/colores';
+import { azul } from '@/ui/colores';
 import { UsuarioListado } from './TablaUsuarios';
 import { ASIGNAR_ROLES_USUARIO_ADMIN_MUTATION, OBTENER_ROLES_QUERY } from './graphql/mutations';
 
@@ -88,16 +88,16 @@ export default function ModalAsignarRoles({ open, usuario, onClose, onSuccess }:
       PaperProps={{
         sx: {
           borderRadius: 0,
-          border: `1px solid ${grisNeutro.borderOuter}`,
+          border: `1px solid ${azul.borderOuter}`,
           boxShadow: '0 4px 20px rgba(0,0,0,0.1)'
         }
       }}
     >
       <DialogTitle
         sx={{
-          bgcolor: grisNeutro.headerBg,
-          color: grisNeutro.headerText,
-          borderBottom: `1px solid ${grisNeutro.headerBorder}`,
+          bgcolor: azul.headerBg,
+          color: azul.headerText,
+          borderBottom: `1px solid ${azul.headerBorder}`,
           fontWeight: 700,
           display: 'flex',
           alignItems: 'center',
@@ -117,7 +117,7 @@ export default function ModalAsignarRoles({ open, usuario, onClose, onSuccess }:
 
         {rolesLoading ? (
           <Box display="flex" justifyContent="center" p={3}>
-            <CircularProgress size={24} sx={{ color: grisNeutro.primary }} />
+            <CircularProgress size={24} sx={{ color: azul.primary }} />
           </Box>
         ) : (
           <Box display="flex" flexDirection="column" gap={1}>
@@ -137,8 +137,8 @@ export default function ModalAsignarRoles({ open, usuario, onClose, onSuccess }:
                   checked={!!seleccion[r.slug]}
                   onChange={() => toggle(r.slug)}
                   sx={{
-                    color: grisNeutro.primary,
-                    '&.Mui-checked': { color: grisNeutro.primary }
+                    color: azul.primary,
+                    '&.Mui-checked': { color: azul.primary }
                   }}
                 />
                 <Box>
@@ -146,7 +146,7 @@ export default function ModalAsignarRoles({ open, usuario, onClose, onSuccess }:
                   <Typography variant="caption" color="text.secondary">{r.slug}</Typography>
                 </Box>
                 {seleccion[r.slug] && (
-                  <Chip label="Asignado" size="small" sx={{ ml: 'auto', bgcolor: grisNeutro.chipBg, color: grisNeutro.chipText, fontWeight: 700, borderRadius: 0 }} />
+                  <Chip label="Asignado" size="small" sx={{ ml: 'auto', bgcolor: azul.chipBg, color: azul.chipText, fontWeight: 700, borderRadius: 0 }} />
                 )}
               </Box>
             ))}
@@ -157,8 +157,8 @@ export default function ModalAsignarRoles({ open, usuario, onClose, onSuccess }:
         )}
       </DialogContent>
 
-      <DialogActions sx={{ p: 2, bgcolor: grisNeutro.toolbarBg, borderTop: `1px solid ${grisNeutro.toolbarBorder}` }}>
-        <Button onClick={onClose} sx={{ borderRadius: 0, fontWeight: 600, color: grisNeutro.textStrong }}>
+      <DialogActions sx={{ p: 2, bgcolor: azul.toolbarBg, borderTop: `1px solid ${azul.toolbarBorder}` }}>
+        <Button onClick={onClose} sx={{ borderRadius: 0, fontWeight: 600, color: azul.textStrong }}>
           Cancelar
         </Button>
         <Button
@@ -169,8 +169,8 @@ export default function ModalAsignarRoles({ open, usuario, onClose, onSuccess }:
           sx={{
             borderRadius: 0,
             fontWeight: 600,
-            bgcolor: grisNeutro.primary,
-            '&:hover': { bgcolor: grisNeutro.primaryHover }
+            bgcolor: azul.primary,
+            '&:hover': { bgcolor: azul.primaryHover }
           }}
         >
           {saving ? 'Guardando...' : 'Guardar Roles'}

@@ -238,11 +238,11 @@ const TablaUsuarios: React.FC<Props> = () => {
           sx={{
             borderRadius: 0,
             textTransform: 'none',
-            bgcolor: grisNeutro.primary,
+            bgcolor: azul.primary,
             fontWeight: 600,
             px: 3,
             py: 1,
-            '&:hover': { bgcolor: grisNeutro.primaryHover }
+            '&:hover': { bgcolor: azul.primaryHover }
           }}
         >
           Nuevo Usuario
@@ -275,7 +275,7 @@ const TablaUsuarios: React.FC<Props> = () => {
               bgcolor: '#f5f5f5',
               '& fieldset': { borderColor: '#e0e0e0' },
               '&:hover fieldset': { borderColor: '#bdbdbd' },
-              '&.Mui-focused fieldset': { borderColor: grisNeutro.primary },
+              '&.Mui-focused fieldset': { borderColor: azul.primary },
             }
           }}
         />
@@ -329,19 +329,24 @@ const TablaUsuarios: React.FC<Props> = () => {
             borderBottom: '1px solid #f0f0f0',
             color: '#37474f',
           },
+          '& .MuiTableBody-root .MuiTableRow-root:nth-of-type(even)': {
+            bgcolor: azul.tableStriped,
+          },
           '& .MuiTableBody-root .MuiTableRow-root:hover': {
-            bgcolor: alpha(grisNeutro.primary, 0.08),
+            bgcolor: alpha(azul.primary, 0.12),
           },
           '& .MuiTableCell-head': {
             fontSize: '0.8rem',
             fontWeight: 700,
-            bgcolor: grisNeutro.tableHeader,
+            bgcolor: azul.tableHeader,
             color: '#ffffff',
+            textTransform: 'uppercase',
+            letterSpacing: '0.5px',
           },
         }}
       >
         <TableHead>
-          <TableRow sx={{ '& th': { bgcolor: grisNeutro.tableHeader, color: '#ffffff', fontWeight: 600, letterSpacing: 0.5, borderRadius: 0 } }}>
+          <TableRow sx={{ '& th': { borderBottom: 'none' } }}>
             <TableCell>
               <Box display="flex" alignItems="center" gap={1}>
                 Username
@@ -440,7 +445,7 @@ const TablaUsuarios: React.FC<Props> = () => {
                       </IconButton>
                     </Tooltip>
                     <Tooltip title="Asignar Roles">
-                      <IconButton size="small" onClick={() => handleRolesUsuario(u)} sx={{ color: grisNeutro.textStrong }}>
+                      <IconButton size="small" onClick={() => handleRolesUsuario(u)} sx={{ color: azul.textStrong }}>
                         <IconUserShield size={20} />
                       </IconButton>
                     </Tooltip>

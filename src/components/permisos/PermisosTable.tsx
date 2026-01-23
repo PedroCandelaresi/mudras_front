@@ -4,7 +4,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { apiFetch } from '@/lib/api';
 import { Box, Button, Chip, CircularProgress, IconButton, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Tooltip, TextField, Typography, Menu, Divider, Stack } from '@mui/material';
 import { IconEdit, IconTrash, IconSearch } from '@tabler/icons-react';
-import { marron } from '@/ui/colores';
+import { azul } from '@/ui/colores';
 import SearchToolbar from '@/components/ui/SearchToolbar';
 
 export interface PermisoListado { id: string; resource: string; action: string; description?: string | null }
@@ -65,21 +65,19 @@ export function PermisosTable({ onCrear, onEditar, onEliminar, refetchToken }: P
   }
 
   return (
-    <Paper elevation={0} sx={{ p: 3, border: 'none', boxShadow: 'none', borderRadius: 2, bgcolor: 'background.paper' }}>
+    <Paper elevation={0} sx={{ p: 3, border: 'none', boxShadow: 'none', borderRadius: 0, bgcolor: 'background.paper' }}>
       <Box
         sx={{
-          px: 1,
-          py: 1,
-          bgcolor: marron.toolbarBg,
-          border: '1px solid',
-          borderColor: marron.toolbarBorder,
-          borderRadius: 1,
-          mb: 2,
+          px: 2,
+          py: 2,
+          bgcolor: '#ffffff',
+          borderRadius: 0,
+          mb: 3,
         }}
       >
         <SearchToolbar
           title="Permisos"
-          baseColor={marron.primary}
+          baseColor={azul.primary}
           placeholder="Buscar (recurso:acción, descripción)"
           searchValue={busqueda}
           onSearchValueChange={setBusqueda}
@@ -97,11 +95,25 @@ export function PermisosTable({ onCrear, onEditar, onEliminar, refetchToken }: P
         )}
       </Box>
 
-      <TableContainer sx={{ borderRadius: 2, border: '1px solid', borderColor: marron.borderInner, bgcolor: 'background.paper' }}>
-        <Table stickyHeader size="small" sx={{ '& .MuiTableCell-head': { bgcolor: marron.headerBg, color: marron.headerText } }}>
-          <TableHead sx={{ position: 'sticky', top: 0, zIndex: 5 }}>
-            <TableRow sx={{ bgcolor: marron.headerBg, '& th': { top: 0, position: 'sticky', zIndex: 5 } }}>
-              <TableCell onClick={() => toggleOrden('resource')} sx={{ cursor: 'pointer', fontWeight: 700, borderBottom: '3px solid', borderColor: marron.headerBorder, color: marron.headerText }}>
+      <TableContainer sx={{ borderRadius: 0, border: '1px solid #e0e0e0', bgcolor: '#fff', boxShadow: 'none' }}>
+        <Table stickyHeader size="small" sx={{
+          '& .MuiTableCell-head': {
+            bgcolor: azul.tableHeader,
+            color: '#ffffff',
+            fontWeight: 700,
+            textTransform: 'uppercase',
+            letterSpacing: '0.5px'
+          },
+          '& .MuiTableBody-root .MuiTableRow-root:nth-of-type(even)': {
+            bgcolor: azul.tableStriped,
+          },
+          '& .MuiTableBody-root .MuiTableRow-root:hover': {
+            bgcolor: azul.rowHover,
+          }
+        }}>
+          <TableHead>
+            <TableRow>
+              <TableCell onClick={() => toggleOrden('resource')} sx={{ cursor: 'pointer', borderBottom: '1px solid #e0e0e0' }}>
                 <Box display="flex" alignItems="center" justifyContent="space-between">
                   Recurso {orden.campo === 'resource' ? (orden.dir === 'asc' ? '▲' : '▼') : ''}
                   <Tooltip title="Filtrar columna">
@@ -111,7 +123,7 @@ export function PermisosTable({ onCrear, onEditar, onEliminar, refetchToken }: P
                   </Tooltip>
                 </Box>
               </TableCell>
-              <TableCell onClick={() => toggleOrden('action')} sx={{ cursor: 'pointer', fontWeight: 700, borderBottom: '3px solid', borderColor: marron.headerBorder, color: marron.headerText }}>
+              <TableCell onClick={() => toggleOrden('action')} sx={{ cursor: 'pointer', borderBottom: '1px solid #e0e0e0' }}>
                 <Box display="flex" alignItems="center" justifyContent="space-between">
                   Acción {orden.campo === 'action' ? (orden.dir === 'asc' ? '▲' : '▼') : ''}
                   <Tooltip title="Filtrar columna">
@@ -121,27 +133,29 @@ export function PermisosTable({ onCrear, onEditar, onEliminar, refetchToken }: P
                   </Tooltip>
                 </Box>
               </TableCell>
-              <TableCell sx={{ fontWeight: 700, borderBottom: '3px solid', borderColor: marron.headerBorder, color: marron.headerText }}>Descripción</TableCell>
-              <TableCell align="right" sx={{ fontWeight: 700, borderBottom: '3px solid', borderColor: marron.headerBorder, color: marron.headerText }}>Acciones</TableCell>
+              <TableCell sx={{ borderBottom: '1px solid #e0e0e0' }}>Descripción</TableCell>
+              <TableCell align="center" sx={{ borderBottom: '1px solid #e0e0e0' }}>Acciones</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
             {permisosFiltrados.map((p, idx) => (
-              <TableRow key={p.id} hover sx={{ bgcolor: idx % 2 === 1 ? 'grey.50' : 'inherit', '&:hover': { bgcolor: marron.rowHover } }}>
-                <TableCell><Chip size="small" label={p.resource} /></TableCell>
-                <TableCell><Chip size="small" label={p.action} /></TableCell>
-                <TableCell>{p.description || '-'}</TableCell>
-                <TableCell align="right">
-                  <Tooltip title="Editar">
-                    <IconButton onClick={() => onEditar?.(p)}>
-                      <IconEdit size={18} />
-                    </IconButton>
-                  </Tooltip>
-                  <Tooltip title="Eliminar">
-                    <IconButton color="error" onClick={() => onEliminar?.(p)}>
-                      <IconTrash size={18} />
-                    </IconButton>
-                  </Tooltip>
+              <TableRow key={p.id} hover>
+                <TableCell sx={{ borderBottom: '1px solid #e0e0e0' }}><Chip size="small" label={p.resource} sx={{ borderRadius: 0, fontWeight: 600, bgcolor: '#eee' }} /></TableCell>
+                <TableCell sx={{ borderBottom: '1px solid #e0e0e0' }}><Chip size="small" label={p.action} sx={{ borderRadius: 0, fontWeight: 600, bgcolor: '#eee' }} /></TableCell>
+                <TableCell sx={{ borderBottom: '1px solid #e0e0e0' }}>{p.description || '-'}</TableCell>
+                <TableCell align="center" sx={{ borderBottom: '1px solid #e0e0e0' }}>
+                  <Box display="flex" justifyContent="center" gap={0.5}>
+                    <Tooltip title="Editar">
+                      <IconButton onClick={() => onEditar?.(p)} sx={{ color: azul.primary }}>
+                        <IconEdit size={18} />
+                      </IconButton>
+                    </Tooltip>
+                    <Tooltip title="Eliminar">
+                      <IconButton onClick={() => onEliminar?.(p)} sx={{ color: '#d32f2f' }}>
+                        <IconTrash size={18} />
+                      </IconButton>
+                    </Tooltip>
+                  </Box>
                 </TableCell>
               </TableRow>
             ))}
@@ -181,8 +195,8 @@ export function PermisosTable({ onCrear, onEditar, onEliminar, refetchToken }: P
               }}
             />
             <Stack direction="row" justifyContent="flex-end" spacing={1} mt={1}>
-              <Button size="small" onClick={() => { setFiltroColInput(''); setFiltrosColumna((prev) => ({ ...prev, [columnaActiva!]: '' })); }}>Limpiar</Button>
-              <Button size="small" variant="contained" sx={{ bgcolor: marron.primary, '&:hover': { bgcolor: marron.primaryHover } }} onClick={() => {
+              <Button size="small" onClick={() => { setFiltroColInput(''); setFiltrosColumna((prev) => ({ ...prev, [columnaActiva!]: '' })); }} sx={{ borderRadius: 0 }}>Limpiar</Button>
+              <Button size="small" variant="contained" sx={{ borderRadius: 0, bgcolor: azul.primary, '&:hover': { bgcolor: azul.primaryHover } }} onClick={() => {
                 setFiltrosColumna((prev) => ({ ...prev, [columnaActiva!]: filtroColInput }));
                 setMenuAnchor(null);
                 setColumnaActiva(null);

@@ -2,8 +2,9 @@
 
 import React, { useEffect, useMemo, useState } from 'react';
 import { apiFetch } from '@/lib/api';
-import { Box, Chip, CircularProgress, IconButton, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Tooltip, TextField, Button, Popover, Divider, Stack } from '@mui/material';
+import { Box, Chip, CircularProgress, IconButton, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Tooltip, TextField, Button, Popover, Divider, Stack, Typography } from '@mui/material';
 import { IconAdjustments, IconPlus } from '@tabler/icons-react';
+import { azul } from '@/ui/colores';
 
 import SearchToolbar from '@/components/ui/SearchToolbar';
 
@@ -63,15 +64,14 @@ export function RolesTable({ onAsignarPermisos, onCrear, refetchToken }: Props) 
   }
 
   return (
-    <Paper elevation={0} sx={{ p: 3, border: 'none', boxShadow: 'none', borderRadius: 2, bgcolor: 'background.paper' }}>
+    <Paper elevation={0} sx={{ p: 3, border: 'none', boxShadow: 'none', borderRadius: 0, bgcolor: 'background.paper' }}>
       <Box
         sx={{
-          px: 1,
-          py: 1,
-          bgcolor: '#f5f5f5',
-          border: '1px solid #e0e0e0',
+          px: 2,
+          py: 2,
+          bgcolor: '#ffffff',
           borderRadius: 0,
-          mb: 2,
+          mb: 3,
         }}
       >
         {/* <SearchToolbar
@@ -95,7 +95,21 @@ export function RolesTable({ onAsignarPermisos, onCrear, refetchToken }: Props) 
       </Box>
 
       <TableContainer sx={{ borderRadius: 0, border: '1px solid #e0e0e0', bgcolor: '#fff', boxShadow: 'none' }}>
-        <Table stickyHeader size="small" sx={{ '& .MuiTableCell-head': { bgcolor: '#f5f5f5', color: '#000', fontWeight: 700 } }}>
+        <Table stickyHeader size="small" sx={{
+          '& .MuiTableCell-head': {
+            bgcolor: azul.tableHeader,
+            color: '#ffffff',
+            fontWeight: 700,
+            textTransform: 'uppercase',
+            letterSpacing: '0.5px'
+          },
+          '& .MuiTableBody-root .MuiTableRow-root:nth-of-type(even)': {
+            bgcolor: azul.tableStriped,
+          },
+          '& .MuiTableBody-root .MuiTableRow-root:hover': {
+            bgcolor: azul.rowHover,
+          }
+        }}>
           <TableHead>
             <TableRow>
               <TableCell onClick={() => toggleOrden('name')} sx={{ cursor: 'pointer', borderBottom: '1px solid #e0e0e0' }}>
@@ -119,13 +133,15 @@ export function RolesTable({ onAsignarPermisos, onCrear, refetchToken }: Props) 
                 </Box>
               </TableCell>
               <TableCell sx={{ borderBottom: '1px solid #e0e0e0' }}>Permisos</TableCell>
-              <TableCell align="right" sx={{ borderBottom: '1px solid #e0e0e0' }}>Acciones</TableCell>
+              <TableCell align="center" sx={{ borderBottom: '1px solid #e0e0e0' }}>Acciones</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
             {rolesFiltrados.map((r, idx) => (
-              <TableRow key={r.id} hover sx={{ '&:hover': { bgcolor: '#f5f5f5' } }}>
-                <TableCell sx={{ borderBottom: '1px solid #e0e0e0' }}>{r.name}</TableCell>
+              <TableRow key={r.id} hover>
+                <TableCell sx={{ borderBottom: '1px solid #e0e0e0' }}>
+                  <Typography variant="body2" fontWeight={600}>{r.name}</Typography>
+                </TableCell>
                 <TableCell sx={{ borderBottom: '1px solid #e0e0e0' }}>
                   <Chip size="small" label={r.slug} sx={{ borderRadius: 0, fontWeight: 600, bgcolor: '#eee' }} />
                 </TableCell>
@@ -134,9 +150,9 @@ export function RolesTable({ onAsignarPermisos, onCrear, refetchToken }: Props) 
                     <Chip key={rp.permission.id} size="small" label={`${rp.permission.resource}:${rp.permission.action}`} sx={{ mr: 0.5, mb: 0.5, borderRadius: 0 }} variant="outlined" />
                   ))}
                 </TableCell>
-                <TableCell align="right" sx={{ borderBottom: '1px solid #e0e0e0' }}>
+                <TableCell align="center" sx={{ borderBottom: '1px solid #e0e0e0' }}>
                   <Tooltip title="Asignar permisos">
-                    <IconButton onClick={() => onAsignarPermisos(r)} sx={{ color: '#1976d2' }}>
+                    <IconButton onClick={() => onAsignarPermisos(r)} sx={{ color: azul.primary }}>
                       <IconAdjustments size={18} />
                     </IconButton>
                   </Tooltip>
@@ -177,7 +193,7 @@ export function RolesTable({ onAsignarPermisos, onCrear, refetchToken }: Props) 
               />
               <Stack direction="row" justifyContent="flex-end" spacing={1} mt={1}>
                 <Button size="small" onClick={() => { setFiltroColInput(''); setFiltrosColumna((prev) => ({ ...prev, [columnaActiva!]: '' })); }} sx={{ borderRadius: 0 }}>Limpiar</Button>
-                <Button size="small" variant="contained" sx={{ borderRadius: 0, bgcolor: '#8d6e63', '&:hover': { bgcolor: '#6d4c41' } }} onClick={() => {
+                <Button size="small" variant="contained" sx={{ borderRadius: 0, bgcolor: azul.primary, '&:hover': { bgcolor: azul.primaryHover } }} onClick={() => {
                   setFiltrosColumna((prev) => ({ ...prev, [columnaActiva!]: filtroColInput }));
                   setMenuAnchor(null);
                   setColumnaActiva(null);

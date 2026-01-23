@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import { Dialog, DialogActions, DialogContent, DialogTitle, Button, FormControlLabel, Checkbox, TextField, Box } from '@mui/material';
 import type { RolItem, PermisoItem } from './RolesTable';
+import { azul } from '@/ui/colores';
 
 interface Props {
   open: boolean;
@@ -51,7 +52,7 @@ export function AssignPermisosModal({ open, rol, onClose, onSubmit, cargarPermis
       maxWidth="sm"
       PaperProps={{ sx: { borderRadius: 0, border: '1px solid #e0e0e0', boxShadow: 'none' } }}
     >
-      <DialogTitle sx={{ bgcolor: '#f5f5f5', borderBottom: '1px solid #e0e0e0', fontWeight: 700 }}>
+      <DialogTitle sx={{ bgcolor: azul.headerBg, color: azul.headerText, borderBottom: `1px solid ${azul.headerBorder}`, fontWeight: 700 }}>
         Asignar permisos al rol {rol?.name}
       </DialogTitle>
       <DialogContent sx={{ p: 3 }}>
@@ -76,13 +77,13 @@ export function AssignPermisosModal({ open, rol, onClose, onSubmit, cargarPermis
           </Box>
         </Box>
       </DialogContent>
-      <DialogActions sx={{ p: 2, bgcolor: '#f5f5f5', borderTop: '1px solid #e0e0e0' }}>
-        <Button onClick={onClose} sx={{ borderRadius: 0, fontWeight: 600 }}>Cancelar</Button>
+      <DialogActions sx={{ p: 2, bgcolor: azul.toolbarBg, borderTop: `1px solid ${azul.toolbarBorder}` }}>
+        <Button onClick={onClose} sx={{ borderRadius: 0, fontWeight: 600, color: azul.textStrong }}>Cancelar</Button>
         <Button
           variant="contained"
           onClick={submit}
           disableElevation
-          sx={{ borderRadius: 0, fontWeight: 600, bgcolor: '#8d6e63', '&:hover': { bgcolor: '#6d4c41' } }}
+          sx={{ borderRadius: 0, fontWeight: 600, bgcolor: azul.primary, '&:hover': { bgcolor: azul.primaryHover } }}
         >
           Guardar
         </Button>
