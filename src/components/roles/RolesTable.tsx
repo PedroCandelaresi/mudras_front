@@ -2,8 +2,8 @@
 
 import React, { useEffect, useMemo, useState } from 'react';
 import { apiFetch } from '@/lib/api';
-import { Box, Chip, CircularProgress, IconButton, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Tooltip, TextField, Button, Popover, Divider, Stack, Typography } from '@mui/material';
-import { IconAdjustments, IconPlus } from '@tabler/icons-react';
+import { Box, Chip, CircularProgress, IconButton, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Tooltip, TextField, Button, Popover, Divider, Stack, Typography, Alert } from '@mui/material';
+import { IconAdjustments, IconPlus, IconAlertTriangle } from '@tabler/icons-react';
 import { azul } from '@/ui/colores';
 
 import SearchToolbar from '@/components/ui/SearchToolbar';
@@ -21,6 +21,7 @@ interface Props {
 export function RolesTable({ onAsignarPermisos, onCrear, refetchToken }: Props) {
   const [cargando, setCargando] = useState<boolean>(true);
   const [roles, setRoles] = useState<RolItem[]>([]);
+  const [error, setError] = useState<string | null>(null);
   const [busqueda, setBusqueda] = useState('');
   const [busquedaInput, setBusquedaInput] = useState('');
   const [orden, setOrden] = useState<{ campo: 'name' | 'slug'; dir: 'asc' | 'desc' }>({ campo: 'name', dir: 'asc' });
@@ -32,10 +33,18 @@ export function RolesTable({ onAsignarPermisos, onCrear, refetchToken }: Props) 
   async function cargar() {
     try {
       setCargando(true);
+      setError(null);
       const datos = await apiFetch<RolItem[]>(`/roles`);
-      setRoles(datos);
+      if (Array.isArray(datos)) {
+        setRoles(datos);
+      } else {
+        console.error('Datos recibidos no son array:', datos);
+        setRoles([]);
+        setError('Formato de datos inválido recibido del servidor');
+      }
     } catch (e: any) {
       console.error('Error al cargar roles', e);
+      setError(e.message || 'Error desconocido al cargar roles');
     } finally {
       setCargando(false);
     }
@@ -67,16 +76,18 @@ export function RolesTable({ onAsignarPermisos, onCrear, refetchToken }: Props) 
     <Paper elevation={0} sx={{ p: 3, border: 'none', boxShadow: 'none', borderRadius: 0, bgcolor: 'background.paper' }}>
       <Box
         sx={{
-          px: 2,
-          py: 2,
-          bgcolor: '#ffffff',
-          borderRadius: 0,
-          mb: 3,
+          px: 1,
+          py: 1,
+          bgcolor: azul.toolbarBg,
+          border: '1px solid',
+          borderColor: azul.toolbarBorder,
+          borderRadius: 1,
+          mb: 2,
         }}
       >
-        {/* <SearchToolbar
+        <SearchToolbar
           title="Roles"
-          baseColor=""
+          baseColor={azul.primary}
           placeholder="Buscar rol (nombre o slug)"
           searchValue={busquedaInput}
           onSearchValueChange={setBusquedaInput}
@@ -86,13 +97,25 @@ export function RolesTable({ onAsignarPermisos, onCrear, refetchToken }: Props) 
           createLabel="Nuevo Rol"
           onCreateClick={onCrear}
           searchDisabled={cargando}
-        /> */}
+        />
         {cargando && (
           <Box display="flex" justifyContent="flex-end" mt={0.5}>
             <CircularProgress size={20} />
           </Box>
         )}
       </Box>
+
+      {error && (
+        <Alert severity="error" icon={<IconAlertTriangle />} sx={{ mb: 2 }}>
+          {error}
+        </Alert>
+      )}
+
+      {roles.length === 0 && !cargando && !error && (
+        <Alert severity="info" sx={{ mb: 2 }}>
+          No hay roles creados o no se encontraron datos.
+        </Alert>
+      )}
 
       <TableContainer sx={{ borderRadius: 0, border: '1px solid #e0e0e0', bgcolor: '#fff', boxShadow: 'none' }}>
         <Table stickyHeader size="small" sx={{

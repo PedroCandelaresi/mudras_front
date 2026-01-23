@@ -54,8 +54,8 @@ export const azul = {
   rowHover: '#FFFFFF',
   alternateRow: '#f0f7ff',
   actionHover: '#cce7ff',
-  tableHeader: '#4FC3F7', // Celeste claro más blanco/fuerte
-  tableStriped: '#e1f5fe', // Celeste pastel sutil
+  tableHeader: '#1565c0', // Azul primario para header de tabla (más serio)
+  tableStriped: '#f5f9ff', // Celeste muy sutil
 };
 
 export type PaletaAzul = typeof azul;
