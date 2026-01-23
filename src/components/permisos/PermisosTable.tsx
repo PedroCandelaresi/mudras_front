@@ -1,9 +1,10 @@
 "use client";
 
-import React, { useEffect, useMemo, useState } from 'react';
-import { apiFetch } from '@/lib/api';
-import { Box, Button, Chip, CircularProgress, IconButton, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Tooltip, TextField, Typography, Menu, Divider, Stack } from '@mui/material';
-import { IconEdit, IconTrash, IconSearch } from '@tabler/icons-react';
+import { useEffect, useMemo, useState } from 'react';
+import { useQuery } from '@apollo/client/react';
+import { OBTENER_PERMISOS_QUERY } from '@/components/usuarios/graphql/queries';
+import { Box, Button, Chip, CircularProgress, IconButton, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Tooltip, TextField, Typography, Menu, Divider, Stack, Alert } from '@mui/material';
+import { IconEdit, IconTrash, IconSearch, IconAlertTriangle } from '@tabler/icons-react';
 import { azul } from '@/ui/colores';
 import SearchToolbar from '@/components/ui/SearchToolbar';
 
@@ -17,30 +18,17 @@ interface Props {
 }
 
 export function PermisosTable({ onCrear, onEditar, onEliminar, refetchToken }: Props) {
-  const [cargando, setCargando] = useState<boolean>(true);
-  const [permisos, setPermisos] = useState<PermisoListado[]>([]);
-  const [error, setError] = useState<string | null>(null);
-  const [busqueda, setBusqueda] = useState('');
-  const [menuAnchor, setMenuAnchor] = useState<null | HTMLElement>(null);
-  const [columnaActiva, setColumnaActiva] = useState<null | 'resource' | 'action'>(null);
-  const [filtrosColumna, setFiltrosColumna] = useState<{ resource?: string; action?: string; }>({});
-  const [filtroColInput, setFiltroColInput] = useState('');
-  const [orden, setOrden] = useState<{ campo: 'resource' | 'action'; dir: 'asc' | 'desc' }>({ campo: 'resource', dir: 'asc' });
+  const { data, loading: cargando, error: errorQuery, refetch } = useQuery<{ permisos: PermisoListado[] }>(OBTENER_PERMISOS_QUERY, {
+    notifyOnNetworkStatusChange: true,
+    fetchPolicy: 'network-only'
+  });
 
-  async function cargar() {
-    try {
-      setCargando(true);
-      const data = await apiFetch<PermisoListado[]>(`/permissions`);
-      setPermisos(data);
-      setError(null);
-    } catch (e: any) {
-      setError(e?.message || 'Error al cargar permisos');
-    } finally {
-      setCargando(false);
-    }
-  }
+  const permisos = data?.permisos || [];
+  const error = errorQuery?.message || null;
 
-  useEffect(() => { cargar(); /* eslint-disable-next-line */ }, [refetchToken]);
+  useEffect(() => {
+    if (refetchToken) refetch();
+  }, [refetchToken, refetch]);
 
   const permisosFiltrados = useMemo(() => {
     let arr = [...permisos];
@@ -94,6 +82,18 @@ export function PermisosTable({ onCrear, onEditar, onEliminar, refetchToken }: P
           </Box>
         )}
       </Box>
+
+      {error && (
+        <Alert severity="error" icon={<IconAlertTriangle />} sx={{ mb: 2 }}>
+          {error}
+        </Alert>
+      )}
+
+      {permisos.length === 0 && !cargando && !error && (
+        <Alert severity="info" sx={{ mb: 2 }}>
+          No hay permisos registrados.
+        </Alert>
+      )}
 
       <TableContainer sx={{ borderRadius: 0, border: '1px solid #e0e0e0', bgcolor: '#fff', boxShadow: 'none' }}>
         <Table stickyHeader size="small" sx={{
