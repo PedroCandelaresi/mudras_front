@@ -30,6 +30,13 @@ export function PermisosTable({ onCrear, onEditar, onEliminar, refetchToken }: P
     if (refetchToken) refetch();
   }, [refetchToken, refetch]);
 
+  const [busqueda, setBusqueda] = useState('');
+  const [menuAnchor, setMenuAnchor] = useState<null | HTMLElement>(null);
+  const [columnaActiva, setColumnaActiva] = useState<null | 'resource' | 'action'>(null);
+  const [filtrosColumna, setFiltrosColumna] = useState<{ resource?: string; action?: string; }>({});
+  const [filtroColInput, setFiltroColInput] = useState('');
+  const [orden, setOrden] = useState<{ campo: 'resource' | 'action'; dir: 'asc' | 'desc' }>({ campo: 'resource', dir: 'asc' });
+
   const permisosFiltrados = useMemo(() => {
     let arr = [...permisos];
     const q = busqueda.trim().toLowerCase();
