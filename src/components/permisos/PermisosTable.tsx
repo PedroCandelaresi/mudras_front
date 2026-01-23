@@ -37,6 +37,8 @@ export function PermisosTable({ onCrear, onEditar, onEliminar, refetchToken }: P
   const [filtroColInput, setFiltroColInput] = useState('');
   const [orden, setOrden] = useState<{ campo: 'resource' | 'action'; dir: 'asc' | 'desc' }>({ campo: 'resource', dir: 'asc' });
 
+
+
   const permisosFiltrados = useMemo(() => {
     let arr = [...permisos];
     const q = busqueda.trim().toLowerCase();
@@ -76,7 +78,7 @@ export function PermisosTable({ onCrear, onEditar, onEliminar, refetchToken }: P
           placeholder="Buscar (recurso:acción, descripción)"
           searchValue={busqueda}
           onSearchValueChange={setBusqueda}
-          onSubmitSearch={() => { void cargar(); }}
+          onSubmitSearch={() => { void refetch(); }}
           onClear={() => setBusqueda('')}
           canCreate={Boolean(onCrear)}
           createLabel="Nuevo Permiso"

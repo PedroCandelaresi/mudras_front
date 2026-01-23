@@ -54,3 +54,14 @@ export const OBTENER_ROLES_QUERY = gql`
     }
   }
 `;
+
+export const OBTENER_PERMISOS_QUERY = gql`
+  query ObtenerPermisos {
+    permisos {
+      id
+      resource
+      action
+      description
+    }
+  }
+`;
