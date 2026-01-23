@@ -43,4 +43,17 @@ export const USUARIOS_CAJA_AUTH_QUERY = gql`
       displayName
     }
   }
+      displayName
+    }
+  }
+`;
+
+export const OBTENER_ROLES_QUERY = gql`
+  query ObtenerRoles {
+    roles {
+      id
+      nombre
+      slug
+    }
+  }
 `;

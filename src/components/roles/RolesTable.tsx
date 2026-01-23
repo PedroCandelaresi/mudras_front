@@ -1,7 +1,8 @@
 "use client";
 
-import React, { useEffect, useMemo, useState } from 'react';
-import { apiFetch } from '@/lib/api';
+import { useEffect, useMemo, useState } from 'react';
+import { useQuery } from '@apollo/client/react';
+import { OBTENER_ROLES_QUERY } from '@/components/usuarios/graphql/queries';
 import { Box, Chip, CircularProgress, IconButton, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Tooltip, TextField, Button, Popover, Divider, Stack, Typography, Alert } from '@mui/material';
 import { IconAdjustments, IconPlus, IconAlertTriangle } from '@tabler/icons-react';
 import { azul } from '@/ui/colores';
@@ -12,6 +13,14 @@ export interface PermisoItem { id: string; resource: string; action: string; des
 export interface RolePermission { permission: PermisoItem }
 export interface RolItem { id: string; name: string; slug: string; rolePermissions?: RolePermission[] }
 
+interface RolesQueryResponse {
+  roles: {
+    id: string;
+    nombre: string;
+    slug: string;
+  }[];
+}
+
 interface Props {
   onAsignarPermisos: (rol: RolItem) => void;
   onCrear?: () => void;
@@ -19,9 +28,27 @@ interface Props {
 }
 
 export function RolesTable({ onAsignarPermisos, onCrear, refetchToken }: Props) {
-  const [cargando, setCargando] = useState<boolean>(true);
-  const [roles, setRoles] = useState<RolItem[]>([]);
-  const [error, setError] = useState<string | null>(null);
+  const { data, loading: cargando, error: errorQuery, refetch } = useQuery<RolesQueryResponse>(OBTENER_ROLES_QUERY, {
+    notifyOnNetworkStatusChange: true,
+    fetchPolicy: 'network-only' // Asegurar que siempre traiga lo último al montar
+  });
+
+  const roles: RolItem[] = useMemo(() => {
+    if (!data || !data.roles) return [];
+    return data.roles.map((r: any) => ({
+      id: r.id,
+      name: r.nombre, // Mapeo de GraphQL 'nombre' a frontend 'name'
+      slug: r.slug,
+      rolePermissions: [] // La query actual de roles no trae permisos anidados por ahora
+    }));
+  }, [data]);
+
+  const error = errorQuery ? errorQuery.message : null;
+
+  useEffect(() => {
+    if (refetchToken) refetch();
+  }, [refetchToken, refetch]);
+
   const [busqueda, setBusqueda] = useState('');
   const [busquedaInput, setBusquedaInput] = useState('');
   const [orden, setOrden] = useState<{ campo: 'name' | 'slug'; dir: 'asc' | 'desc' }>({ campo: 'name', dir: 'asc' });
@@ -30,27 +57,7 @@ export function RolesTable({ onAsignarPermisos, onCrear, refetchToken }: Props) 
   const [filtrosColumna, setFiltrosColumna] = useState<{ name?: string; slug?: string; }>({});
   const [filtroColInput, setFiltroColInput] = useState('');
 
-  async function cargar() {
-    try {
-      setCargando(true);
-      setError(null);
-      const datos = await apiFetch<RolItem[]>(`/roles`);
-      if (Array.isArray(datos)) {
-        setRoles(datos);
-      } else {
-        console.error('Datos recibidos no son array:', datos);
-        setRoles([]);
-        setError('Formato de datos inválido recibido del servidor');
-      }
-    } catch (e: any) {
-      console.error('Error al cargar roles', e);
-      setError(e.message || 'Error desconocido al cargar roles');
-    } finally {
-      setCargando(false);
-    }
-  }
-
-  useEffect(() => { cargar(); /* eslint-disable-next-line */ }, [refetchToken]);
+  // Eliminamos funcion cargar() y useEffect() manual ya que useQuery lo maneja
 
   const rolesFiltrados = useMemo(() => {
     let arr = roles.slice();
