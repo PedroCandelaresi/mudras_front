@@ -43,9 +43,6 @@ export const USUARIOS_CAJA_AUTH_QUERY = gql`
       displayName
     }
   }
-      displayName
-    }
-  }
 `;
 
 export const OBTENER_ROLES_QUERY = gql`
