@@ -49,6 +49,18 @@ export async function GET(req: NextRequest) {
 
     if (!res.ok) {
       const errorText = await res.text().catch(() => '');
+      // DEBUG: Devolver más info para diagnosticar el 401
+      if (res.status === 401) {
+        return new NextResponse(JSON.stringify({
+          backendError: errorText,
+          tokenPrefix: token.substring(0, 15) + '...',
+          cookieFound: [
+            req.cookies.get('mudras_token') ? 'mudras_token' : '',
+            req.cookies.get('mudras_jwt') ? 'mudras_jwt' : '',
+            req.cookies.get('access_token') ? 'access_token' : ''
+          ].filter(Boolean).join(', ')
+        }), { status: 401 });
+      }
       return new NextResponse(errorText || `Error ${res.status}`, { status: res.status });
     }
 
