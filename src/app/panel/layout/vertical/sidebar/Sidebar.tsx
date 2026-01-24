@@ -3,9 +3,11 @@ import Drawer from "@mui/material/Drawer";
 import useMediaQuery from "@mui/material/useMediaQuery";
 import { useTheme } from "@mui/material/styles";
 import SidebarItems from "./SidebarItems";
-import Logo from "../../shared/logo/Logo";
 import { CustomizerContext } from "@/app/context/customizerContext";
 import config from '@/app/context/config';
+import Image from "next/image";
+import Typography from "@mui/material/Typography";
+import Link from 'next/link';
 
 import Scrollbar from "@/app/components/custom-scroll/Scrollbar";
 import { Profile } from "./SidebarProfile/Profile";
@@ -19,6 +21,7 @@ const Sidebar = () => {
     setIsMobileSidebar,
     setIsCollapse,
     isSidebarPinned,
+    isSidebarHover,
   } = useContext(CustomizerContext);
 
   const SidebarWidth = config.sidebarWidth;
@@ -46,6 +49,69 @@ const Sidebar = () => {
       onMouseEnter={() => setIsCollapse("full-sidebar")}
     />
   ) : null;
+
+  const SidebarLogo = () => {
+    // Si está colapsado y no está en hover (y no es mobile), mostrar versión reducida
+    // Nota: El usuario no especificó versión reducida, pero mantenemos lógica de colapso.
+    // Usaremos el mismo logo pero más chico o solo el icono si fuera posible.
+    // Como es SVG, lo escalamos.
+    const isMini = isCollapse === "mini-sidebar" && !isSidebarHover && !isMobileSidebar;
+
+    return (
+      <Link href="/" style={{ textDecoration: 'none' }}>
+        <Box
+          display="flex"
+          flexDirection="column"
+          alignItems="center"
+          justifyContent="center"
+          sx={{
+            transition: 'all 0.3s ease',
+            opacity: 0.9, // Watermark style
+            '&:hover': { opacity: 1 }
+          }}
+        >
+          {isMini ? (
+            <Image
+              src={"/images/logo.svg"}
+              alt="Mudras"
+              width={30}
+              height={30}
+              style={{
+                filter: 'brightness(0) invert(1)',
+              }}
+            />
+          ) : (
+            <>
+              <Image
+                src={"/images/logo.svg"}
+                alt="Mudras"
+                width={80}
+                height={80}
+                style={{
+                  filter: 'brightness(0) invert(1)',
+                  marginBottom: '8px'
+                }}
+              />
+              <Typography
+                variant="subtitle2"
+                sx={{
+                  color: 'white',
+                  textTransform: 'uppercase',
+                  fontWeight: 700,
+                  letterSpacing: '0.2rem',
+                  fontSize: '0.75rem',
+                  fontFamily: '"Roboto", "Helvetica", "Arial", sans-serif', // Serious font
+                  textShadow: '0px 1px 2px rgba(0,0,0,0.3)' // Legibility on light bg
+                }}
+              >
+                GESTION
+              </Typography>
+            </>
+          )}
+        </Box>
+      </Link>
+    );
+  };
 
   const overlayDrawer = (
     <Drawer
@@ -85,8 +151,8 @@ const Sidebar = () => {
         onMouseLeave={() => setIsCollapse("mini-sidebar")}
       >
         {/* Logo */}
-        <Box px={2} pt={2} pb={1.5}>
-          <Logo />
+        <Box px={2} pt={3} pb={2} display="flex" justifyContent="center">
+          <SidebarLogo />
         </Box>
 
         {/* Items con scroll central */}
@@ -129,8 +195,8 @@ const Sidebar = () => {
     >
       <Box sx={{ height: "100vh", display: "flex", flexDirection: "column" }}>
         {/* Logo */}
-        <Box px={2} pt={2} pb={1.5}>
-          <Logo />
+        <Box px={2} pt={3} pb={2} display="flex" justifyContent="center">
+          <SidebarLogo />
         </Box>
 
         {/* Items con scroll central */}
@@ -169,8 +235,8 @@ const Sidebar = () => {
     >
       <Box sx={{ height: "100vh", display: "flex", flexDirection: "column" }}>
         {/* Logo */}
-        <Box px={1.5} pt={1.5} pb={1}>
-          <Logo />
+        <Box px={1.5} pt={3} pb={2} display="flex" justifyContent="center">
+          <SidebarLogo />
         </Box>
 
         {/* Items */}
