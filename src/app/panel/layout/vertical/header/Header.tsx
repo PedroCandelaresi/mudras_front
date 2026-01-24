@@ -74,7 +74,7 @@ const Header = () => {
 
   const ToolbarStyled = styled(Toolbar)(({ theme }) => ({
     width: '100%',
-    color: theme.palette.text.secondary,
+    color: '#ffffff',
     minHeight: TopbarHeight,
     paddingTop: 0,
     paddingBottom: 0,
@@ -86,7 +86,7 @@ const Header = () => {
         position="fixed"
         sx={(theme) => ({
           boxShadow: 'none',
-          background: theme.palette.background.paper,
+          background: '#3E2723',
           justifyContent: 'center',
           backdropFilter: 'blur(4px)',
           [theme.breakpoints.up('lg')]: {
@@ -121,7 +121,7 @@ const Header = () => {
                 setIsMobileSidebar(!isMobileSidebar);
               }
             }}
-            sx={{ color: 'text.secondary' }}
+            sx={{ color: 'inherit' }}
           >
             <IconMenu2 size="20" />
           </IconButton>
@@ -134,7 +134,7 @@ const Header = () => {
               variant="body1"
               sx={{
                 fontWeight: 500,
-                color: 'text.secondary',
+                color: 'inherit',
                 textAlign: 'center',
                 fontSize: { xs: '0.8rem', md: '0.9rem' },
                 display: { xs: 'none', sm: 'block' }
