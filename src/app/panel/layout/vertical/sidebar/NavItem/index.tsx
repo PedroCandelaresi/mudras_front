@@ -30,7 +30,7 @@ export default function NavItem({
   const Icon = item?.icon;
   const theme = useTheme();
   const { t } = useTranslation();
-  
+
 
   const itemIcon = Icon ? (
     (level ?? 1) > 1 ? (
@@ -48,22 +48,22 @@ export default function NavItem({
     backgroundColor: (level ?? 1) > 1 ? "transparent !important" : "inherit",
     color:
       (level ?? 1) > 1 && pathDirect === item?.href
-        ? `${theme.palette.primary.main}!important`
-        : theme.palette.text.secondary,
+        ? `white !important` // Subitems selected: White
+        : "rgba(255, 255, 255, 0.7)", // Default text: Light gray/white
     paddingLeft: "8px", // Padding fijo para evitar desplazamientos
     minHeight: "32px",
     display: "flex",
     alignItems: "center",
     "&:hover": {
-      backgroundColor: theme.palette.primary.light,
-      color: theme.palette.primary.main,
+      backgroundColor: "rgba(255, 255, 255, 0.1)", // Subtle white hover
+      color: "white",
     },
     "&.Mui-selected": {
-      color: "white",
-      backgroundColor: theme.palette.primary.main,
+      color: "#E65100", // Selected text: Dark Orange
+      backgroundColor: "white", // Selected bg: White
       "&:hover": {
-        backgroundColor: theme.palette.primary.main,
-        color: "white",
+        backgroundColor: "white",
+        color: "#E65100",
       },
     },
   }));
@@ -108,9 +108,9 @@ export default function NavItem({
             {hideMenu ? "" : <>{t(`${item?.title}`)}</>}
             <br />
             {item?.subtitle ? (
-              <Typography 
-                variant="caption" 
-                sx={{ 
+              <Typography
+                variant="caption"
+                sx={{
                   fontSize: '0.7rem',
                   whiteSpace: 'nowrap',
                   overflow: 'hidden',

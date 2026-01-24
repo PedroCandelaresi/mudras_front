@@ -131,15 +131,11 @@ const Sidebar = () => {
         '& .MuiDrawer-paper': {
           width: SidebarWidth,
           boxSizing: "border-box",
-          // Dorado anaranjado con textura metálica
+          // Dark Orange background
           backgroundImage:
-            'linear-gradient(135deg, #FFE4D6 0%, #FFD4B3 40%, #FFC299 100%), url("/textures/brushed-metal-1024.png")',
-          backgroundBlendMode: 'overlay',
-          backgroundSize: 'cover, cover',
-          backgroundRepeat: 'no-repeat, repeat-y',
-          backgroundPosition: 'center, center',
-          backgroundColor: '#FFC299',
-          borderRight: '1px solid rgba(0,0,0,0.25)',
+            'linear-gradient(135deg, #E65100 0%, #F57C00 100%)',
+          backgroundColor: '#E65100',
+          borderRight: '1px solid rgba(255,255,255,0.1)',
           overflowX: "hidden",
           "&::-webkit-scrollbar": { display: "none" },
           scrollbarWidth: "none",
@@ -178,15 +174,11 @@ const Sidebar = () => {
         '& .MuiDrawer-paper': {
           width: SidebarWidth,
           boxSizing: "border-box",
-          // Dorado anaranjado con textura metálica
+          // Dark Orange background
           backgroundImage:
-            'linear-gradient(135deg, #FFE4D6 0%, #FFD4B3 40%, #FFC299 100%), url("/textures/brushed-metal-1024.png")',
-          backgroundBlendMode: 'overlay',
-          backgroundSize: 'cover, cover',
-          backgroundRepeat: 'no-repeat, repeat-y',
-          backgroundPosition: 'center, center',
-          backgroundColor: '#FFC299',
-          borderRight: '1px solid rgba(0,0,0,0.25)',
+            'linear-gradient(135deg, #E65100 0%, #F57C00 100%)',
+          backgroundColor: '#E65100',
+          borderRight: '1px solid rgba(255,255,255,0.1)',
           overflowX: "hidden",
           "&::-webkit-scrollbar": { display: "none" },
           scrollbarWidth: "none",
@@ -223,12 +215,8 @@ const Sidebar = () => {
             border: "0 !important",
             boxShadow: (theme) => theme.shadows[8],
             backgroundImage:
-              'linear-gradient(135deg, #FFE4D6 0%, #FFD4B3 40%, #FFC299 100%), url("/textures/brushed-metal-1024.png")',
-            backgroundBlendMode: 'overlay',
-            backgroundSize: 'cover, cover',
-            backgroundRepeat: 'no-repeat, repeat-y',
-            backgroundPosition: 'center, center',
-            backgroundColor: '#FFC299',
+              'linear-gradient(135deg, #E65100 0%, #F57C00 100%)',
+            backgroundColor: '#E65100',
           },
         },
       }}

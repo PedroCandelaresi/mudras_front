@@ -69,24 +69,16 @@ export default function NavCollapse({
     marginBottom: "2px",
     padding: "8px 10px",
     paddingLeft: hideMenu ? "10px" : level > 2 ? `${level * 15}px` : "10px",
-    backgroundColor: open && level < 2 ? theme.palette.primary.main : "",
+    backgroundColor: open && level < 2 ? "white" : "",
     whiteSpace: "nowrap",
     "&:hover": {
-      backgroundColor:
-        pathname.includes(menu.href || '') || open
-          ? theme.palette.primary.main
-          : theme.palette.primary.light,
-      color:
-        pathname.includes(menu.href || '') || open
-          ? "white"
-          : theme.palette.primary.main,
+      backgroundColor: "rgba(255, 255, 255, 0.1)",
+      color: "white",
     },
     color:
       open && level < 2
-        ? "white"
-        : level > 1 && open
-          ? theme.palette.primary.main
-          : theme.palette.text.secondary,
+        ? "#E65100" // Open parent: Orange text
+        : "rgba(255, 255, 255, 0.7)", // Default: Light text
     borderRadius: `${isBorderRadius}px`,
   }));
 
