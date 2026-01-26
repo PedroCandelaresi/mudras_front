@@ -129,9 +129,14 @@ const ModalDetalleVenta: React.FC<ModalDetalleVentaProps> = ({ open, onClose, ve
                                     <Typography variant="caption" color="text.secondary" textTransform="uppercase" fontWeight={600} fontSize="0.7rem">Cliente</Typography>
                                     <Typography variant="body2" fontWeight={600} sx={{ mt: 0.5 }}>
                                         {venta.cliente
-                                            ? `${venta.cliente.nombre || ''} ${venta.cliente.apellido || ''}`.trim() || '-'
-                                            : 'Consumidor Final'}
+                                            ? `${venta.cliente.nombre || ''} ${venta.cliente.apellido || ''}`.trim()
+                                            : (venta.razonSocialCliente || venta.nombreCliente || 'Consumidor Final')}
                                     </Typography>
+                                    {(venta.cuitCliente || venta.cliente?.cuit) && (
+                                        <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
+                                            {venta.razonSocialCliente ? `CUIT: ${venta.cuitCliente}` : (venta.cuitCliente ? `DNI/CUIT: ${venta.cuitCliente}` : '')}
+                                        </Typography>
+                                    )}
                                 </Grid>
                                 <Grid size={{ xs: 12, sm: 3 }}>
                                     <Typography variant="caption" color="text.secondary" textTransform="uppercase" fontWeight={600} fontSize="0.7rem">Vendedor</Typography>

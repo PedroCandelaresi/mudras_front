@@ -98,12 +98,19 @@ export const ModalConfirmacionVenta: React.FC<ModalConfirmacionVentaProps> = ({
     monto: '0',
   });
   const [dniCuit, setDniCuit] = useState<string>('');
+  const [nombreCliente, setNombreCliente] = useState<string>('');
+  const [razonSocialCliente, setRazonSocialCliente] = useState<string>('');
   const [usuarios, setUsuarios] = useState<UsuarioOption[]>([]);
   const [cargandoUsuarios, setCargandoUsuarios] = useState<boolean>(false);
   const [errorUsuarios, setErrorUsuarios] = useState<string | null>(null);
   const [usuarioSeleccionado, setUsuarioSeleccionado] = useState<UsuarioOption | null>(null);
   const [perfilUsuarioId, setPerfilUsuarioId] = useState<string | null>(null);
   const [snack, setSnack] = useState<{ open: boolean; msg: string; sev: 'success' | 'error' | 'info' }>({ open: false, msg: '', sev: 'success' });
+
+  // Determine input type based on length (simplistic but effective for UX)
+  const esCuit = dniCuit.length === 11;
+  const showNombre = dniCuit.length > 0 && !esCuit;
+  const showRazonSocial = esCuit;
 
   const [obtenerUsuarios, { called: usuariosCalled, loading: usuariosLoading, data: usuariosData, error: usuariosError }] =
     useLazyQuery<UsuariosCajaRespuesta>(USUARIOS_CAJA_AUTH_QUERY, {
@@ -186,6 +193,8 @@ export const ModalConfirmacionVenta: React.FC<ModalConfirmacionVentaProps> = ({
       monto: String(subtotal),
     });
     setDniCuit('');
+    setNombreCliente('');
+    setRazonSocialCliente('');
     setUsuarioSeleccionado(null);
     setErrorUsuarios(null);
   }, [open, subtotal]);
@@ -279,11 +288,13 @@ export const ModalConfirmacionVenta: React.FC<ModalConfirmacionVentaProps> = ({
       return;
     }
 
-    const input: CrearVentaCajaInput = {
+    const input: CrearVentaCajaInput & { nombreCliente?: string; razonSocialCliente?: string } = {
       tipoVenta: 'MOSTRADOR',
       usuarioAuthId: usuarioSeleccionado.id,
       puntoMudrasId: puntoMudrasIdSeleccionado!,
-      cuitCliente: requiereDni ? dniCuit.trim() : undefined,
+      cuitCliente: dniCuit ? dniCuit.trim() : undefined,
+      nombreCliente: showNombre ? nombreCliente.trim() : undefined,
+      razonSocialCliente: showRazonSocial ? razonSocialCliente.trim() : undefined,
       detalles: articulos.map(art => ({
         articuloId: Number(art.id),
         cantidad: Number(art.cantidad),
@@ -414,6 +425,35 @@ export const ModalConfirmacionVenta: React.FC<ModalConfirmacionVentaProps> = ({
                       required={requiereDni}
                       InputProps={{ sx: { borderRadius: 0 } }}
                     />
+                    {showNombre && (
+                      <TextField
+                        label="Nombre / Apellido"
+                        value={nombreCliente}
+                        onChange={(e) => setNombreCliente(e.target.value)}
+                        placeholder="Nombre del cliente"
+                        size="small"
+                        fullWidth
+                        sx={{ mt: 2 }}
+                        InputProps={{ sx: { borderRadius: 0 } }}
+                      />
+                    )}
+                    {showRazonSocial && (
+                      <TextField
+                        label="Razón Social"
+                        value={razonSocialCliente}
+                        onChange={(e) => setRazonSocialCliente(e.target.value)}
+                        placeholder="Razón Social de la empresa"
+                        size="small"
+                        fullWidth
+                        sx={{ mt: 2 }}
+                        InputProps={{ sx: { borderRadius: 0 } }}
+                      />
+                    )}
+                    <Box mt={1}>
+                      <Typography variant="caption" color="text.secondary" sx={{ fontStyle: 'italic' }}>
+                        {esCuit ? 'Identificado como Empresa/Responsable' : (dniCuit.length > 0 ? 'Identificado como Consumidor/Persona' : 'Consumidor Final (Anónimo)')}
+                      </Typography>
+                    </Box>
                   </Grid>
                 </Grid>
               </CardContent>

@@ -45,6 +45,7 @@ export interface VentaListado {
   fecha: string; // ISO
   nro: string;
   cliente: string;
+  usuario: string; // Vendedor
   total: number;
   estado: "PAGADA" | "PENDIENTE" | "CANCELADA";
 }
@@ -113,7 +114,8 @@ export function TablaVentas() {
       id: String(v.id),
       fecha: v.fecha,
       nro: v.numeroVenta,
-      cliente: v.nombreUsuario || "-",
+      cliente: v.razonSocialCliente || v.nombreCliente || (v.cuitCliente ? `CUIT: ${v.cuitCliente}` : "Consumidor Final"),
+      usuario: v.nombreUsuario || "-",
       total: Number(v.total || 0),
       estado: mapEstado(v.estado),
     }));
@@ -212,13 +214,16 @@ export function TablaVentas() {
               </TableCell>
               <TableCell sx={{ fontWeight: 700, color: grisRojizo.headerText }}>
                 <Box display="flex" alignItems="center" justifyContent="space-between">
-                  Usuario
+                  Cliente
                   <Tooltip title="Filtrar columna">
                     <IconButton size="small" sx={{ color: 'inherit' }} onClick={abrirMenu("cliente")}>
                       <IconDotsVertical size={16} />
                     </IconButton>
                   </Tooltip>
                 </Box>
+              </TableCell>
+              <TableCell sx={{ fontWeight: 700, color: grisRojizo.headerText }}>
+                Vendedor
               </TableCell>
               <TableCell sx={{ fontWeight: 700, color: grisRojizo.headerText }}>Total</TableCell>
               <TableCell sx={{ fontWeight: 700, color: grisRojizo.headerText }}>
@@ -275,6 +280,11 @@ export function TablaVentas() {
                   <TableCell>
                     <Typography variant="body2" fontWeight={600}>
                       {v.cliente}
+                    </Typography>
+                  </TableCell>
+                  <TableCell>
+                    <Typography variant="body2" color="text.secondary">
+                      {v.usuario}
                     </Typography>
                   </TableCell>
                   <TableCell>

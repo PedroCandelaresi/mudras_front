@@ -66,6 +66,9 @@ export const OBTENER_HISTORIAL_VENTAS = gql`
         total
         nombreUsuario
         nombrePuesto
+        nombreCliente
+        cuitCliente
+        razonSocialCliente
       }
       total
       totalPaginas
@@ -132,6 +135,10 @@ export const OBTENER_DETALLE_VENTA = gql`
         id
         displayName
       }
+      nombreCliente
+      cuitCliente
+      razonSocialCliente
+      tipoClienteSnapshot
       detalles {
         id
         cantidad

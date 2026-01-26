@@ -82,6 +82,8 @@ export interface CrearVentaCajaInput {
   observaciones?: string;
   generarFactura?: boolean;
   cuitCliente?: string;
+  nombreCliente?: string;
+  razonSocialCliente?: string;
   detalles: {
     articuloId: number;
     cantidad: number;
