@@ -23,7 +23,7 @@ const NavGroup = ({ item, hideMenu }: ItemType) => {
     fontSize: '0.7rem',
     marginTop: theme.spacing(1.5),
     marginBottom: theme.spacing(0.5),
-    color: 'rgba(255,255,255,0.7)', // Light text for headers
+    color: 'rgba(0,0,0,0.6)', // Darker text for headers on metallic bg
     lineHeight: '20px',
     padding: '2px 8px',
     marginLeft: hideMenu ? '' : '-8px',

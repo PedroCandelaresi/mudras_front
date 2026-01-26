@@ -48,22 +48,25 @@ export default function NavItem({
     backgroundColor: (level ?? 1) > 1 ? "transparent !important" : "inherit",
     color:
       (level ?? 1) > 1 && pathDirect === item?.href
-        ? `white !important` // Subitems selected: White
-        : "rgba(255, 255, 255, 0.7)", // Default text: Light gray/white
+        ? `#E65100 !important` // Subitems selected: Orange (to stand out against silver)
+        : "rgba(0, 0, 0, 0.87)", // Default text: Black
+    fontWeight: "700 !important", // Bold as requested
     paddingLeft: "8px", // Padding fijo para evitar desplazamientos
     minHeight: "32px",
     display: "flex",
     alignItems: "center",
     "&:hover": {
-      backgroundColor: "rgba(255, 255, 255, 0.1)", // Subtle white hover
-      color: "white",
+      backgroundColor: "rgba(0, 0, 0, 0.05)", // Subtle dark hover
+      color: "#000000",
     },
     "&.Mui-selected": {
       color: "#E65100", // Selected text: Dark Orange
       backgroundColor: "white", // Selected bg: White
+      fontWeight: '800 !important',
+      boxShadow: '0 2px 6px rgba(0,0,0,0.1)', // slight pop
       "&:hover": {
         backgroundColor: "white",
-        color: "#E65100",
+        color: "#d84315",
       },
     },
   }));

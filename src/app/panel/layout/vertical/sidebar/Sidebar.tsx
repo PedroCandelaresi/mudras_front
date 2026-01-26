@@ -77,7 +77,7 @@ const Sidebar = () => {
               width={30}
               height={30}
               style={{
-                filter: 'brightness(0) invert(1)',
+                // No filter needed for light bg
               }}
             />
           ) : (
@@ -88,20 +88,19 @@ const Sidebar = () => {
                 width={80}
                 height={80}
                 style={{
-                  filter: 'brightness(0) invert(1)',
                   marginBottom: '8px'
                 }}
               />
               <Typography
                 variant="subtitle2"
                 sx={{
-                  color: 'white',
+                  color: '#333333',
                   textTransform: 'uppercase',
                   fontWeight: 700,
                   letterSpacing: '0.2rem',
                   fontSize: '0.75rem',
                   fontFamily: '"Roboto", "Helvetica", "Arial", sans-serif', // Serious font
-                  textShadow: '0px 1px 2px rgba(0,0,0,0.3)' // Legibility on light bg
+                  textShadow: '0px 1px 1px rgba(255,255,255,0.8)' // Highlight on light bg
                 }}
               >
                 GESTION
@@ -174,11 +173,11 @@ const Sidebar = () => {
         '& .MuiDrawer-paper': {
           width: SidebarWidth,
           boxSizing: "border-box",
-          // Dark Orange background
+          // Metallic Silver background
           backgroundImage:
-            'linear-gradient(135deg, #E65100 0%, #F57C00 100%)',
-          backgroundColor: '#E65100',
-          borderRight: '1px solid rgba(255,255,255,0.1)',
+            'linear-gradient(135deg, #ECE9E6 0%, #FFFFFF 100%)',
+          backgroundColor: '#ECE9E6',
+          borderRight: '1px solid rgba(0,0,0,0.1)',
           overflowX: "hidden",
           "&::-webkit-scrollbar": { display: "none" },
           scrollbarWidth: "none",
@@ -187,16 +186,15 @@ const Sidebar = () => {
     >
       <Box sx={{ height: "100vh", display: "flex", flexDirection: "column" }}>
         {/* Logo */}
-        <Box px={2} pt={3} pb={2} display="flex" justifyContent="center">
+        <Box px={1.5} pt={3} pb={2} display="flex" justifyContent="center">
           <SidebarLogo />
         </Box>
 
-        {/* Items con scroll central */}
+        {/* Items */}
         <Scrollbar sx={{ flex: 1, minHeight: 0 }}>
           <SidebarItems />
         </Scrollbar>
 
-        {/* Perfil al pie */}
         <Profile />
       </Box>
     </Drawer>
