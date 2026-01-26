@@ -132,7 +132,7 @@ const Sidebar = () => {
           // Copper/Metallic Orange background
           backgroundImage:
             'linear-gradient(135deg, #FFB74D 0%, #EF6C00 100%), url("/textures/brushed-metal-1024.png")',
-          backgroundBlendMode: 'overlay',
+          backgroundBlendMode: 'soft-light',
           backgroundSize: 'cover, cover',
           backgroundRepeat: 'no-repeat, repeat-y',
           backgroundPosition: 'center, center',
@@ -176,7 +176,7 @@ const Sidebar = () => {
           // Copper/Metallic Orange background
           backgroundImage:
             'linear-gradient(135deg, #FFB74D 0%, #EF6C00 100%), url("/textures/brushed-metal-1024.png")',
-          backgroundBlendMode: 'overlay',
+          backgroundBlendMode: 'soft-light',
           backgroundSize: 'cover, cover',
           backgroundRepeat: 'no-repeat, repeat-y',
           backgroundPosition: 'center, center',
@@ -217,7 +217,7 @@ const Sidebar = () => {
             // Copper/Metallic Orange background
             backgroundImage:
               'linear-gradient(135deg, #FFB74D 0%, #EF6C00 100%), url("/textures/brushed-metal-1024.png")',
-            backgroundBlendMode: 'overlay',
+            backgroundBlendMode: 'soft-light',
             backgroundSize: 'cover, cover',
             backgroundRepeat: 'no-repeat, repeat-y',
             backgroundPosition: 'center, center',

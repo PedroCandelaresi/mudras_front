@@ -61,11 +61,11 @@ export default function NavItem({
     },
     "&.Mui-selected": {
       color: "#E65100", // Selected text: Dark Orange
-      backgroundColor: "white", // Selected bg: White
+      backgroundColor: "rgba(255, 255, 255, 0.6)", // Semi-transparent White
       fontWeight: '800 !important',
       boxShadow: '0 2px 6px rgba(0,0,0,0.1)', // slight pop
       "&:hover": {
-        backgroundColor: "white",
+        backgroundColor: "rgba(255, 255, 255, 0.8)",
         color: "#d84315",
       },
     },
