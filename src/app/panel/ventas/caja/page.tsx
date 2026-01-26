@@ -14,8 +14,14 @@ import {
   TablaArticulosCapturados,
   type ArticuloCapturado,
 } from '@/components/ventas/caja-registradora/TablaArticulosCapturados';
-import { ModalConfirmacionVenta } from '@/components/ventas/caja-registradora/ModalConfirmacionVenta';
+// import { ModalConfirmacionVenta } from '@/components/ventas/caja-registradora/ModalConfirmacionVenta';
+import dynamic from 'next/dynamic';
 import { IconCheck } from '@tabler/icons-react';
+
+const ModalConfirmacionVenta = dynamic(
+  () => import('@/components/ventas/caja-registradora/ModalConfirmacionVenta').then(mod => mod.ModalConfirmacionVenta),
+  { loading: () => null }
+);
 import { Icon } from '@iconify/react';
 
 import { type ArticuloCaja } from '@/components/ventas/caja-registradora/graphql/queries';
