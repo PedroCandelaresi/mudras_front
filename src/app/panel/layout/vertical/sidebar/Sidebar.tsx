@@ -10,7 +10,6 @@ import Typography from "@mui/material/Typography";
 import Link from 'next/link';
 
 import Scrollbar from "@/app/components/custom-scroll/Scrollbar";
-import { Profile } from "./SidebarProfile/Profile";
 import { useContext } from "react";
 
 const Sidebar = () => {
@@ -85,8 +84,8 @@ const Sidebar = () => {
               <Image
                 src={"/images/logo.svg"}
                 alt="Mudras"
-                width={80}
-                height={80}
+                width={140}
+                height={140}
                 style={{
                   marginBottom: '8px'
                 }}
@@ -158,9 +157,6 @@ const Sidebar = () => {
         <Scrollbar sx={{ flex: 1, minHeight: 0 }}>
           <SidebarItems />
         </Scrollbar>
-
-        {/* Perfil al pie */}
-        <Profile />
       </Box>
     </Drawer>
   );
@@ -202,8 +198,6 @@ const Sidebar = () => {
         <Scrollbar sx={{ flex: 1, minHeight: 0 }}>
           <SidebarItems />
         </Scrollbar>
-
-        <Profile />
       </Box>
     </Drawer>
   );
@@ -242,8 +236,6 @@ const Sidebar = () => {
         <Scrollbar sx={{ flex: 1, minHeight: 0 }}>
           <SidebarItems />
         </Scrollbar>
-
-        <Profile />
       </Box>
     </Drawer>
   );
