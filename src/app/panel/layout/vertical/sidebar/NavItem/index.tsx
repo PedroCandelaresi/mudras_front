@@ -56,7 +56,7 @@ export default function NavItem({
     display: "flex",
     alignItems: "center",
     "&:hover": {
-      backgroundColor: "rgba(0, 0, 0, 0.05)", // Subtle dark hover
+      backgroundColor: "rgba(0, 0, 0, 0.15)", // Darker hover
       color: "#000000",
     },
     "&.Mui-selected": {

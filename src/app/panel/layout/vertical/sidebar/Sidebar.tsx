@@ -129,14 +129,14 @@ const Sidebar = () => {
         '& .MuiDrawer-paper': {
           width: SidebarWidth,
           boxSizing: "border-box",
-          // Copper/Metallic Orange background
+          // Copper/Metallic Orange background (Lighter 20%)
           backgroundImage:
-            'linear-gradient(135deg, #FFB74D 0%, #EF6C00 100%), url("/textures/brushed-metal-1024.png")',
+            'linear-gradient(135deg, #FFE0B2 0%, #FB8C00 100%), url("/textures/brushed-metal-1024.png")',
           backgroundBlendMode: 'soft-light',
           backgroundSize: 'cover, cover',
           backgroundRepeat: 'no-repeat, repeat-y',
           backgroundPosition: 'center, center',
-          backgroundColor: '#EF6C00',
+          backgroundColor: '#FB8C00',
           borderRight: '1px solid rgba(0,0,0,0.1)',
           overflowX: "hidden",
           "&::-webkit-scrollbar": { display: "none" },
@@ -173,14 +173,14 @@ const Sidebar = () => {
         '& .MuiDrawer-paper': {
           width: SidebarWidth,
           boxSizing: "border-box",
-          // Copper/Metallic Orange background
+          // Copper/Metallic Orange background (Lighter 20%)
           backgroundImage:
-            'linear-gradient(135deg, #FFB74D 0%, #EF6C00 100%), url("/textures/brushed-metal-1024.png")',
+            'linear-gradient(135deg, #FFE0B2 0%, #FB8C00 100%), url("/textures/brushed-metal-1024.png")',
           backgroundBlendMode: 'soft-light',
           backgroundSize: 'cover, cover',
           backgroundRepeat: 'no-repeat, repeat-y',
           backgroundPosition: 'center, center',
-          backgroundColor: '#EF6C00',
+          backgroundColor: '#FB8C00',
           borderRight: '1px solid rgba(0,0,0,0.1)',
           overflowX: "hidden",
           "&::-webkit-scrollbar": { display: "none" },
@@ -214,14 +214,14 @@ const Sidebar = () => {
             width: SidebarWidth,
             border: "0 !important",
             boxShadow: (theme) => theme.shadows[8],
-            // Copper/Metallic Orange background
+            // Copper/Metallic Orange background (Lighter 20%)
             backgroundImage:
-              'linear-gradient(135deg, #FFB74D 0%, #EF6C00 100%), url("/textures/brushed-metal-1024.png")',
+              'linear-gradient(135deg, #FFE0B2 0%, #FB8C00 100%), url("/textures/brushed-metal-1024.png")',
             backgroundBlendMode: 'soft-light',
             backgroundSize: 'cover, cover',
             backgroundRepeat: 'no-repeat, repeat-y',
             backgroundPosition: 'center, center',
-            backgroundColor: '#EF6C00',
+            backgroundColor: '#FB8C00',
           },
         },
       }}

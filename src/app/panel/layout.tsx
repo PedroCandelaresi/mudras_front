@@ -8,6 +8,7 @@ import Sidebar from "./layout/vertical/sidebar/Sidebar";
 import Navigation from "./layout/horizontal/navbar/Navigation";
 import HorizontalHeader from "./layout/horizontal/header/Header";
 import { CustomizerContext } from "@/app/context/customizerContext";
+import config from '@/app/context/config';
 import { useRouter, usePathname } from "next/navigation";
 
 const MainWrapper = styled("div")(() => ({
@@ -132,7 +133,7 @@ export default function RootLayout({
         {activeLayout === 'horizontal' ? <Navigation /> : ""}
         <Container
           sx={{
-            paddingTop: "84px", // Espacio para topbar fija
+            paddingTop: `${config.topbarHeight + 30}px`, // Espacio para topbar fija
             maxWidth: isLayout === "boxed" ? "lg" : "100%!important",
           }}
         >
