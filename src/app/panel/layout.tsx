@@ -8,7 +8,6 @@ import Sidebar from "./layout/vertical/sidebar/Sidebar";
 import Navigation from "./layout/horizontal/navbar/Navigation";
 import HorizontalHeader from "./layout/horizontal/header/Header";
 import { CustomizerContext } from "@/app/context/customizerContext";
-import config from "@/app/context/config";
 import { useRouter, usePathname } from "next/navigation";
 
 const MainWrapper = styled("div")(() => ({
