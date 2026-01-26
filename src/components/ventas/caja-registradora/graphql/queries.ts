@@ -123,10 +123,10 @@ export const OBTENER_DETALLE_VENTA = gql`
       }
       cliente {
         id
-        Nombre
-        Apellido
-        Email
-        Telefono
+        nombre
+        apellido
+        email
+        telefono
       }
       usuarioAuth {
         id
@@ -168,8 +168,8 @@ export const OBTENER_DETALLE_VENTA = gql`
         numeroComprobante
         estado
         cae
-        fechaVencimientoCae
-        fechaEmision
+        vencimientoCae
+        creadoEn
         importeTotal
         urlPdf
         mensajeError
