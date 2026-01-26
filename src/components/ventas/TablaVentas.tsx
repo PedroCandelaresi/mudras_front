@@ -38,7 +38,7 @@ import {
   type ObtenerHistorialVentasResponse,
 } from "@/components/ventas/caja-registradora/graphql/queries";
 import SearchToolbar from "@/components/ui/SearchToolbar";
-import { ModalBase } from "@/ui/ModalBase";
+import ModalDetalleVenta from "./ModalDetalleVenta";
 
 export interface VentaListado {
   id: string;
@@ -474,14 +474,11 @@ export function TablaVentas() {
         )}
       </Menu>
 
-      <ModalBase
-        abierto={Boolean(ventaSeleccionada)}
-        titulo={`Venta #${ventaSeleccionada?.id ?? ''}`}
-        onCerrar={() => setVentaSeleccionada(null)}
-        cancelarTexto="Cerrar"
-      >
-        <Typography variant="body2" color="text.secondary">Detalle a implementar.</Typography>
-      </ModalBase>
+      <ModalDetalleVenta
+        open={Boolean(ventaSeleccionada)}
+        ventaId={ventaSeleccionada?.id || null}
+        onClose={() => setVentaSeleccionada(null)}
+      />
     </Paper>
   );
 }
