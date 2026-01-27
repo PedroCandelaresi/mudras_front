@@ -1,7 +1,6 @@
 import Box from "@mui/material/Box";
 import Drawer from "@mui/material/Drawer";
 import useMediaQuery from "@mui/material/useMediaQuery";
-import { useTheme } from "@mui/material/styles";
 import SidebarItems from "./SidebarItems";
 import { CustomizerContext } from "@/app/context/customizerContext";
 import config from '@/app/context/config';
@@ -24,8 +23,6 @@ const Sidebar = () => {
   } = useContext(CustomizerContext);
 
   const SidebarWidth = config.sidebarWidth;
-  const MiniSidebarWidth = config.miniSidebarWidth;
-  const theme = useTheme();
 
   // En escritorio distinguimos dos modos:
   // - Fijo (pinned): Drawer permanente que redimensiona el contenido.

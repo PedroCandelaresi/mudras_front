@@ -8,7 +8,7 @@ const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:4000
 
 const AuthSocialButtons = ({ title }: signInType) => (
   <>
-    <Stack direction="row" justifyContent="center" spacing={2} mt={3}>
+    {/* <Stack direction="row" justifyContent="center" spacing={2} mt={3}>
       <CustomSocialButton component="a" href={`${backendUrl.replace(/\/$/, '')}/auth/google`}>
         <Avatar
           src={"/images/svgs/google-icon.svg"}
@@ -31,7 +31,7 @@ const AuthSocialButtons = ({ title }: signInType) => (
         </Box>{" "}
         Instagram
       </CustomSocialButton>
-    </Stack>
+    </Stack> */}
   </>
 );
 
