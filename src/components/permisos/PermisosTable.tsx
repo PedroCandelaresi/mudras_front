@@ -23,7 +23,7 @@ export function PermisosTable({ onCrear, onEditar, onEliminar, refetchToken }: P
     fetchPolicy: 'network-only'
   });
 
-  const permisos = data?.permisos || [];
+  const permisos = useMemo(() => data?.permisos || [], [data]);
   const error = errorQuery?.message || null;
 
   useEffect(() => {

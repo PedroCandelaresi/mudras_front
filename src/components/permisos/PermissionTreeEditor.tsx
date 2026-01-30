@@ -150,13 +150,13 @@ const TreeNode: React.FC<TreeNodeProps> = ({ node, level, assignedPermissions, o
                     </IconButton>
                 )}
                 <Typography variant="body2" fontWeight={600} sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                    {level === 0 && <IconFolder size={16} color={azul.acento} />}
+                    {level === 0 && <IconFolder size={16} color={azul.primary} />}
                     {node.label}
                 </Typography>
             </Box>
 
             <Collapse in={open}>
-                <Box sx={{ ml: (hasChildren || hasFields) ? 3 : 0, p: 1, borderLeft: `1px solid ${grisNeutro.claro}`, bgcolor: alpha(azul.primary, 0.02) }}>
+                <Box sx={{ ml: (hasChildren || hasFields) ? 3 : 0, p: 1, borderLeft: `1px solid ${grisNeutro.borderInner}`, bgcolor: alpha(azul.primary, 0.02) }}>
 
                     {/* Actions Row */}
                     {hasActions && (
@@ -177,7 +177,7 @@ const TreeNode: React.FC<TreeNodeProps> = ({ node, level, assignedPermissions, o
                             </Typography>
                             <Grid container spacing={1}>
                                 {node.fields!.map(field => (
-                                    <Grid item key={field.permission}>
+                                    <Grid key={field.permission}>
                                         <FormControlLabel
                                             control={
                                                 <Checkbox
