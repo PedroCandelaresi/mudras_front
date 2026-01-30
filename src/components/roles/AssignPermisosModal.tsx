@@ -2,7 +2,7 @@
 import React, { useEffect, useState } from 'react';
 import { Dialog, DialogActions, DialogContent, DialogTitle, Button, Box } from '@mui/material';
 import type { RolItem, PermisoItem } from './RolesTable';
-import { azul } from '@/ui/colores';
+import { grisNeutro } from '@/ui/colores';
 import PermissionTreeEditor from '../permisos/PermissionTreeEditor';
 
 interface Props {
@@ -88,7 +88,7 @@ export function AssignPermisosModal({ open, rol, onClose, onSubmit, cargarPermis
       maxWidth="md"
       PaperProps={{ sx: { borderRadius: 0, border: '1px solid #e0e0e0', boxShadow: 'none', height: '80vh' } }}
     >
-      <DialogTitle sx={{ bgcolor: azul.headerBg, color: azul.headerText, borderBottom: `1px solid ${azul.headerBorder}`, fontWeight: 700 }}>
+      <DialogTitle sx={{ bgcolor: grisNeutro.headerBg, color: grisNeutro.headerText, borderBottom: `1px solid ${grisNeutro.headerBorder}`, fontWeight: 700 }}>
         Asignar permisos al rol: {rol?.name}
       </DialogTitle>
 
@@ -101,13 +101,13 @@ export function AssignPermisosModal({ open, rol, onClose, onSubmit, cargarPermis
         </Box>
       </DialogContent>
 
-      <DialogActions sx={{ p: 2, bgcolor: azul.toolbarBg, borderTop: `1px solid ${azul.toolbarBorder}` }}>
-        <Button onClick={onClose} sx={{ borderRadius: 0, fontWeight: 600, color: azul.textStrong }}>Cancelar</Button>
+      <DialogActions sx={{ p: 2, bgcolor: grisNeutro.toolbarBg, borderTop: `1px solid ${grisNeutro.toolbarBorder}` }}>
+        <Button onClick={onClose} sx={{ borderRadius: 0, fontWeight: 600, color: grisNeutro.textStrong }}>Cancelar</Button>
         <Button
           variant="contained"
           onClick={submit}
           disableElevation
-          sx={{ borderRadius: 0, fontWeight: 600, bgcolor: azul.primary, '&:hover': { bgcolor: azul.primaryHover } }}
+          sx={{ borderRadius: 0, fontWeight: 600, bgcolor: grisNeutro.primary, '&:hover': { bgcolor: grisNeutro.primaryHover } }}
         >
           Guardar Cambios
         </Button>

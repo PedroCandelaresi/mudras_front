@@ -37,6 +37,7 @@ import MenuItem from '@mui/material/MenuItem';
 import { calcularPrecioVenta, obtenerCostoReferencia } from '@/utils/precioVenta';
 import { OBTENER_PUNTOS_MUDRAS, OBTENER_STOCK_PUNTO_MUDRAS, BUSCAR_ARTICULOS_PARA_ASIGNACION } from '@/components/puntos-mudras/graphql/queries';
 import { MODIFICAR_STOCK_PUNTO } from '@/components/puntos-mudras/graphql/mutations';
+import { usePermisos } from '@/lib/permisos';
 
 type FormState = {
   descripcion: string;
@@ -138,6 +139,12 @@ const IVA_OPTIONS: IvaOption[] = ['0', '10.5', '21'];
 
 const ModalNuevoArticulo = ({ open, onClose, articulo, onSuccess, accentColor }: ModalNuevoArticuloProps) => {
   const COLORS = useMemo(() => makeColors(accentColor), [accentColor]);
+
+  const { tienePermiso } = usePermisos();
+  const canEditInfo = tienePermiso('productos:update:info');
+  const canEditPrecios = tienePermiso('productos:update:precios');
+  const canEditCostos = tienePermiso('productos:update:costos');
+  const canEditStock = tienePermiso('productos:update:stock');
 
   const [form, setForm] = useState<FormState>(INITIAL_STATE);
   const [modalUploadOpen, setModalUploadOpen] = useState(false);
@@ -783,6 +790,7 @@ const ModalNuevoArticulo = ({ open, onClose, articulo, onSuccess, accentColor }:
                 // Si se quiere bloquear en edición, usar: disabled={editando}
                 // El usuario pidió ingresar cantidad inicial, así que lo habilitamos.
                 helperText="Stock global inicial"
+                disabled={!canEditStock}
                 sx={{
                   '& .MuiOutlinedInput-root': {
                     borderRadius: 0,
