@@ -65,7 +65,7 @@ export default function ArticulosPage() {
                   { key: 'estado', header: 'Estado', filterable: true, width: 200 },
                   { key: 'acciones', header: 'Acciones', width: 180 },
                 ]}
-                initialServerFilters={{ pagina: 0, limite: 50, ordenarPor: 'Descripcion', direccionOrden: 'ASC' }}
+                initialServerFilters={{ pagina: 0, limite: 150, ordenarPor: 'Descripcion', direccionOrden: 'ASC' }}
                 onEdit={(a) => {
                   setArticuloSeleccionado(a);
                   setModalNuevoOpen(true);
