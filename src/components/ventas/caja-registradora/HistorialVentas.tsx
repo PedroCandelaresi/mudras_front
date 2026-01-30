@@ -70,7 +70,7 @@ const ESTADOS_VENTA = [
 export const HistorialVentas: React.FC = () => {
   const [filtros, setFiltros] = useState<FiltrosHistorialInput>({
     pagina: 1,
-    limite: 10,
+    limite: 150,
   });
   const [ventaSeleccionada, setVentaSeleccionada] = useState<VentaCaja | null>(null);
   const [modalDetalleAbierto, setModalDetalleAbierto] = useState(false);
@@ -332,7 +332,7 @@ export const HistorialVentas: React.FC = () => {
                   <TableBody>
                     {ventas.map((venta: VentaCaja) => {
                       const estadoConfig = obtenerEstadoChip(venta.estado);
-                      
+
                       return (
                         <TableRow key={venta.id} hover>
                           <TableCell>
@@ -340,13 +340,13 @@ export const HistorialVentas: React.FC = () => {
                               {venta.numeroVenta}
                             </Typography>
                           </TableCell>
-                          
+
                           <TableCell>
                             <Typography variant="body2">
                               {formatearFecha(venta.fecha)}
                             </Typography>
                           </TableCell>
-                          
+
                           <TableCell>
                             <Typography variant="body2" color={venta.cliente ? 'inherit' : 'text.secondary'}>
                               {venta.cliente
@@ -354,13 +354,13 @@ export const HistorialVentas: React.FC = () => {
                                 : 'Sin cliente'}
                             </Typography>
                           </TableCell>
-                          
+
                           <TableCell>
                             <Typography variant="body2">
                               {venta.puestoVenta?.nombre ?? venta.nombrePuesto ?? '—'}
                             </Typography>
                           </TableCell>
-                          
+
                           <TableCell>
                             <Chip
                               label={estadoConfig.label}
@@ -368,13 +368,13 @@ export const HistorialVentas: React.FC = () => {
                               size="small"
                             />
                           </TableCell>
-                          
+
                           <TableCell align="right">
                             <Typography variant="body2" fontWeight="bold">
                               ${venta.total.toFixed(2)}
                             </Typography>
                           </TableCell>
-                          
+
                           <TableCell align="center">
                             <IconButton
                               size="small"
@@ -395,9 +395,9 @@ export const HistorialVentas: React.FC = () => {
                 count={totalRegistros}
                 page={(filtros.pagina || 1) - 1}
                 onPageChange={handlePaginaChange}
-                rowsPerPage={filtros.limite || 10}
+                rowsPerPage={filtros.limite || 150}
                 onRowsPerPageChange={handleLimiteChange}
-                rowsPerPageOptions={[5, 10, 25, 50]}
+                rowsPerPageOptions={[50, 100, 150, 300, 500]}
                 labelRowsPerPage="Filas por página:"
                 labelDisplayedRows={({ from, to, count }) =>
                   `${from}-${to} de ${count !== -1 ? count : `más de ${to}`}`

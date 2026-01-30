@@ -167,8 +167,8 @@ const numberFormatter = new Intl.NumberFormat('es-AR', { maximumFractionDigits: 
 const TablaArticulos: React.FC<ArticulosTableProps> = ({
   columns,
   title = 'Artículos',
-  rowsPerPageOptions = [50, 100, 150],
-  defaultPageSize = 50,
+  rowsPerPageOptions = [50, 100, 150, 300, 500],
+  defaultPageSize = 150,
   initialServerFilters,
   controlledFilters,
   onFiltersChange,

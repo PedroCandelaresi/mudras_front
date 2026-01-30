@@ -652,12 +652,10 @@ const ModalNuevoArticulo = ({ open, onClose, articulo, onSuccess, accentColor }:
                 value={selectedProveedor ?? null}
                 inputValue={proveedorInput}
                 onInputChange={(_, val) => {
-                  if (val === proveedorInput) return;
                   setProveedorInput(val);
                 }}
                 onChange={(_, val) => {
                   setForm((prev) => ({ ...prev, idProveedor: val ? String(val.IdProveedor) : '' }));
-                  setProveedorInput(val ? (val.Nombre || `Proveedor #${val.IdProveedor}`) : '');
                 }}
                 getOptionLabel={(option) => option.Nombre || `Proveedor #${option.IdProveedor}`}
                 isOptionEqualToValue={(opt, val) => opt.IdProveedor === val.IdProveedor}

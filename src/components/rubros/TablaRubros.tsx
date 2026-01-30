@@ -21,6 +21,7 @@ import {
   Menu,
   Divider,
   Button,
+  MenuItem,
 } from '@mui/material';
 import { alpha } from '@mui/material/styles';
 import { useMemo, useState } from 'react';
@@ -76,7 +77,7 @@ type ColFilters = Partial<Record<ColKey, string>>;
 const TablaRubros: React.FC<Props> = ({ onNuevoRubro, puedeCrear = true }) => {
   /* ---------- Estado de tabla / filtros ---------- */
   const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(50);
+  const [rowsPerPage, setRowsPerPage] = useState(150);
 
   // Buscador general (input) y aplicado (filtro)
   const [filtroInput, setFiltroInput] = useState('');
@@ -532,7 +533,7 @@ const TablaRubros: React.FC<Props> = ({ onNuevoRubro, puedeCrear = true }) => {
       </Typography>
       <Stack direction="row" spacing={1} alignItems="center">
         <TextField select size="small" value={String(rowsPerPage)} onChange={handleChangeRowsPerPage} sx={{ minWidth: 80 }}>
-          {[50, 100, 150].map((option) => (<option key={option} value={option}>{option}</option>))}
+          {[50, 100, 150, 300, 500].map((option) => (<MenuItem key={option} value={option}>{option}</MenuItem>))}
         </TextField>
         <Typography variant="body2" color="text.secondary">
           Página {paginaActual} de {Math.max(1, totalPaginas)}

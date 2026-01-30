@@ -7,7 +7,7 @@ import {
   Paper,
   Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
   Typography, Avatar, Skeleton, TextField, InputAdornment, Button,
-  IconButton, Tooltip, Menu, Divider, Stack
+  IconButton, Tooltip, Menu, Divider, Stack, MenuItem
 } from '@mui/material';
 import { alpha } from '@mui/material/styles';
 import { useQuery } from '@apollo/client/react';
@@ -74,7 +74,7 @@ const TablaProveedores = forwardRef<TablaProveedoresHandle, Props>(({
 
   // estado tabla
   const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(50);
+  const [rowsPerPage, setRowsPerPage] = useState(150);
   const [filtro, setFiltro] = useState('');
 
   // filtros por columna
@@ -519,7 +519,7 @@ const TablaProveedores = forwardRef<TablaProveedoresHandle, Props>(({
       </Typography>
       <Stack direction="row" spacing={1} alignItems="center">
         <TextField select size="small" value={String(rowsPerPage)} onChange={handleChangeRowsPerPage} sx={{ minWidth: 80 }}>
-          {[50, 100, 150].map((option) => (<option key={option} value={option}>{option}</option>))}
+          {[50, 100, 150, 300, 500].map((option) => (<MenuItem key={option} value={option}>{option}</MenuItem>))}
         </TextField>
         <Typography variant="body2" color="text.secondary">
           Página {paginaActual} de {Math.max(1, totalPaginas)}

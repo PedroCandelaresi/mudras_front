@@ -80,7 +80,7 @@ export const TablaArticulosCapturados: React.FC<TablaArticulosCapturadosProps> =
   onToggleSeleccionTodos,
 }) => {
   const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(25);
+  const [rowsPerPage, setRowsPerPage] = useState(150);
   const [editando, setEditando] = useState<number | null>(null);
   const [cantidadTemporal, setCantidadTemporal] = useState<string>('');
 
@@ -359,7 +359,7 @@ export const TablaArticulosCapturados: React.FC<TablaArticulosCapturadosProps> =
         onPageChange={handleChangePage}
         rowsPerPage={rowsPerPage}
         onRowsPerPageChange={handleChangeRowsPerPage}
-        rowsPerPageOptions={[10, 25, 50, 100]}
+        rowsPerPageOptions={[50, 100, 150, 300, 500]}
         labelRowsPerPage="Filas por página"
         sx={{ mt: 'auto', borderTop: `1px solid ${grisRojizo.borderInner}` }}
       />

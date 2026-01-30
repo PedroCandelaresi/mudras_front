@@ -37,7 +37,7 @@ interface ModalDetallesProveedorProps {
 }
 
 /* ======================== Utils ======================== */
-const PAGINAS_OPCIONES = [20, 50, 100];
+const PAGINAS_OPCIONES = [50, 100, 150, 300, 500];
 type ColumnasTablaArticulos = ComponentProps<typeof TablaArticulos>['columns'];
 type FiltrosTablaControlados = NonNullable<ComponentProps<typeof TablaArticulos>['controlledFilters']>;
 type TablaArticulosOnDataLoaded = NonNullable<ComponentProps<typeof TablaArticulos>['onDataLoaded']>;
@@ -119,7 +119,7 @@ const ModalDetallesProveedor = ({ open, onClose, proveedor, accentColor }: Modal
   // Estado de filtros/paginación (igual al patrón de ModalDetallesRubro)
   const [filtroInput, setFiltroInput] = useState('');
   const [busquedaPersonalizada, setBusquedaPersonalizada] = useState('');
-  const [paginacion, setPaginacion] = useState({ pagina: 0, limite: PAGINAS_OPCIONES[0] });
+  const [paginacion, setPaginacion] = useState({ pagina: 0, limite: 150 });
   const { pagina, limite } = paginacion;
   const [estadoTabla, setEstadoTabla] = useState<EstadoTabla>({ total: 0, loading: false, error: undefined });
   const [reloadKey, setReloadKey] = useState(0);

@@ -50,7 +50,7 @@ export default function TablaPuntosMudras({ tipo, onEditarPunto, onVerInventario
   const [modalEliminarAbierto, setModalEliminarAbierto] = useState(false);
   const [eliminando, setEliminando] = useState(false);
   const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(50);
+  const [rowsPerPage, setRowsPerPage] = useState(150);
   const [snack, setSnack] = useState<{ open: boolean; msg: string; sev: 'success' | 'error' | 'info' }>({ open: false, msg: '', sev: 'success' });
 
   // Tema de colores
@@ -353,7 +353,7 @@ export default function TablaPuntosMudras({ tipo, onEditarPunto, onVerInventario
             sx={{ minWidth: 80 }}
             InputProps={{ sx: { borderRadius: 0, fontSize: '0.875rem' } }}
           >
-            {[10, 25, 50, 100].map((option) => (
+            {[50, 100, 150, 300, 500].map((option) => (
               <MenuItem key={option} value={option}>
                 {option}
               </MenuItem>

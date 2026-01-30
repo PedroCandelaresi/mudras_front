@@ -20,6 +20,7 @@ import {
   Tooltip,
   Typography,
   InputAdornment,
+  MenuItem,
 } from "@mui/material";
 import {
   IconDotsVertical,
@@ -67,7 +68,7 @@ const formatInArgentina = (
 
 export function TablaVentas() {
   const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(50);
+  const [rowsPerPage, setRowsPerPage] = useState(150);
   const [busqueda, setBusqueda] = useState("");
   const [menuAnchor, setMenuAnchor] = useState<null | HTMLElement>(null);
   const [columnaActiva, setColumnaActiva] = useState<
@@ -349,10 +350,10 @@ export function TablaVentas() {
               }
             }}
           >
-            {[50, 100, 150].map((option) => (
-              <option key={option} value={option}>
+            {[50, 100, 150, 300, 500].map((option) => (
+              <MenuItem key={option} value={option}>
                 {option}
-              </option>
+              </MenuItem>
             ))}
           </TextField>
         </Box>

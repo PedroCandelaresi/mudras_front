@@ -33,7 +33,7 @@ interface ModalDetallesRubroProps {
   accentColor?: string;
 }
 
-const PAGINAS_OPCIONES = [20, 50, 100];
+const PAGINAS_OPCIONES = [50, 100, 150, 300, 500];
 type ColumnasTablaArticulos = ComponentProps<typeof TablaArticulos>['columns'];
 type FiltrosTablaControlados = NonNullable<ComponentProps<typeof TablaArticulos>['controlledFilters']>;
 type TablaArticulosOnDataLoaded = NonNullable<ComponentProps<typeof TablaArticulos>['onDataLoaded']>;
@@ -57,7 +57,7 @@ const ModalDetallesRubro = ({ open, onClose, rubro, accentColor }: ModalDetalles
   const [filtroInput, setFiltroInput] = useState('');
   const [busquedaPersonalizada, setBusquedaPersonalizada] = useState('');
   const [proveedorSeleccionadoId, setProveedorSeleccionadoId] = useState<number | null>(null);
-  const [paginacion, setPaginacion] = useState({ pagina: 0, limite: PAGINAS_OPCIONES[0] });
+  const [paginacion, setPaginacion] = useState({ pagina: 0, limite: 150 });
   const { pagina, limite } = paginacion;
 
   const rubroId = rubro?.id ?? null;

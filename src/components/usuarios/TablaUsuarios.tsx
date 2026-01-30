@@ -92,7 +92,7 @@ interface Props {
 const TablaUsuarios: React.FC<Props> = () => {
   /* ---------- Estado de tabla / filtros ---------- */
   const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(50);
+  const [rowsPerPage, setRowsPerPage] = useState(150);
 
   // Filtros
   const [filtroInput, setFiltroInput] = useState('');
@@ -476,7 +476,7 @@ const TablaUsuarios: React.FC<Props> = () => {
           onPageChange={(_, p) => setPage(p)}
           rowsPerPage={rowsPerPage}
           onRowsPerPageChange={(e) => { setRowsPerPage(parseInt(e.target.value, 10)); setPage(0); }}
-          rowsPerPageOptions={[10, 20, 50]}
+          rowsPerPageOptions={[50, 100, 150, 300, 500]}
         />
       </Box>
 
