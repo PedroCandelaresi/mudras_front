@@ -5,7 +5,7 @@ import { useQuery } from '@apollo/client/react';
 import { OBTENER_ROLES_QUERY } from '@/components/usuarios/graphql/queries';
 import { Box, Chip, CircularProgress, IconButton, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Tooltip, TextField, Button, Popover, Divider, Stack, Typography, Alert } from '@mui/material';
 import { IconAdjustments, IconPlus, IconAlertTriangle } from '@tabler/icons-react';
-import { azul } from '@/ui/colores';
+import { grisNeutro, azul } from '@/ui/colores';
 
 import SearchToolbar from '@/components/ui/SearchToolbar';
 
@@ -85,16 +85,16 @@ export function RolesTable({ onAsignarPermisos, onCrear, refetchToken }: Props) 
         sx={{
           px: 1,
           py: 1,
-          bgcolor: azul.toolbarBg,
+          bgcolor: grisNeutro.toolbarBg,
           border: '1px solid',
-          borderColor: azul.toolbarBorder,
+          borderColor: grisNeutro.toolbarBorder,
           borderRadius: 1,
           mb: 2,
         }}
       >
         <SearchToolbar
           title="Roles"
-          baseColor={azul.primary}
+          baseColor={grisNeutro.primary}
           placeholder="Buscar rol (nombre o slug)"
           searchValue={busquedaInput}
           onSearchValueChange={setBusquedaInput}
@@ -127,17 +127,17 @@ export function RolesTable({ onAsignarPermisos, onCrear, refetchToken }: Props) 
       <TableContainer sx={{ borderRadius: 0, border: '1px solid #e0e0e0', bgcolor: '#fff', boxShadow: 'none' }}>
         <Table stickyHeader size="small" sx={{
           '& .MuiTableCell-head': {
-            bgcolor: azul.tableHeader,
+            bgcolor: grisNeutro.tableHeader,
             color: '#ffffff',
             fontWeight: 700,
             textTransform: 'uppercase',
             letterSpacing: '0.5px'
           },
           '& .MuiTableBody-root .MuiTableRow-root:nth-of-type(even)': {
-            bgcolor: azul.tableStriped,
+            bgcolor: grisNeutro.tableStriped,
           },
           '& .MuiTableBody-root .MuiTableRow-root:hover': {
-            bgcolor: azul.rowHover,
+            bgcolor: grisNeutro.rowHover,
           }
         }}>
           <TableHead>
@@ -182,7 +182,7 @@ export function RolesTable({ onAsignarPermisos, onCrear, refetchToken }: Props) 
                 </TableCell>
                 <TableCell align="center" sx={{ borderBottom: '1px solid #e0e0e0' }}>
                   <Tooltip title="Asignar permisos">
-                    <IconButton onClick={() => onAsignarPermisos(r)} sx={{ color: azul.primary }}>
+                    <IconButton onClick={() => onAsignarPermisos(r)} sx={{ color: grisNeutro.primary }}>
                       <IconAdjustments size={18} />
                     </IconButton>
                   </Tooltip>

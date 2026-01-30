@@ -238,11 +238,11 @@ const TablaUsuarios: React.FC<Props> = () => {
           sx={{
             borderRadius: 0,
             textTransform: 'none',
-            bgcolor: azul.primary,
+            bgcolor: grisNeutro.primary, // Neutral Gray
             fontWeight: 600,
             px: 3,
             py: 1,
-            '&:hover': { bgcolor: azul.primaryHover }
+            '&:hover': { bgcolor: grisNeutro.primaryHover }
           }}
         >
           Nuevo Usuario
@@ -275,7 +275,7 @@ const TablaUsuarios: React.FC<Props> = () => {
               bgcolor: '#f5f5f5',
               '& fieldset': { borderColor: '#e0e0e0' },
               '&:hover fieldset': { borderColor: '#bdbdbd' },
-              '&.Mui-focused fieldset': { borderColor: azul.primary },
+              '&.Mui-focused fieldset': { borderColor: grisNeutro.primary },
             }
           }}
         />
@@ -330,15 +330,15 @@ const TablaUsuarios: React.FC<Props> = () => {
             color: '#37474f',
           },
           '& .MuiTableBody-root .MuiTableRow-root:nth-of-type(even)': {
-            bgcolor: azul.tableStriped,
+            bgcolor: grisNeutro.tableStriped,
           },
           '& .MuiTableBody-root .MuiTableRow-root:hover': {
-            bgcolor: alpha(azul.primary, 0.12),
+            bgcolor: alpha(grisNeutro.primary, 0.12),
           },
           '& .MuiTableCell-head': {
             fontSize: '0.8rem',
             fontWeight: 700,
-            bgcolor: azul.tableHeader,
+            bgcolor: grisNeutro.tableHeader, // Neutral Header
             color: '#ffffff',
             textTransform: 'uppercase',
             letterSpacing: '0.5px',
@@ -440,12 +440,12 @@ const TablaUsuarios: React.FC<Props> = () => {
                 <TableCell align="center">
                   <Box display="flex" justifyContent="center" gap={0.5}>
                     <Tooltip title="Editar">
-                      <IconButton size="small" onClick={() => handleEditarUsuario(u)} sx={{ color: azul.primary }}>
+                      <IconButton size="small" onClick={() => handleEditarUsuario(u)} sx={{ color: grisNeutro.primary }}>
                         <IconEdit size={20} />
                       </IconButton>
                     </Tooltip>
                     <Tooltip title="Asignar Roles">
-                      <IconButton size="small" onClick={() => handleRolesUsuario(u)} sx={{ color: azul.textStrong }}>
+                      <IconButton size="small" onClick={() => handleRolesUsuario(u)} sx={{ color: grisNeutro.textStrong }}>
                         <IconUserShield size={20} />
                       </IconButton>
                     </Tooltip>

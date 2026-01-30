@@ -5,7 +5,7 @@ import { useQuery } from '@apollo/client/react';
 import { OBTENER_PERMISOS_QUERY } from '@/components/usuarios/graphql/queries';
 import { Box, Button, Chip, CircularProgress, IconButton, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Tooltip, TextField, Typography, Menu, Divider, Stack, Alert } from '@mui/material';
 import { IconEdit, IconTrash, IconSearch, IconAlertTriangle } from '@tabler/icons-react';
-import { azul } from '@/ui/colores';
+import { grisNeutro } from '@/ui/colores';
 import SearchToolbar from '@/components/ui/SearchToolbar';
 
 export interface PermisoListado { id: string; resource: string; action: string; description?: string | null }
@@ -74,7 +74,7 @@ export function PermisosTable({ onCrear, onEditar, onEliminar, refetchToken }: P
       >
         <SearchToolbar
           title="Permisos"
-          baseColor={azul.primary}
+          baseColor={grisNeutro.primary}
           placeholder="Buscar (recurso:acción, descripción)"
           searchValue={busqueda}
           onSearchValueChange={setBusqueda}
@@ -107,17 +107,17 @@ export function PermisosTable({ onCrear, onEditar, onEliminar, refetchToken }: P
       <TableContainer sx={{ borderRadius: 0, border: '1px solid #e0e0e0', bgcolor: '#fff', boxShadow: 'none' }}>
         <Table stickyHeader size="small" sx={{
           '& .MuiTableCell-head': {
-            bgcolor: azul.tableHeader,
+            bgcolor: grisNeutro.tableHeader,
             color: '#ffffff',
             fontWeight: 700,
             textTransform: 'uppercase',
             letterSpacing: '0.5px'
           },
           '& .MuiTableBody-root .MuiTableRow-root:nth-of-type(even)': {
-            bgcolor: azul.tableStriped,
+            bgcolor: grisNeutro.tableStriped,
           },
           '& .MuiTableBody-root .MuiTableRow-root:hover': {
-            bgcolor: azul.rowHover,
+            bgcolor: grisNeutro.rowHover,
           }
         }}>
           <TableHead>
@@ -155,7 +155,7 @@ export function PermisosTable({ onCrear, onEditar, onEliminar, refetchToken }: P
                 <TableCell align="center" sx={{ borderBottom: '1px solid #e0e0e0' }}>
                   <Box display="flex" justifyContent="center" gap={0.5}>
                     <Tooltip title="Editar">
-                      <IconButton onClick={() => onEditar?.(p)} sx={{ color: azul.primary }}>
+                      <IconButton onClick={() => onEditar?.(p)} sx={{ color: grisNeutro.primary }}>
                         <IconEdit size={18} />
                       </IconButton>
                     </Tooltip>
@@ -205,7 +205,7 @@ export function PermisosTable({ onCrear, onEditar, onEliminar, refetchToken }: P
             />
             <Stack direction="row" justifyContent="flex-end" spacing={1} mt={1}>
               <Button size="small" onClick={() => { setFiltroColInput(''); setFiltrosColumna((prev) => ({ ...prev, [columnaActiva!]: '' })); }} sx={{ borderRadius: 0 }}>Limpiar</Button>
-              <Button size="small" variant="contained" sx={{ borderRadius: 0, bgcolor: azul.primary, '&:hover': { bgcolor: azul.primaryHover } }} onClick={() => {
+              <Button size="small" variant="contained" sx={{ borderRadius: 0, bgcolor: grisNeutro.primary, '&:hover': { bgcolor: grisNeutro.primaryHover } }} onClick={() => {
                 setFiltrosColumna((prev) => ({ ...prev, [columnaActiva!]: filtroColInput }));
                 setMenuAnchor(null);
                 setColumnaActiva(null);
