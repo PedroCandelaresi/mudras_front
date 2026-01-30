@@ -862,7 +862,7 @@ const TablaArticulos: React.FC<ArticulosTableProps> = ({
           onChange={handleChangeRowsPerPage}
           sx={{ minWidth: 80 }}
         >
-          {[50, 100, 150].map((option) => (
+          {rowsPerPageOptions.map((option) => (
             <MenuItem key={option} value={option}>
               {option}
             </MenuItem>
