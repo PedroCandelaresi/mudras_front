@@ -128,7 +128,7 @@ export const ModalConfirmacionVenta: React.FC<ModalConfirmacionVentaProps> = ({
       setCargandoUsuarios(true);
       setErrorUsuarios(null);
 
-      const { data } = await obtenerUsuarios({ variables: { rolSlug: 'caja_registradora' } });
+      const { data } = await obtenerUsuarios();
       const opciones = (data?.usuariosCajaAuth || [])
         .map((item) => {
           const etiqueta = item.displayName?.trim() || item.username?.trim() || item.email?.trim() || `Usuario ${item.id.substring(0, 6)}`;
