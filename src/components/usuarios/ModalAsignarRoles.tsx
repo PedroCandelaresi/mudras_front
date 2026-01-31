@@ -8,15 +8,18 @@ import {
   DialogTitle,
   Button,
   FormControlLabel,
-  Checkbox,
+  Switch,
   Box,
   CircularProgress,
   Typography,
-  Chip
+  Chip,
+  Paper,
+  Divider
 } from '@mui/material';
-import { IconUserShield } from '@tabler/icons-react';
+import { alpha } from '@mui/material/styles';
+import { IconUserShield, IconCircleCheck } from '@tabler/icons-react';
 import { useQuery, useMutation } from '@apollo/client/react';
-import { azul } from '@/ui/colores';
+import { grisNeutro, azul } from '@/ui/colores';
 import { UsuarioListado } from './TablaUsuarios';
 import { ASIGNAR_ROLES_USUARIO_ADMIN_MUTATION, OBTENER_ROLES_QUERY } from './graphql/mutations';
 
@@ -75,7 +78,7 @@ export default function ModalAsignarRoles({ open, usuario, onClose, onSuccess }:
       onClose();
     } catch (err: any) {
       console.error('Error asignando roles:', err);
-      alert('Error al asignar roles: ' + (err.message || 'Desconocido'));
+      // alert('Error al asignar roles: ' + (err.message || 'Desconocido')); // Mejor manejo por snackbar externo o UI state
     }
   };
 
@@ -88,77 +91,109 @@ export default function ModalAsignarRoles({ open, usuario, onClose, onSuccess }:
       PaperProps={{
         sx: {
           borderRadius: 0,
-          border: `1px solid ${azul.borderOuter}`,
-          boxShadow: '0 4px 20px rgba(0,0,0,0.1)'
+          border: `1px solid ${grisNeutro.borderOuter}`,
+          boxShadow: 'none'
         }
       }}
     >
       <DialogTitle
         sx={{
-          bgcolor: azul.headerBg,
-          color: azul.headerText,
-          borderBottom: `1px solid ${azul.headerBorder}`,
+          bgcolor: grisNeutro.headerBg,
+          color: grisNeutro.headerText,
+          borderBottom: `1px solid ${grisNeutro.headerBorder}`,
           fontWeight: 700,
           display: 'flex',
           alignItems: 'center',
-          gap: 1.5
+          gap: 1.5,
+          py: 2
         }}
       >
         <IconUserShield size={24} />
-        Asignar Roles
+        <Box>
+          Asignar Roles
+          <Typography variant="caption" display="block" sx={{ fontWeight: 400, opacity: 0.8, fontSize: '0.8rem' }}>
+            Define qué funciones puede realizar este usuario.
+          </Typography>
+        </Box>
       </DialogTitle>
 
-      <DialogContent sx={{ p: 3, pt: 3 }}>
-        <Box mb={2}>
+      <DialogContent sx={{ p: 0, bgcolor: '#fafafa' }}>
+        <Box sx={{ p: 2, mb: 1, bgcolor: '#fff', borderBottom: '1px solid #eee' }}>
           <Typography variant="body2" color="text.secondary">
-            Usuario: <strong>{usuario?.username || usuario?.email}</strong>
+            Usuario seleccionado:
+          </Typography>
+          <Typography variant="subtitle1" fontWeight={600} color={grisNeutro.textStrong}>
+            {usuario?.displayName || usuario?.username}
+          </Typography>
+          <Typography variant="caption" color="text.secondary">
+            {usuario?.email}
           </Typography>
         </Box>
 
-        {rolesLoading ? (
-          <Box display="flex" justifyContent="center" p={3}>
-            <CircularProgress size={24} sx={{ color: azul.primary }} />
-          </Box>
-        ) : (
-          <Box display="flex" flexDirection="column" gap={1}>
-            {rolesData?.roles?.map((r) => (
-              <Box
-                key={r.id}
-                sx={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  p: 1,
-                  border: '1px solid #eee',
-                  bgcolor: seleccion[r.slug] ? '#f5f5f5' : 'transparent',
-                  transition: 'background-color 0.2s'
-                }}
-              >
-                <Checkbox
-                  checked={!!seleccion[r.slug]}
-                  onChange={() => toggle(r.slug)}
-                  sx={{
-                    color: azul.primary,
-                    '&.Mui-checked': { color: azul.primary }
-                  }}
-                />
-                <Box>
-                  <Typography variant="body2" fontWeight={600}>{r.nombre}</Typography>
-                  <Typography variant="caption" color="text.secondary">{r.slug}</Typography>
-                </Box>
-                {seleccion[r.slug] && (
-                  <Chip label="Asignado" size="small" sx={{ ml: 'auto', bgcolor: azul.chipBg, color: azul.chipText, fontWeight: 700, borderRadius: 0 }} />
-                )}
-              </Box>
-            ))}
-            {rolesData?.roles?.length === 0 && (
-              <Typography variant="body2" color="text.secondary">No hay roles disponibles.</Typography>
-            )}
-          </Box>
-        )}
+        <Box sx={{ p: 2, maxHeight: 400, overflowY: 'auto' }}>
+          {rolesLoading ? (
+            <Box display="flex" justifyContent="center" p={3}>
+              <CircularProgress size={24} sx={{ color: grisNeutro.primary }} />
+            </Box>
+          ) : (
+            <Box display="flex" flexDirection="column" gap={1.5}>
+              {rolesData?.roles?.map((r) => {
+                const active = seleccion[r.slug];
+                return (
+                  <Paper
+                    key={r.id}
+                    variant="outlined"
+                    onClick={() => toggle(r.slug)}
+                    sx={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      p: 2,
+                      borderRadius: 0,
+                      cursor: 'pointer',
+                      borderColor: active ? azul.primary : 'divider',
+                      bgcolor: active ? alpha(azul.primary, 0.04) : '#ffffff',
+                      transition: 'all 0.2s',
+                      '&:hover': {
+                        borderColor: active ? azul.primary : '#ccc',
+                        bgcolor: active ? alpha(azul.primary, 0.08) : '#f9f9f9',
+                      }
+                    }}
+                  >
+                    <Box sx={{ flex: 1 }}>
+                      <Box display="flex" alignItems="center" gap={1} mb={0.5}>
+                        <Typography variant="subtitle2" fontWeight={700} color={active ? azul.primary : 'text.primary'}>
+                          {r.nombre}
+                        </Typography>
+                        <Chip
+                          label={r.slug}
+                          size="small"
+                          sx={{
+                            height: 20,
+                            fontSize: '0.7rem',
+                            borderRadius: 0,
+                            bgcolor: '#eee',
+                            color: '#666'
+                          }}
+                        />
+                      </Box>
+                      <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.85rem' }}>
+                        Permite acceso a funciones de {r.nombre.toLowerCase()}.
+                      </Typography>
+                    </Box>
+                    <Switch checked={!!active} sx={{ '& .MuiSwitch-switchBase.Mui-checked': { color: azul.primary }, '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': { backgroundColor: azul.primary } }} />
+                  </Paper>
+                );
+              })}
+              {rolesData?.roles?.length === 0 && (
+                <Typography variant="body2" color="text.secondary" align="center">No hay roles disponibles.</Typography>
+              )}
+            </Box>
+          )}
+        </Box>
       </DialogContent>
 
-      <DialogActions sx={{ p: 2, bgcolor: azul.toolbarBg, borderTop: `1px solid ${azul.toolbarBorder}` }}>
-        <Button onClick={onClose} sx={{ borderRadius: 0, fontWeight: 600, color: azul.textStrong }}>
+      <DialogActions sx={{ p: 2, bgcolor: grisNeutro.toolbarBg, borderTop: `1px solid ${grisNeutro.toolbarBorder}` }}>
+        <Button onClick={onClose} sx={{ borderRadius: 0, fontWeight: 600, color: grisNeutro.textStrong }}>
           Cancelar
         </Button>
         <Button
@@ -169,11 +204,11 @@ export default function ModalAsignarRoles({ open, usuario, onClose, onSuccess }:
           sx={{
             borderRadius: 0,
             fontWeight: 600,
-            bgcolor: azul.primary,
-            '&:hover': { bgcolor: azul.primaryHover }
+            bgcolor: grisNeutro.primary,
+            '&:hover': { bgcolor: grisNeutro.primaryHover }
           }}
         >
-          {saving ? 'Guardando...' : 'Guardar Roles'}
+          {saving ? 'Guardando...' : 'Confirmar Roles'}
         </Button>
       </DialogActions>
     </Dialog>

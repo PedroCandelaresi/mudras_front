@@ -348,6 +348,9 @@ export const grisNeutro = {
   actionHover: '#bdbdbd',
   tableHeader: '#757575',
   tableStriped: '#fafafa',
+  textWeak: '#757575',
+  icon: '#616161',
+  borderInput: '#bdbdbd',
 };
 
 export type PaletaGrisNeutro = typeof grisNeutro;
