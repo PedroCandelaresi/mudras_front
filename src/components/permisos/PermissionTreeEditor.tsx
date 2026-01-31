@@ -284,26 +284,52 @@ const PermissionTreeEditor: React.FC<EditorProps> = ({ assignedPermissions, onTo
     };
 
     return (
-        <Box sx={{
-            bgcolor: '#ffffff',
-            borderRadius: 0,
-            border: `1px solid ${grisNeutro.borderOuter}`,
-            maxHeight: '65vh',
-            overflowY: 'auto',
-            '&::-webkit-scrollbar': { width: '6px' },
-            '&::-webkit-scrollbar-track': { background: '#f5f5f5' },
-            '&::-webkit-scrollbar-thumb': { background: '#ccc', borderRadius: '3px' }
-        }}>
-            {SITE_PERMISSION_TREE.map((node) => (
-                <PermissionRow
-                    key={node.resource + node.label}
-                    node={node}
-                    level={0}
-                    assignedPermissions={assignedPermissions}
-                    onToggle={onTogglePermission}
-                    onToggleAll={handleToggleAll}
-                />
-            ))}
+        <Box>
+            {/* Help / Explainer */}
+            <Box sx={{ p: 2, mb: 2, bgcolor: alpha(grisNeutro.primary, 0.05), border: `1px solid ${grisNeutro.borderInner}` }}>
+                <Typography variant="subtitle2" fontWeight={700} sx={{ mb: 1, color: grisNeutro.textStrong, display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <IconShieldCheck size={18} /> Guía de Permisos
+                </Typography>
+                <Typography variant="body2" color="text.secondary" paragraph sx={{ mb: 1 }}>
+                    Selecciona las acciones permitidas para este rol. Los permisos se agrupan por módulos (Recursos).
+                </Typography>
+                <Box display="flex" gap={2} flexWrap="wrap">
+                    <Box display="flex" alignItems="center" gap={0.5}>
+                        <IconEye size={16} /> <Typography variant="caption">Ver (Read)</Typography>
+                    </Box>
+                    <Box display="flex" alignItems="center" gap={0.5}>
+                        <IconPlus size={16} /> <Typography variant="caption">Crear (Create)</Typography>
+                    </Box>
+                    <Box display="flex" alignItems="center" gap={0.5}>
+                        <IconEdit size={16} /> <Typography variant="caption">Editar (Update)</Typography>
+                    </Box>
+                    <Box display="flex" alignItems="center" gap={0.5}>
+                        <IconTrash size={16} /> <Typography variant="caption">Borrar (Delete)</Typography>
+                    </Box>
+                </Box>
+            </Box>
+
+            <Box sx={{
+                bgcolor: '#ffffff',
+                borderRadius: 0,
+                border: `1px solid ${grisNeutro.borderOuter}`,
+                maxHeight: '65vh',
+                overflowY: 'auto',
+                '&::-webkit-scrollbar': { width: '6px' },
+                '&::-webkit-scrollbar-track': { background: '#f5f5f5' },
+                '&::-webkit-scrollbar-thumb': { background: '#ccc', borderRadius: '3px' }
+            }}>
+                {SITE_PERMISSION_TREE.map((node) => (
+                    <PermissionRow
+                        key={node.resource + node.label}
+                        node={node}
+                        level={0}
+                        assignedPermissions={assignedPermissions}
+                        onToggle={onTogglePermission}
+                        onToggleAll={handleToggleAll}
+                    />
+                ))}
+            </Box>
         </Box>
     );
 };
