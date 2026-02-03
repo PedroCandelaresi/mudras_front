@@ -73,6 +73,10 @@ export const OBTENER_HISTORIAL_VENTAS = gql`
       total
       totalPaginas
       paginaActual
+      resumen {
+        totalVentas
+        montoTotal
+      }
     }
   }
 `;
@@ -86,11 +90,13 @@ export interface HistorialVentaItem {
   nombreUsuario?: string | null;
   nombrePuesto?: string | null;
   nombreCliente?: string | null;
+  razonSocialCliente?: string | null;
+  cuitCliente?: string | null;
 }
 
 export interface ResumenHistorialVentas {
-  totalVentas?: number;
-  montoTotal?: number;
+  totalVentas: number;
+  montoTotal: number;
   ventasPorEstado?: Array<{ estado: string; cantidad: number }>;
 }
 
@@ -350,10 +356,12 @@ export interface FiltrosHistorialInput {
   estado?: string;
   puestoVentaId?: number;
   clienteId?: number;
-  usuarioId?: number;
+  usuarioAuthId?: string; // Updated from usuarioId to match backend DTO
   numeroVenta?: string;
   pagina?: number;
   limite?: number;
+  offset?: number;
+  medioPago?: string;
 }
 
 export interface VentaCajaDetalle {
@@ -384,4 +392,30 @@ export interface VentaCaja extends VentaCajaResumen {
 
 export interface PuestosVentaResponse {
   obtenerPuestosVenta: PuestoVenta[];
+}
+
+export const OBTENER_USUARIOS_AUTH = gql`
+  query ObtenerUsuariosAuth {
+    usuariosAuth(filtros: { limite: 100 }) {
+      items {
+        id
+        displayName
+        email
+        rol
+      }
+      total
+    }
+  }
+`;
+
+export interface UsuariosAuthResponse {
+  usuariosAuth: {
+    items: Array<{
+      id: string;
+      displayName: string;
+      email: string;
+      rol: string;
+    }>;
+    total: number;
+  };
 }
