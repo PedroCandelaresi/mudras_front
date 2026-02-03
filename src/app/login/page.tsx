@@ -40,7 +40,7 @@ export default function Login() {
         >
           <Box display="flex" alignItems="center" justifyItems="center" flexDirection="column">
             <Image
-              src="/images/logo.svg"
+              src={"/images/logo.svg"}
               alt="Mudras Logo"
               width={450}
               height={450}
@@ -51,7 +51,6 @@ export default function Login() {
                 filter: "brightness(0) invert(1)", // Makes the logo white
                 opacity: 0.9,
               }}
-              priority
             />
           </Box>
         </Grid>
