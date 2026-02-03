@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { Grid, Box, Stack, Typography, useTheme, alpha } from "@mui/material";
 import PageContainer from "@/components/container/PageContainer";
-import Logo from "@/app/components/shared/Logo";
+
 import AuthLogin from "../auth/authForms/AuthLogin"; // Updated import path
 import Image from "next/image";
 
@@ -19,49 +19,40 @@ export default function Login() {
         sx={{ height: "100vh" }}
       >
         <Grid
-          sx={{
-            position: "relative",
-            "&:before": {
-              content: '""',
-              background: "radial-gradient(#d2f1df, #d3d7fa, #bad8f4)",
-              backgroundSize: "400% 400%",
-              animation: "gradient 15s ease infinite",
-              position: "absolute",
-              height: "100%",
-              width: "100%",
-              opacity: "0.3",
-            },
-          }}
           size={{
             xs: 12,
             sm: 12,
             lg: 7,
             xl: 8
-          }}>
-          <Box position="relative">
-            <Box px={3}>
-              <Logo />
-            </Box>
-            <Box
-              alignItems="center"
-              justifyContent="center"
-              height={"calc(100vh - 75px)"}
-              sx={{
-                display: {
-                  xs: "none",
-                  lg: "flex",
-                },
+          }}
+          sx={{
+            position: "relative",
+            backgroundImage: 'linear-gradient(135deg, #FFE0B2 0%, #FB8C00 100%), url("/textures/brushed-metal-1024.png")',
+            backgroundBlendMode: 'soft-light',
+            backgroundSize: 'cover, cover',
+            backgroundRepeat: 'no-repeat, repeat-y',
+            backgroundPosition: 'center, center',
+            backgroundColor: '#FB8C00',
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+        >
+          <Box display="flex" alignItems="center" justifyItems="center" flexDirection="column">
+            <Image
+              src="/images/logo.svg"
+              alt="Mudras Logo"
+              width={450}
+              height={450}
+              style={{
+                width: "100%",
+                maxWidth: "450px",
+                height: "auto",
+                filter: "brightness(0) invert(1)", // Makes the logo white
+                opacity: 0.9,
               }}
-            >
-              <Image
-                src={"/images/backgrounds/login-bg.svg"}
-                alt="bg" width={500} height={500}
-                style={{
-                  width: "100%",
-                  maxWidth: "500px", maxHeight: '500px',
-                }}
-              />
-            </Box>
+              priority
+            />
           </Box>
         </Grid>
         <Grid

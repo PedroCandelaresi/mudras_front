@@ -1,10 +1,24 @@
 'use client';
 
-import { ApolloClient, InMemoryCache, createHttpLink } from '@apollo/client';
+import { ApolloClient, InMemoryCache, createHttpLink, Observable } from '@apollo/client';
 import { setContext } from '@apollo/client/link/context';
 import { onError } from '@apollo/client/link/error';
 import { ApolloProvider as ApolloClientProvider } from '@apollo/client/react';
 import type { ReactNode } from 'react';
+
+// Utility to wrap a Promise in an Observable (since fromPromise is not exported in v4)
+function fromPromise<T>(promise: Promise<T>): Observable<T> {
+  return new Observable((observer) => {
+    promise
+      .then((value) => {
+        observer.next(value);
+        observer.complete();
+      })
+      .catch((err) => {
+        observer.error(err);
+      });
+  });
+}
 
 /**
  * Elegimos el endpoint así, SIN usar window ni puertos:
@@ -36,10 +50,10 @@ const authLink = setContext((_, { headers }) => {
   };
 });
 
-let isRefreshingToken = false;
+let refreshPromise: Promise<void> | null = null;
 
-const errorLink = onError((err) => {
-  const { graphQLErrors, networkError } = err as any;
+const errorLink = onError((error: any) => {
+  const { graphQLErrors, networkError, operation, forward } = error;
   let isAuthError = false;
 
   const statusCode =
@@ -64,35 +78,45 @@ const errorLink = onError((err) => {
     });
   }
 
-  if (!isAuthError) return;
-  if (typeof window === 'undefined') return;
-  if (isRefreshingToken) return;
+  if (isAuthError) {
+    if (typeof window === 'undefined') return; // server side, can't refresh cookies reliably this way
 
-  isRefreshingToken = true;
-
-  (async () => {
-    try {
-      const res = await fetch('/api/auth/refresh', {
+    if (!refreshPromise) {
+      refreshPromise = fetch('/api/auth/refresh', {
         method: 'POST',
         credentials: 'include',
-      });
-
-      if (res.ok) {
-        // Refrescamos y recargamos para que se re-ejecuten las queries con el nuevo token
-        window.location.reload();
-        return;
-      }
-    } catch (e) {
-      // ignoramos, pasamos a redirigir al login
-    } finally {
-      isRefreshingToken = false;
+      })
+        .then((res) => {
+          if (!res.ok) throw new Error('Refresh failed');
+          return res.json(); // Consumir body para completar request
+        })
+        .then(() => {
+          // Success
+          refreshPromise = null;
+        })
+        .catch((err) => {
+          refreshPromise = null;
+          // Si falla refresh, redirigir a login
+          const nextPath = window.location.pathname || '/panel';
+          const search = window.location.search || '';
+          const siguiente = encodeURIComponent(`${nextPath}${search}`);
+          window.location.href = `/login?siguiente=${siguiente}`;
+          throw err; // Propagate error to queue
+        });
     }
 
-    const nextPath = typeof window !== 'undefined' ? window.location.pathname || '/panel' : '/panel';
-    const search = typeof window !== 'undefined' ? window.location.search || '' : '';
-    const siguiente = encodeURIComponent(`${nextPath}${search}`);
-    window.location.href = `/login?siguiente=${siguiente}`;
-  })();
+    // Return observable that waits for refresh, then attempts retry
+    return new Observable((observer) => {
+      refreshPromise!
+        .then(() => {
+          const subscriber = forward(operation).subscribe(observer);
+          return subscriber;
+        })
+        .catch((err) => {
+          observer.error(err);
+        });
+    });
+  }
 });
 
 const client = new ApolloClient({

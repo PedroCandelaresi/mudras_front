@@ -119,7 +119,21 @@ export const TablaArticulosCapturados: React.FC<TablaArticulosCapturadosProps> =
   };
 
   const confirmarEdicion = (articuloId: number) => {
-    const nuevaCantidad = parseFloat(cantidadTemporal);
+    let nuevaCantidad = parseFloat(cantidadTemporal);
+    const articulo = articulos.find((a) => a.id === articuloId);
+
+    if (articulo) {
+      const u = (articulo.Unidad || '').toLowerCase();
+      // Unidades que permiten decimales (peso, volumen, longitud)
+      const permiteDecimales = ['gramo', 'kilogramo', 'litro', 'mililitro', 'metro', 'centimentro', 'g', 'kg', 'ml', 'l', 'm', 'cm'].some((x) => u.includes(x));
+      if (!permiteDecimales) {
+        nuevaCantidad = Math.round(nuevaCantidad);
+      } else {
+        // Enforce max 1 decimal place as requested ("solo un decimal")
+        nuevaCantidad = parseFloat(nuevaCantidad.toFixed(1));
+      }
+    }
+
     if (!Number.isNaN(nuevaCantidad) && nuevaCantidad > 0) {
       onActualizarCantidad(articuloId, nuevaCantidad);
     }
@@ -284,7 +298,15 @@ export const TablaArticulosCapturados: React.FC<TablaArticulosCapturadosProps> =
                           size="small"
                           type="number"
                           InputProps={{ sx: { borderRadius: 0, textAlign: 'center' } }}
-                          inputProps={{ min: 0, step: '0.01', style: { width: 60, textAlign: 'center' } }}
+                          inputProps={{
+                            min: 0,
+                            step: (() => {
+                              const u = (articulo.Unidad || '').toLowerCase();
+                              const permiteDecimales = ['gramo', 'kilogramo', 'litro', 'mililitro', 'metro', 'centimetro', 'g', 'kg', 'ml', 'l', 'm', 'cm'].some((x) => u.includes(x));
+                              return permiteDecimales ? '0.1' : '1';
+                            })(),
+                            style: { width: 60, textAlign: 'center' }
+                          }}
                           autoFocus
                           onKeyUp={(event) => {
                             if (event.key === 'Enter') confirmarEdicion(articulo.id);

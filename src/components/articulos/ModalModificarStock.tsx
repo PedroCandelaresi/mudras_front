@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import {
   Box,
   Button,
@@ -60,6 +60,12 @@ const ModalModificarStock = ({
     onClose();
   };
 
+  const permiteDecimales = useMemo(() => {
+    if (!articulo) return true;
+    const u = (articulo.Unidad || '').toLowerCase();
+    return ['gramo', 'kilogramo', 'litro', 'mililitro', 'metro', 'centimetro', 'g', 'kg', 'ml', 'l', 'm', 'cm'].some((x) => u.includes(x));
+  }, [articulo]);
+
   return (
     <Dialog
       open={open}
@@ -87,17 +93,25 @@ const ModalModificarStock = ({
             </Typography>
           ) : null}
 
+
+
           <TextField
             label="Cantidad"
             value={cantidad}
             onChange={(event) => {
               const val = event.target.value;
-              if (val === '' || /^\d*[.,]?\d*$/.test(val)) setCantidad(val);
+              if (permiteDecimales) {
+                // Permitir decimales (max 1 si es 'gr' según requerimiento, pero regex general es seguro por ahora)
+                if (val === '' || /^\d*[.,]?\d*$/.test(val)) setCantidad(val);
+              } else {
+                // Solo enteros
+                if (val === '' || /^\d+$/.test(val)) setCantidad(val);
+              }
             }}
             fullWidth
             size="small"
             sx={{ '& .MuiOutlinedInput-root': { borderRadius: 0 } }}
-            inputMode="decimal"
+            inputMode={permiteDecimales ? 'decimal' : 'numeric'}
           />
 
           <TextField
