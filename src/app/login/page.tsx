@@ -40,7 +40,7 @@ export default function Login() {
         >
           <Box display="flex" alignItems="center" justifyItems="center" flexDirection="column">
             <Image
-              src={"/images/logo.svg"}
+              src={"/logo.svg"}
               alt="Mudras Logo"
               width={450}
               height={450}
