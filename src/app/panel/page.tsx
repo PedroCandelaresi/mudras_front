@@ -27,7 +27,7 @@ export default function Dashboard() {
             >
               <Box mb={2}>
                 <img
-                  src="/images/logo.svg"
+                  src="/logo.svg"
                   alt="Mudras Logo"
                   style={{
                     width: '300px',
