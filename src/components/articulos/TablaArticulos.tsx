@@ -21,7 +21,12 @@ import {
   TextField,
   Tooltip,
   Typography,
+  Autocomplete,
+  Checkbox,
+  LinearProgress,
 } from '@mui/material';
+import CheckBoxOutlineBlankIcon from '@mui/icons-material/CheckBoxOutlineBlank';
+import CheckBoxIcon from '@mui/icons-material/CheckBox';
 
 import { alpha, darken } from '@mui/material/styles';
 import { useQuery, useApolloClient } from '@apollo/client/react';
@@ -84,6 +89,8 @@ type FiltrosServidor = {
   proveedor?: string;
   rubroId?: number;
   proveedorId?: number;
+  rubroIds?: number[];
+  proveedorIds?: number[];
 };
 
 /* ======================== Props reutilizable ======================== */
@@ -197,6 +204,8 @@ const TablaArticulos: React.FC<ArticulosTableProps> = ({
     estado: initialServerFilters?.estado ?? '',
     rubroId: initialServerFilters?.rubroId ?? undefined as number | undefined,
     proveedorId: initialServerFilters?.proveedorId ?? undefined as number | undefined,
+    rubroIds: initialServerFilters?.rubroIds ?? [],
+    proveedorIds: initialServerFilters?.proveedorIds ?? [],
   });
   const [menuAnchor, setMenuAnchor] = useState<null | HTMLElement>(null);
   const [activeCol, setActiveCol] = useState<ColumnDef['key'] | null>(null);
@@ -238,6 +247,8 @@ const TablaArticulos: React.FC<ArticulosTableProps> = ({
     soloEnPromocion: controlledFilters?.soloEnPromocion,
     rubroId: controlledFilters?.rubroId ?? localFilters.rubroId ?? undefined,
     proveedorId: controlledFilters?.proveedorId ?? localFilters.proveedorId ?? undefined,
+    rubroIds: controlledFilters?.rubroIds ?? localFilters.rubroIds ?? undefined,
+    proveedorIds: controlledFilters?.proveedorIds ?? localFilters.proveedorIds ?? undefined,
   }), [
     controlledFilters,
     localFilters,
@@ -471,6 +482,8 @@ const TablaArticulos: React.FC<ArticulosTableProps> = ({
         estado: '',
         rubroId: undefined,
         proveedorId: undefined,
+        rubroIds: [],
+        proveedorIds: [],
       });
       setPage(0);
     } else {
@@ -743,6 +756,14 @@ const TablaArticulos: React.FC<ArticulosTableProps> = ({
         const pName = (proveedoresData as any)?.proveedores?.find((p: any) => Number(p.IdProveedor) === f.proveedorId)?.Nombre;
         filterParts.push(`Proveedor: ${pName || f.proveedorId}`);
       }
+      if (f.rubroIds && f.rubroIds.length > 0) {
+        const rNames = (rubrosData as any)?.obtenerRubros?.filter((r: any) => f.rubroIds?.includes(Number(r.id))).map((r: any) => r.nombre).join(', ');
+        if (rNames) filterParts.push(`Rubros: ${rNames}`);
+      }
+      if (f.proveedorIds && f.proveedorIds.length > 0) {
+        const pNames = (proveedoresData as any)?.proveedores?.filter((p: any) => f.proveedorIds?.includes(Number(p.IdProveedor))).map((p: any) => p.Nombre).join(', ');
+        if (pNames) filterParts.push(`Proveedores: ${pNames}`);
+      }
       if (f.soloConStock) filterParts.push('Estado: Con Stock');
       if (f.soloStockBajo) filterParts.push('Estado: Poco Stock');
       if (f.soloSinStock) filterParts.push('Estado: Sin Stock');
@@ -819,6 +840,84 @@ const TablaArticulos: React.FC<ArticulosTableProps> = ({
 
       {/* Right Side: Search & Filters */}
       <Box display="flex" alignItems="center" gap={2}>
+        {/* --- Filtro Multi-Select Rubros --- */}
+        <Autocomplete
+          multiple
+          limitTags={1}
+          id="checkboxes-rubros"
+          options={(rubrosData as any)?.obtenerRubros || []}
+          disableCloseOnSelect
+          getOptionLabel={(option: any) => option.nombre || option.Rubro || ''}
+          value={((rubrosData as any)?.obtenerRubros || []).filter((r: any) => localFilters.rubroIds?.includes(Number(r.id)))}
+          onChange={(_, newValue) => {
+            const newIds = newValue.map((v: any) => Number(v.id));
+            if (controlledFilters) {
+              onFiltersChange?.({
+                ...filtrosServidor,
+                rubroIds: newIds,
+                pagina: 0,
+              });
+            } else {
+              setLocalFilters(prev => ({ ...prev, rubroIds: newIds }));
+              setPage(0);
+            }
+          }}
+          renderOption={(props, option: any, { selected }) => (
+            <li {...props}>
+              <Checkbox
+                icon={<CheckBoxOutlineBlankIcon fontSize="small" />}
+                checkedIcon={<CheckBoxIcon fontSize="small" />}
+                style={{ marginRight: 8 }}
+                checked={selected}
+              />
+              {option.nombre || option.Rubro}
+            </li>
+          )}
+          style={{ width: 250 }}
+          renderInput={(params) => (
+            <TextField {...params} label="Rubros" placeholder="Seleccionar..." size="small" />
+          )}
+        />
+
+        {/* --- Filtro Multi-Select Proveedores --- */}
+        <Autocomplete
+          multiple
+          limitTags={1}
+          id="checkboxes-proveedores"
+          options={(proveedoresData as any)?.proveedores || []}
+          disableCloseOnSelect
+          getOptionLabel={(option: any) => option.Nombre || ''}
+          value={((proveedoresData as any)?.proveedores || []).filter((p: any) => localFilters.proveedorIds?.includes(Number(p.IdProveedor)))}
+          onChange={(_, newValue) => {
+            const newIds = newValue.map((v: any) => Number(v.IdProveedor));
+            if (controlledFilters) {
+              onFiltersChange?.({
+                ...filtrosServidor,
+                proveedorIds: newIds,
+                pagina: 0,
+              });
+            } else {
+              setLocalFilters(prev => ({ ...prev, proveedorIds: newIds }));
+              setPage(0);
+            }
+          }}
+          renderOption={(props, option: any, { selected }) => (
+            <li {...props}>
+              <Checkbox
+                icon={<CheckBoxOutlineBlankIcon fontSize="small" />}
+                checkedIcon={<CheckBoxIcon fontSize="small" />}
+                style={{ marginRight: 8 }}
+                checked={selected}
+              />
+              {option.Nombre}
+            </li>
+          )}
+          style={{ width: 250 }}
+          renderInput={(params) => (
+            <TextField {...params} label="Proveedores" placeholder="Seleccionar..." size="small" />
+          )}
+        />
+
         <TextField
           placeholder="Buscar descripción, código o proveedor…"
           size="small"
