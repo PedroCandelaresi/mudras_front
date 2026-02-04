@@ -382,10 +382,23 @@ const ModalDetallesProveedor = ({ open, onClose, proveedor, accentColor }: Modal
       const timestamp = new Date().toISOString().split('T')[0];
       const filename = `${proveedorCompleto.Nombre?.replace(/\s+/g, '_')}_Articulos_${timestamp}`;
 
+      const filterParts: string[] = [];
+      if (busquedaPersonalizada) filterParts.push(`Búsqueda: "${busquedaPersonalizada}"`);
+      if (rubroFiltro?.nombre) filterParts.push(`Rubro: ${rubroFiltro.nombre}`);
+      if (filtroStock !== 'todos') {
+        const stockLabels: Record<string, string> = {
+          'con_stock': 'Con Stock',
+          'bajo_stock': 'Poco Stock',
+          'sin_stock': 'Sin Stock'
+        };
+        filterParts.push(`Stock: ${stockLabels[filtroStock] || filtroStock}`);
+      }
+      const filterSummary = filterParts.join(' | ');
+
       if (type === 'excel') {
-        exportToExcel(articulosHydrated, columns, filename);
+        exportToExcel(articulosHydrated, columns, filename, filterSummary);
       } else {
-        exportToPdf(articulosHydrated, columns, filename, `Artículos de ${proveedorCompleto.Nombre}`);
+        exportToPdf(articulosHydrated, columns, filename, `Artículos de ${proveedorCompleto.Nombre}`, filterSummary);
       }
 
     } catch (error) {

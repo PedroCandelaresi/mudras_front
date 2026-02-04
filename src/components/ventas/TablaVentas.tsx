@@ -181,10 +181,20 @@ export function TablaVentas() {
       ];
 
       const timestamp = new Date().toISOString().split('T')[0];
+
+      const filterParts: string[] = [];
+      const f = queryVariables.filtros as any;
+      if (f.fechaDesde && f.fechaHasta) {
+        filterParts.push(`Periodo: ${new Date(f.fechaDesde).toLocaleDateString()} - ${new Date(f.fechaHasta).toLocaleDateString()}`);
+      }
+      if (f.busqueda) filterParts.push(`Búsqueda: "${f.busqueda}"`);
+
+      const filterSummary = filterParts.join(' | ');
+
       if (type === 'excel') {
-        exportToExcel(ventasListado, columns, `Ventas_Mudras_${timestamp}`);
+        exportToExcel(ventasListado, columns, `Ventas_Mudras_${timestamp}`, filterSummary);
       } else {
-        exportToPdf(ventasListado, columns, `Ventas_Mudras_${timestamp}`, 'Historial de Ventas');
+        exportToPdf(ventasListado, columns, `Ventas_Mudras_${timestamp}`, 'Historial de Ventas', filterSummary);
       }
 
     } catch (error) {

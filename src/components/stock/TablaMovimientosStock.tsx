@@ -201,10 +201,15 @@ const TablaMovimientosStock = () => {
       ];
 
       const timestamp = new Date().toISOString().split('T')[0];
+
+      const filterParts: string[] = [];
+      if (filtroTipo) filterParts.push(`Tipo: ${getTipoLabel(filtroTipo)}`);
+      const filterSummary = filterParts.join(' | ');
+
       if (type === 'excel') {
-        exportToExcel(movimientosExport, columns, `Movimientos_Mudras_${timestamp}`);
+        exportToExcel(movimientosExport, columns, `Movimientos_Mudras_${timestamp}`, filterSummary);
       } else {
-        exportToPdf(movimientosExport, columns, `Movimientos_Mudras_${timestamp}`, 'Movimientos de Stock');
+        exportToPdf(movimientosExport, columns, `Movimientos_Mudras_${timestamp}`, 'Movimientos de Stock', filterSummary);
       }
 
     } catch (error) {

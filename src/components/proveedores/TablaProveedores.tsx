@@ -228,7 +228,15 @@ const TablaProveedores = forwardRef<TablaProveedoresHandle, Props>(({
       { header: 'Localidad', key: 'Localidad', width: 15 },
       { header: 'Provincia', key: 'Provincia', width: 15 },
     ];
-    exportToExcel(proveedoresFiltrados, columns, `Proveedores_Mudras_${new Date().toISOString().split('T')[0]}`);
+
+    const filterParts: string[] = [];
+    if (filtro) filterParts.push(`Búsqueda: "${filtro}"`);
+    Object.entries(filtrosColumna).forEach(([k, v]) => {
+      if (v) filterParts.push(`${k.charAt(0).toUpperCase() + k.slice(1)}: "${v}"`);
+    });
+    const filterSummary = filterParts.join(' | ');
+
+    exportToExcel(proveedoresFiltrados, columns, `Proveedores_Mudras_${new Date().toISOString().split('T')[0]}`, filterSummary);
   };
 
   const handleExportarPdf = () => {
@@ -239,7 +247,15 @@ const TablaProveedores = forwardRef<TablaProveedoresHandle, Props>(({
       { header: 'Teléfono', key: 'Telefono' },
       { header: 'Email', key: 'Mail' },
     ];
-    exportToPdf(proveedoresFiltrados, columns, `Proveedores_Mudras_${new Date().toISOString().split('T')[0]}`, 'Listado de Proveedores');
+
+    const filterParts: string[] = [];
+    if (filtro) filterParts.push(`Búsqueda: "${filtro}"`);
+    Object.entries(filtrosColumna).forEach(([k, v]) => {
+      if (v) filterParts.push(`${k.charAt(0).toUpperCase() + k.slice(1)}: "${v}"`);
+    });
+    const filterSummary = filterParts.join(' | ');
+
+    exportToPdf(proveedoresFiltrados, columns, `Proveedores_Mudras_${new Date().toISOString().split('T')[0]}`, 'Listado de Proveedores', filterSummary);
   };
 
   /* ======================== Toolbar ======================== */

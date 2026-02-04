@@ -728,10 +728,31 @@ const TablaArticulos: React.FC<ArticulosTableProps> = ({
       ];
 
       const timestamp = new Date().toISOString().split('T')[0];
+
+      // Build filter summary
+      const filterParts: string[] = [];
+      const f = variablesQuery.filtros;
+      if (f.busqueda) filterParts.push(`Búsqueda: "${f.busqueda}"`);
+      if (f.rubro) filterParts.push(`Rubro: ${f.rubro}`);
+      if (f.rubroId) {
+        // Try to find rubro name if only ID is present, though usually 'rubro' string is also set or we can infer it
+        const rName = (rubrosData as any)?.obtenerRubros?.find((r: any) => Number(r.id) === f.rubroId)?.nombre;
+        if (rName) filterParts.push(`Rubro: ${rName}`);
+      }
+      if (f.proveedorId) {
+        const pName = (proveedoresData as any)?.proveedores?.find((p: any) => Number(p.IdProveedor) === f.proveedorId)?.Nombre;
+        filterParts.push(`Proveedor: ${pName || f.proveedorId}`);
+      }
+      if (f.soloConStock) filterParts.push('Estado: Con Stock');
+      if (f.soloStockBajo) filterParts.push('Estado: Poco Stock');
+      if (f.soloSinStock) filterParts.push('Estado: Sin Stock');
+
+      const filterSummary = filterParts.join(' | ');
+
       if (type === 'excel') {
-        exportToExcel(articulosHydrated, columns, `Articulos_Mudras_${timestamp}`);
+        exportToExcel(articulosHydrated, columns, `Articulos_Mudras_${timestamp}`, filterSummary);
       } else {
-        exportToPdf(articulosHydrated, columns, `Articulos_Mudras_${timestamp}`, 'Listado de Artículos');
+        exportToPdf(articulosHydrated, columns, `Articulos_Mudras_${timestamp}`, 'Listado de Artículos', filterSummary);
       }
 
     } catch (error) {
