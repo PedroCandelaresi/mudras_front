@@ -798,7 +798,9 @@ const TablaArticulos: React.FC<ArticulosTableProps> = ({
       const prov = todosProveedores.find((p: any) => Number(p.IdProveedor) === pid);
       if (prov?.proveedorRubros) {
         prov.proveedorRubros.forEach((pr: any) => {
-          if (pr.rubro?.Id) rubroIdsPermitidos.add(Number(pr.rubro.Id));
+          // Handle case sensitivity safely
+          const rId = pr.rubro?.id || pr.rubro?.Id;
+          if (rId) rubroIdsPermitidos.add(Number(rId));
         });
       }
     });
