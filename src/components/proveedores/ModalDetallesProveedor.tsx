@@ -329,6 +329,10 @@ const ModalDetallesProveedor = ({ open, onClose, proveedor, accentColor }: Modal
       const variables = {
         filtros: {
           ...filtrosControlados,
+          estado: undefined, // Remove string state from query vars
+          soloConStock: filtroStock === 'con_stock' ? true : undefined,
+          soloStockBajo: filtroStock === 'bajo_stock' ? true : undefined,
+          soloSinStock: filtroStock === 'sin_stock' ? true : undefined,
           limite: 100000,
           pagina: 0,
         }
