@@ -27,6 +27,9 @@ import {
   ModalEditarProveedor,
   ModalEliminarProveedor
 } from '@/components/proveedores';
+import { IconFileTypePdf, IconFileSpreadsheet } from '@tabler/icons-react';
+import { exportToExcel, exportToPdf, ExportColumn } from '@/utils/exportUtils';
+import { borgoña } from '@/ui/colores';
 
 /* ======================== Tipos ======================== */
 type ColKey = 'nombre' | 'codigo' | 'cuit';
@@ -209,6 +212,36 @@ const TablaProveedores = forwardRef<TablaProveedoresHandle, Props>(({
     setPage(0);
   };
 
+  // ... (rest of imports)
+
+  // Inside TablaProveedores component:
+
+  const handleExportarExcel = () => {
+    const columns: ExportColumn<Proveedor>[] = [
+      { header: 'ID', key: 'IdProveedor', width: 5 },
+      { header: 'Nombre', key: 'Nombre', width: 30 },
+      { header: 'Código', key: 'Codigo', width: 10 },
+      { header: 'CUIT', key: 'CUIT', width: 15 },
+      { header: 'Teléfono', key: 'Telefono', width: 15 },
+      { header: 'Email', key: 'Mail', width: 25 },
+      { header: 'Dirección', key: 'Direccion', width: 25 },
+      { header: 'Localidad', key: 'Localidad', width: 15 },
+      { header: 'Provincia', key: 'Provincia', width: 15 },
+    ];
+    exportToExcel(proveedoresFiltrados, columns, `Proveedores_Mudras_${new Date().toISOString().split('T')[0]}`);
+  };
+
+  const handleExportarPdf = () => {
+    const columns: ExportColumn<Proveedor>[] = [
+      { header: 'Nombre', key: 'Nombre' },
+      { header: 'Código', key: 'Codigo' },
+      { header: 'CUIT', key: 'CUIT' },
+      { header: 'Teléfono', key: 'Telefono' },
+      { header: 'Email', key: 'Mail' },
+    ];
+    exportToPdf(proveedoresFiltrados, columns, `Proveedores_Mudras_${new Date().toISOString().split('T')[0]}`, 'Listado de Proveedores');
+  };
+
   /* ======================== Toolbar ======================== */
   const toolbar = (
     <Box
@@ -222,7 +255,7 @@ const TablaProveedores = forwardRef<TablaProveedoresHandle, Props>(({
       }}
     >
       {/* IZQUIERDA: Botón Nuevo */}
-      <Box>
+      <Box display="flex" gap={1}>
         {puedeCrear && (
           <Button
             variant="contained"
@@ -240,6 +273,22 @@ const TablaProveedores = forwardRef<TablaProveedoresHandle, Props>(({
             Nuevo Proveedor
           </Button>
         )}
+        <Button
+          variant="outlined"
+          startIcon={<IconFileSpreadsheet size={18} />}
+          onClick={handleExportarExcel}
+          sx={{ borderRadius: 0, textTransform: 'none', color: '#1D6F42', borderColor: '#1D6F42', '&:hover': { bgcolor: alpha('#1D6F42', 0.1), borderColor: '#1D6F42' } }}
+        >
+          Excel
+        </Button>
+        <Button
+          variant="outlined"
+          startIcon={<IconFileTypePdf size={18} />}
+          onClick={handleExportarPdf}
+          sx={{ borderRadius: 0, textTransform: 'none', color: '#D32F2F', borderColor: '#D32F2F', '&:hover': { bgcolor: alpha('#D32F2F', 0.1), borderColor: '#D32F2F' } }}
+        >
+          PDF
+        </Button>
       </Box>
 
       {/* DERECHA: Buscador y Limpiar */}

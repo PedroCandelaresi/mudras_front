@@ -27,13 +27,15 @@ import {
   IconEye,
   IconRefresh,
   IconSearch,
-  IconCurrencyDollar,
-  IconTrash,
   IconEdit,
-  IconReceipt
+  IconReceipt,
+  IconFileTypePdf,
+  IconFileSpreadsheet
 } from "@tabler/icons-react";
 import { grisRojizo } from "@/ui/colores";
-import { useQuery } from "@apollo/client/react";
+import { alpha } from '@mui/material/styles';
+import { useQuery, useApolloClient } from "@apollo/client/react";
+import { exportToExcel, exportToPdf, ExportColumn } from '@/utils/exportUtils';
 import {
   OBTENER_HISTORIAL_VENTAS,
   type ObtenerHistorialVentasResponse,
@@ -73,6 +75,8 @@ export function TablaVentas() {
   const [rowsPerPage, setRowsPerPage] = useState(50);
   const [busqueda, setBusqueda] = useState("");
   const [ventaSeleccionada, setVentaSeleccionada] = useState<VentaListado | null>(null);
+  const [exporting, setExporting] = useState(false);
+  const client = useApolloClient();
 
   // Filters State
   const [fechaDesde, setFechaDesde] = useState<Date | null>(startOfMonth(new Date()));
@@ -140,6 +144,56 @@ export function TablaVentas() {
     }));
   }, [data]);
 
+  const handleExportar = async (type: 'pdf' | 'excel') => {
+    try {
+      setExporting(true);
+      const { data: exportData } = await client.query({
+        query: OBTENER_HISTORIAL_VENTAS,
+        variables: {
+          filtros: {
+            ...queryVariables.filtros,
+            limite: 100000,
+            offset: 0,
+          }
+        },
+        fetchPolicy: 'network-only',
+      });
+
+      const ventasExport = (exportData as any)?.obtenerHistorialVentas?.ventas || [];
+      // Mapear al formato listado
+      const ventasListado = ventasExport.map((v: any) => ({
+        id: String(v.id),
+        fecha: v.fecha,
+        nro: v.numeroVenta,
+        cliente: v.razonSocialCliente || v.nombreCliente || (v.cuitCliente ? `CUIT: ${v.cuitCliente}` : "Consumidor Final"),
+        usuario: v.nombreUsuario || "-",
+        total: Number(v.total || 0),
+        estado: mapEstado(v.estado),
+      }));
+
+      const columns: ExportColumn<any>[] = [
+        { header: 'Fecha', key: (item) => formatInArgentina(item.fecha, { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" }), width: 20 },
+        { header: 'Nº Comprobante', key: 'nro', width: 20 },
+        { header: 'Cliente', key: 'cliente', width: 30 },
+        { header: 'Vendedor', key: 'usuario', width: 20 },
+        { header: 'Total', key: (item) => `$${item.total.toLocaleString("es-AR")}`, width: 15 },
+        { header: 'Estado', key: 'estado', width: 15 },
+      ];
+
+      const timestamp = new Date().toISOString().split('T')[0];
+      if (type === 'excel') {
+        exportToExcel(ventasListado, columns, `Ventas_Mudras_${timestamp}`);
+      } else {
+        exportToPdf(ventasListado, columns, `Ventas_Mudras_${timestamp}`, 'Historial de Ventas');
+      }
+
+    } catch (error) {
+      console.error('Error exportando:', error);
+    } finally {
+      setExporting(false);
+    }
+  };
+
   // Server-side pagination details
   const totalRegistros = data?.obtenerHistorialVentas?.total || 0;
   const totalPaginas = data?.obtenerHistorialVentas?.totalPaginas || 0;
@@ -202,6 +256,30 @@ export function TablaVentas() {
           onSearchValueChange={setBusqueda}
           onSubmitSearch={() => setPage(0)}
           onClear={() => { setBusqueda(""); setPage(0); }}
+          customActions={
+            <Box display="flex" gap={1}>
+              <Button
+                variant="outlined"
+                size="small"
+                startIcon={<IconFileSpreadsheet size={18} />}
+                onClick={() => handleExportar('excel')}
+                disabled={exporting}
+                sx={{ borderRadius: 0, textTransform: 'none', color: '#1D6F42', borderColor: '#1D6F42', '&:hover': { bgcolor: alpha('#1D6F42', 0.1), borderColor: '#1D6F42' } }}
+              >
+                {exporting ? '...' : 'Excel'}
+              </Button>
+              <Button
+                variant="outlined"
+                size="small"
+                startIcon={<IconFileTypePdf size={18} />}
+                onClick={() => handleExportar('pdf')}
+                disabled={exporting}
+                sx={{ borderRadius: 0, textTransform: 'none', color: '#D32F2F', borderColor: '#D32F2F', '&:hover': { bgcolor: alpha('#D32F2F', 0.1), borderColor: '#D32F2F' } }}
+              >
+                {exporting ? '...' : 'PDF'}
+              </Button>
+            </Box>
+          }
         />
 
         <TableContainer sx={{ maxHeight: 650 }}>

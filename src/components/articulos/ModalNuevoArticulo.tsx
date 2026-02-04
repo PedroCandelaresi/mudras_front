@@ -421,7 +421,9 @@ const ModalNuevoArticulo = ({ open, onClose, articulo, onSuccess, accentColor }:
       setError('');
 
       // Parseos numéricos seguros
-      const idProveedor = form.idProveedor !== '' && !Number.isNaN(Number(form.idProveedor)) ? Number(form.idProveedor) : undefined;
+      const idProveedor = form.idProveedor !== '' && !Number.isNaN(Number(form.idProveedor))
+        ? Number(form.idProveedor)
+        : (editando ? null : undefined);
       const stock = form.stock !== '' && !Number.isNaN(Number(form.stock)) ? Number(form.stock) : 0;
       const stockMinimo = form.stockMinimo !== '' && !Number.isNaN(Number(form.stockMinimo)) ? Number(form.stockMinimo) : 0;
       const rubroIdNumber = form.rubroId !== '' && !Number.isNaN(Number(form.rubroId)) ? Number(form.rubroId) : undefined;
@@ -445,7 +447,7 @@ const ModalNuevoArticulo = ({ open, onClose, articulo, onSuccess, accentColor }:
         ImpuestoPorcentual: true,
         ...(rubroNombre ? { Rubro: rubroNombre } : {}),
         ...(typeof rubroIdNumber === 'number' ? { rubroId: rubroIdNumber } : {}),
-        ...(typeof idProveedor === 'number' ? { idProveedor } : {}),
+        ...(typeof idProveedor === 'number' || idProveedor === null ? { idProveedor } : {}),
       } as const;
 
       let articuloGuardadoId = articulo?.id;

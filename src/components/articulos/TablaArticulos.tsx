@@ -24,11 +24,13 @@ import {
 } from '@mui/material';
 
 import { alpha, darken } from '@mui/material/styles';
-import { useQuery } from '@apollo/client/react';
+import { useQuery, useApolloClient } from '@apollo/client/react';
 import {
   IconSearch, IconClipboardList, IconRefresh, IconPhone, IconMail,
-  IconEdit, IconTrash, IconEye, IconPlus, IconDotsVertical
+  IconEdit, IconTrash, IconEye, IconPlus, IconDotsVertical,
+  IconFileTypePdf, IconFileSpreadsheet
 } from '@tabler/icons-react';
+import { exportToExcel, exportToPdf, ExportColumn } from '@/utils/exportUtils';
 import { Icon } from '@iconify/react';
 import { BUSCAR_ARTICULOS, GET_ESTADISTICAS_ARTICULOS } from '@/components/articulos/graphql/queries';
 import { GET_RUBROS } from '@/components/rubros/graphql/queries';
@@ -216,6 +218,9 @@ const TablaArticulos: React.FC<ArticulosTableProps> = ({
   useEffect(() => {
     setGlobalSearchDraft(controlledFilters?.busqueda ?? globalInput);
   }, [controlledFilters?.busqueda, globalInput]);
+
+  const client = useApolloClient();
+  const [exporting, setExporting] = useState(false);
 
   const filtrosServidor = useMemo<FiltrosServidor>(() => ({
     busqueda: undefined,
@@ -651,6 +656,56 @@ const TablaArticulos: React.FC<ArticulosTableProps> = ({
     return renderer ? renderer(articulo) : null;
   };
 
+  const handleExportar = async (type: 'pdf' | 'excel') => {
+    try {
+      setExporting(true);
+      const { data: exportData } = await client.query({
+        query: BUSCAR_ARTICULOS,
+        variables: {
+          filtros: {
+            ...variablesQuery.filtros,
+            limite: 100000,
+            pagina: 0,
+          }
+        },
+        fetchPolicy: 'network-only',
+      });
+
+      const articulosExport = (exportData as any)?.buscarArticulos?.articulos || [];
+      const articulosHydrated = articulosExport.map((a: any) => ({
+        ...a,
+        rubro: a.rubro ? a.rubro : { Rubro: a.Rubro },
+        proveedor: a.proveedor ? a.proveedor : { IdProveedor: a.idProveedor },
+      })).map((a: any) => {
+        // Re-apply hydration logic basically or just access props safely
+        // For simplistic export, we might prioritize raw values
+        return a;
+      });
+
+      const columns: ExportColumn<any>[] = [
+        { header: 'Descripción', key: 'Descripcion', width: 40 },
+        { header: 'Código', key: 'Codigo', width: 15 },
+        { header: 'Marca', key: 'Marca', width: 20 },
+        { header: 'Rubro', key: (item) => item.Rubro || item.rubro?.Rubro || '', width: 15 },
+        { header: 'Proveedor', key: (item) => item.proveedor?.Nombre || '', width: 25 },
+        { header: 'Precio Venta', key: (item) => `$${Number(item.PrecioVenta).toLocaleString('es-AR')}`, width: 15 },
+        { header: 'Stock Global', key: (item) => item.totalStock || item.Stock || 0, width: 10 },
+      ];
+
+      const timestamp = new Date().toISOString().split('T')[0];
+      if (type === 'excel') {
+        exportToExcel(articulosHydrated, columns, `Articulos_Mudras_${timestamp}`);
+      } else {
+        exportToPdf(articulosHydrated, columns, `Articulos_Mudras_${timestamp}`, 'Listado de Artículos');
+      }
+
+    } catch (error) {
+      console.error('Error exportando:', error);
+    } finally {
+      setExporting(false);
+    }
+  };
+
   /* ---------- Toolbar ---------- */
   const toolbar = (
     <Box
@@ -684,6 +739,26 @@ const TablaArticulos: React.FC<ArticulosTableProps> = ({
             {`Nuevo artículo`}
           </Button>
         )}
+        <Button
+          variant="outlined"
+          size="small"
+          startIcon={<IconFileSpreadsheet size={18} />}
+          onClick={() => handleExportar('excel')}
+          disabled={exporting}
+          sx={{ borderRadius: 0, textTransform: 'none', color: '#1D6F42', borderColor: '#1D6F42', '&:hover': { bgcolor: alpha('#1D6F42', 0.1), borderColor: '#1D6F42' } }}
+        >
+          {exporting ? '...' : 'Excel'}
+        </Button>
+        <Button
+          variant="outlined"
+          size="small"
+          startIcon={<IconFileTypePdf size={18} />}
+          onClick={() => handleExportar('pdf')}
+          disabled={exporting}
+          sx={{ borderRadius: 0, textTransform: 'none', color: '#D32F2F', borderColor: '#D32F2F', '&:hover': { bgcolor: alpha('#D32F2F', 0.1), borderColor: '#D32F2F' } }}
+        >
+          {exporting ? '...' : 'PDF'}
+        </Button>
       </Box>
 
       {/* Right Side: Search & Filters */}

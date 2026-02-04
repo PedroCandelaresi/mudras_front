@@ -23,7 +23,7 @@ import {
   Button
 } from '@mui/material';
 import { alpha } from '@mui/material/styles';
-import { useQuery } from '@apollo/client/react';
+import { useQuery, useApolloClient } from '@apollo/client/react';
 import {
   IconEye,
   IconArrowRight,
@@ -32,8 +32,11 @@ import {
   IconCalendar,
   IconPackage,
   IconNotes,
-  IconRefresh
+  IconRefresh,
+  IconFileTypePdf,
+  IconFileSpreadsheet
 } from '@tabler/icons-react';
+import { exportToExcel, exportToPdf, ExportColumn } from '@/utils/exportUtils';
 
 import { GET_MOVIMIENTOS_STOCK_FULL } from '@/components/articulos/graphql/queries';
 import { borgoña } from '@/ui/colores';
@@ -122,6 +125,8 @@ const TablaMovimientosStock = () => {
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(50);
   const [filtroTipo, setFiltroTipo] = useState<string>('');
+  const [exporting, setExporting] = useState(false);
+  const client = useApolloClient();
 
   // Query Apollo
   const { data, loading, error, refetch } = useQuery<MovimientosFullData>(GET_MOVIMIENTOS_STOCK_FULL, {
@@ -167,6 +172,46 @@ const TablaMovimientosStock = () => {
       paginas.push(1, '...', paginaActual - 1, paginaActual, paginaActual + 1, '...', totalPaginas);
     }
     return paginas;
+  };
+  const handleExportar = async (type: 'pdf' | 'excel') => {
+    try {
+      setExporting(true);
+      const { data: exportData } = await client.query({
+        query: GET_MOVIMIENTOS_STOCK_FULL,
+        variables: {
+          input: {
+            offset: 0,
+            limite: 100000,
+            tipoMovimiento: filtroTipo || undefined,
+          }
+        },
+        fetchPolicy: 'network-only',
+      });
+
+      const movimientosExport = (exportData as any)?.movimientosStockFull?.movimientos || [];
+
+      const columns: ExportColumn<any>[] = [
+        { header: 'Fecha', key: (item) => formatearFecha(item.fechaMovimiento), width: 22 },
+        { header: 'Tipo', key: (item) => getTipoLabel(item.tipoMovimiento), width: 15 },
+        { header: 'Artículo', key: (item) => item.articulo ? `${item.articulo.Descripcion} (${item.articulo.Codigo})` : 'Eliminado', width: 40 },
+        { header: 'Origen', key: (item) => item.puntoOrigen?.nombre || '-', width: 20 },
+        { header: 'Destino', key: (item) => item.puntoDestino?.nombre || '-', width: 20 },
+        { header: 'Cant.', key: 'cantidad', width: 10 },
+        { header: 'Usuario', key: (item) => item.usuario ? `${item.usuario.nombre} ${item.usuario.apellido}` : '-', width: 20 },
+      ];
+
+      const timestamp = new Date().toISOString().split('T')[0];
+      if (type === 'excel') {
+        exportToExcel(movimientosExport, columns, `Movimientos_Mudras_${timestamp}`);
+      } else {
+        exportToPdf(movimientosExport, columns, `Movimientos_Mudras_${timestamp}`, 'Movimientos de Stock');
+      }
+
+    } catch (error) {
+      console.error('Error exportando:', error);
+    } finally {
+      setExporting(false);
+    }
   };
 
   /* ======================== Toolbar ======================== */
@@ -231,6 +276,26 @@ const TablaMovimientosStock = () => {
           }}
         >
           Actualizar
+        </Button>
+        <Button
+          variant="outlined"
+          size="small"
+          startIcon={<IconFileSpreadsheet size={18} />}
+          onClick={() => handleExportar('excel')}
+          disabled={exporting}
+          sx={{ borderRadius: 0, textTransform: 'none', color: '#1D6F42', borderColor: '#1D6F42', '&:hover': { bgcolor: alpha('#1D6F42', 0.1), borderColor: '#1D6F42' }, height: 40 }}
+        >
+          Excel
+        </Button>
+        <Button
+          variant="outlined"
+          size="small"
+          startIcon={<IconFileTypePdf size={18} />}
+          onClick={() => handleExportar('pdf')}
+          disabled={exporting}
+          sx={{ borderRadius: 0, textTransform: 'none', color: '#D32F2F', borderColor: '#D32F2F', '&:hover': { bgcolor: alpha('#D32F2F', 0.1), borderColor: '#D32F2F' }, height: 40 }}
+        >
+          PDF
         </Button>
       </Box>
     </Box>
