@@ -396,6 +396,8 @@ const TablaUsuarios: React.FC<Props> = () => {
           {loading ? (
             // Simple loading state
             <TableRow><TableCell colSpan={6} align="center">Cargando...</TableCell></TableRow>
+          ) : error ? (
+            <TableRow><TableCell colSpan={6} align="center" sx={{ color: 'error.main' }}>Error: {error.message}</TableCell></TableRow>
           ) : usuarios.length === 0 ? (
             <TableRow><TableCell colSpan={6} align="center">No hay usuarios.</TableCell></TableRow>
           ) : (
