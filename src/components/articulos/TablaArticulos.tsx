@@ -788,178 +788,234 @@ const TablaArticulos: React.FC<ArticulosTableProps> = ({
     <Box
       sx={{
         display: 'flex',
-        justifyContent: 'space-between', // Space between Left (Actions) and Right (Search)
-        alignItems: 'center',
+        flexDirection: 'column',
+        gap: 2,
         mb: 3,
         p: 2,
         bgcolor: '#ffffff',
+        borderBottom: '1px solid #f0f0f0',
       }}
     >
-      {/* Left Side: Actions */}
-      <Box display="flex" alignItems="center" gap={2}>
-        {allowCreate && (
-          <Button
-            variant="contained"
-            startIcon={<IconPlus size={18} />}
-            onClick={onCreateClick}
-            disableElevation
+      {/* --- Fila 1: Nuevo Artículo + Búsqueda + Limpiar --- */}
+      <Box display="flex" justifyContent="space-between" alignItems="center" flexWrap="wrap" gap={2}>
+        {/* Left: Nuevo Artículo */}
+        <Box>
+          {allowCreate && (
+            <Button
+              variant="contained"
+              startIcon={<IconPlus size={18} />}
+              onClick={onCreateClick}
+              disableElevation
+              sx={{
+                borderRadius: 1, // Slightly rounded for "site aesthetic" if needed, or 0 if strict
+                textTransform: 'none',
+                bgcolor: verdeMilitar.primary,
+                fontWeight: 600,
+                px: 3,
+                py: 1,
+                boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+                '&:hover': { bgcolor: verdeMilitar.primaryHover }
+              }}
+            >
+              {`Nuevo artículo`}
+            </Button>
+          )}
+        </Box>
+
+        {/* Right: Search + Limpiar */}
+        <Box display="flex" alignItems="center" gap={2} flexWrap="wrap">
+          <TextField
+            placeholder="Buscar descripción, código o proveedor…"
+            size="small"
+            value={globalSearchDraft}
+            onChange={(e) => setGlobalSearchDraft(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') ejecutarBusqueda();
+            }}
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <IconSearch size={18} color="#757575" />
+                </InputAdornment>
+              ),
+            }}
             sx={{
-              borderRadius: 0,
+              minWidth: 350,
+              '& .MuiOutlinedInput-root': {
+                borderRadius: 1,
+                bgcolor: '#f9f9f9',
+                '& fieldset': { borderColor: '#e0e0e0' },
+                '&:hover fieldset': { borderColor: '#bdbdbd' },
+                '&.Mui-focused fieldset': { borderColor: verdeMilitar.primary },
+              }
+            }}
+          />
+
+          <Button
+            variant="outlined"
+            startIcon={<IconRefresh size={18} />}
+            onClick={limpiarFiltros}
+            sx={{
+              borderRadius: 1,
               textTransform: 'none',
-              bgcolor: verdeMilitar.primary,
-              fontWeight: 600,
-              px: 3,
-              py: 1,
-              '&:hover': { bgcolor: verdeMilitar.primaryHover }
+              color: '#757575',
+              borderColor: '#e0e0e0',
+              height: 40,
+              px: 2,
+              '&:hover': { borderColor: '#bdbdbd', bgcolor: '#f5f5f5' }
             }}
           >
-            {`Nuevo artículo`}
+            Limpiar
           </Button>
-        )}
-        <Button
-          variant="outlined"
-          size="small"
-          startIcon={<IconFileSpreadsheet size={18} />}
-          onClick={() => handleExportar('excel')}
-          disabled={exporting}
-          sx={{ borderRadius: 0, textTransform: 'none', color: '#1D6F42', borderColor: '#1D6F42', '&:hover': { bgcolor: alpha('#1D6F42', 0.1), borderColor: '#1D6F42' } }}
-        >
-          {exporting ? '...' : 'Excel'}
-        </Button>
-        <Button
-          variant="outlined"
-          size="small"
-          startIcon={<IconFileTypePdf size={18} />}
-          onClick={() => handleExportar('pdf')}
-          disabled={exporting}
-          sx={{ borderRadius: 0, textTransform: 'none', color: '#D32F2F', borderColor: '#D32F2F', '&:hover': { bgcolor: alpha('#D32F2F', 0.1), borderColor: '#D32F2F' } }}
-        >
-          {exporting ? '...' : 'PDF'}
-        </Button>
+        </Box>
       </Box>
 
-      {/* Right Side: Search & Filters */}
-      <Box display="flex" alignItems="center" gap={2}>
-        {/* --- Filtro Multi-Select Rubros --- */}
-        <Autocomplete
-          multiple
-          limitTags={1}
-          id="checkboxes-rubros"
-          options={(rubrosData as any)?.obtenerRubros || []}
-          disableCloseOnSelect
-          getOptionLabel={(option: any) => option.nombre || option.Rubro || ''}
-          value={((rubrosData as any)?.obtenerRubros || []).filter((r: any) => localFilters.rubroIds?.includes(Number(r.id)))}
-          onChange={(_, newValue) => {
-            const newIds = newValue.map((v: any) => Number(v.id));
-            if (controlledFilters) {
-              onFiltersChange?.({
-                ...filtrosServidor,
-                rubroIds: newIds,
-                pagina: 0,
-              });
-            } else {
-              setLocalFilters(prev => ({ ...prev, rubroIds: newIds }));
-              setPage(0);
-            }
-          }}
-          renderOption={(props, option: any, { selected }) => (
-            <li {...props}>
-              <Checkbox
-                icon={<CheckBoxOutlineBlankIcon fontSize="small" />}
-                checkedIcon={<CheckBoxIcon fontSize="small" />}
-                style={{ marginRight: 8 }}
-                checked={selected}
+      <Divider />
+
+      {/* --- Fila 2: Exportación + Combos --- */}
+      <Box display="flex" justifyContent="space-between" alignItems="center" flexWrap="wrap" gap={2}>
+        {/* Left: Export Buttons */}
+        <Box display="flex" gap={2}>
+          <Button
+            variant="outlined"
+            startIcon={<IconFileSpreadsheet size={20} />}
+            onClick={() => handleExportar('excel')}
+            disabled={exporting}
+            sx={{
+              borderRadius: 1,
+              textTransform: 'none',
+              color: '#1D6F42',
+              borderColor: '#1D6F42',
+              height: 40,
+              px: 3,
+              fontWeight: 600,
+              '&:hover': { bgcolor: alpha('#1D6F42', 0.08), borderColor: '#1D6F42' }
+            }}
+          >
+            {exporting ? 'Exportando...' : 'Excel'}
+          </Button>
+          <Button
+            variant="outlined"
+            startIcon={<IconFileTypePdf size={20} />}
+            onClick={() => handleExportar('pdf')}
+            disabled={exporting}
+            sx={{
+              borderRadius: 1,
+              textTransform: 'none',
+              color: '#d32f2f',
+              borderColor: '#d32f2f',
+              height: 40,
+              px: 3,
+              fontWeight: 600,
+              '&:hover': { bgcolor: alpha('#d32f2f', 0.08), borderColor: '#d32f2f' }
+            }}
+          >
+            {exporting ? 'Exportando...' : 'PDF'}
+          </Button>
+        </Box>
+
+        {/* Right: Combos (Proveedor -> Rubro) */}
+        <Box display="flex" gap={2} alignItems="center" flexWrap="wrap">
+          {/* --- Proveedores --- */}
+          <Autocomplete
+            multiple
+            limitTags={1}
+            id="checkboxes-proveedores"
+            options={(proveedoresData as any)?.proveedores || []}
+            disableCloseOnSelect
+            getOptionLabel={(option: any) => option.Nombre || ''}
+            value={((proveedoresData as any)?.proveedores || []).filter((p: any) => localFilters.proveedorIds?.includes(Number(p.IdProveedor)))}
+            onChange={(_, newValue) => {
+              const newIds = newValue.map((v: any) => Number(v.IdProveedor));
+              if (controlledFilters) {
+                onFiltersChange?.({
+                  ...filtrosServidor,
+                  proveedorIds: newIds,
+                  pagina: 0,
+                });
+              } else {
+                setLocalFilters(prev => ({ ...prev, proveedorIds: newIds }));
+                setPage(0);
+              }
+            }}
+            renderOption={(props, option: any, { selected }) => (
+              <li {...props}>
+                <Checkbox
+                  icon={<CheckBoxOutlineBlankIcon fontSize="small" />}
+                  checkedIcon={<CheckBoxIcon fontSize="small" />}
+                  style={{ marginRight: 8 }}
+                  checked={selected}
+                />
+                {option.Nombre}
+              </li>
+            )}
+            style={{ width: 280 }}
+            renderInput={(params) => (
+              <TextField
+                {...params}
+                label="Proveedores"
+                placeholder="Seleccionar..."
+                size="small"
+                sx={{
+                  '& .MuiOutlinedInput-root': {
+                    borderRadius: 1,
+                    bgcolor: '#fff',
+                  }
+                }}
               />
-              {option.nombre || option.Rubro}
-            </li>
-          )}
-          style={{ width: 250 }}
-          renderInput={(params) => (
-            <TextField {...params} label="Rubros" placeholder="Seleccionar..." size="small" />
-          )}
-        />
+            )}
+          />
 
-        {/* --- Filtro Multi-Select Proveedores --- */}
-        <Autocomplete
-          multiple
-          limitTags={1}
-          id="checkboxes-proveedores"
-          options={(proveedoresData as any)?.proveedores || []}
-          disableCloseOnSelect
-          getOptionLabel={(option: any) => option.Nombre || ''}
-          value={((proveedoresData as any)?.proveedores || []).filter((p: any) => localFilters.proveedorIds?.includes(Number(p.IdProveedor)))}
-          onChange={(_, newValue) => {
-            const newIds = newValue.map((v: any) => Number(v.IdProveedor));
-            if (controlledFilters) {
-              onFiltersChange?.({
-                ...filtrosServidor,
-                proveedorIds: newIds,
-                pagina: 0,
-              });
-            } else {
-              setLocalFilters(prev => ({ ...prev, proveedorIds: newIds }));
-              setPage(0);
-            }
-          }}
-          renderOption={(props, option: any, { selected }) => (
-            <li {...props}>
-              <Checkbox
-                icon={<CheckBoxOutlineBlankIcon fontSize="small" />}
-                checkedIcon={<CheckBoxIcon fontSize="small" />}
-                style={{ marginRight: 8 }}
-                checked={selected}
+          {/* --- Rubros --- */}
+          <Autocomplete
+            multiple
+            limitTags={1}
+            id="checkboxes-rubros"
+            options={(rubrosData as any)?.obtenerRubros || []}
+            disableCloseOnSelect
+            getOptionLabel={(option: any) => option.nombre || option.Rubro || ''}
+            value={((rubrosData as any)?.obtenerRubros || []).filter((r: any) => localFilters.rubroIds?.includes(Number(r.id)))}
+            onChange={(_, newValue) => {
+              const newIds = newValue.map((v: any) => Number(v.id));
+              if (controlledFilters) {
+                onFiltersChange?.({
+                  ...filtrosServidor,
+                  rubroIds: newIds,
+                  pagina: 0,
+                });
+              } else {
+                setLocalFilters(prev => ({ ...prev, rubroIds: newIds }));
+                setPage(0);
+              }
+            }}
+            renderOption={(props, option: any, { selected }) => (
+              <li {...props}>
+                <Checkbox
+                  icon={<CheckBoxOutlineBlankIcon fontSize="small" />}
+                  checkedIcon={<CheckBoxIcon fontSize="small" />}
+                  style={{ marginRight: 8 }}
+                  checked={selected}
+                />
+                {option.nombre || option.Rubro}
+              </li>
+            )}
+            style={{ width: 280 }}
+            renderInput={(params) => (
+              <TextField
+                {...params}
+                label="Rubros"
+                placeholder="Seleccionar..."
+                size="small"
+                sx={{
+                  '& .MuiOutlinedInput-root': {
+                    borderRadius: 1,
+                    bgcolor: '#fff',
+                  }
+                }}
               />
-              {option.Nombre}
-            </li>
-          )}
-          style={{ width: 250 }}
-          renderInput={(params) => (
-            <TextField {...params} label="Proveedores" placeholder="Seleccionar..." size="small" />
-          )}
-        />
-
-        <TextField
-          placeholder="Buscar descripción, código o proveedor…"
-          size="small"
-          value={globalSearchDraft}
-          onChange={(e) => setGlobalSearchDraft(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter') ejecutarBusqueda();
-          }}
-          InputProps={{
-            startAdornment: (
-              <InputAdornment position="start">
-                <IconSearch size={18} color="#757575" />
-              </InputAdornment>
-            ),
-          }}
-          sx={{
-            minWidth: 350,
-            '& .MuiOutlinedInput-root': {
-              borderRadius: 0,
-              bgcolor: '#f5f5f5',
-              '& fieldset': { borderColor: '#e0e0e0' },
-              '&:hover fieldset': { borderColor: '#bdbdbd' },
-              '&.Mui-focused fieldset': { borderColor: verdeMilitar.primary },
-            }
-          }}
-        />
-
-        <Button
-          variant="outlined"
-          startIcon={<IconRefresh size={18} />}
-          onClick={limpiarFiltros}
-          sx={{
-            borderRadius: 0,
-            textTransform: 'none',
-            color: '#757575',
-            borderColor: '#e0e0e0',
-            height: 40,
-            '&:hover': { borderColor: '#bdbdbd', bgcolor: '#f5f5f5' }
-          }}
-        >
-          Limpiar
-        </Button>
+            )}
+          />
+        </Box>
       </Box>
     </Box>
   );
