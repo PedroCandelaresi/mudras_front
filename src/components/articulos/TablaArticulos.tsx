@@ -783,6 +783,32 @@ const TablaArticulos: React.FC<ArticulosTableProps> = ({
     }
   };
 
+  const rubrosFiltrados = useMemo(() => {
+    const todosRubros = (rubrosData as any)?.obtenerRubros || [];
+    const idsProveedores = localFilters.proveedorIds || [];
+
+    if (idsProveedores.length === 0) {
+      return todosRubros;
+    }
+
+    const todosProveedores = (proveedoresData as any)?.proveedores || [];
+    const rubroIdsPermitidos = new Set<number>();
+
+    idsProveedores.forEach((pid: number) => {
+      const prov = todosProveedores.find((p: any) => Number(p.IdProveedor) === pid);
+      if (prov?.proveedorRubros) {
+        prov.proveedorRubros.forEach((pr: any) => {
+          if (pr.rubro?.Id) rubroIdsPermitidos.add(Number(pr.rubro.Id));
+        });
+      }
+    });
+
+    // If providers are selected but have no assigned rubros, technically the list should be empty (or all? usually intersection -> empty)
+    // However, if the user picks a provider that has NO configured rubros, seeing "No options" is correct.
+
+    return todosRubros.filter((r: any) => rubroIdsPermitidos.has(Number(r.id)));
+  }, [rubrosData, proveedoresData, localFilters.proveedorIds]);
+
   /* ---------- Toolbar ---------- */
   const toolbar = (
     <Box
@@ -927,6 +953,12 @@ const TablaArticulos: React.FC<ArticulosTableProps> = ({
             value={((proveedoresData as any)?.proveedores || []).filter((p: any) => localFilters.proveedorIds?.includes(Number(p.IdProveedor)))}
             onChange={(_, newValue) => {
               const newIds = newValue.map((v: any) => Number(v.IdProveedor));
+
+              // When providers change, we should also validate if selected Rubros are still valid?
+              // The user didn't explicitly ask for this, but it's good UX.
+              // However, simple dependent filtering just updates the OPTIONS. Existing selections might remain or be cleared.
+              // Let's assume standard behavior: just update newIds.
+
               if (controlledFilters) {
                 onFiltersChange?.({
                   ...filtrosServidor,
@@ -971,10 +1003,10 @@ const TablaArticulos: React.FC<ArticulosTableProps> = ({
             multiple
             limitTags={1}
             id="checkboxes-rubros"
-            options={(rubrosData as any)?.obtenerRubros || []}
+            options={rubrosFiltrados}
             disableCloseOnSelect
             getOptionLabel={(option: any) => option.nombre || option.Rubro || ''}
-            value={((rubrosData as any)?.obtenerRubros || []).filter((r: any) => localFilters.rubroIds?.includes(Number(r.id)))}
+            value={rubrosFiltrados.filter((r: any) => localFilters.rubroIds?.includes(Number(r.id)))}
             onChange={(_, newValue) => {
               const newIds = newValue.map((v: any) => Number(v.id));
               if (controlledFilters) {

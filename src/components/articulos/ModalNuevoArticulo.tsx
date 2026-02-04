@@ -199,7 +199,7 @@ const ModalNuevoArticulo = ({ open, onClose, articulo, onSuccess, accentColor }:
   const selectedRubro = useMemo(() => {
     const id = Number(form.rubroId);
     if (Number.isFinite(id) && id > 0) {
-      return rubros.find((r) => r.id === id);
+      return rubros.find((r) => Number(r.id) === id);
     }
     return undefined;
   }, [form.rubroId, rubros]);
@@ -207,7 +207,7 @@ const ModalNuevoArticulo = ({ open, onClose, articulo, onSuccess, accentColor }:
   const selectedProveedor = useMemo(() => {
     const id = Number(form.idProveedor);
     if (Number.isFinite(id) && id > 0) {
-      return proveedores.find((p) => p.IdProveedor === id);
+      return proveedores.find((p) => Number(p.IdProveedor) === id);
     }
     return undefined;
   }, [form.idProveedor, proveedores]);
@@ -665,6 +665,7 @@ const ModalNuevoArticulo = ({ open, onClose, articulo, onSuccess, accentColor }:
                 }}
                 onChange={(_, val) => {
                   setForm((prev) => ({ ...prev, idProveedor: val ? String(val.IdProveedor) : '' }));
+                  setProveedorInput(val ? (val.Nombre || `Proveedor #${val.IdProveedor}`) : '');
                 }}
                 getOptionLabel={(option) => option.Nombre || `Proveedor #${option.IdProveedor}`}
                 isOptionEqualToValue={(opt, val) => opt.IdProveedor === val.IdProveedor}
