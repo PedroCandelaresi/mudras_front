@@ -672,14 +672,49 @@ const TablaArticulos: React.FC<ArticulosTableProps> = ({
       });
 
       const articulosExport = (exportData as any)?.buscarArticulos?.articulos || [];
-      const articulosHydrated = articulosExport.map((a: any) => ({
-        ...a,
-        rubro: a.rubro ? a.rubro : { Rubro: a.Rubro },
-        proveedor: a.proveedor ? a.proveedor : { IdProveedor: a.idProveedor },
-      })).map((a: any) => {
-        // Re-apply hydration logic basically or just access props safely
-        // For simplistic export, we might prioritize raw values
-        return a;
+      const articulosHydrated = articulosExport.map((a: any) => {
+        // Logica simplificada de hidratacion para export
+        // Reutilizamos la misma logica del hook obtenerPrecioHydrated pero aqui manual
+        // para asegurarnos de que el export tenga el precio calculado
+
+        let rubroHydrated = a.rubro;
+        if (!rubroHydrated?.PorcentajeRecargo && a.Rubro) {
+          const match = rubroMap.get(a.Rubro.toLowerCase());
+          if (match) {
+            rubroHydrated = {
+              ...rubroHydrated,
+              Id: rubroHydrated?.Id || 0,
+              Rubro: a.Rubro,
+              PorcentajeRecargo: match.porcentajeRecargo,
+              PorcentajeDescuento: match.porcentajeDescuento,
+            };
+          }
+        }
+
+        let proveedorHydrated = a.proveedor;
+        if (!proveedorHydrated?.PorcentajeRecargoProveedor && a.idProveedor) {
+          const match = proveedorMap.get(a.idProveedor);
+          if (match) {
+            proveedorHydrated = {
+              ...proveedorHydrated,
+              IdProveedor: a.idProveedor,
+              PorcentajeRecargoProveedor: match.porcentajeRecargo,
+              PorcentajeDescuentoProveedor: match.porcentajeDescuento,
+            };
+          }
+        }
+
+        const ctx: Articulo = {
+          ...a,
+          rubro: rubroHydrated,
+          proveedor: proveedorHydrated,
+        };
+        const precioFinal = obtenerPrecioCalculado(ctx);
+
+        return {
+          ...ctx,
+          PrecioVentaCalculado: precioFinal
+        };
       });
 
       const columns: ExportColumn<any>[] = [
@@ -688,7 +723,7 @@ const TablaArticulos: React.FC<ArticulosTableProps> = ({
         { header: 'Marca', key: 'Marca', width: 20 },
         { header: 'Rubro', key: (item) => item.Rubro || item.rubro?.Rubro || '', width: 15 },
         { header: 'Proveedor', key: (item) => item.proveedor?.Nombre || '', width: 25 },
-        { header: 'Precio Venta', key: (item) => `$${Number(item.PrecioVenta).toLocaleString('es-AR')}`, width: 15 },
+        { header: 'Precio Venta', key: (item) => `$${Number(item.PrecioVentaCalculado).toLocaleString('es-AR')}`, width: 15 },
         { header: 'Stock Global', key: (item) => item.totalStock || item.Stock || 0, width: 10 },
       ];
 
