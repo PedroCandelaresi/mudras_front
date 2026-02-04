@@ -18,10 +18,15 @@ import {
 import { alpha, darken } from '@mui/material/styles';
 import { useState, useEffect, useMemo, useCallback, type ComponentProps } from 'react';
 import { Icon } from '@iconify/react';
+import { IconFileTypePdf, IconFileSpreadsheet } from '@tabler/icons-react';
 import { azul, verde, marron as marronPalette } from '@/ui/colores';
 import { TablaArticulos } from '@/components/articulos';
-import { useQuery } from '@apollo/client/react';
+import { useQuery, useApolloClient } from '@apollo/client/react';
 import { GET_PROVEEDOR, RUBROS_POR_PROVEEDOR } from '@/components/proveedores/graphql/queries';
+import { BUSCAR_ARTICULOS } from '@/components/articulos/graphql/queries';
+import { exportToExcel, exportToPdf, ExportColumn } from '@/utils/exportUtils';
+import { calcularPrecioDesdeArticulo } from '@/utils/precioVenta';
+import type { Articulo } from '@/app/interfaces/mudras.types';
 import type {
   ProveedorResponse,
   Proveedor,
@@ -143,6 +148,9 @@ const ModalDetallesProveedor = ({ open, onClose, proveedor, accentColor }: Modal
   );
 
   const [rubroFiltro, setRubroFiltro] = useState<{ id: number | null; nombre: string | null } | null>(null);
+  const [filtroStock, setFiltroStock] = useState<string>('todos'); // 'todos', 'con_stock', 'bajo_stock', 'sin_stock'
+  const [exporting, setExporting] = useState(false);
+  const client = useApolloClient();
 
   const { data: rubrosData, loading: loadingRubros, error: errorRubros } =
     useQuery<RubrosPorProveedorListResponse>(RUBROS_POR_PROVEEDOR, {
@@ -246,8 +254,13 @@ const ModalDetallesProveedor = ({ open, onClose, proveedor, accentColor }: Modal
     } else if (rubroFiltro?.nombre) {
       base.rubro = rubroFiltro.nombre;
     }
+
+    if (filtroStock === 'con_stock') base.estado = 'Con stock';
+    if (filtroStock === 'bajo_stock') base.estado = 'Bajo stock';
+    if (filtroStock === 'sin_stock') base.estado = 'Sin stock';
+
     return base;
-  }, [pagina, limite, proveedorId, busquedaPersonalizada, rubroFiltro]);
+  }, [pagina, limite, proveedorId, busquedaPersonalizada, rubroFiltro, filtroStock]);
 
   // Hooks para sincronizar resets al abrir/cambiar proveedor
   useEffect(() => {
@@ -307,6 +320,76 @@ const ModalDetallesProveedor = ({ open, onClose, proveedor, accentColor }: Modal
     },
     [],
   );
+
+  const handleExportar = async (type: 'pdf' | 'excel') => {
+    if (!proveedorCompleto) return;
+    try {
+      setExporting(true);
+
+      const variables = {
+        filtros: {
+          ...filtrosControlados,
+          limite: 100000,
+          pagina: 0,
+        }
+      };
+
+      const { data: exportData } = await client.query({
+        query: BUSCAR_ARTICULOS,
+        variables,
+        fetchPolicy: 'network-only',
+      });
+
+      const articulosExport = (exportData as any)?.buscarArticulos?.articulos || [];
+
+      // lógica simplificada para hidratar precios en exportación (asumiendo que los datos del proveedor ya están cargados)
+      const articulosHydrated = articulosExport.map((a: any) => {
+        const ctx: Articulo = {
+          ...a,
+          proveedor: a.proveedor ? a.proveedor : {
+            IdProveedor: proveedorCompleto.IdProveedor,
+            PorcentajeRecargoProveedor: proveedorCompleto.PorcentajeRecargoProveedor,
+            PorcentajeDescuentoProveedor: proveedorCompleto.PorcentajeDescuentoProveedor,
+            Nombre: proveedorCompleto.Nombre
+          },
+          rubro: a.rubro ? a.rubro : (a.Rubro ? { Rubro: a.Rubro } : undefined)
+        };
+        // Nota: si el rubro no viene completo y no tenemos forma facil de buscarlo aqui sin el mapa global,
+        // el precio podria variar si depende del recargo del rubro. 
+        // Sin embargo, en contexto proveedor, el recargo proveedor suele ser el dominante, o el usuario acepta la aprox.
+        const precioFinal = calcularPrecioDesdeArticulo(ctx) || Number(a.PrecioVenta ?? 0);
+
+        return {
+          ...ctx,
+          PrecioVentaCalculado: precioFinal,
+          StockTotal: (a.totalStock !== undefined) ? a.totalStock : (a.Stock || 0)
+        };
+      });
+
+
+      const columns: ExportColumn<any>[] = [
+        { header: 'Código', key: 'Codigo', width: 15 },
+        { header: 'Descripción', key: 'Descripcion', width: 40 },
+        { header: 'Rubro', key: (item) => item.Rubro || item.rubro?.Rubro || '', width: 20 },
+        { header: 'Stock', key: 'StockTotal', width: 10 },
+        { header: 'Precio', key: (item) => `$${Number(item.PrecioVentaCalculado).toLocaleString('es-AR')}`, width: 15 },
+      ];
+
+      const timestamp = new Date().toISOString().split('T')[0];
+      const filename = `${proveedorCompleto.Nombre?.replace(/\s+/g, '_')}_Articulos_${timestamp}`;
+
+      if (type === 'excel') {
+        exportToExcel(articulosHydrated, columns, filename);
+      } else {
+        exportToPdf(articulosHydrated, columns, filename, `Artículos de ${proveedorCompleto.Nombre}`);
+      }
+
+    } catch (error) {
+      console.error('Error exportando:', error);
+    } finally {
+      setExporting(false);
+    }
+  };
 
   const onCerrar = () => {
     setFiltroInput('');
@@ -556,6 +639,64 @@ const ModalDetallesProveedor = ({ open, onClose, proveedor, accentColor }: Modal
                     },
                   }}
                 />
+              </Box>
+
+              {/* Toolbar Actions: Stock Filters & Exports */}
+              <Box display="flex" flexWrap="wrap" gap={2} mb={2} alignItems="center">
+                <Box display="flex" gap={1}>
+                  {[
+                    { label: 'Todos', value: 'todos', color: COLORS.secondary },
+                    { label: 'Con Stock', value: 'con_stock', color: '#2e7d32' }, // Green
+                    { label: 'Poco Stock', value: 'bajo_stock', color: '#ed6c02' }, // Orange
+                    { label: 'Sin Stock', value: 'sin_stock', color: '#d32f2f' }, // Red
+                  ].map((opt) => (
+                    <Chip
+                      key={opt.value}
+                      label={opt.label}
+                      onClick={() => {
+                        setFiltroStock(opt.value);
+                        setPaginacion(prev => ({ ...prev, pagina: 0 }));
+                      }}
+                      variant={filtroStock === opt.value ? 'filled' : 'outlined'}
+                      sx={{
+                        borderRadius: 0,
+                        fontWeight: 600,
+                        cursor: 'pointer',
+                        bgcolor: filtroStock === opt.value ? opt.color : 'transparent',
+                        color: filtroStock === opt.value ? '#fff' : opt.color,
+                        borderColor: opt.color,
+                        '&:hover': {
+                          bgcolor: filtroStock === opt.value ? darken(opt.color, 0.1) : alpha(opt.color, 0.1)
+                        }
+                      }}
+                    />
+                  ))}
+                </Box>
+
+                <Box flexGrow={1} />
+
+                <Box display="flex" gap={1}>
+                  <Button
+                    variant="outlined"
+                    size="small"
+                    startIcon={<IconFileSpreadsheet size={18} />}
+                    onClick={() => handleExportar('excel')}
+                    disabled={exporting}
+                    sx={{ borderRadius: 0, textTransform: 'none', color: '#1D6F42', borderColor: '#1D6F42', '&:hover': { bgcolor: alpha('#1D6F42', 0.1), borderColor: '#1D6F42' } }}
+                  >
+                    Excel
+                  </Button>
+                  <Button
+                    variant="outlined"
+                    size="small"
+                    startIcon={<IconFileTypePdf size={18} />}
+                    onClick={() => handleExportar('pdf')}
+                    disabled={exporting}
+                    sx={{ borderRadius: 0, textTransform: 'none', color: '#D32F2F', borderColor: '#D32F2F', '&:hover': { bgcolor: alpha('#D32F2F', 0.1), borderColor: '#D32F2F' } }}
+                  >
+                    PDF
+                  </Button>
+                </Box>
               </Box>
 
               <Box mt={2}>
