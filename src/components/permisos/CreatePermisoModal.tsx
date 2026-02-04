@@ -1,7 +1,7 @@
 "use client";
 
 import React from 'react';
-import { Dialog, DialogActions, DialogContent, DialogTitle, Button, TextField, Box, Typography, Divider, IconButton, Alert } from '@mui/material';
+import { Dialog, DialogActions, DialogContent, DialogTitle, Button, TextField, Box, Typography, Divider, IconButton, Alert, Autocomplete } from '@mui/material';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -26,8 +26,16 @@ const schema = z.object({
   description: z.string().trim().optional().or(z.literal('')).nullable(),
 });
 
+const SYSTEM_RESOURCES = [
+  'dashboard', 'productos', 'stock', 'depositos', 'puntos_venta', 'rubros',
+  'ventas', 'caja', 'clientes', 'pedidos', 'tienda_online', 'promociones',
+  'proveedores', 'compras', 'gastos', 'admin', 'usuarios', 'roles', 'contabilidad'
+];
+
+const SYSTEM_ACTIONS = ['read', 'create', 'update', 'delete', 'info', 'precios', 'costos', 'stock'];
+
 export function CreatePermisoModal({ open, onClose, onSubmit }: Props) {
-  const { register, handleSubmit, reset, formState: { errors } } = useForm<CrearPermisoForm>({
+  const { register, handleSubmit, reset, setValue, watch, formState: { errors } } = useForm<CrearPermisoForm>({
     defaultValues: { resource: '', action: '', description: '' },
     resolver: zodResolver(schema),
   });
@@ -79,35 +87,46 @@ export function CreatePermisoModal({ open, onClose, onSubmit }: Props) {
 
           <Alert severity="info" icon={<IconInfoCircle size={20} />} sx={{ mb: 3, borderRadius: 0 }}>
             <Typography variant="body2" sx={{ fontSize: '0.85rem' }}>
-              Los permisos definen <strong>qué se puede hacer</strong> sobre un recurso. Un permiso se compone de:
-              <br />
-              • <strong>Recurso:</strong> La entidad afectada (ej: <code>productos</code>, <code>usuarios</code>).
-              <br />
-              • <strong>Acción:</strong> La operación permitida (ej: <code>read</code>, <code>create</code>, <code>update</code>).
+              Los permisos definen <strong>qué se puede hacer</strong>. Para que surtan efecto, deben coincidir con los definidos en el código del sistema.
             </Typography>
           </Alert>
 
           <Box display="grid" gap={3}>
             <Box display="grid" gridTemplateColumns="1fr 1fr" gap={2}>
-              <TextField
-                label="Recurso (Resource)"
-                placeholder="ej: productos"
-                size="small"
-                {...register('resource')}
-                error={!!errors.resource}
-                helperText={errors.resource?.message || "Entidad del sistema"}
-                fullWidth
-                InputProps={{ sx: { borderRadius: 0, bgcolor: '#fff' } }}
+              <Autocomplete
+                freeSolo
+                options={SYSTEM_RESOURCES}
+                renderInput={(params) => (
+                  <TextField
+                    {...params}
+                    label="Recurso (Resource)"
+                    placeholder="ej: productos"
+                    size="small"
+                    error={!!errors.resource}
+                    helperText={errors.resource?.message}
+                    fullWidth
+                    InputProps={{ ...params.InputProps, sx: { borderRadius: 0, bgcolor: '#fff' } }}
+                  />
+                )}
+                onInputChange={(_, val) => setValue('resource', val)}
               />
-              <TextField
-                label="Acción (Action)"
-                placeholder="ej: create"
-                size="small"
-                {...register('action')}
-                error={!!errors.action}
-                helperText={errors.action?.message || "Operación a realizar"}
-                fullWidth
-                InputProps={{ sx: { borderRadius: 0, bgcolor: '#fff' } }}
+
+              <Autocomplete
+                freeSolo
+                options={SYSTEM_ACTIONS}
+                renderInput={(params) => (
+                  <TextField
+                    {...params}
+                    label="Acción (Action)"
+                    placeholder="ej: create"
+                    size="small"
+                    error={!!errors.action}
+                    helperText={errors.action?.message}
+                    fullWidth
+                    InputProps={{ ...params.InputProps, sx: { borderRadius: 0, bgcolor: '#fff' } }}
+                  />
+                )}
+                onInputChange={(_, val) => setValue('action', val)}
               />
             </Box>
 

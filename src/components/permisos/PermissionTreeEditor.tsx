@@ -44,63 +44,63 @@ export const SITE_PERMISSION_TREE: PermissionNode[] = [
     {
         label: 'Dashboard',
         resource: 'dashboard',
-        actions: { read: 'dashboard:read' }
+        actions: { read: 'dashboard.read' }
     },
     {
         label: 'Catálogo y Productos',
         resource: 'productos',
-        actions: { read: 'productos:read', create: 'productos:create', delete: 'productos:delete', update: 'productos:update' },
+        actions: { read: 'productos.read', create: 'productos.create', delete: 'productos.delete', update: 'productos.update' },
         fields: [
-            { label: 'Editar Información (Desc., Fotos)', permission: 'productos:update:info' },
-            { label: 'Editar Precios y Ganancia', permission: 'productos:update:precios' },
-            { label: 'Editar Costos y Proveedores', permission: 'productos:update:costos' },
-            { label: 'Ajuste Manual de Stock', permission: 'productos:update:stock' },
+            { label: 'Editar Información (Desc., Fotos)', permission: 'productos.update.info' },
+            { label: 'Editar Precios y Ganancia', permission: 'productos.update.precios' },
+            { label: 'Editar Costos y Proveedores', permission: 'productos.update.costos' },
+            { label: 'Ajuste Manual de Stock', permission: 'productos.update.stock' },
         ]
     },
     {
         label: 'Inventario',
         resource: 'stock',
         children: [
-            { label: 'Movimientos de Stock', resource: 'stock', actions: { read: 'stock:read', update: 'stock:update' } },
-            { label: 'Depósitos', resource: 'depositos', actions: { read: 'depositos:read', create: 'depositos:create', update: 'depositos:update' } },
-            { label: 'Puntos de Venta', resource: 'puntos_venta', actions: { read: 'puntos_venta:read', create: 'puntos_venta:create', update: 'puntos_venta:update' } },
-            { label: 'Rubros', resource: 'rubros', actions: { read: 'rubros:read', create: 'rubros:create', update: 'rubros:update' } },
+            { label: 'Movimientos de Stock', resource: 'stock', actions: { read: 'stock.read', update: 'stock.update' } },
+            { label: 'Depósitos', resource: 'depositos', actions: { read: 'depositos.read', create: 'depositos.create', update: 'depositos.update' } },
+            { label: 'Puntos de Venta', resource: 'puntos_venta', actions: { read: 'puntos_venta.read', create: 'puntos_venta.create', update: 'puntos_venta.update' } },
+            { label: 'Rubros', resource: 'rubros', actions: { read: 'rubros.read', create: 'rubros.create', update: 'rubros.update' } },
         ]
     },
     {
         label: 'Ventas y Comercial',
         resource: 'ventas',
         children: [
-            { label: 'Historial de Ventas', resource: 'ventas', actions: { read: 'ventas:read', create: 'ventas:create', delete: 'ventas:delete' } },
-            { label: 'Caja Registradora', resource: 'caja', actions: { read: 'caja:read', create: 'caja:create', update: 'caja:update' } },
-            { label: 'Clientes', resource: 'clientes', actions: { read: 'clientes:read', create: 'clientes:create', update: 'clientes:update' } },
-            { label: 'Pedidos', resource: 'pedidos', actions: { read: 'pedidos:read', create: 'pedidos:create', update: 'pedidos:update' } },
+            { label: 'Historial de Ventas', resource: 'ventas', actions: { read: 'ventas.read', create: 'ventas.create', delete: 'ventas.delete' } },
+            { label: 'Caja Registradora', resource: 'caja', actions: { read: 'caja.read', create: 'caja.create', update: 'caja.update' } },
+            { label: 'Clientes', resource: 'clientes', actions: { read: 'clientes.read', create: 'clientes.create', update: 'clientes.update' } },
+            { label: 'Pedidos', resource: 'pedidos', actions: { read: 'pedidos.read', create: 'pedidos.create', update: 'pedidos.update' } },
         ]
     },
     {
         label: 'Tienda Online',
         resource: 'tienda_online',
-        actions: { read: 'tienda_online:read', update: 'tienda_online:update' },
+        actions: { read: 'tienda_online.read', update: 'tienda_online.update' },
         children: [
-            { label: 'Promociones', resource: 'promociones', actions: { read: 'promociones:read', create: 'promociones:create', update: 'promociones:update' } },
+            { label: 'Promociones', resource: 'promociones', actions: { read: 'promociones.read', create: 'promociones.create', update: 'promociones.update' } },
         ]
     },
     {
         label: 'Compras y Proveedores',
         resource: 'compras',
         children: [
-            { label: 'Proveedores', resource: 'proveedores', actions: { read: 'proveedores:read', create: 'proveedores:create', update: 'proveedores:update', delete: 'proveedores:delete' } },
-            { label: 'Órdenes de Compra', resource: 'compras', actions: { read: 'compras:read', create: 'compras:create', update: 'compras:update' } },
-            { label: 'Gastos', resource: 'gastos', actions: { read: 'gastos:read', create: 'gastos:create', update: 'gastos:update' } },
+            { label: 'Proveedores', resource: 'proveedores', actions: { read: 'proveedores.read', create: 'proveedores.create', update: 'proveedores.update', delete: 'proveedores.delete' } },
+            { label: 'Órdenes de Compra', resource: 'compras', actions: { read: 'compras.read', create: 'compras.create', update: 'compras.update' } },
+            { label: 'Gastos', resource: 'gastos', actions: { read: 'gastos.read', create: 'gastos.create', update: 'gastos.update' } },
         ]
     },
     {
         label: 'Administración',
         resource: 'admin',
         children: [
-            { label: 'Usuarios', resource: 'usuarios', actions: { read: 'usuarios:read', create: 'usuarios:create', update: 'usuarios:update', delete: 'usuarios:delete' } },
-            { label: 'Roles y Permisos', resource: 'roles', actions: { read: 'roles:read', create: 'roles:create', update: 'roles:update', delete: 'roles:delete' } },
-            { label: 'Contabilidad', resource: 'contabilidad', actions: { read: 'contabilidad:read', create: 'contabilidad:create', update: 'contabilidad:update' } },
+            { label: 'Usuarios', resource: 'usuarios', actions: { read: 'usuarios.read', create: 'usuarios.create', update: 'usuarios.update', delete: 'usuarios.delete' } },
+            { label: 'Roles y Permisos', resource: 'roles', actions: { read: 'roles.read', create: 'roles.create', update: 'roles.update', delete: 'roles.delete' } },
+            { label: 'Contabilidad', resource: 'contabilidad', actions: { read: 'contabilidad.read', create: 'contabilidad.create', update: 'contabilidad.update' } },
         ]
     }
 ];

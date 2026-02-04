@@ -1,7 +1,7 @@
 "use client";
 
 import React from 'react';
-import { Dialog, DialogActions, DialogContent, DialogTitle, Button, TextField, Box, Typography, IconButton, Alert } from '@mui/material';
+import { Dialog, DialogActions, DialogContent, DialogTitle, Button, TextField, Box, Typography, IconButton, Alert, Autocomplete } from '@mui/material';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -28,8 +28,16 @@ const schema = z.object({
   description: z.string().trim().optional().or(z.literal('')).nullable(),
 });
 
+const SYSTEM_RESOURCES = [
+  'dashboard', 'productos', 'stock', 'depositos', 'puntos_venta', 'rubros',
+  'ventas', 'caja', 'clientes', 'pedidos', 'tienda_online', 'promociones',
+  'proveedores', 'compras', 'gastos', 'admin', 'usuarios', 'roles', 'contabilidad'
+];
+
+const SYSTEM_ACTIONS = ['read', 'create', 'update', 'delete', 'info', 'precios', 'costos', 'stock'];
+
 export function EditPermisoModal({ open, permiso, onClose, onSubmit }: Props) {
-  const { register, handleSubmit, reset, formState: { errors } } = useForm<EditarPermisoForm>({
+  const { register, handleSubmit, reset, setValue, formState: { errors } } = useForm<EditarPermisoForm>({
     values: {
       resource: permiso?.resource ?? '',
       action: permiso?.action ?? '',
@@ -88,29 +96,46 @@ export function EditPermisoModal({ open, permiso, onClose, onSubmit }: Props) {
         <Box p={3}>
           <Alert severity="warning" icon={<IconInfoCircle size={20} />} sx={{ mb: 3, borderRadius: 0 }}>
             <Typography variant="body2" sx={{ fontSize: '0.85rem' }}>
-              <strong>Límite de cuidado:</strong> Modificar el <code>resource</code> o <code>action</code> de un permiso existente puede afectar a los roles que ya lo tienen asignado y a la lógica interna del sistema.
+              <strong>Límite de cuidado:</strong> Modificar el <code>resource</code> o <code>action</code> de un permiso existente puede afectar a los roles que ya lo tienen asignado.
             </Typography>
           </Alert>
 
           <Box display="grid" gap={3}>
             <Box display="grid" gridTemplateColumns="1fr 1fr" gap={2}>
-              <TextField
-                label="Recurso (Resource)"
-                size="small"
-                {...register('resource')}
-                error={!!errors.resource}
-                helperText={errors.resource?.message}
-                fullWidth
-                InputProps={{ sx: { borderRadius: 0, bgcolor: '#fff' } }}
+              <Autocomplete
+                freeSolo
+                options={SYSTEM_RESOURCES}
+                value={permiso?.resource || ''}
+                renderInput={(params) => (
+                  <TextField
+                    {...params}
+                    label="Recurso (Resource)"
+                    size="small"
+                    error={!!errors.resource}
+                    helperText={errors.resource?.message}
+                    fullWidth
+                    InputProps={{ ...params.InputProps, sx: { borderRadius: 0, bgcolor: '#fff' } }}
+                  />
+                )}
+                onInputChange={(_, val) => setValue('resource', val)}
               />
-              <TextField
-                label="Acción (Action)"
-                size="small"
-                {...register('action')}
-                error={!!errors.action}
-                helperText={errors.action?.message}
-                fullWidth
-                InputProps={{ sx: { borderRadius: 0, bgcolor: '#fff' } }}
+
+              <Autocomplete
+                freeSolo
+                options={SYSTEM_ACTIONS}
+                value={permiso?.action || ''}
+                renderInput={(params) => (
+                  <TextField
+                    {...params}
+                    label="Acción (Action)"
+                    size="small"
+                    error={!!errors.action}
+                    helperText={errors.action?.message}
+                    fullWidth
+                    InputProps={{ ...params.InputProps, sx: { borderRadius: 0, bgcolor: '#fff' } }}
+                  />
+                )}
+                onInputChange={(_, val) => setValue('action', val)}
               />
             </Box>
 
