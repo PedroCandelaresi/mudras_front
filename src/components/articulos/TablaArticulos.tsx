@@ -952,9 +952,9 @@ const TablaArticulos: React.FC<ArticulosTableProps> = ({
 
       {/* --- Fila 2: Exportación + Combos --- */}
       {/* --- Fila 2: Exportación + Combos --- */}
-      <Box display="flex" justifyContent="space-between" alignItems="center" flexWrap="wrap" gap={2}>
+      <Box display="flex" justifyContent="space-between" alignItems="flex-start" flexWrap="nowrap" gap={2}>
         {/* Left: Export Buttons */}
-        <Box display="flex" gap={2}>
+        <Box display="flex" gap={2} mt={0.5}>
           <Button
             variant="outlined"
             startIcon={<IconFileSpreadsheet size={18} />}
@@ -974,7 +974,7 @@ const TablaArticulos: React.FC<ArticulosTableProps> = ({
         </Box>
 
         {/* Right: Combos (Proveedor -> Rubro) */}
-        <Box display="flex" alignItems="center" gap={2} flexWrap="wrap" sx={{ flexGrow: 1 }}>
+        <Box display="flex" alignItems="flex-start" gap={2} flexWrap="nowrap" sx={{ flexGrow: 1 }}>
           {/* --- Proveedores --- */}
           <Autocomplete
             multiple
@@ -1007,7 +1007,7 @@ const TablaArticulos: React.FC<ArticulosTableProps> = ({
               </li>
             )}
             fullWidth
-            sx={{ minWidth: 200, flexGrow: 1 }}
+            sx={{ flexBasis: '50%', flexGrow: 1 }}
             renderInput={(params) => <TextField {...params} label="Proveedores" size="small" placeholder="Seleccionar..." sx={{ bgcolor: 'white' }} />}
           />
 
@@ -1043,7 +1043,7 @@ const TablaArticulos: React.FC<ArticulosTableProps> = ({
               </li>
             )}
             fullWidth
-            sx={{ minWidth: 200, flexGrow: 1 }}
+            sx={{ flexBasis: '50%', flexGrow: 1 }}
             renderInput={(params) => <TextField {...params} label="Rubros" size="small" placeholder="Seleccionar..." sx={{ bgcolor: 'white' }} />}
           />
         </Box>
