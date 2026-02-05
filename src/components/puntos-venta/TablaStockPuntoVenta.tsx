@@ -448,7 +448,7 @@ const TablaStockPuntoVenta: React.FC<Props> = ({
                 <Table size="small" stickyHeader>
                   <TableHead>
                     <TableRow>
-                      {['IMAGEN', 'CÓDIGO', 'DESCRIPCIÓN', 'PRECIO', 'STOCK', 'RUBRO', ...(showActions ? ['ACCIONES'] : [])].map((head, idx) => (
+                      {['IMAGEN', 'CÓDIGO', 'DESCRIPCIÓN', 'PRECIO', 'STOCK', ...(showActions ? ['ACCIONES'] : [])].map((head, idx) => (
                         <TableCell
                           key={idx}
                           align={['PRECIO', 'STOCK'].includes(head) ? 'right' : head === 'ACCIONES' ? 'center' : 'left'}
@@ -574,17 +574,7 @@ const TablaStockPuntoVenta: React.FC<Props> = ({
                               {numberFormatter.format(Number(item.stockAsignado) || 0)}
                             </Typography>
                           </TableCell>
-                          <TableCell>
-                            {item.rubro?.nombre ? (
-                              <Chip
-                                label={item.rubro.nombre}
-                                size="small"
-                                sx={{ borderRadius: 0, bgcolor: '#ffffff', border: '1px solid #e0e0e0' }}
-                              />
-                            ) : (
-                              <Typography variant="caption" color="text.secondary">—</Typography>
-                            )}
-                          </TableCell>
+
                           {showActions && (
                             <TableCell align="center">
                               <Box display="flex" justifyContent="center" gap={0.5}>
