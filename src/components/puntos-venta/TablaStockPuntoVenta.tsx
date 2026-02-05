@@ -72,30 +72,74 @@ const TablaStockPuntoVenta: React.FC<Props> = ({
   const [filtrosRubros, setFiltrosRubros] = useState<any[]>([]);
   const [filtrosProveedores, setFiltrosProveedores] = useState<any[]>([]);
 
-  // Derivar opciones únicas
-  const opcionesRubros = useMemo(() => {
-    const seen = new Set();
-    const opts: any[] = [];
-    articulos.forEach(a => {
-      if (a.rubro?.id && !seen.has(a.rubro.id)) {
-        seen.add(a.rubro.id);
-        opts.push(a.rubro);
-      }
-    });
-    return opts.sort((a, b) => a.nombre.localeCompare(b.nombre));
-  }, [articulos]);
+  // Bidirectional Filtering Logic
+  const { rubrosDisponibles, proveedoresDisponibles } = useMemo(() => {
+    const allRubrosMap = new Map();
+    const allProvsMap = new Map();
 
-  const opcionesProveedores = useMemo(() => {
-    const seen = new Set();
-    const opts: any[] = [];
-    articulos.forEach(a => {
-      if (a.articulo?.proveedor?.IdProveedor && !seen.has(a.articulo.proveedor.IdProveedor)) {
-        seen.add(a.articulo.proveedor.IdProveedor);
-        opts.push(a.articulo.proveedor);
+    const provToRubros = new Map<number, Set<number>>();
+    const rubroToProvs = new Map<number, Set<number>>();
+
+    // 1. Build Maps and Lists from Articulos
+    articulos.forEach(item => {
+      const rubro = item.rubro;
+      const prov = item.articulo?.proveedor;
+
+      if (rubro?.id) {
+        if (!allRubrosMap.has(rubro.id)) allRubrosMap.set(rubro.id, rubro);
+      }
+      if (prov?.IdProveedor) {
+        if (!allProvsMap.has(prov.IdProveedor)) allProvsMap.set(prov.IdProveedor, prov);
+      }
+
+      if (rubro?.id && prov?.IdProveedor) {
+        // Map Prov -> Rubros
+        if (!provToRubros.has(prov.IdProveedor)) provToRubros.set(prov.IdProveedor, new Set());
+        provToRubros.get(prov.IdProveedor)?.add(rubro.id);
+
+        // Map Rubro -> Provs
+        if (!rubroToProvs.has(rubro.id)) rubroToProvs.set(rubro.id, new Set());
+        rubroToProvs.get(rubro.id)?.add(prov.IdProveedor);
       }
     });
-    return opts.sort((a, b) => (a.Nombre || '').localeCompare(b.Nombre || ''));
-  }, [articulos]);
+
+    const allRubrosList = Array.from(allRubrosMap.values()).sort((a, b) => a.nombre.localeCompare(b.nombre));
+    const allProvsList = Array.from(allProvsMap.values()).sort((a, b) => (a.Nombre || '').localeCompare(b.Nombre || ''));
+
+    // 2. Filter Available Options based on Selection
+    const activeProvIds = filtrosProveedores.map(p => p.IdProveedor);
+    const activeRubroIds = filtrosRubros.map(r => r.id);
+
+    // Calculate Available Providers
+    let filteredProvs = allProvsList;
+    if (activeRubroIds.length > 0) {
+      const allowedProvs = new Set<number>();
+      activeRubroIds.forEach(rId => {
+        const provs = rubroToProvs.get(rId);
+        if (provs) provs.forEach(pId => allowedProvs.add(pId));
+      });
+      // Logic: Show providers that have AT LEAST ONE of the selected rubrics
+      filteredProvs = allProvsList.filter(p => allowedProvs.has(Number(p.IdProveedor)));
+    }
+
+    // Calculate Available Rubros
+    let filteredRubros = allRubrosList;
+    if (activeProvIds.length > 0) {
+      const allowedRubros = new Set<number>();
+      activeProvIds.forEach(pId => {
+        const rubros = provToRubros.get(pId);
+        if (rubros) rubros.forEach(rId => allowedRubros.add(rId));
+      });
+      // Logic: Show rubrics offered by AT LEAST ONE of the selected providers
+      filteredRubros = allRubrosList.filter(r => allowedRubros.has(Number(r.id)));
+    }
+
+    return { rubrosDisponibles: filteredRubros, proveedoresDisponibles: filteredProvs };
+  }, [articulos, filtrosProveedores, filtrosRubros]);
+
+  // Alias for compatibility
+  const opcionesRubros = rubrosDisponibles;
+  const opcionesProveedores = proveedoresDisponibles;
 
   const articulosFiltrados = useMemo(() => {
     let res = articulos;
@@ -246,10 +290,11 @@ const TablaStockPuntoVenta: React.FC<Props> = ({
                 startIcon={<IconRefresh size={18} />}
                 sx={{
                   borderRadius: 0,
-                  borderColor: '#e0e0e0',
-                  color: '#757575',
                   textTransform: 'none',
+                  color: '#757575',
+                  borderColor: '#e0e0e0',
                   height: 40,
+                  px: 2,
                   '&:hover': { borderColor: '#bdbdbd', bgcolor: '#f5f5f5' }
                 }}
               >
@@ -373,6 +418,8 @@ const TablaStockPuntoVenta: React.FC<Props> = ({
             />
           </Box>
         </Box>
+
+        <Divider sx={{ my: 2 }} />
 
         {error ? (
           <Alert severity="error" sx={{ mb: 2, borderRadius: 0 }}>
