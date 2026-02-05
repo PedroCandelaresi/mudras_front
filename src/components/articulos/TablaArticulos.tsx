@@ -36,6 +36,7 @@ import {
   IconFileTypePdf, IconFileSpreadsheet
 } from '@tabler/icons-react';
 import { exportToExcel, exportToPdf, ExportColumn } from '@/utils/exportUtils';
+import MudrasLoader from '@/components/ui/MudrasLoader';
 import { Icon } from '@iconify/react';
 import { BUSCAR_ARTICULOS, GET_ESTADISTICAS_ARTICULOS } from '@/components/articulos/graphql/queries';
 import { GET_RUBROS } from '@/components/rubros/graphql/queries';
@@ -1127,7 +1128,13 @@ const TablaArticulos: React.FC<ArticulosTableProps> = ({
         </TableHead>
 
         <TableBody>
-          {articulos.length === 0 ? (
+          {loading ? (
+            <TableRow>
+              <TableCell colSpan={columns.length} align="center" sx={{ py: 10 }}>
+                <MudrasLoader size={80} text="Cargando artículos..." />
+              </TableCell>
+            </TableRow>
+          ) : articulos.length === 0 ? (
             <TableRow>
               <TableCell colSpan={columns.length} align="center" sx={{ py: 6 }}>
                 <Typography variant="body2" color="text.secondary">
@@ -1223,14 +1230,7 @@ const TablaArticulos: React.FC<ArticulosTableProps> = ({
 
 
 
-  if (loading) {
-    return (
-      <Box sx={{ width: '100%' }}>
-        {showToolbar && <Skeleton variant="rectangular" height={80} sx={{ mb: 3, borderRadius: 0 }} />}
-        <Skeleton variant="rectangular" height={dense ? 320 : 380} sx={{ borderRadius: 0 }} />
-      </Box>
-    );
-  }
+
 
   if (error) {
     return (
