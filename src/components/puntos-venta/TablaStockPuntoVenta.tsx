@@ -18,15 +18,20 @@ import {
   IconButton,
   TextField,
   InputAdornment,
-  Button
+  Button,
+  Autocomplete,
+  Checkbox,
+  Stack,
 } from '@mui/material';
 import { alpha } from '@mui/material/styles';
 import type { ArticuloConStockPuntoMudras } from '@/components/puntos-mudras/graphql/queries';
 import type { Articulo } from '@/app/interfaces/mudras.types';
 import { calcularPrecioDesdeArticulo } from '@/utils/precioVenta';
+
 import { Icon } from '@iconify/react';
+import { CheckBoxOutlineBlank as CheckBoxOutlineBlankIcon, CheckBox as CheckBoxIcon } from '@mui/icons-material';
 import { grisVerdoso } from '@/ui/colores';
-import { IconFileSpreadsheet, IconFileTypePdf } from '@tabler/icons-react';
+import { IconFileSpreadsheet, IconFileTypePdf, IconRefresh } from '@tabler/icons-react';
 import { exportToExcel, exportToPdf, ExportColumn } from '@/utils/exportUtils';
 import MudrasLoader from '@/components/ui/MudrasLoader';
 
@@ -60,18 +65,61 @@ const TablaStockPuntoVenta: React.FC<Props> = ({
 }) => {
   const [busquedaDraft, setBusquedaDraft] = useState('');
   const [busquedaAplicada, setBusquedaAplicada] = useState('');
+
   const [page, setPage] = useState(0);
   const [rowsPerPage] = useState(50);
+  const [filtrosRubros, setFiltrosRubros] = useState<any[]>([]);
+  const [filtrosProveedores, setFiltrosProveedores] = useState<any[]>([]);
+
+  // Derivar opciones únicas
+  const opcionesRubros = useMemo(() => {
+    const seen = new Set();
+    const opts: any[] = [];
+    articulos.forEach(a => {
+      if (a.rubro?.id && !seen.has(a.rubro.id)) {
+        seen.add(a.rubro.id);
+        opts.push(a.rubro);
+      }
+    });
+    return opts.sort((a, b) => a.nombre.localeCompare(b.nombre));
+  }, [articulos]);
+
+  const opcionesProveedores = useMemo(() => {
+    const seen = new Set();
+    const opts: any[] = [];
+    articulos.forEach(a => {
+      if (a.articulo?.proveedor?.IdProveedor && !seen.has(a.articulo.proveedor.IdProveedor)) {
+        seen.add(a.articulo.proveedor.IdProveedor);
+        opts.push(a.articulo.proveedor);
+      }
+    });
+    return opts.sort((a, b) => (a.Nombre || '').localeCompare(b.Nombre || ''));
+  }, [articulos]);
 
   const articulosFiltrados = useMemo(() => {
-    if (!busquedaAplicada) return articulos;
-    const term = busquedaAplicada.toLowerCase();
-    return articulos.filter((item) =>
-      [item.codigo, item.nombre, item.rubro?.nombre]
-        .filter(Boolean)
-        .some((value) => value!.toLowerCase().includes(term))
-    );
-  }, [articulos, busquedaAplicada]);
+    let res = articulos;
+
+    if (busquedaAplicada) {
+      const term = busquedaAplicada.toLowerCase();
+      res = res.filter((item) =>
+        [item.codigo, item.nombre, item.rubro?.nombre]
+          .filter(Boolean)
+          .some((value) => value!.toLowerCase().includes(term))
+      );
+    }
+
+    if (filtrosRubros.length > 0) {
+      const ids = filtrosRubros.map(r => r.id);
+      res = res.filter(item => item.rubro?.id && ids.includes(item.rubro.id));
+    }
+
+    if (filtrosProveedores.length > 0) {
+      const ids = filtrosProveedores.map(p => p.IdProveedor);
+      res = res.filter(item => item.articulo?.proveedor?.IdProveedor && ids.includes(item.articulo.proveedor.IdProveedor));
+    }
+
+    return res;
+  }, [articulos, busquedaAplicada, filtrosRubros, filtrosProveedores]);
 
   const ejecutarBusqueda = useCallback(() => {
     setBusquedaAplicada((busquedaDraft || '').trim());
@@ -81,6 +129,8 @@ const TablaStockPuntoVenta: React.FC<Props> = ({
   const limpiarFiltros = useCallback(() => {
     setBusquedaDraft('');
     setBusquedaAplicada('');
+    setFiltrosRubros([]);
+    setFiltrosProveedores([]);
     setPage(0);
   }, []);
 
@@ -143,19 +193,14 @@ const TablaStockPuntoVenta: React.FC<Props> = ({
   return (
     <Box>
       <Box
-        display="flex"
-        flexDirection={{ xs: 'column', md: 'row' }}
-        gap={2}
         mb={3}
         p={2}
         bgcolor="#ffffff"
-        alignItems={{ xs: 'stretch', md: 'center' }}
-        justifyContent="space-between"
+        borderBottom="1px solid #f0f0f0"
       >
-        <div /> {/* Spacer if needed or just empty */}
-        {/* Left: Actions + Export */}
-        <Box display="flex" flexDirection="column" gap={2}>
-          <Box display="flex" gap={2}>
+        {/* Row 1: New Assignment (Left) - Search (Right) */}
+        <Box display="flex" justifyContent="space-between" alignItems="center" flexWrap="wrap" gap={2}>
+          <Box>
             {onNewAssignment && (
               <Button
                 variant="contained"
@@ -174,6 +219,62 @@ const TablaStockPuntoVenta: React.FC<Props> = ({
               </Button>
             )}
           </Box>
+
+          <Box display="flex" alignItems="center" gap={2} flex={1} maxWidth={600} justifyContent="flex-end">
+            <TextField
+              placeholder="Buscar por código, descripción o rubro..."
+              size="small"
+              fullWidth
+              value={busquedaDraft}
+              onChange={(e) => setBusquedaDraft(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && ejecutarBusqueda()}
+              InputProps={{
+                startAdornment: <InputAdornment position="start"><Icon icon="mdi:magnify" color="#757575" /></InputAdornment>,
+                sx: {
+                  borderRadius: 1, // Match TablaArticulos
+                  bgcolor: '#f9f9f9',
+                  '& .MuiOutlinedInput-notchedOutline': { borderColor: '#e0e0e0' },
+                  '&:hover .MuiOutlinedInput-notchedOutline': { borderColor: '#bdbdbd' },
+                  '&.Mui-focused .MuiOutlinedInput-notchedOutline': { borderColor: theme.primary },
+                }
+              }}
+            />
+            <Button
+              variant="contained"
+              disableElevation
+              onClick={ejecutarBusqueda}
+              sx={{
+                borderRadius: 0,
+                bgcolor: theme.primary,
+                fontWeight: 600,
+                textTransform: 'none',
+                '&:hover': { bgcolor: theme.primaryHover }
+              }}
+            >
+              Buscar
+            </Button>
+            {busquedaAplicada && (
+              <Button
+                variant="outlined"
+                onClick={limpiarFiltros}
+                startIcon={<IconRefresh size={18} />}
+                sx={{
+                  borderRadius: 0,
+                  borderColor: '#e0e0e0',
+                  color: '#757575',
+                  textTransform: 'none',
+                  height: 40,
+                  '&:hover': { borderColor: '#bdbdbd', bgcolor: '#f5f5f5' }
+                }}
+              >
+                Limpiar
+              </Button>
+            )}
+          </Box>
+        </Box>
+
+        {/* Row 2: Exports (Left) - Filters (Right) */}
+        <Box mt={2} display="flex" justifyContent="space-between" alignItems="flex-start" flexWrap="wrap" gap={2}>
           <Box display="flex" gap={2}>
             <Button
               variant="outlined"
@@ -192,269 +293,311 @@ const TablaStockPuntoVenta: React.FC<Props> = ({
               PDF
             </Button>
           </Box>
-        </Box>
 
-        {/* Right: Search */}
-        <Box display="flex" gap={1} flex={1} maxWidth={600} justifyContent="flex-end">
-          <TextField
-            placeholder="Buscar por código, descripción o rubro..."
-            size="small"
-            fullWidth
-            value={busquedaDraft}
-            onChange={(e) => setBusquedaDraft(e.target.value)}
-            onKeyDown={(e) => e.key === 'Enter' && ejecutarBusqueda()}
-            InputProps={{
-              startAdornment: <InputAdornment position="start"><Icon icon="mdi:magnify" color={theme.primary} /></InputAdornment>,
-              sx: {
-                borderRadius: 0,
-                bgcolor: '#f5f5f5',
-                '& .MuiOutlinedInput-notchedOutline': { borderColor: '#e0e0e0' },
-                '&:hover .MuiOutlinedInput-notchedOutline': { borderColor: '#bdbdbd' },
-                '&.Mui-focused .MuiOutlinedInput-notchedOutline': { borderColor: theme.primary },
+          <Box display="flex" gap={2}>
+            <Autocomplete
+              multiple
+              disableCloseOnSelect
+              options={opcionesProveedores}
+              getOptionLabel={(option) => option.Nombre || ''}
+              value={filtrosProveedores}
+              onChange={(_, newValue) => { setFiltrosProveedores(newValue); setPage(0); }}
+              renderOption={(props, option, { selected }) => (
+                <li {...props}>
+                  <Checkbox
+                    icon={<CheckBoxOutlineBlankIcon fontSize="small" />}
+                    checkedIcon={<CheckBoxIcon fontSize="small" />}
+                    style={{ marginRight: 8 }}
+                    checked={selected}
+                  />
+                  {option.Nombre}
+                </li>
+              )}
+              sx={{ minWidth: 200 }}
+              renderTags={(value, getTagProps) =>
+                value.map((option: any, index: number) => (
+                  <Chip
+                    key={option.IdProveedor}
+                    variant="outlined"
+                    label={option.Nombre}
+                    size="small"
+                    {...getTagProps({ index })}
+                    sx={{
+                      borderColor: alpha('#1565c0', 0.3),
+                      color: '#1565c0',
+                      bgcolor: alpha('#1565c0', 0.05),
+                      borderRadius: 1,
+                    }}
+                  />
+                ))
               }
-            }}
-          />
-          <Button
-            variant="contained"
-            disableElevation
-            onClick={ejecutarBusqueda}
-            sx={{
-              borderRadius: 0,
-              bgcolor: theme.primary,
-              fontWeight: 700,
-              textTransform: 'none',
-              '&:hover': { bgcolor: theme.primaryHover }
-            }}
-          >
-            Buscar
-          </Button>
-          {busquedaAplicada && (
-            <Button
-              variant="outlined"
-              onClick={limpiarFiltros}
-              sx={{
-                borderRadius: 0,
-                borderColor: '#e0e0e0',
-                color: '#757575',
-                textTransform: 'none',
-                '&:hover': { borderColor: '#bdbdbd', bgcolor: '#f5f5f5' }
-              }}
-            >
-              Limpiar
-            </Button>
-          )}
+              renderInput={(params) => <TextField {...params} label="Proveedores" size="small" sx={{ bgcolor: '#f9f9f9', '& .MuiOutlinedInput-root': { borderRadius: 1 } }} />}
+            />
+            <Autocomplete
+              multiple
+              disableCloseOnSelect
+              options={opcionesRubros}
+              getOptionLabel={(option) => option.nombre || ''}
+              value={filtrosRubros}
+              onChange={(_, newValue) => { setFiltrosRubros(newValue); setPage(0); }}
+              renderOption={(props, option, { selected }) => (
+                <li {...props}>
+                  <Checkbox
+                    icon={<CheckBoxOutlineBlankIcon fontSize="small" />}
+                    checkedIcon={<CheckBoxIcon fontSize="small" />}
+                    style={{ marginRight: 8 }}
+                    checked={selected}
+                  />
+                  {option.nombre}
+                </li>
+              )}
+              sx={{ minWidth: 200 }}
+              renderTags={(value, getTagProps) =>
+                value.map((option: any, index: number) => (
+                  <Chip
+                    key={option.id}
+                    variant="outlined"
+                    label={option.nombre}
+                    size="small"
+                    {...getTagProps({ index })}
+                    sx={{
+                      borderColor: alpha(theme.primary, 0.3),
+                      color: theme.primary,
+                      bgcolor: alpha(theme.primary, 0.05),
+                      borderRadius: 1,
+                    }}
+                  />
+                ))
+              }
+              renderInput={(params) => <TextField {...params} label="Rubros" size="small" sx={{ bgcolor: '#f9f9f9', '& .MuiOutlinedInput-root': { borderRadius: 1 } }} />}
+            />
+          </Box>
         </Box>
-      </Box>
 
-      {error ? (
-        <Alert severity="error" sx={{ mb: 2, borderRadius: 0 }}>
-          {error.message || 'No se pudo cargar el stock del punto seleccionado.'}
-        </Alert>
-      ) : (
-        <>
-          <Paper elevation={0} sx={{ borderRadius: 0, overflow: 'hidden', mb: 2 }}>
-            <Box px={2} py={1.5} bgcolor={theme.headerBg} display="flex" justifyContent="space-between" alignItems="center">
-              <Typography variant="subtitle2" fontWeight={700} color={theme.headerText}>
-                {puntoNombre ? `STOCK EN: ${puntoNombre.toUpperCase()}` : 'STOCK DEL PUNTO DE VENTA'}
-              </Typography>
-              <Typography variant="caption" color={theme.headerText} sx={{ opacity: 0.9 }}>
-                {articulosFiltrados.length} artículos • {numberFormatter.format(totalUnidades)} unidades • {currencyFormatter.format(valorEstimado)} val. est.
-              </Typography>
-            </Box>
-          </Paper>
+        {error ? (
+          <Alert severity="error" sx={{ mb: 2, borderRadius: 0 }}>
+            {error.message || 'No se pudo cargar el stock del punto seleccionado.'}
+          </Alert>
+        ) : (
+          <>
+            <Paper elevation={0} sx={{ borderRadius: 0, overflow: 'hidden', mb: 2 }}>
+              <Box px={2} py={1.5} bgcolor={theme.headerBg} display="flex" justifyContent="space-between" alignItems="center">
+                <Typography variant="subtitle2" fontWeight={700} color={theme.headerText}>
+                  {puntoNombre ? `STOCK EN: ${puntoNombre.toUpperCase()}` : 'STOCK DEL PUNTO DE VENTA'}
+                </Typography>
+                <Typography variant="caption" color={theme.headerText} sx={{ opacity: 0.9 }}>
+                  {articulosFiltrados.length} artículos • {numberFormatter.format(totalUnidades)} unidades • {currencyFormatter.format(valorEstimado)} val. est.
+                </Typography>
+              </Box>
+            </Paper>
 
-          <Paper elevation={0} sx={{ border: '1px solid #e0e0e0', borderRadius: 0, overflow: 'hidden' }}>
-            <TableContainer>
-              <Table size="small" stickyHeader>
-                <TableHead>
-                  <TableRow>
-                    {['IMAGEN', 'CÓDIGO', 'DESCRIPCIÓN', 'PRECIO', 'STOCK', 'RUBRO', ...(showActions ? ['ACCIONES'] : [])].map((head, idx) => (
-                      <TableCell
-                        key={idx}
-                        align={['PRECIO', 'STOCK'].includes(head) ? 'right' : head === 'ACCIONES' ? 'center' : 'left'}
-                        sx={{
-                          bgcolor: theme.headerBg,
-                          fontWeight: 700,
-                          color: theme.headerText,
-                          borderBottom: `2px solid ${theme.headerBorder}`, // Usar headerBorder para consistencia
-                          fontSize: '0.8rem',
-                          textTransform: 'uppercase',
-                          letterSpacing: '0.5px',
-                          py: 1.5
-                        }}
-                      >
-                        {head}
-                      </TableCell>
-                    ))}
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {loading ? (
+            <Paper elevation={0} sx={{ border: '1px solid #e0e0e0', borderRadius: 0, overflow: 'hidden' }}>
+              <TableContainer>
+                <Table size="small" stickyHeader>
+                  <TableHead>
                     <TableRow>
-                      <TableCell colSpan={7} align="center" sx={{ py: 10 }}>
-                        <MudrasLoader size={80} text="Cargando stock..." />
-                      </TableCell>
-                    </TableRow>
-                  ) : articulosFiltrados.length === 0 ? (
-                    <TableRow>
-                      <TableCell colSpan={7} align="center" sx={{ py: 4 }}>
-                        {busquedaAplicada
-                          ? 'No hay resultados que coincidan con la búsqueda.'
-                          : 'Este punto aún no tiene stock cargado.'}
-                      </TableCell>
-                    </TableRow>
-                  ) : (
-                    articulosPaginados.map((item, idx) => (
-                      <TableRow
-                        key={item.id}
-                        hover
-                        sx={{
-                          bgcolor: idx % 2 === 0 ? '#ffffff' : theme.alternateRow,
-                          '&:hover': { bgcolor: alpha(theme.primary, 0.08) }
-                        }}
-                      >
-                        <TableCell>
-                          {item.articulo?.ImagenUrl ? (
-                            <Box
-                              sx={{
-                                width: 40,
-                                height: 40,
-                                borderRadius: 0,
-                                overflow: 'hidden',
-                                border: '1px solid #e0e0e0',
-                              }}
-                            >
-                              <img
-                                src={
-                                  item.articulo.ImagenUrl.startsWith('http') || item.articulo.ImagenUrl.startsWith('data:')
-                                    ? item.articulo.ImagenUrl
-                                    : `${process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:4000'}${item.articulo.ImagenUrl.startsWith('/') ? '' : '/'}${item.articulo.ImagenUrl}`
-                                }
-                                alt={item.nombre}
-                                style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                              />
-                            </Box>
-                          ) : (
-                            <Box width={40} height={40} bgcolor="#f5f5f5" border="1px solid #e0e0e0" display="grid" sx={{ placeItems: 'center', borderRadius: 0 }}>
-                              <Icon icon="mdi:image-off-outline" color="#bdbdbd" />
-                            </Box>
-                          )}
+                      {['IMAGEN', 'CÓDIGO', 'DESCRIPCIÓN', 'PRECIO', 'STOCK', 'RUBRO', ...(showActions ? ['ACCIONES'] : [])].map((head, idx) => (
+                        <TableCell
+                          key={idx}
+                          align={['PRECIO', 'STOCK'].includes(head) ? 'right' : head === 'ACCIONES' ? 'center' : 'left'}
+                          sx={{
+                            bgcolor: theme.headerBg,
+                            fontWeight: 700,
+                            color: theme.headerText,
+                            borderBottom: `2px solid ${theme.headerBorder}`, // Usar headerBorder para consistencia
+                            fontSize: '0.8rem',
+                            textTransform: 'uppercase',
+                            letterSpacing: '0.5px',
+                            py: 1.5
+                          }}
+                        >
+                          {head}
                         </TableCell>
-                        <TableCell>
-                          <Chip
-                            label={item.codigo ?? 'Sin código'}
-                            size="small"
-                            sx={{ borderRadius: 0, bgcolor: '#e0e0e0', fontWeight: 600, color: 'text.primary', fontFamily: 'monospace' }}
-                          />
+                      ))}
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {loading ? (
+                      <TableRow>
+                        <TableCell colSpan={7} align="center" sx={{ py: 10 }}>
+                          <MudrasLoader size={80} text="Cargando stock..." />
                         </TableCell>
-                        <TableCell>
-                          <Box display="flex" flexDirection="column">
-                            <Typography variant="body2" fontWeight={500}>{item.nombre}</Typography>
-                            {item.rubro?.nombre && (
-                              <Box mt={0.5}>
-                                <Chip
-                                  label={item.rubro.nombre}
-                                  size="small"
-                                  variant="outlined"
-                                  sx={{
-                                    height: 20,
-                                    fontSize: '0.65rem',
-                                    color: grisVerdoso.primary,
-                                    borderColor: alpha(grisVerdoso.primary, 0.3),
-                                    '& .MuiChip-label': { px: 1 }
-                                  }}
+                      </TableRow>
+                    ) : articulosFiltrados.length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={7} align="center" sx={{ py: 4 }}>
+                          {busquedaAplicada
+                            ? 'No hay resultados que coincidan con la búsqueda.'
+                            : 'Este punto aún no tiene stock cargado.'}
+                        </TableCell>
+                      </TableRow>
+                    ) : (
+                      articulosPaginados.map((item, idx) => (
+                        <TableRow
+                          key={item.id}
+                          hover
+                          sx={{
+                            bgcolor: idx % 2 === 0 ? '#ffffff' : theme.alternateRow,
+                            '&:hover': { bgcolor: alpha(theme.primary, 0.08) }
+                          }}
+                        >
+                          <TableCell>
+                            {item.articulo?.ImagenUrl ? (
+                              <Box
+                                sx={{
+                                  width: 40,
+                                  height: 40,
+                                  borderRadius: 0,
+                                  overflow: 'hidden',
+                                  border: '1px solid #e0e0e0',
+                                }}
+                              >
+                                <img
+                                  src={
+                                    item.articulo.ImagenUrl.startsWith('http') || item.articulo.ImagenUrl.startsWith('data:')
+                                      ? item.articulo.ImagenUrl
+                                      : `${process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:4000'}${item.articulo.ImagenUrl.startsWith('/') ? '' : '/'}${item.articulo.ImagenUrl}`
+                                  }
+                                  alt={item.nombre}
+                                  style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                                 />
                               </Box>
+                            ) : (
+                              <Box width={40} height={40} bgcolor="#f5f5f5" border="1px solid #e0e0e0" display="grid" sx={{ placeItems: 'center', borderRadius: 0 }}>
+                                <Icon icon="mdi:image-off-outline" color="#bdbdbd" />
+                              </Box>
                             )}
-                          </Box>
-                        </TableCell>
-                        <TableCell align="right">
-                          {Number.isFinite(obtenerPrecioUnitario(item))
-                            ? currencyFormatter.format(obtenerPrecioUnitario(item))
-                            : '—'}
-                        </TableCell>
-                        <TableCell align="right">
-                          <Typography variant="body2" fontWeight={700} color={theme.textStrong}>
-                            {numberFormatter.format(Number(item.stockAsignado) || 0)}
-                          </Typography>
-                        </TableCell>
-                        <TableCell>
-                          {item.rubro?.nombre ? (
+                          </TableCell>
+                          <TableCell>
                             <Chip
-                              label={item.rubro.nombre}
+                              label={item.codigo ?? 'Sin código'}
                               size="small"
-                              sx={{ borderRadius: 0, bgcolor: '#ffffff', border: '1px solid #e0e0e0' }}
+                              sx={{ borderRadius: 0, bgcolor: '#e0e0e0', fontWeight: 600, color: 'text.primary', fontFamily: 'monospace' }}
                             />
-                          ) : (
-                            <Typography variant="caption" color="text.secondary">—</Typography>
-                          )}
-                        </TableCell>
-                        {showActions && (
-                          <TableCell align="center">
-                            <Box display="flex" justifyContent="center" gap={0.5}>
-                              {onViewDetails && (
-                                <Tooltip title="Ver detalles">
-                                  <IconButton
-                                    size="small"
-                                    onClick={() => onViewDetails(item)}
-                                    sx={{
-                                      borderRadius: 0,
-                                      color: theme.primary,
-                                      '&:hover': { bgcolor: alpha(theme.primary, 0.1) }
-                                    }}
-                                  >
-                                    <Icon icon="mdi:eye" width={20} />
-                                  </IconButton>
-                                </Tooltip>
-                              )}
-                              {onEditStock && (
-                                <Tooltip title="Editar stock">
-                                  <IconButton
-                                    size="small"
-                                    onClick={() => onEditStock(item)}
-                                    sx={{
-                                      borderRadius: 0,
-                                      color: theme.primary,
-                                      '&:hover': { bgcolor: alpha(theme.primary, 0.1) }
-                                    }}
-                                  >
-                                    <Icon icon="mdi:pencil" width={20} />
-                                  </IconButton>
-                                </Tooltip>
+                          </TableCell>
+                          <TableCell>
+                            <Box display="flex" flexDirection="column">
+                              <Typography variant="body2" fontWeight={500}>{item.nombre}</Typography>
+                              {(item.rubro?.nombre || item.articulo?.proveedor?.Nombre) && (
+                                <Stack direction="row" spacing={0.5} mt={0.5}>
+                                  {item.rubro?.nombre && (
+                                    <Chip
+                                      label={item.rubro.nombre}
+                                      size="small"
+                                      variant="outlined"
+                                      sx={{
+                                        height: 20,
+                                        fontSize: '0.65rem',
+                                        color: grisVerdoso.primary,
+                                        borderColor: alpha(grisVerdoso.primary, 0.3),
+                                        '& .MuiChip-label': { px: 1 }
+                                      }}
+                                    />
+                                  )}
+                                  {item.articulo?.proveedor?.Nombre && (
+                                    <Chip
+                                      label={item.articulo.proveedor.Nombre}
+                                      size="small"
+                                      variant="outlined"
+                                      sx={{
+                                        height: 20,
+                                        fontSize: '0.65rem',
+                                        color: '#1565c0', // Blue distinct from Rubro
+                                        borderColor: alpha('#1565c0', 0.3),
+                                        '& .MuiChip-label': { px: 1 }
+                                      }}
+                                    />
+                                  )}
+                                </Stack>
                               )}
                             </Box>
                           </TableCell>
-                        )}
-                      </TableRow>
-                    ))
-                  )}
-                </TableBody>
-              </Table>
-            </TableContainer>
-            {totalPaginas > 1 && (
-              <Box p={2} borderTop="1px solid #e0e0e0" display="flex" justifyContent="center" gap={1}>
-                <Button
-                  size="small"
-                  disabled={page === 0}
-                  onClick={() => setPage(p => p - 1)}
-                  sx={{ borderRadius: 0, textTransform: 'none', color: '#757575' }}
-                >
-                  Anterior
-                </Button>
-                <Typography variant="caption" sx={{ alignSelf: 'center' }}>Página {page + 1} de {totalPaginas}</Typography>
-                <Button
-                  size="small"
-                  disabled={page >= totalPaginas - 1}
-                  onClick={() => setPage(p => p + 1)}
-                  sx={{ borderRadius: 0, textTransform: 'none', color: '#757575' }}
-                >
-                  Siguiente
-                </Button>
-              </Box>
-            )}
-          </Paper>
-        </>
-      )}
+                          <TableCell align="right">
+                            {Number.isFinite(obtenerPrecioUnitario(item))
+                              ? currencyFormatter.format(obtenerPrecioUnitario(item))
+                              : '—'}
+                          </TableCell>
+                          <TableCell align="right">
+                            <Typography variant="body2" fontWeight={700} color={theme.textStrong}>
+                              {numberFormatter.format(Number(item.stockAsignado) || 0)}
+                            </Typography>
+                          </TableCell>
+                          <TableCell>
+                            {item.rubro?.nombre ? (
+                              <Chip
+                                label={item.rubro.nombre}
+                                size="small"
+                                sx={{ borderRadius: 0, bgcolor: '#ffffff', border: '1px solid #e0e0e0' }}
+                              />
+                            ) : (
+                              <Typography variant="caption" color="text.secondary">—</Typography>
+                            )}
+                          </TableCell>
+                          {showActions && (
+                            <TableCell align="center">
+                              <Box display="flex" justifyContent="center" gap={0.5}>
+                                {onViewDetails && (
+                                  <Tooltip title="Ver detalles">
+                                    <IconButton
+                                      size="small"
+                                      onClick={() => onViewDetails(item)}
+                                      sx={{
+                                        color: '#1565c0', // Blue
+                                        '&:hover': { bgcolor: alpha('#1565c0', 0.1) }
+                                      }}
+                                    >
+                                      <Icon icon="mdi:eye" width={20} />
+                                    </IconButton>
+                                  </Tooltip>
+                                )}
+                                {onEditStock && (
+                                  <Tooltip title="Editar stock">
+                                    <IconButton
+                                      size="small"
+                                      onClick={() => onEditStock(item)}
+                                      sx={{
+                                        color: '#2e7d32', // Green
+                                        '&:hover': { bgcolor: alpha('#2e7d32', 0.1) }
+                                      }}
+                                    >
+                                      <Icon icon="mdi:pencil" width={20} />
+                                    </IconButton>
+                                  </Tooltip>
+                                )}
+                              </Box>
+                            </TableCell>
+                          )}
+                        </TableRow>
+                      ))
+                    )}
+                  </TableBody>
+                </Table>
+              </TableContainer>
+              {totalPaginas > 1 && (
+                <Box p={2} borderTop="1px solid #e0e0e0" display="flex" justifyContent="center" gap={1}>
+                  <Button
+                    size="small"
+                    disabled={page === 0}
+                    onClick={() => setPage(p => p - 1)}
+                    sx={{ borderRadius: 0, textTransform: 'none', color: '#757575' }}
+                  >
+                    Anterior
+                  </Button>
+                  <Typography variant="caption" sx={{ alignSelf: 'center' }}>Página {page + 1} de {totalPaginas}</Typography>
+                  <Button
+                    size="small"
+                    disabled={page >= totalPaginas - 1}
+                    onClick={() => setPage(p => p + 1)}
+                    sx={{ borderRadius: 0, textTransform: 'none', color: '#757575' }}
+                  >
+                    Siguiente
+                  </Button>
+                </Box>
+              )}
+            </Paper>
+          </>
+        )}
+      </Box>
     </Box>
   );
 };

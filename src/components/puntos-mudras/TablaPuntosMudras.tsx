@@ -20,6 +20,7 @@ import {
   TextField,
   MenuItem,
   Stack,
+  InputAdornment,
 } from '@mui/material';
 import { Store, Warehouse } from '@mui/icons-material';
 import { Icon } from '@iconify/react';
@@ -154,61 +155,95 @@ export default function TablaPuntosMudras({ tipo, onEditarPunto, onVerInventario
         borderBottom: '1px solid #f0f0f0',
       }}
     >
-      <Box display="flex" justifyContent="space-between" alignItems="center" flexWrap="wrap" gap={2}>
-        <Box display="flex" alignItems="center" gap={2}>
-          {onNuevoPunto && (
-            <Button
-              variant="contained"
-              onClick={onNuevoPunto}
-              startIcon={<Icon icon="mdi:plus" />}
-              disableElevation
-              sx={{
-                borderRadius: 0,
-                textTransform: 'none',
-                bgcolor: paleta.primary,
-                fontWeight: 600,
-                px: 3,
-                py: 1,
-                '&:hover': { bgcolor: paleta.primaryHover }
+      <Box>
+        <Box display="flex" justifyContent="space-between" alignItems="center" flexWrap="wrap" gap={2}>
+          {/* Left: Nuevo Punto */}
+          <Box>
+            {onNuevoPunto && (
+              <Button
+                variant="contained"
+                onClick={onNuevoPunto}
+                startIcon={<Icon icon="mdi:plus" />}
+                disableElevation
+                sx={{
+                  borderRadius: 0,
+                  textTransform: 'none',
+                  bgcolor: paleta.primary, // Thematic color for primary action
+                  fontWeight: 600,
+                  px: 3,
+                  py: 1,
+                  '&:hover': { bgcolor: paleta.primaryHover }
+                }}
+              >
+                {tipo === 'venta' ? 'Nuevo punto' : 'Nuevo depósito'}
+              </Button>
+            )}
+          </Box>
+
+          {/* Right: Search + Clear */}
+          <Box display="flex" alignItems="center" gap={2}>
+            <TextField
+              placeholder={`Buscar ${tipo === 'venta' ? 'puntos' : 'depósitos'}...`}
+              size="small"
+              value={busqueda}
+              onChange={(e) => setBusqueda(e.target.value)}
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <Icon icon="mdi:magnify" color="#757575" />
+                  </InputAdornment>
+                ),
               }}
-            >
-              {tipo === 'venta' ? 'Nuevo punto' : 'Nuevo depósito'}
-            </Button>
-          )}
+              sx={{
+                minWidth: 350,
+                '& .MuiOutlinedInput-root': {
+                  borderRadius: 1, // Match TablaArticulos
+                  bgcolor: '#f9f9f9',
+                  '& fieldset': { borderColor: '#e0e0e0' },
+                  '&:hover fieldset': { borderColor: '#bdbdbd' },
+                  '&.Mui-focused fieldset': { borderColor: paleta.primary },
+                }
+              }}
+            />
+            {busqueda && (
+              <Button
+                variant="outlined"
+                startIcon={<IconRefresh size={18} />}
+                onClick={() => setBusqueda('')}
+                sx={{
+                  borderRadius: 0,
+                  textTransform: 'none',
+                  color: '#757575',
+                  borderColor: '#e0e0e0',
+                  height: 40,
+                  '&:hover': { borderColor: '#bdbdbd', bgcolor: '#f5f5f5' }
+                }}
+              >
+                Limpiar
+              </Button>
+            )}
+          </Box>
         </Box>
 
-        <Box display="flex" alignItems="center" gap={2}>
-          <SearchToolbar
-            title=""
-            baseColor={paleta.primary}
-            placeholder={`Buscar ${tipo === 'venta' ? 'puntos' : 'depósitos'}...`}
-            searchValue={busqueda}
-            onSearchValueChange={setBusqueda}
-            onSubmitSearch={() => setPage(0)}
-            onClear={() => { setBusqueda(''); setPage(0); }}
-            searchDisabled={loading}
-          />
+        {/* Row 2: Exports */}
+        <Box mt={2} display="flex" gap={2}>
+          <Button
+            variant="outlined"
+            startIcon={<IconFileSpreadsheet size={18} />}
+            onClick={() => handleExportar('excel')}
+            sx={{ borderRadius: 0, textTransform: 'none', color: '#1D6F42', borderColor: '#1D6F42', height: 40 }}
+          >
+            Excel
+          </Button>
+          <Button
+            variant="outlined"
+            startIcon={<IconFileTypePdf size={18} />}
+            onClick={() => handleExportar('pdf')}
+            sx={{ borderRadius: 0, textTransform: 'none', color: '#B71C1C', borderColor: '#B71C1C', height: 40 }}
+          >
+            PDF
+          </Button>
         </Box>
-      </Box>
-
-      {/* Fila 2: Exportación */}
-      <Box display="flex" gap={2}>
-        <Button
-          variant="outlined"
-          startIcon={<IconFileSpreadsheet size={18} />}
-          onClick={() => handleExportar('excel')}
-          sx={{ borderRadius: 0, textTransform: 'none', color: '#1D6F42', borderColor: '#1D6F42', height: 40 }}
-        >
-          Excel
-        </Button>
-        <Button
-          variant="outlined"
-          startIcon={<IconFileTypePdf size={18} />}
-          onClick={() => handleExportar('pdf')}
-          sx={{ borderRadius: 0, textTransform: 'none', color: '#B71C1C', borderColor: '#B71C1C', height: 40 }}
-        >
-          PDF
-        </Button>
       </Box>
     </Box>
   );
@@ -332,30 +367,27 @@ export default function TablaPuntosMudras({ tipo, onEditarPunto, onVerInventario
                   </TableCell>
                   <TableCell align="center">
                     <Box display="flex" justifyContent="center" gap={0.5}>
-                      {onVerInventario && (
-                        <Tooltip title="Ver Inventario">
-                          <IconButton size="small" onClick={() => onVerInventario(punto)} sx={{ color: '#0288d1', '&:hover': { bgcolor: alpha('#0288d1', 0.1) } }}>
-                            <Store />
-                          </IconButton>
-                        </Tooltip>
-                      )}
                       {onEditarPunto && (
                         <Tooltip title="Editar">
-                          <IconButton size="small" onClick={() => onEditarPunto(punto)} sx={{ color: paleta.primary, '&:hover': { bgcolor: alpha(paleta.primary, 0.1) } }}>
+                          <IconButton size="small" onClick={() => onEditarPunto(punto)} sx={{ color: '#2e7d32', '&:hover': { bgcolor: alpha('#2e7d32', 0.1) } }}>
                             <IconEdit size={20} />
                           </IconButton>
                         </Tooltip>
                       )}
-                      <Tooltip title="Eliminar">
-                        <IconButton
-                          size="small"
-                          onClick={() => handleConfirmarEliminacion(punto)}
-                          sx={{ color: '#d32f2f', '&:hover': { bgcolor: alpha('#d32f2f', 0.1) } }}
-                        >
-                          <IconTrash size={20} />
-                        </IconButton>
-                      </Tooltip>
-                    </Box>
+                      {onEliminado && (
+                        <Tooltip title="Eliminar">
+                          <IconButton size="small" onClick={() => handleConfirmarEliminacion(punto)} sx={{ color: '#d32f2f', '&:hover': { bgcolor: alpha('#d32f2f', 0.1) } }}>
+                            <IconTrash size={20} />
+                          </IconButton>
+                        </Tooltip>
+                      )}
+                      {onVerInventario && (
+                        <Tooltip title="Ver Inventario">
+                          <IconButton size="small" onClick={() => onVerInventario(punto)} sx={{ color: '#1565c0', '&:hover': { bgcolor: alpha('#1565c0', 0.1) } }}>
+                            <Icon icon="mdi:store" width={20} />
+                          </IconButton>
+                        </Tooltip>
+                      )}  </Box>
                   </TableCell>
                 </TableRow>
               ))
