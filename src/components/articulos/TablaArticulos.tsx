@@ -880,7 +880,7 @@ const TablaArticulos: React.FC<ArticulosTableProps> = ({
       if (type === 'excel') {
         exportToExcel(articulosHydrated, columns, `Articulos_Mudras_${timestamp}`, filterSummary);
       } else {
-        exportToPdf(articulosHydrated, columns, `Articulos_Mudras_${timestamp}`, 'Listado de Artículos', filterSummary);
+        await exportToPdf(articulosHydrated, columns, `Articulos_Mudras_${timestamp}`, 'Listado de Artículos', filterSummary);
       }
 
     } catch (error) {
@@ -1042,6 +1042,7 @@ const TablaArticulos: React.FC<ArticulosTableProps> = ({
             renderTags={(value, getTagProps) =>
               value.map((option: any, index: number) => (
                 <Chip
+                  key={option.IdProveedor}
                   variant="outlined"
                   label={option.Nombre}
                   size="small"
@@ -1094,6 +1095,7 @@ const TablaArticulos: React.FC<ArticulosTableProps> = ({
             renderTags={(value, getTagProps) =>
               value.map((option: any, index: number) => (
                 <Chip
+                  key={option.id}
                   variant="outlined"
                   label={option.nombre || option.Rubro}
                   size="small"

@@ -26,6 +26,9 @@ import type { Articulo } from '@/app/interfaces/mudras.types';
 import { calcularPrecioDesdeArticulo } from '@/utils/precioVenta';
 import { Icon } from '@iconify/react';
 import { grisVerdoso } from '@/ui/colores';
+import { IconFileSpreadsheet, IconFileTypePdf } from '@tabler/icons-react';
+import { exportToExcel, exportToPdf, ExportColumn } from '@/utils/exportUtils';
+import MudrasLoader from '@/components/ui/MudrasLoader';
 
 const numberFormatter = new Intl.NumberFormat('es-AR', { maximumFractionDigits: 2 });
 const currencyFormatter = new Intl.NumberFormat('es-AR', {
@@ -81,6 +84,31 @@ const TablaStockPuntoVenta: React.FC<Props> = ({
     setPage(0);
   }, []);
 
+  const handleExportar = async (formato: 'excel' | 'pdf') => {
+    const timestamp = new Date().toISOString().split('T')[0];
+    const filename = `Stock_${puntoNombre || 'Punto'}_${timestamp}`;
+    const titulo = `Stock en ${puntoNombre || 'Punto de Venta'}`;
+
+    const columns: ExportColumn<any>[] = [
+      { header: 'Código', key: 'codigo', width: 25 },
+      { header: 'Descripción', key: 'nombre', width: 60 },
+      { header: 'Rubro', key: (item: any) => item.rubro?.nombre || '-', width: 30 },
+      { header: 'Stock', key: 'stockAsignado', width: 20 },
+      {
+        header: 'Precio', key: (item: any) => {
+          const p = obtenerPrecioUnitario(item);
+          return Number.isFinite(p) ? currencyFormatter.format(p) : '-';
+        }, width: 25
+      },
+    ];
+
+    if (formato === 'excel') {
+      exportToExcel(articulosFiltrados, columns, filename, busquedaAplicada ? `Filtro: ${busquedaAplicada}` : '');
+    } else {
+      await exportToPdf(articulosFiltrados, columns, filename, titulo, busquedaAplicada ? `Filtro: ${busquedaAplicada}` : '');
+    }
+  };
+
   const obtenerPrecioUnitario = useCallback((item: ArticuloConStockPuntoMudras) => {
     if (item.articulo) {
       const calculado = calcularPrecioDesdeArticulo(item.articulo as Articulo);
@@ -124,25 +152,46 @@ const TablaStockPuntoVenta: React.FC<Props> = ({
         alignItems={{ xs: 'stretch', md: 'center' }}
         justifyContent="space-between"
       >
-        {/* Left: Actions */}
-        <Box display="flex" alignItems="center" gap={1}>
-          {onNewAssignment && (
+        <div /> {/* Spacer if needed or just empty */}
+        {/* Left: Actions + Export */}
+        <Box display="flex" flexDirection="column" gap={2}>
+          <Box display="flex" gap={2}>
+            {onNewAssignment && (
+              <Button
+                variant="contained"
+                disableElevation
+                startIcon={<Icon icon="mdi:plus" />}
+                onClick={onNewAssignment}
+                sx={{
+                  borderRadius: 0,
+                  fontWeight: 700,
+                  textTransform: 'none',
+                  bgcolor: theme.primary,
+                  '&:hover': { bgcolor: theme.primaryHover }
+                }}
+              >
+                Nueva Asignación
+              </Button>
+            )}
+          </Box>
+          <Box display="flex" gap={2}>
             <Button
-              variant="contained"
-              disableElevation
-              startIcon={<Icon icon="mdi:plus" />}
-              onClick={onNewAssignment}
-              sx={{
-                borderRadius: 0,
-                fontWeight: 700,
-                textTransform: 'none',
-                bgcolor: theme.primary,
-                '&:hover': { bgcolor: theme.primaryHover }
-              }}
+              variant="outlined"
+              startIcon={<IconFileSpreadsheet size={18} />}
+              onClick={() => handleExportar('excel')}
+              sx={{ borderRadius: 0, textTransform: 'none', color: '#1D6F42', borderColor: '#1D6F42', height: 40 }}
             >
-              Nueva Asignación
+              Excel
             </Button>
-          )}
+            <Button
+              variant="outlined"
+              startIcon={<IconFileTypePdf size={18} />}
+              onClick={() => handleExportar('pdf')}
+              sx={{ borderRadius: 0, textTransform: 'none', color: '#B71C1C', borderColor: '#B71C1C', height: 40 }}
+            >
+              PDF
+            </Button>
+          </Box>
         </Box>
 
         {/* Right: Search */}
@@ -241,15 +290,11 @@ const TablaStockPuntoVenta: React.FC<Props> = ({
                 </TableHead>
                 <TableBody>
                   {loading ? (
-                    Array.from({ length: 6 }).map((_, idx) => (
-                      <TableRow key={`skeleton-${idx}`}>
-                        {Array.from({ length: 7 }).map((__, cellIdx) => (
-                          <TableCell key={cellIdx}>
-                            <Skeleton variant="text" />
-                          </TableCell>
-                        ))}
-                      </TableRow>
-                    ))
+                    <TableRow>
+                      <TableCell colSpan={7} align="center" sx={{ py: 10 }}>
+                        <MudrasLoader size={80} text="Cargando stock..." />
+                      </TableCell>
+                    </TableRow>
                   ) : articulosFiltrados.length === 0 ? (
                     <TableRow>
                       <TableCell colSpan={7} align="center" sx={{ py: 4 }}>
@@ -302,7 +347,27 @@ const TablaStockPuntoVenta: React.FC<Props> = ({
                             sx={{ borderRadius: 0, bgcolor: '#e0e0e0', fontWeight: 600, color: 'text.primary', fontFamily: 'monospace' }}
                           />
                         </TableCell>
-                        <TableCell><Typography variant="body2" fontWeight={500}>{item.nombre}</Typography></TableCell>
+                        <TableCell>
+                          <Box display="flex" flexDirection="column">
+                            <Typography variant="body2" fontWeight={500}>{item.nombre}</Typography>
+                            {item.rubro?.nombre && (
+                              <Box mt={0.5}>
+                                <Chip
+                                  label={item.rubro.nombre}
+                                  size="small"
+                                  variant="outlined"
+                                  sx={{
+                                    height: 20,
+                                    fontSize: '0.65rem',
+                                    color: grisVerdoso.primary,
+                                    borderColor: alpha(grisVerdoso.primary, 0.3),
+                                    '& .MuiChip-label': { px: 1 }
+                                  }}
+                                />
+                              </Box>
+                            )}
+                          </Box>
+                        </TableCell>
                         <TableCell align="right">
                           {Number.isFinite(obtenerPrecioUnitario(item))
                             ? currencyFormatter.format(obtenerPrecioUnitario(item))

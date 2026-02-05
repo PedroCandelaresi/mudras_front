@@ -194,7 +194,7 @@ export function TablaVentas() {
       if (type === 'excel') {
         exportToExcel(ventasListado, columns, `Ventas_Mudras_${timestamp}`, filterSummary);
       } else {
-        exportToPdf(ventasListado, columns, `Ventas_Mudras_${timestamp}`, 'Historial de Ventas', filterSummary);
+        await exportToPdf(ventasListado, columns, `Ventas_Mudras_${timestamp}`, 'Historial de Ventas', filterSummary);
       }
 
     } catch (error) {

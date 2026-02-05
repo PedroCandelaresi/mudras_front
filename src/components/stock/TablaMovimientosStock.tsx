@@ -209,7 +209,7 @@ const TablaMovimientosStock = () => {
       if (type === 'excel') {
         exportToExcel(movimientosExport, columns, `Movimientos_Mudras_${timestamp}`, filterSummary);
       } else {
-        exportToPdf(movimientosExport, columns, `Movimientos_Mudras_${timestamp}`, 'Movimientos de Stock', filterSummary);
+        await exportToPdf(movimientosExport, columns, `Movimientos_Mudras_${timestamp}`, 'Movimientos de Stock', filterSummary);
       }
 
     } catch (error) {

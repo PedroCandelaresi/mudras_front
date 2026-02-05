@@ -239,7 +239,7 @@ const TablaProveedores = forwardRef<TablaProveedoresHandle, Props>(({
     exportToExcel(proveedoresFiltrados, columns, `Proveedores_Mudras_${new Date().toISOString().split('T')[0]}`, filterSummary);
   };
 
-  const handleExportarPdf = () => {
+  const handleExportarPdf = async () => {
     const columns: ExportColumn<Proveedor>[] = [
       { header: 'Nombre', key: 'Nombre' },
       { header: 'Código', key: 'Codigo' },
@@ -255,7 +255,7 @@ const TablaProveedores = forwardRef<TablaProveedoresHandle, Props>(({
     });
     const filterSummary = filterParts.join(' | ');
 
-    exportToPdf(proveedoresFiltrados, columns, `Proveedores_Mudras_${new Date().toISOString().split('T')[0]}`, 'Listado de Proveedores', filterSummary);
+    await exportToPdf(proveedoresFiltrados, columns, `Proveedores_Mudras_${new Date().toISOString().split('T')[0]}`, 'Listado de Proveedores', filterSummary);
   };
 
   /* ======================== Toolbar ======================== */

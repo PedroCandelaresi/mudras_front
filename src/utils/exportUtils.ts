@@ -74,9 +74,33 @@ export const exportToExcel = <T>(
 };
 
 /**
+ * Helper to load image as base64
+ */
+const loadImage = (url: string): Promise<string> => {
+    return new Promise((resolve, reject) => {
+        const img = new Image();
+        img.crossOrigin = 'Anonymous';
+        img.src = url;
+        img.onload = () => {
+            const canvas = document.createElement('canvas');
+            canvas.width = img.width;
+            canvas.height = img.height;
+            const ctx = canvas.getContext('2d');
+            if (ctx) {
+                ctx.drawImage(img, 0, 0);
+                resolve(canvas.toDataURL('image/png'));
+            } else {
+                reject(new Error('Could not get canvas context'));
+            }
+        };
+        img.onerror = (e) => reject(e);
+    });
+};
+
+/**
  * Exporta un array de objetos a un archivo PDF con tabla
  */
-export const exportToPdf = <T>(
+export const exportToPdf = async <T>(
     data: T[],
     columns: ExportColumn<T>[],
     filename: string,
@@ -84,19 +108,34 @@ export const exportToPdf = <T>(
     filterSummary?: string
 ) => {
     const doc = new jsPDF();
+    const pageWidth = doc.internal.pageSize.getWidth();
+
+    // Load Logo
+    try {
+        const logoData = await loadImage('/logo.svg');
+        // Logo width/height ratio. Assuming square-ish or adjusting.
+        // Let's set a fixed width of 24mm (approx 90px)
+        const logoWidth = 24;
+        const logoHeight = 24;
+        const margin = 14;
+
+        doc.addImage(logoData, 'PNG', pageWidth - margin - logoWidth, 10, logoWidth, logoHeight);
+    } catch (e) {
+        console.warn('Could not load logo for PDF', e);
+    }
 
     // Título
     doc.setFontSize(16);
-    doc.text(title, 14, 15);
+    doc.text(title, 14, 20); // Moved down slightly to align center-ish with logo
     doc.setFontSize(10);
-    doc.text(`Fecha de exportación: ${new Date().toLocaleDateString('es-AR')}`, 14, 22);
+    doc.text(`Fecha de exportación: ${new Date().toLocaleDateString('es-AR')}`, 14, 28);
 
-    let startY = 30;
+    let startY = 35; // Increased startY
     if (filterSummary) {
         doc.setFontSize(9);
         doc.setTextColor(100);
-        // Split text to fit page width
-        const splitText = doc.splitTextToSize(`Filtros: ${filterSummary}`, 180);
+        // Split text to fit page width minus logo area
+        const splitText = doc.splitTextToSize(`Filtros: ${filterSummary}`, pageWidth - 50);
         doc.text(splitText, 14, startY);
         startY += (splitText.length * 5) + 5;
     }

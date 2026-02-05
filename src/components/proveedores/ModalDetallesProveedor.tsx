@@ -398,7 +398,7 @@ const ModalDetallesProveedor = ({ open, onClose, proveedor, accentColor }: Modal
       if (type === 'excel') {
         exportToExcel(articulosHydrated, columns, filename, filterSummary);
       } else {
-        exportToPdf(articulosHydrated, columns, filename, `Artículos de ${proveedorCompleto.Nombre}`, filterSummary);
+        await exportToPdf(articulosHydrated, columns, filename, `Artículos de ${proveedorCompleto.Nombre}`, filterSummary);
       }
 
     } catch (error) {

@@ -23,7 +23,9 @@ import {
 } from '@mui/material';
 import { Store, Warehouse } from '@mui/icons-material';
 import { Icon } from '@iconify/react';
-import { IconEdit, IconEye, IconRefresh, IconTrash, IconInfoCircle, IconPhone } from '@tabler/icons-react'; // Added IconPhone
+import { IconEdit, IconEye, IconRefresh, IconTrash, IconInfoCircle, IconPhone, IconFileSpreadsheet, IconFileTypePdf } from '@tabler/icons-react'; // Added IconPhone
+import { exportToExcel, exportToPdf, ExportColumn } from '@/utils/exportUtils';
+import MudrasLoader from '@/components/ui/MudrasLoader';
 import { useQuery, useMutation } from '@apollo/client/react';
 import { alpha } from '@mui/material/styles';
 import {
@@ -110,6 +112,26 @@ export default function TablaPuntosMudras({ tipo, onEditarPunto, onVerInventario
     setPage(0);
   };
 
+  const handleExportar = async (formato: 'excel' | 'pdf') => {
+    const timestamp = new Date().toISOString().split('T')[0];
+    const filename = `${tipo === 'venta' ? 'Puntos_Venta' : 'Depositos'}_${timestamp}`;
+    const titulo = `Listado de ${tipo === 'venta' ? 'Puntos de Venta' : 'Depósitos'}`;
+
+    const columns: ExportColumn<any>[] = [
+      { header: 'Nombre', key: 'nombre', width: 40 },
+      { header: 'Descripción', key: 'descripcion', width: 50 },
+      { header: 'Dirección', key: 'direccion', width: 40 },
+      { header: 'Teléfono', key: 'telefono', width: 30 },
+      { header: 'Estado', key: (item: any) => (item.activo ? 'Activo' : 'Inactivo'), width: 20 },
+    ];
+
+    if (formato === 'excel') {
+      exportToExcel(puntosFiltrados, columns, filename, busqueda ? `Filtro: ${busqueda}` : '');
+    } else {
+      await exportToPdf(puntosFiltrados, columns, filename, titulo, busqueda ? `Filtro: ${busqueda}` : '');
+    }
+  };
+
   const handleConfirmarEliminacion = (punto: PuntoMudras) => {
     const puntosDelMismoTipo = puntos.filter(p => p.tipo === tipo);
     if (puntosDelMismoTipo.length <= 1) {
@@ -124,69 +146,74 @@ export default function TablaPuntosMudras({ tipo, onEditarPunto, onVerInventario
     <Box
       sx={{
         display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
+        flexDirection: 'column',
+        gap: 2,
         mb: 3,
         p: 2,
         bgcolor: '#ffffff',
+        borderBottom: '1px solid #f0f0f0',
       }}
     >
-      <Box display="flex" alignItems="center" gap={2}>
-        {onNuevoPunto && (
-          <Button
-            variant="contained"
-            onClick={onNuevoPunto}
-            startIcon={<Icon icon="mdi:plus" />}
-            disableElevation
-            sx={{
-              borderRadius: 0,
-              textTransform: 'none',
-              bgcolor: paleta.primary,
-              fontWeight: 600,
-              px: 3,
-              py: 1,
-              '&:hover': { bgcolor: paleta.primaryHover }
-            }}
-          >
-            {tipo === 'venta' ? 'Nuevo Punto' : 'Nuevo Depósito'}
-          </Button>
-        )}
+      <Box display="flex" justifyContent="space-between" alignItems="center" flexWrap="wrap" gap={2}>
+        <Box display="flex" alignItems="center" gap={2}>
+          {onNuevoPunto && (
+            <Button
+              variant="contained"
+              onClick={onNuevoPunto}
+              startIcon={<Icon icon="mdi:plus" />}
+              disableElevation
+              sx={{
+                borderRadius: 0,
+                textTransform: 'none',
+                bgcolor: paleta.primary,
+                fontWeight: 600,
+                px: 3,
+                py: 1,
+                '&:hover': { bgcolor: paleta.primaryHover }
+              }}
+            >
+              {tipo === 'venta' ? 'Nuevo punto' : 'Nuevo depósito'}
+            </Button>
+          )}
+        </Box>
+
+        <Box display="flex" alignItems="center" gap={2}>
+          <SearchToolbar
+            title=""
+            baseColor={paleta.primary}
+            placeholder={`Buscar ${tipo === 'venta' ? 'puntos' : 'depósitos'}...`}
+            searchValue={busqueda}
+            onSearchValueChange={setBusqueda}
+            onSubmitSearch={() => setPage(0)}
+            onClear={() => { setBusqueda(''); setPage(0); }}
+            searchDisabled={loading}
+          />
+        </Box>
       </Box>
 
-      <Box display="flex" alignItems="center" gap={2}>
-        <SearchToolbar
-          title=""
-          baseColor={paleta.primary}
-          placeholder={`Buscar ${tipo === 'venta' ? 'puntos' : 'depósitos'}...`}
-          searchValue={busqueda}
-          onSearchValueChange={setBusqueda}
-          onSubmitSearch={() => setPage(0)}
-          onClear={() => { setBusqueda(''); setPage(0); }}
-          searchDisabled={loading}
-        />
+      {/* Fila 2: Exportación */}
+      <Box display="flex" gap={2}>
+        <Button
+          variant="outlined"
+          startIcon={<IconFileSpreadsheet size={18} />}
+          onClick={() => handleExportar('excel')}
+          sx={{ borderRadius: 0, textTransform: 'none', color: '#1D6F42', borderColor: '#1D6F42', height: 40 }}
+        >
+          Excel
+        </Button>
+        <Button
+          variant="outlined"
+          startIcon={<IconFileTypePdf size={18} />}
+          onClick={() => handleExportar('pdf')}
+          sx={{ borderRadius: 0, textTransform: 'none', color: '#B71C1C', borderColor: '#B71C1C', height: 40 }}
+        >
+          PDF
+        </Button>
       </Box>
     </Box>
   );
 
-  if (loading) {
-    return (
-      <Paper elevation={0} sx={{ p: 2 }}>
-        <TableContainer>
-          <Table>
-            <TableBody>
-              {[1, 2, 3, 4, 5].map((i) => (
-                <TableRow key={i}>
-                  <TableCell><Skeleton /></TableCell>
-                  <TableCell><Skeleton /></TableCell>
-                  <TableCell><Skeleton /></TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </TableContainer>
-      </Paper>
-    );
-  }
+
 
   if (error) {
     return (
@@ -247,7 +274,13 @@ export default function TablaPuntosMudras({ tipo, onEditarPunto, onVerInventario
             </TableRow>
           </TableHead>
           <TableBody>
-            {puntosPaginados.length === 0 ? (
+            {loading ? (
+              <TableRow>
+                <TableCell colSpan={5} align="center" sx={{ py: 10 }}>
+                  <MudrasLoader size={80} text={`Cargando ${tipo === 'venta' ? 'puntos' : 'depósitos'}...`} />
+                </TableCell>
+              </TableRow>
+            ) : puntosPaginados.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={5} align="center" sx={{ py: 4 }}>
                   <Stack alignItems="center" spacing={1}>
