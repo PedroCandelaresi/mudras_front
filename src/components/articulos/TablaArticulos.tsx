@@ -974,11 +974,10 @@ const TablaArticulos: React.FC<ArticulosTableProps> = ({
         </Box>
 
         {/* Right: Combos (Proveedor -> Rubro) */}
-        <Box display="flex" alignItems="center" gap={2} flexWrap="wrap">
+        <Box display="flex" alignItems="center" gap={2} flexWrap="wrap" sx={{ flexGrow: 1 }}>
           {/* --- Proveedores --- */}
           <Autocomplete
             multiple
-            limitTags={1}
             disableCloseOnSelect
             id="checkboxes-proveedores"
             options={proveedoresFiltradosLista}
@@ -1007,14 +1006,14 @@ const TablaArticulos: React.FC<ArticulosTableProps> = ({
                 {option.Nombre}
               </li>
             )}
-            style={{ width: 250 }}
+            fullWidth
+            sx={{ minWidth: 200, flexGrow: 1 }}
             renderInput={(params) => <TextField {...params} label="Proveedores" size="small" placeholder="Seleccionar..." sx={{ bgcolor: 'white' }} />}
           />
 
           {/* --- Rubros --- */}
           <Autocomplete
             multiple
-            limitTags={1}
             disableCloseOnSelect
             id="checkboxes-rubros"
             options={rubrosFiltrados}
@@ -1043,7 +1042,8 @@ const TablaArticulos: React.FC<ArticulosTableProps> = ({
                 {option.nombre || option.Rubro}
               </li>
             )}
-            style={{ width: 250 }}
+            fullWidth
+            sx={{ minWidth: 200, flexGrow: 1 }}
             renderInput={(params) => <TextField {...params} label="Rubros" size="small" placeholder="Seleccionar..." sx={{ bgcolor: 'white' }} />}
           />
         </Box>
