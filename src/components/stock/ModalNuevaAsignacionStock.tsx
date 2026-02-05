@@ -1,9 +1,8 @@
 'use client';
-import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import {
   Dialog,
   DialogContent,
-  DialogActions,
   Box,
   Typography,
   TextField,
@@ -21,25 +20,30 @@ import {
   Autocomplete,
   Snackbar,
   Checkbox,
-  Button
+  Button,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
 } from '@mui/material';
+import { alpha } from '@mui/material/styles';
 import { Icon } from '@iconify/react';
 import { useQuery, useLazyQuery, useMutation } from '@apollo/client/react';
 import {
   OBTENER_PROVEEDORES_CON_STOCK,
   BUSCAR_ARTICULOS_PARA_ASIGNACION,
   OBTENER_PUNTOS_MUDRAS,
+  OBTENER_RUBROS_POR_PROVEEDOR,
   type ObtenerProveedoresConStockResponse,
   type BuscarArticulosParaAsignacionResponse,
   type ProveedorBasico,
   type ArticuloFiltrado,
   type ObtenerPuntosMudrasResponse,
   type PuntoMudras,
-  OBTENER_RELACIONES_PROVEEDOR_RUBRO,
-  type ObtenerRelacionesProveedorRubroResponse,
+  type ObtenerRubrosPorProveedorResponse,
 } from '@/components/puntos-mudras/graphql/queries';
 import { ASIGNAR_STOCK_MASIVO } from '@/components/puntos-mudras/graphql/mutations';
-import { oroNegro } from '@/ui/colores';
+import { verde } from '@/ui/colores';
 
 interface AsignacionStock {
   articuloId: number;
@@ -49,7 +53,7 @@ interface AsignacionStock {
 interface Props {
   open: boolean;
   onClose: () => void;
-  destinoId?: number | null; // punto o depósito
+  destinoId?: number | null; // Pre-selected destination ID (optional)
   onStockAsignado: () => void;
   titulo?: string;
   tipoDestinoPreferido?: 'venta' | 'deposito';
@@ -58,41 +62,38 @@ interface Props {
 }
 
 export default function ModalNuevaAsignacionStock({ open, onClose, destinoId, onStockAsignado, titulo, tipoDestinoPreferido, articuloPreseleccionado, origen }: Props) {
-  // Estados para filtros
+  // --- Estados de Filtros ---
   const [proveedores, setProveedores] = useState<ProveedorBasico[]>([]);
   const [proveedorSeleccionado, setProveedorSeleccionado] = useState<ProveedorBasico | null>(null);
+  const [rubros, setRubros] = useState<{ rubro: string }[]>([]);
   const [rubroSeleccionado, setRubroSeleccionado] = useState<string>('');
   const [busqueda, setBusqueda] = useState('');
-  const [destinoSeleccionado, setDestinoSeleccionado] = useState<number | null>(destinoId ?? null);
 
-  // Estados para artículos y asignaciones
+  // --- Estados de Destino (Multi-select) ---
+  const [destinosSeleccionados, setDestinosSeleccionados] = useState<PuntoMudras[]>([]);
+
+  // --- Estados de Datos ---
   const [articulos, setArticulos] = useState<ArticuloFiltrado[]>([]);
   const [asignaciones, setAsignaciones] = useState<AsignacionStock[]>([]);
-  const [articulosSnapshot, setArticulosSnapshot] = useState<Record<number, ArticuloFiltrado>>({});
+
+  // --- Estados de UI ---
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string>('');
   const [snack, setSnack] = useState<{ open: boolean; msg: string; sev: 'success' | 'error' | 'info' }>(() => ({ open: false, msg: '', sev: 'success' }));
   const [confirmOpen, setConfirmOpen] = useState(false);
-  const prevDestino = useRef<number | null>(null);
+  const [loadingRubros, setLoadingRubros] = useState(false);
 
-  const busquedaActiva = useMemo(() => busqueda.trim().length > 0, [busqueda]);
+  // --- GraphQL Queries ---
+  const { data: proveedoresData } = useQuery<ObtenerProveedoresConStockResponse>(OBTENER_PROVEEDORES_CON_STOCK, {
+    skip: !open,
+    fetchPolicy: 'cache-and-network'
+  });
 
-  const { data: proveedoresData, loading: loadingProveedores } = useQuery<ObtenerProveedoresConStockResponse>(OBTENER_PROVEEDORES_CON_STOCK, { skip: !open, fetchPolicy: 'cache-and-network' });
-  useEffect(() => {
-    if (!open) return;
-    const normalizados = (proveedoresData?.obtenerProveedoresConStock ?? []).map((p) => ({
-      ...p,
-      id: Number(p.id),
-    }));
-    setProveedores(normalizados);
-  }, [open, proveedoresData]);
+  const [obtenerRubros, { data: rubrosData }] = useLazyQuery<ObtenerRubrosPorProveedorResponse>(OBTENER_RUBROS_POR_PROVEEDOR, {
+    fetchPolicy: 'network-only'
+  });
 
-  const { data: relacionesData, loading: loadingRelaciones } = useQuery<ObtenerRelacionesProveedorRubroResponse>(
-    OBTENER_RELACIONES_PROVEEDOR_RUBRO,
-    { skip: !open, fetchPolicy: 'cache-and-network' }
-  );
-
-  const [buscarArticulosQuery, { data: articulosData, loading: buscandoArticulos, error: errorBuscar }] =
+  const [buscarArticulosQuery, { data: articulosData, loading: buscandoArticulos }] =
     useLazyQuery<BuscarArticulosParaAsignacionResponse>(BUSCAR_ARTICULOS_PARA_ASIGNACION, {
       fetchPolicy: "network-only",
     });
@@ -102,237 +103,207 @@ export default function ModalNuevaAsignacionStock({ open, onClose, destinoId, on
     skip: !open,
   });
 
-  const relacionesProveedorRubro = useMemo(
-    () => relacionesData?.obtenerRelacionesProveedorRubro ?? [],
-    [relacionesData]
-  );
+  const [asignarMasivoMutation] = useMutation<{ asignarStockMasivo: boolean }>(ASIGNAR_STOCK_MASIVO);
 
-  const rubrosOpciones = useMemo(() => {
-    if (proveedorSeleccionado) {
-      const rubros = relacionesProveedorRubro
-        .filter((r) => Number(r.proveedorId) === Number(proveedorSeleccionado.id))
-        .map((r) => r.rubroNombre || '')
-        .filter(Boolean);
-      return Array.from(new Set(rubros));
-    }
-    const rubros = relacionesProveedorRubro.map((r) => r.rubroNombre || '').filter(Boolean);
-    return Array.from(new Set(rubros));
-  }, [relacionesProveedorRubro, proveedorSeleccionado]);
+  // --- Effects: Data Loading ---
 
-  const proveedoresFiltrados = useMemo(() => {
-    if (!rubroSeleccionado) return proveedores;
-    const proveedoresIds = new Set(
-      relacionesProveedorRubro
-        .filter((r) => (r.rubroNombre || '').toLowerCase() === rubroSeleccionado.toLowerCase())
-        .map((r) => Number(r.proveedorId))
-    );
-    return proveedores.filter((p) => proveedoresIds.has(Number(p.id)));
-  }, [proveedores, relacionesProveedorRubro, rubroSeleccionado]);
-
+  // Cargar puntos y preseleccionar si corresponde
   useEffect(() => {
-    if (!proveedorSeleccionado) return;
-    if (rubroSeleccionado && !rubrosOpciones.includes(rubroSeleccionado)) {
+    if (!open || !puntosData?.obtenerPuntosMudras) return;
+
+    const todosLosPuntos = puntosData.obtenerPuntosMudras.filter(p => p.activo);
+
+    // Filtro por preferencia o origen si es necesario, aunque en multi-select mostremos todos
+    // Pero si viene un destinoId, lo preseleccionamos
+    if (destinoId && destinosSeleccionados.length === 0) {
+      const target = todosLosPuntos.find(p => Number(p.id) === Number(destinoId));
+      if (target) setDestinosSeleccionados([target]);
+    }
+  }, [open, puntosData, destinoId]);
+
+  // Cargar proveedores
+  useEffect(() => {
+    if (proveedoresData?.obtenerProveedoresConStock) {
+      setProveedores(proveedoresData.obtenerProveedoresConStock.map(p => ({
+        ...p,
+        id: Number(p.id)
+      })));
+    }
+  }, [proveedoresData]);
+
+  // Cargar rubros al seleccionar proveedor
+  useEffect(() => {
+    if (proveedorSeleccionado) {
+      setLoadingRubros(true);
+      obtenerRubros({ variables: { proveedorId: proveedorSeleccionado.id } })
+        .catch(err => console.error("Error cargando rubros", err))
+        .finally(() => setLoadingRubros(false));
+    } else {
+      setRubros([]);
       setRubroSeleccionado('');
     }
-  }, [proveedorSeleccionado, rubrosOpciones, rubroSeleccionado]);
+  }, [proveedorSeleccionado, obtenerRubros]);
 
   useEffect(() => {
-    if (proveedorSeleccionado && !proveedoresFiltrados.some((p) => Number(p.id) === Number(proveedorSeleccionado.id))) {
-      setProveedorSeleccionado(null);
+    if (rubrosData?.obtenerRubrosPorProveedor) {
+      setRubros(rubrosData.obtenerRubrosPorProveedor);
+      // Auto-select si solo hay uno
+      if (rubrosData.obtenerRubrosPorProveedor.length === 1) {
+        setRubroSeleccionado(rubrosData.obtenerRubrosPorProveedor[0].rubro);
+      } else {
+        setRubroSeleccionado(''); // Reset si cambian las opciones
+      }
     }
-  }, [proveedorSeleccionado, proveedoresFiltrados]);
+  }, [rubrosData]);
 
-  const puntosDisponibles: PuntoMudras[] = useMemo(
-    () => (puntosData?.obtenerPuntosMudras ?? []).filter((p) => p.activo),
-    [puntosData]
-  );
+  // Prellenado desde articuloPreseleccionado
+  useEffect(() => {
+    if (!open || !articuloPreseleccionado) return;
 
-  const puntosFiltrados = useMemo(() => {
-    const prefer = origen === 'venta' ? 'venta' : origen === 'deposito' ? 'deposito' : tipoDestinoPreferido;
-    if (prefer === 'venta' || prefer === 'deposito') {
-      return puntosDisponibles.filter((p) => p.tipo === prefer);
+    // Si hay un proveedor predefinido, buscarlo
+    if (articuloPreseleccionado.proveedorId && proveedores.length > 0) {
+      const p = proveedores.find(pr => Number(pr.id) === Number(articuloPreseleccionado.proveedorId));
+      if (p) setProveedorSeleccionado(p);
     }
-    return puntosDisponibles;
-  }, [puntosDisponibles, origen, tipoDestinoPreferido]);
+
+    // Rubro se seteará cuando carguen los rubros del proveedor (podría necesitar un efecto adicional o logica de espera, 
+    // pero usualmente el usuario seleccionará manual si falla)
+    // El articuloPreseleccionado también setea la búsqueda
+    setBusqueda(articuloPreseleccionado.codigo || articuloPreseleccionado.nombre || '');
+  }, [open, articuloPreseleccionado, proveedores]);
+
+
+  // --- Actions ---
 
   const buscarArticulos = useCallback(async () => {
-    const term = busqueda.trim();
-    if (!term && !proveedorSeleccionado && !rubroSeleccionado) {
-      setError('Ingresá un artículo o seleccioná proveedor/rubro para buscar');
+    // Validar minimos para buscar
+    if (!proveedorSeleccionado && busqueda.trim().length < 3) {
+      // Si no hay proveedor, exigimos al menos 3 caracteres de busqueda
       return;
     }
+
     setError("");
-    const proveedorIdToSend = busquedaActiva ? null : (proveedorSeleccionado ? Number(proveedorSeleccionado.id) : null);
-    const rubroToSend = busquedaActiva ? null : (rubroSeleccionado.trim() || null);
-    await buscarArticulosQuery({
-      variables: {
-        proveedorId: proveedorIdToSend,
-        rubro: rubroToSend,
-        busqueda: term || null,
-        destinoId: destinoSeleccionado ?? null,
-      },
-    });
-  }, [proveedorSeleccionado, rubroSeleccionado, busqueda, destinoSeleccionado, buscarArticulosQuery, busquedaActiva]);
+    const term = busqueda.trim();
+
+    try {
+      await buscarArticulosQuery({
+        variables: {
+          proveedorId: proveedorSeleccionado ? Number(proveedorSeleccionado.id) : null,
+          rubro: rubroSeleccionado || null,
+          busqueda: term || null,
+          destinoId: destinosSeleccionados.length === 1 ? Number(destinosSeleccionados[0].id) : null, // Solo enviamos destino si es unico para ver stock actual
+        },
+      });
+    } catch (e: any) {
+      setError(e.message);
+    }
+  }, [proveedorSeleccionado, rubroSeleccionado, busqueda, destinosSeleccionados, buscarArticulosQuery]);
+
+  // Auto-buscar si hay filtros suficientes
+  useEffect(() => {
+    // Debounce simple o condicion de triggers
+    if (proveedorSeleccionado) {
+      void buscarArticulos();
+    } else if (busqueda.length >= 3) {
+      const timer = setTimeout(() => {
+        void buscarArticulos();
+      }, 500);
+      return () => clearTimeout(timer);
+    } else {
+      setArticulos([]);
+    }
+  }, [proveedorSeleccionado, rubroSeleccionado, busqueda]); // Quitamos buscarArticulos de deps para evitar loop si no es memoized
 
   useEffect(() => {
     if (articulosData?.buscarArticulosParaAsignacion) {
-      const normalizados = (articulosData.buscarArticulosParaAsignacion as any[]).map((a) => ({
+      setArticulos(articulosData.buscarArticulosParaAsignacion.map(a => ({
         ...a,
         id: Number(a.id),
         stockDisponible: Number(a.stockDisponible ?? 0),
         stockEnDestino: Number(a.stockEnDestino ?? 0),
-      }));
-      setArticulos(normalizados);
-      setArticulosSnapshot((prev) => {
-        const next = { ...prev };
-        normalizados.forEach((a) => {
-          next[a.id] = { ...a };
-        });
-        return next;
-      });
+      })));
     }
   }, [articulosData]);
 
-  useEffect(() => {
-    if (errorBuscar) setError(errorBuscar.message);
-  }, [errorBuscar]);
-
-  const articulosOrdenados = useMemo(() => {
-    const term = busqueda.trim().toLowerCase();
-    const score = (valor?: string | null) => {
-      const v = (valor || '').trim().toLowerCase();
-      if (!v) return 4;
-      if (v === term) return 0;
-      if (v.startsWith(term)) return 1;
-      if (v.includes(term)) return 2;
-      return 3;
-    };
-
-    if (!term) {
-      return [...articulos].sort((a, b) => (a.codigo || '').localeCompare(b.codigo || ''));
-    }
-
-    return [...articulos]
-      .map((a) => {
-        const codeScore = score(a.codigo);
-        const descScore = score(a.nombre);
-        const best = Math.min(codeScore, descScore);
-        const codigoLower = (a.codigo || '').toLowerCase();
-        const exactCode = codigoLower === term;
-        return { a, s: best, exactCode, len: (a.codigo || '').length };
-      })
-      .sort((x, y) =>
-        x.s - y.s ||
-        Number(y.exactCode) - Number(x.exactCode) ||
-        x.len - y.len ||
-        (x.a.codigo || '').localeCompare(y.a.codigo || '')
-      )
-      .map((x) => x.a);
-  }, [articulos, busqueda]);
-
-  const articuloPorId = useMemo(() => {
-    const map = new Map<number, ArticuloFiltrado>();
-    articulos.forEach((a) => map.set(Number(a.id), a));
-    return map;
-  }, [articulos]);
-
-  useEffect(() => {
-    if (!proveedorSeleccionado) {
-      setArticulos([]);
-      setBusqueda("");
-    }
-  }, [proveedorSeleccionado]);
-
-  const handleAsignarStock = (articuloId: number, cantidad: string, opts?: { allowZero?: boolean }) => {
-    const allowZero = opts?.allowZero ?? false;
-    // Permitir vacío para edición
+  const handleAsignarStock = (articuloId: number, cantidad: string) => {
     if (cantidad !== '' && !/^\d*[.,]?\d*$/.test(cantidad)) return;
 
     const asignacionExistente = asignaciones.find(a => a.articuloId === articuloId);
 
     if (asignacionExistente) {
-      setAsignaciones(prev =>
-        prev.map(a =>
-          a.articuloId === articuloId
-            ? { ...a, cantidad }
-            : a
-        )
-      );
-    } else {
-      setAsignaciones(prev => [...prev, { articuloId, cantidad }]);
-    }
-  };
-
-  const handleRemoverAsignacion = (articuloId: number) => {
-    setAsignaciones(prev => prev.filter(a => a.articuloId !== articuloId));
-  };
-
-  const limpiarFiltros = () => {
-    setProveedorSeleccionado(null);
-    setRubroSeleccionado('');
-    setBusqueda('');
-    setArticulos([]);
-    setError('');
-  };
-
-  const toggleSeleccion = (articulo: ArticuloFiltrado, checked: boolean) => {
-    if (checked) {
-      const ya = asignaciones.find(a => a.articuloId === articulo.id);
-      if (!ya) {
-        setAsignaciones(prev => [...prev, { articuloId: articulo.id, cantidad: String(articulo.stockDisponible > 0 ? articulo.stockDisponible : 1) }]);
-        setArticulosSnapshot((prev) => ({ ...prev, [Number(articulo.id)]: { ...articulo } }));
+      if (cantidad === '' || parseFloat(cantidad) === 0) {
+        setAsignaciones(prev => prev.filter(a => a.articuloId !== articuloId));
+      } else {
+        setAsignaciones(prev =>
+          prev.map(a =>
+            a.articuloId === articuloId
+              ? { ...a, cantidad }
+              : a
+          )
+        );
       }
     } else {
-      handleRemoverAsignacion(articulo.id);
+      if (cantidad !== '' && parseFloat(cantidad) > 0) {
+        setAsignaciones(prev => [...prev, { articuloId, cantidad }]);
+      }
     }
   };
 
-  const handleConfirmarAsignaciones = async () => {
-    if (!destinoSeleccionado) {
-      setError('Debe seleccionar un destino (punto o depósito)');
-      return;
-    }
-    if (asignaciones.length === 0) {
-      setError('Debe asignar stock a al menos un artículo');
-      return;
-    }
-    setConfirmOpen(true);
-  };
-
-  const [asignarMasivoMutation] = useMutation<{ asignarStockMasivo: boolean }>(ASIGNAR_STOCK_MASIVO);
-
-  const aplicarAsignaciones = async () => {
+  const confirmarAplicacion = async () => {
     setLoading(true);
     setError('');
 
     try {
-      if (!destinoSeleccionado) throw new Error('No hay destino seleccionado');
+      if (destinosSeleccionados.length === 0) throw new Error('Debe seleccionar al menos un destino');
 
-      const payload = {
-        puntoMudrasId: destinoSeleccionado,
-        asignaciones: asignaciones.map(a => ({
-          articuloId: Number(a.articuloId),
-          cantidad: parseFloat(a.cantidad) || 0
-        })),
-        motivo: 'Asignación masiva desde panel'
-      };
+      const errores: string[] = [];
+      let exitos = 0;
 
-      const { data } = await asignarMasivoMutation({
-        variables: { input: payload }
-      });
+      // Iteramos por cada destino seleccionado para aplicar la asignacion
+      // Esto es secuencial para no saturar si son muchos (aunque suelen ser pocos)
+      for (const destino of destinosSeleccionados) {
+        try {
+          const payload = {
+            puntoMudrasId: Number(destino.id),
+            asignaciones: asignaciones.map(a => ({
+              articuloId: Number(a.articuloId),
+              cantidad: parseFloat(a.cantidad) || 0
+            })),
+            motivo: 'Asignación masiva (Multi-destino)'
+          };
 
-      if (!data?.asignarStockMasivo) {
-        throw new Error('La operación no retornó éxito');
+          const { data } = await asignarMasivoMutation({
+            variables: { input: payload }
+          });
+
+          if (data?.asignarStockMasivo) {
+            exitos++;
+          } else {
+            errores.push(`Falló asignación para ${destino.nombre}`);
+          }
+
+        } catch (e: any) {
+          console.error(`Error asignando a ${destino.nombre}:`, e);
+          errores.push(`${destino.nombre}: ${e.message}`);
+        }
       }
 
-      const destinoNombre = puntosDisponibles.find((p) => p.id === destinoSeleccionado)?.nombre || 'destino';
-      setSnack({ open: true, msg: `Stock asignado a ${destinoNombre}`, sev: 'success' });
-      onStockAsignado();
-      handleCerrar();
-    } catch (error) {
-      console.error('Error al asignar stock:', error);
-      setError('Error al asignar el stock: ' + (error as Error).message);
-      setSnack({ open: true, msg: 'Error al asignar el stock', sev: 'error' });
+      if (errores.length > 0) {
+        setError(`Se completaron ${exitos} destinos. Errores: ${errores.join(', ')}`);
+        setSnack({ open: true, msg: 'Hubo errores en la asignación', sev: 'info' });
+        // No cerramos si hubo error parcial para permitir reintentar o ver que pasó
+        if (exitos > 0) {
+          // Limpiamos las asignaciones si al menos uno pasò? Mejor no, para no perder info
+          onStockAsignado(); // Refrescar tablas de fondo
+        }
+      } else {
+        setSnack({ open: true, msg: `Stock asignado correctamente a ${exitos} destinos`, sev: 'success' });
+        onStockAsignado();
+        handleCerrar();
+      }
+
+    } catch (e: any) {
+      setError(e.message);
     } finally {
       setLoading(false);
       setConfirmOpen(false);
@@ -346,63 +317,26 @@ export default function ModalNuevaAsignacionStock({ open, onClose, destinoId, on
     setArticulos([]);
     setAsignaciones([]);
     setError('');
-    setDestinoSeleccionado(destinoId ?? null);
+    // No reseteamos destinosSeleccionados si vino por props, pero si es manual si?
+    // Mejor resetear todo para limpieza
+    if (!destinoId) setDestinosSeleccionados([]);
     onClose();
   };
 
-  const getCantidadAsignada = (articuloId: number): string => {
-    const asignacion = asignaciones.find(a => a.articuloId === articuloId);
-    return asignacion?.cantidad || '0';
-  };
+  // Calcular totales
+  const totalUnidades = asignaciones.reduce((acc, curr) => acc + (parseFloat(curr.cantidad) || 0), 0);
+  const totalAsignarGlobal = totalUnidades * destinosSeleccionados.length;
 
-  const totalAsignaciones = asignaciones.reduce((total, a) => total + (parseFloat(a.cantidad) || 0), 0);
-
-  useEffect(() => {
-    if (!open) return;
-    setError('');
-    setDestinoSeleccionado(destinoId ?? null);
-    if (articuloPreseleccionado) {
-      setBusqueda(articuloPreseleccionado.codigo || articuloPreseleccionado.nombre || '');
-    }
-  }, [open, destinoId, articuloPreseleccionado]);
-
-  useEffect(() => {
-    if (!open || !articuloPreseleccionado) return;
-    if (articuloPreseleccionado.proveedorId && !proveedorSeleccionado) {
-      const p = proveedores.find((pr) => Number(pr.id) === Number(articuloPreseleccionado.proveedorId));
-      if (p) setProveedorSeleccionado(p);
-    }
-    if (articuloPreseleccionado.rubro && !rubroSeleccionado) {
-      setRubroSeleccionado(articuloPreseleccionado.rubro);
-    }
-  }, [open, articuloPreseleccionado, proveedores, proveedorSeleccionado, rubroSeleccionado]);
-
-  useEffect(() => {
-    if (!open) return;
-    if (destinoSeleccionado) return;
-    const prefer = origen === 'venta' ? 'venta' : origen === 'deposito' ? 'deposito' : tipoDestinoPreferido;
-    const match = (prefer ? puntosFiltrados.find((p) => p.tipo === prefer) : null) || puntosFiltrados[0];
-    if (match) setDestinoSeleccionado(match.id);
-  }, [open, destinoSeleccionado, puntosFiltrados, origen, tipoDestinoPreferido]);
-
-  useEffect(() => {
-    if (!open) return;
-    if (destinoSeleccionado && puntosFiltrados.some(p => p.id === destinoSeleccionado)) return;
-    const fallback = puntosFiltrados[0];
-    if (fallback) setDestinoSeleccionado(fallback.id);
-  }, [open, puntosFiltrados, destinoSeleccionado]);
-
-  useEffect(() => {
-    if (!open) return;
-    if (prevDestino.current !== destinoSeleccionado) {
-      prevDestino.current = destinoSeleccionado ?? null;
-      setAsignaciones([]);
-      setArticulos([]);
-      if (destinoSeleccionado && (busquedaActiva || proveedorSeleccionado || rubroSeleccionado)) {
-        void buscarArticulos();
-      }
-    }
-  }, [open, destinoSeleccionado, busquedaActiva, proveedorSeleccionado, rubroSeleccionado, buscarArticulos]);
+  const puntosDisponibles = useMemo(() => {
+    const all = (puntosData?.obtenerPuntosMudras || []).filter(p => p.activo);
+    // Filtrar por preferencia si se quiere, o dejar todos
+    // Si tipoDestinoPreferido es 'venta', podriamos ordenar primero los de venta
+    return all.sort((a, b) => {
+      if (tipoDestinoPreferido && a.tipo === tipoDestinoPreferido && b.tipo !== tipoDestinoPreferido) return -1;
+      if (tipoDestinoPreferido && a.tipo !== tipoDestinoPreferido && b.tipo === tipoDestinoPreferido) return 1;
+      return a.nombre.localeCompare(b.nombre);
+    });
+  }, [puntosData, tipoDestinoPreferido]);
 
   return (
     <Dialog
@@ -411,182 +345,187 @@ export default function ModalNuevaAsignacionStock({ open, onClose, destinoId, on
       maxWidth="lg"
       fullWidth
       PaperProps={{
-        elevation: 0,
+        elevation: 4,
         sx: {
           borderRadius: 0,
-          border: 'none', // Removed white border
           bgcolor: '#ffffff',
+          minHeight: '80vh',
           maxHeight: '90vh',
         },
       }}
     >
-      {/* Header - Oro Negro */}
+      {/* HEADER VERDE */}
       <Box sx={{
-        bgcolor: oroNegro.headerBg,
-        color: oroNegro.headerText,
+        bgcolor: verde.primary,
+        color: '#ffffff',
         px: 3,
         py: 2,
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
-        borderBottom: `1px solid ${oroNegro.headerBorder}`,
+        borderBottom: `4px solid ${verde.headerBorder}`,
         borderRadius: 0,
       }}>
         <Box display="flex" alignItems="center" gap={2}>
-          <Icon icon="mdi:package-variant-plus" width={24} height={24} color={oroNegro.primary} />
+          <Icon icon="mdi:package-variant-plus" width={24} height={24} />
           <Box>
-            <Typography variant="h6" fontWeight={700} letterSpacing={0}>
-              {titulo || 'Asignar stock'}
+            <Typography variant="h6" fontWeight={600} letterSpacing={0.5}>
+              {titulo || 'ASIGNACIÓN DE STOCK'}
             </Typography>
-            {destinoSeleccionado && (
-              <Typography variant="caption" sx={{ color: oroNegro.primary, opacity: 0.8 }}>
-                Destino: {puntosDisponibles.find(p => p.id === destinoSeleccionado)?.nombre}
-              </Typography>
-            )}
+            <Typography variant="caption" sx={{ opacity: 0.8, letterSpacing: 0.5 }}>
+              {destinosSeleccionados.length > 0
+                ? `${destinosSeleccionados.length} destinos seleccionados`
+                : 'Seleccione destinos'}
+            </Typography>
           </Box>
         </Box>
-        <IconButton onClick={handleCerrar} size="small" sx={{ color: oroNegro.actionHover, '&:hover': { bgcolor: 'rgba(255,255,255,0.05)' } }}>
+        <IconButton onClick={handleCerrar} size="small" sx={{ color: 'white', '&:hover': { bgcolor: 'rgba(255,255,255,0.1)' } }}>
           <Icon icon="mdi:close" width={24} />
         </IconButton>
       </Box>
 
-      {/* Content */}
-      <DialogContent sx={{ p: 3, bgcolor: '#ffffff' }}>
-        {error && (
-          <Alert severity="error" sx={{ mb: 3, borderRadius: 0 }}>
-            {error}
-          </Alert>
-        )}
+      <DialogContent sx={{ p: 3, bgcolor: '#f9fafb' }}>
+        <Box display="flex" flexDirection="column" gap={3}>
+          {error && (
+            <Alert severity="error" sx={{ borderRadius: 0 }} onClose={() => setError('')}>
+              {error}
+            </Alert>
+          )}
 
-        <Box display="grid" gap={3}>
-          {/* Toolbar */}
-          <Box display="flex" gap={2} flexWrap="wrap">
-            <Box flex="1 1 auto" display="flex" gap={2}>
+          {/* SECCIÓN DESTINO MULTIPLE */}
+          <Box p={2} bgcolor="#fff" border="1px solid #e0e0e0">
+            <Typography variant="subtitle2" fontWeight={700} color="text.secondary" mb={2} textTransform="uppercase">
+              Destinos ({destinosSeleccionados.length})
+            </Typography>
+            <Autocomplete
+              multiple
+              options={puntosDisponibles}
+              disableCloseOnSelect
+              getOptionLabel={(option) => `${option.nombre} (${option.tipo})`}
+              value={destinosSeleccionados}
+              onChange={(_, newValue) => setDestinosSeleccionados(newValue)}
+              renderInput={(params) => (
+                <TextField {...params} variant="outlined" label="Seleccionar Puntos de Venta / Depósitos" placeholder="Destinos" />
+              )}
+              renderOption={(props, option, { selected }) => (
+                <li {...props}>
+                  <Checkbox style={{ marginRight: 8 }} checked={selected} />
+                  {option.nombre} ({option.tipo})
+                </li>
+              )}
+              size="small"
+              sx={{
+                '& .MuiOutlinedInput-root': { borderRadius: 0 }
+              }}
+            />
+          </Box>
+
+          {/* SECCIÓN FILTROS */}
+          <Box p={2} bgcolor="#fff" border="1px solid #e0e0e0">
+            <Typography variant="subtitle2" fontWeight={700} color="text.secondary" mb={2} textTransform="uppercase">
+              Búsqueda de Artículos
+            </Typography>
+            <Box display="grid" gridTemplateColumns={{ xs: '1fr', md: 'repeat(3, 1fr)' }} gap={2}>
+              <Autocomplete
+                options={proveedores}
+                getOptionLabel={(option) => option.nombre}
+                value={proveedorSeleccionado}
+                onChange={(_, newValue) => setProveedorSeleccionado(newValue)}
+                size="small"
+                renderInput={(params) => (
+                  <TextField {...params} label="Proveedor" placeholder="Seleccione..." InputProps={{ ...params.InputProps, sx: { borderRadius: 0 } }} />
+                )}
+              />
+
+              <FormControl fullWidth size="small" disabled={!proveedorSeleccionado || loadingRubros}>
+                <InputLabel>Rubro</InputLabel>
+                <Select
+                  value={rubroSeleccionado}
+                  onChange={(e) => setRubroSeleccionado(e.target.value)}
+                  label="Rubro"
+                  sx={{ borderRadius: 0 }}
+                >
+                  <MenuItem value=""><em>Todos</em></MenuItem>
+                  {rubros.map((r) => (<MenuItem key={r.rubro} value={r.rubro}>{r.rubro}</MenuItem>))}
+                </Select>
+              </FormControl>
+
               <TextField
                 fullWidth
                 size="small"
-                label="Artículo (escáner)"
-                placeholder="Escaneá código..."
+                label="Buscar Artículo"
+                placeholder="Nombre o código..."
                 value={busqueda}
                 onChange={(e) => setBusqueda(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
-                    e.preventDefault();
-                    void buscarArticulos();
-                  }
-                }}
-                disabled={Boolean(proveedorSeleccionado || rubroSeleccionado)}
+                onKeyDown={(e) => { if (e.key === 'Enter') void buscarArticulos(); }}
                 InputProps={{
-                  startAdornment: <InputAdornment position="start"><Icon icon="mdi:barcode-scan" color={oroNegro.primary} /></InputAdornment>,
-                  sx: { borderRadius: 0 }
+                  sx: { borderRadius: 0 },
+                  endAdornment: (
+                    <InputAdornment position="end">
+                      <IconButton onClick={() => void buscarArticulos()} edge="end">
+                        <Icon icon="mdi:magnify" />
+                      </IconButton>
+                    </InputAdornment>
+                  )
                 }}
-                helperText="Enter para buscar"
               />
-              <Button
-                variant="contained"
-                onClick={() => void buscarArticulos()}
-                disabled={!busqueda.trim() && !proveedorSeleccionado && !rubroSeleccionado}
-                disableElevation
-                sx={{
-                  borderRadius: 0,
-                  fontWeight: 700,
-                  px: 3,
-                  bgcolor: oroNegro.primary,
-                  color: oroNegro.textStrong,
-                  '&:hover': { bgcolor: oroNegro.primaryHover }
-                }}
-              >
-                Buscar
-              </Button>
-              <IconButton onClick={limpiarFiltros} title="Limpiar filtros" sx={{ borderRadius: 0, border: '1px solid #e0e0e0', color: oroNegro.primary }}>
-                <Icon icon="mdi:trash-can-outline" />
-              </IconButton>
             </Box>
           </Box>
 
-          <Box display="grid" gridTemplateColumns={{ xs: '1fr', md: 'repeat(3, 1fr)' }} gap={2}>
-            <Autocomplete
-              options={puntosFiltrados}
-              getOptionLabel={(p) => `${p.nombre} (${p.tipo})`}
-              value={puntosFiltrados.find((p) => p.id === destinoSeleccionado) ?? null}
-              onChange={(_, val) => setDestinoSeleccionado(val ? val.id : null)}
-              renderInput={(params) => <TextField {...params} label="Destino" size="small" InputProps={{ ...params.InputProps, sx: { borderRadius: 0 } }} />}
-            />
-            <Autocomplete
-              options={proveedoresFiltrados}
-              getOptionLabel={(p) => p.nombre}
-              value={proveedorSeleccionado}
-              onChange={(_, val) => setProveedorSeleccionado(val)}
-              disabled={Boolean(articuloPreseleccionado?.proveedorId) || busquedaActiva}
-              renderInput={(params) => <TextField {...params} label="Proveedor" size="small" InputProps={{ ...params.InputProps, sx: { borderRadius: 0 } }} />}
-            />
-            <Autocomplete
-              options={rubrosOpciones}
-              value={rubroSeleccionado}
-              onChange={(_, val) => setRubroSeleccionado(val || '')}
-              disabled={Boolean(articuloPreseleccionado?.rubro) || busquedaActiva}
-              renderInput={(params) => <TextField {...params} label="Rubro" size="small" InputProps={{ ...params.InputProps, sx: { borderRadius: 0 } }} />}
-            />
-          </Box>
+          {buscandoArticulos && <Typography align="center">Buscando artículos...</Typography>}
 
-          {(buscandoArticulos || loading) && (
-            <Typography align="center" color="text.secondary">Buscando...</Typography>
-          )}
-
-          {/* Table */}
-          {articulosOrdenados.length > 0 && (
+          {articulos.length > 0 && (
             <TableContainer component={Paper} elevation={0} sx={{ borderRadius: 0, border: '1px solid #e0e0e0', maxHeight: 400 }}>
               <Table stickyHeader size="small">
                 <TableHead>
                   <TableRow>
-                    <TableCell padding="checkbox" sx={{ bgcolor: oroNegro.toolbarBg, borderBottom: `1px solid ${oroNegro.headerBorder}` }}>
-                      {/* Checkbox Header */}
-                    </TableCell>
-                    <TableCell sx={{ bgcolor: oroNegro.toolbarBg, fontWeight: 700, color: oroNegro.primary, borderBottom: `1px solid ${oroNegro.headerBorder}` }}>CÓDIGO</TableCell>
-                    <TableCell sx={{ bgcolor: oroNegro.toolbarBg, fontWeight: 700, color: oroNegro.primary, borderBottom: `1px solid ${oroNegro.headerBorder}` }}>DESCRIPCIÓN</TableCell>
-                    <TableCell sx={{ bgcolor: oroNegro.toolbarBg, fontWeight: 700, color: oroNegro.primary, borderBottom: `1px solid ${oroNegro.headerBorder}` }}>RUBRO</TableCell>
-                    <TableCell align="right" sx={{ bgcolor: oroNegro.toolbarBg, fontWeight: 700, color: oroNegro.primary, borderBottom: `1px solid ${oroNegro.headerBorder}` }}>STOCK DEST.</TableCell>
-                    <TableCell align="right" sx={{ bgcolor: oroNegro.toolbarBg, fontWeight: 700, color: oroNegro.primary, borderBottom: `1px solid ${oroNegro.headerBorder}` }}>ASIGNAR</TableCell>
+                    <TableCell sx={{ bgcolor: '#f5f5f5', fontWeight: 700 }}>CÓDIGO</TableCell>
+                    <TableCell sx={{ bgcolor: '#f5f5f5', fontWeight: 700 }}>DESCRIPCIÓN</TableCell>
+                    <TableCell sx={{ bgcolor: '#f5f5f5', fontWeight: 700 }}>RUBRO</TableCell>
+                    <TableCell align="right" sx={{ bgcolor: '#f5f5f5', fontWeight: 700 }}>STOCK DISP.</TableCell>
+                    {destinosSeleccionados.length === 1 && (
+                      <TableCell align="right" sx={{ bgcolor: '#f5f5f5', fontWeight: 700 }}>EN DESTINO</TableCell>
+                    )}
+                    <TableCell align="right" sx={{ bgcolor: '#f5f5f5', fontWeight: 700 }}>ASIGNAR (c/u)</TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
-                  {articulosOrdenados.map((articulo) => {
+                  {articulos.map((articulo) => {
                     const asignacion = asignaciones.find((a) => Number(a.articuloId) === Number(articulo.id));
-                    const cantidadAsignada = asignacion?.cantidad ?? 0;
-                    const seleccionado = Boolean(asignacion);
+                    const cantidad = asignacion?.cantidad || '';
+
+                    // Validacion visual de disponibilidad global
+                    const totalRequerido = (parseFloat(cantidad) || 0) * (destinosSeleccionados.length || 1);
+                    const isExcedido = totalRequerido > articulo.stockDisponible;
+
                     return (
-                      <TableRow key={articulo.id} hover selected={seleccionado}>
-                        <TableCell padding="checkbox">
-                          <Checkbox
-                            checked={seleccionado}
-                            onChange={(e) => toggleSeleccion(articulo, e.target.checked)}
-                            size="small"
-                            sx={{
-                              color: oroNegro.primary,
-                              '&.Mui-checked': { color: oroNegro.primary }
-                            }}
-                          />
-                        </TableCell>
+                      <TableRow key={articulo.id} hover selected={!!asignacion}>
                         <TableCell sx={{ fontFamily: 'monospace' }}>{articulo.codigo}</TableCell>
                         <TableCell>{articulo.nombre}</TableCell>
-                        <TableCell>{(articulo as any)?.rubro || '—'}</TableCell>
+                        <TableCell>{articulo.rubro}</TableCell>
                         <TableCell align="right">
                           <Chip
                             size="small"
-                            label={articulo.stockEnDestino ?? 0}
-                            sx={{ borderRadius: 0, bgcolor: oroNegro.chipBg, color: oroNegro.chipText }}
+                            label={articulo.stockDisponible}
+                            color={articulo.stockDisponible > 0 ? "success" : "default"}
+                            variant="outlined"
+                            sx={{ borderRadius: 0 }}
                           />
                         </TableCell>
+                        {destinosSeleccionados.length === 1 && (
+                          <TableCell align="right">
+                            {articulo.stockEnDestino}
+                          </TableCell>
+                        )}
                         <TableCell align="right">
                           <TextField
-                            type="text"
                             size="small"
-                            value={cantidadAsignada || ''}
-                            onChange={(e) => {
-                              handleAsignarStock(articulo.id, e.target.value, { allowZero: true });
-                            }}
-                            sx={{ width: 80, '& .MuiOutlinedInput-root': { borderRadius: 0 } }}
-                            disabled={!seleccionado}
+                            value={cantidad}
+                            onChange={(e) => handleAsignarStock(articulo.id, e.target.value)}
+                            placeholder="0"
+                            error={isExcedido}
+                            helperText={isExcedido ? 'Sin stock suficiente' : ''}
+                            sx={{ width: 100, '& .MuiOutlinedInput-root': { borderRadius: 0, bgcolor: !!asignacion ? '#e8f5e9' : 'transparent' } }}
                             inputMode="decimal"
                           />
                         </TableCell>
@@ -598,61 +537,50 @@ export default function ModalNuevaAsignacionStock({ open, onClose, destinoId, on
             </TableContainer>
           )}
 
-          {/* Summary */}
+          {/* FOOTER RESUMEN */}
           {asignaciones.length > 0 && (
-            <Alert severity="info" sx={{ borderRadius: 0, '& .MuiAlert-icon': { color: oroNegro.primary } }}>
-              <Typography variant="subtitle2" fontWeight={700}>Resumen de asignaciones</Typography>
-              <Typography variant="body2">
-                Total Artículos: <strong>{asignaciones.length}</strong> | Unidades Total: <strong>{totalAsignaciones}</strong>
-              </Typography>
-            </Alert>
+            <Box p={2} bgcolor={alpha(verde.primary, 0.08)} border={`1px solid ${verde.primary}`} display="flex" justifyContent="space-between" alignItems="center">
+              <Box>
+                <Typography variant="subtitle2" fontWeight={700} color={verde.textStrong}>Resumen de Asignación</Typography>
+                <Typography variant="body2">
+                  Artículos: <b>{asignaciones.length}</b> | Unidades por Destino: <b>{totalUnidades}</b> <br />
+                  Total Global a descontar: <b>{totalAsignarGlobal}</b> unidades ({destinosSeleccionados.length} destinos)
+                </Typography>
+              </Box>
+              <Button
+                variant="contained"
+                onClick={() => setConfirmOpen(true)}
+                disabled={destinosSeleccionados.length === 0}
+                sx={{ bgcolor: verde.primary, fontWeight: 700, borderRadius: 0, '&:hover': { bgcolor: verde.primaryHover } }}
+              >
+                CONFIRMAR
+              </Button>
+            </Box>
           )}
+
         </Box>
       </DialogContent>
 
-      <DialogActions sx={{ p: 2, bgcolor: '#f5f5f5', borderTop: '1px solid #e0e0e0' }}>
-        <Button onClick={handleCerrar} color="inherit" sx={{ fontWeight: 600 }}>Cancelar</Button>
-        <Button
-          onClick={handleConfirmarAsignaciones}
-          disabled={loading || asignaciones.length === 0}
-          variant="contained"
-          disableElevation
-          sx={{
-            bgcolor: oroNegro.primary,
-            color: oroNegro.textStrong,
-            borderRadius: 0,
-            px: 3,
-            fontWeight: 700,
-            '&:hover': { bgcolor: oroNegro.primaryHover }
-          }}
-        >
-          CONFIRMAR ASIGNACIÓN
-        </Button>
-      </DialogActions>
-
-      {/* Confirmation Dialog */}
+      {/* CONFIRMATION DIALOG */}
       <Dialog open={confirmOpen} onClose={() => setConfirmOpen(false)}>
         <Box p={3}>
-          <Typography variant="h6" fontWeight={700} gutterBottom>Confirmar Asignación</Typography>
+          <Typography variant="h6" fontWeight={700} gutterBottom>Confirmar Asignación Masiva</Typography>
           <Typography variant="body2" mb={2}>
-            Estás a punto de asignar <strong>{totalAsignaciones}</strong> unidades de <strong>{asignaciones.length}</strong> artículos
-            al destino seleccionado.
+            Vas a asignar stock a <strong>{destinosSeleccionados.length}</strong> destinos.<br />
+            Total global de unidades a mover: <strong>{totalAsignarGlobal}</strong>.
           </Typography>
+          <Alert severity="warning" sx={{ mb: 2 }}>
+            Esta acción descontará stock del depósito central y lo sumará a cada destino seleccionado.
+          </Alert>
           <Box display="flex" justifyContent="flex-end" gap={2}>
             <Button onClick={() => setConfirmOpen(false)}>Cancelar</Button>
             <Button
-              onClick={aplicarAsignaciones}
+              onClick={() => void confirmarAplicacion()}
               variant="contained"
-              disableElevation
-              sx={{
-                bgcolor: oroNegro.primary,
-                color: oroNegro.textStrong,
-                fontWeight: 700,
-                borderRadius: 0,
-                '&:hover': { bgcolor: oroNegro.primaryHover }
-              }}
+              color="primary"
+              disabled={loading}
             >
-              Confirmar
+              {loading ? 'Procesando...' : 'Confirmar'}
             </Button>
           </Box>
         </Box>
