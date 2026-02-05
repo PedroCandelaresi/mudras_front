@@ -34,6 +34,7 @@ import { grisVerdoso } from '@/ui/colores';
 import { IconFileSpreadsheet, IconFileTypePdf, IconRefresh } from '@tabler/icons-react';
 import { exportToExcel, exportToPdf, ExportColumn } from '@/utils/exportUtils';
 import MudrasLoader from '@/components/ui/MudrasLoader';
+import { Divider } from '@mui/material';
 
 const numberFormatter = new Intl.NumberFormat('es-AR', { maximumFractionDigits: 2 });
 const currencyFormatter = new Intl.NumberFormat('es-AR', {
@@ -258,8 +259,11 @@ const TablaStockPuntoVenta: React.FC<Props> = ({
           </Box>
         </Box>
 
+        <Divider sx={{ my: 2 }} />
+
         {/* Row 2: Exports (Left) - Filters (Right) */}
-        <Box mt={2} display="flex" justifyContent="space-between" alignItems="flex-start" flexWrap="wrap" gap={2}>
+        <Box display="flex" justifyContent="space-between" alignItems="flex-start" flexWrap="nowrap" gap={2}>
+          {/* Left: Export Buttons */}
           <Box display="flex" gap={2}>
             <Button
               variant="outlined"
@@ -279,7 +283,8 @@ const TablaStockPuntoVenta: React.FC<Props> = ({
             </Button>
           </Box>
 
-          <Box display="flex" gap={2}>
+          {/* Right: Filters */}
+          <Box display="flex" alignItems="flex-start" gap={2} flexWrap="nowrap" sx={{ flexGrow: 1 }}>
             <Autocomplete
               multiple
               disableCloseOnSelect
@@ -287,6 +292,7 @@ const TablaStockPuntoVenta: React.FC<Props> = ({
               getOptionLabel={(option) => option.Nombre || ''}
               value={filtrosProveedores}
               onChange={(_, newValue) => { setFiltrosProveedores(newValue); setPage(0); }}
+              fullWidth
               renderOption={(props, option, { selected }) => (
                 <li {...props}>
                   <Checkbox
@@ -298,7 +304,11 @@ const TablaStockPuntoVenta: React.FC<Props> = ({
                   {option.Nombre}
                 </li>
               )}
-              sx={{ minWidth: 200 }}
+              sx={{
+                flexBasis: '50%',
+                flexGrow: 1,
+                '& .MuiOutlinedInput-root': { borderRadius: 1 }
+              }}
               renderTags={(value, getTagProps) =>
                 value.map((option: any, index: number) => (
                   <Chip
@@ -316,7 +326,7 @@ const TablaStockPuntoVenta: React.FC<Props> = ({
                   />
                 ))
               }
-              renderInput={(params) => <TextField {...params} label="Proveedores" size="small" sx={{ bgcolor: '#f9f9f9', '& .MuiOutlinedInput-root': { borderRadius: 1 } }} />}
+              renderInput={(params) => <TextField {...params} label="Proveedores" size="small" />}
             />
             <Autocomplete
               multiple
@@ -325,6 +335,7 @@ const TablaStockPuntoVenta: React.FC<Props> = ({
               getOptionLabel={(option) => option.nombre || ''}
               value={filtrosRubros}
               onChange={(_, newValue) => { setFiltrosRubros(newValue); setPage(0); }}
+              fullWidth
               renderOption={(props, option, { selected }) => (
                 <li {...props}>
                   <Checkbox
@@ -336,7 +347,11 @@ const TablaStockPuntoVenta: React.FC<Props> = ({
                   {option.nombre}
                 </li>
               )}
-              sx={{ minWidth: 200 }}
+              sx={{
+                flexBasis: '50%',
+                flexGrow: 1,
+                '& .MuiOutlinedInput-root': { borderRadius: 1 }
+              }}
               renderTags={(value, getTagProps) =>
                 value.map((option: any, index: number) => (
                   <Chip
@@ -354,7 +369,7 @@ const TablaStockPuntoVenta: React.FC<Props> = ({
                   />
                 ))
               }
-              renderInput={(params) => <TextField {...params} label="Rubros" size="small" sx={{ bgcolor: '#f9f9f9', '& .MuiOutlinedInput-root': { borderRadius: 1 } }} />}
+              renderInput={(params) => <TextField {...params} label="Rubros" size="small" />}
             />
           </Box>
         </Box>

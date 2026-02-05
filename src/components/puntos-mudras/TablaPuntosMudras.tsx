@@ -21,6 +21,7 @@ import {
   MenuItem,
   Stack,
   InputAdornment,
+  Divider,
 } from '@mui/material';
 import { Store, Warehouse } from '@mui/icons-material';
 import { Icon } from '@iconify/react';
@@ -225,8 +226,10 @@ export default function TablaPuntosMudras({ tipo, onEditarPunto, onVerInventario
           </Box>
         </Box>
 
+        <Divider sx={{ my: 2 }} />
+
         {/* Row 2: Exports */}
-        <Box mt={2} display="flex" gap={2}>
+        <Box display="flex" gap={2}>
           <Button
             variant="outlined"
             startIcon={<IconFileSpreadsheet size={18} />}
