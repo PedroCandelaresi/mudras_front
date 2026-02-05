@@ -30,7 +30,7 @@ import { verdeMilitar } from '@/ui/colores';
 import PageContainer from '@/components/container/PageContainer';
 import TransferirStockModal from '@/components/stock/TransferirStockModal';
 import IngresoStockModal from '@/components/stock/IngresoStockModal';
-import ModalNuevaAsignacionStockOptimizado from '@/components/stock/ModalNuevaAsignacionStockOptimizado';
+import ModalNuevaAsignacionStock from '@/components/stock/ModalNuevaAsignacionStock';
 
 // GraphQL
 const GET_MATRIZ_STOCK = gql`
@@ -326,10 +326,9 @@ export default function GlobalStockAssignmentPage() {
                 puntos={puntos}
             />
 
-            <ModalNuevaAsignacionStockOptimizado
+            <ModalNuevaAsignacionStock
                 open={modalOptimizadoOpen}
                 onClose={handleCloseModals}
-                puntoVenta={null} // Se selecciona adentro
                 onStockAsignado={() => {
                     handleCloseModals();
                     refetch();
