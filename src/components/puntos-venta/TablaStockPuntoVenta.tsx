@@ -334,6 +334,7 @@ const TablaStockPuntoVenta: React.FC<Props> = ({
               options={opcionesProveedores}
               getOptionLabel={(option) => option.Nombre || ''}
               value={filtrosProveedores}
+              isOptionEqualToValue={(option, value) => option.IdProveedor === value.IdProveedor}
               onChange={(_, newValue) => { setFiltrosProveedores(newValue); setPage(0); }}
               fullWidth
               renderOption={(props, option, { selected }) => (
@@ -377,6 +378,7 @@ const TablaStockPuntoVenta: React.FC<Props> = ({
               options={opcionesRubros}
               getOptionLabel={(option) => option.nombre || ''}
               value={filtrosRubros}
+              isOptionEqualToValue={(option, value) => option.id === value.id}
               onChange={(_, newValue) => { setFiltrosRubros(newValue); setPage(0); }}
               fullWidth
               renderOption={(props, option, { selected }) => (
