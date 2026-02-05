@@ -1039,6 +1039,22 @@ const TablaArticulos: React.FC<ArticulosTableProps> = ({
             )}
             fullWidth
             sx={{ flexBasis: '50%', flexGrow: 1 }}
+            renderTags={(value, getTagProps) =>
+              value.map((option: any, index: number) => (
+                <Chip
+                  variant="outlined"
+                  label={option.Nombre}
+                  size="small"
+                  {...getTagProps({ index })}
+                  sx={{
+                    borderColor: alpha('#1565c0', 0.3),
+                    color: '#1565c0',
+                    bgcolor: alpha('#1565c0', 0.05),
+                    borderRadius: 1,
+                  }}
+                />
+              ))
+            }
             renderInput={(params) => <TextField {...params} label="Proveedores" size="small" placeholder="Seleccionar..." sx={{ bgcolor: 'white' }} />}
           />
 
@@ -1075,6 +1091,22 @@ const TablaArticulos: React.FC<ArticulosTableProps> = ({
             )}
             fullWidth
             sx={{ flexBasis: '50%', flexGrow: 1 }}
+            renderTags={(value, getTagProps) =>
+              value.map((option: any, index: number) => (
+                <Chip
+                  variant="outlined"
+                  label={option.nombre || option.Rubro}
+                  size="small"
+                  {...getTagProps({ index })}
+                  sx={{
+                    borderColor: alpha(verdeMilitar.primary, 0.3),
+                    color: verdeMilitar.primary,
+                    bgcolor: alpha(verdeMilitar.primary, 0.05),
+                    borderRadius: 1,
+                  }}
+                />
+              ))
+            }
             renderInput={(params) => <TextField {...params} label="Rubros" size="small" placeholder="Seleccionar..." sx={{ bgcolor: 'white' }} />}
           />
         </Box>
