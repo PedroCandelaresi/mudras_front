@@ -281,6 +281,7 @@ export default function ModalNuevaAsignacionStock({
       >
         {/* Header */}
         <Box sx={{
+          borderRadius: 0,
           bgcolor: COLORS.primary,
           color: COLORS.headerText,
           px: 5, // Increased padding
@@ -348,7 +349,7 @@ export default function ModalNuevaAsignacionStock({
             </Box>
 
             {/* 2. Results (Table) */}
-            <Box sx={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', p: 0 }}>
+            <Box sx={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', p: 0, px: 0.5, mb: 0.5 }}>
               <TablaArticulos
                 columns={columns as any}
                 controlledFilters={controlledFilters}
