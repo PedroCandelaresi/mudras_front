@@ -85,21 +85,26 @@ const TablaStockPuntoVenta: React.FC<Props> = ({
       const rubro = item.rubro;
       const prov = item.articulo?.proveedor;
 
-      if (rubro?.id) {
-        if (!allRubrosMap.has(rubro.id)) allRubrosMap.set(rubro.id, rubro);
+      if (rubro?.id != null) {
+        const rId = String(rubro.id);
+        if (!allRubrosMap.has(rId)) allRubrosMap.set(rId, rubro);
       }
-      if (prov?.IdProveedor) {
-        if (!allProvsMap.has(prov.IdProveedor)) allProvsMap.set(prov.IdProveedor, prov);
+      if (prov?.IdProveedor != null) {
+        const pId = String(prov.IdProveedor);
+        if (!allProvsMap.has(pId)) allProvsMap.set(pId, prov);
       }
 
-      if (rubro?.id && prov?.IdProveedor) {
+      if (rubro?.id != null && prov?.IdProveedor != null) {
+        const rId = String(rubro.id);
+        const pId = String(prov.IdProveedor);
+
         // Map Prov -> Rubros
-        if (!provToRubros.has(prov.IdProveedor)) provToRubros.set(prov.IdProveedor, new Set());
-        provToRubros.get(prov.IdProveedor)?.add(rubro.id);
+        if (!provToRubros.has(pId)) provToRubros.set(pId, new Set());
+        provToRubros.get(pId)?.add(rId);
 
         // Map Rubro -> Provs
-        if (!rubroToProvs.has(rubro.id)) rubroToProvs.set(rubro.id, new Set());
-        rubroToProvs.get(rubro.id)?.add(prov.IdProveedor);
+        if (!rubroToProvs.has(rId)) rubroToProvs.set(rId, new Set());
+        rubroToProvs.get(rId)?.add(pId);
       }
     });
 
@@ -107,31 +112,31 @@ const TablaStockPuntoVenta: React.FC<Props> = ({
     const allProvsList = Array.from(allProvsMap.values()).sort((a, b) => (a.Nombre || '').localeCompare(b.Nombre || ''));
 
     // 2. Filter Available Options based on Selection
-    const activeProvIds = filtrosProveedores.map(p => p.IdProveedor);
-    const activeRubroIds = filtrosRubros.map(r => r.id);
+    const activeProvIds = filtrosProveedores.map(p => String(p.IdProveedor));
+    const activeRubroIds = filtrosRubros.map(r => String(r.id));
 
     // Calculate Available Providers
     let filteredProvs = allProvsList;
     if (activeRubroIds.length > 0) {
-      const allowedProvs = new Set<number>();
+      const allowedProvs = new Set<string>();
       activeRubroIds.forEach(rId => {
         const provs = rubroToProvs.get(rId);
         if (provs) provs.forEach(pId => allowedProvs.add(pId));
       });
       // Logic: Show providers that have AT LEAST ONE of the selected rubrics
-      filteredProvs = allProvsList.filter(p => allowedProvs.has(Number(p.IdProveedor)));
+      filteredProvs = allProvsList.filter(p => allowedProvs.has(String(p.IdProveedor)));
     }
 
     // Calculate Available Rubros
     let filteredRubros = allRubrosList;
     if (activeProvIds.length > 0) {
-      const allowedRubros = new Set<number>();
+      const allowedRubros = new Set<string>();
       activeProvIds.forEach(pId => {
         const rubros = provToRubros.get(pId);
         if (rubros) rubros.forEach(rId => allowedRubros.add(rId));
       });
       // Logic: Show rubrics offered by AT LEAST ONE of the selected providers
-      filteredRubros = allRubrosList.filter(r => allowedRubros.has(Number(r.id)));
+      filteredRubros = allRubrosList.filter(r => allowedRubros.has(String(r.id)));
     }
 
     return { rubrosDisponibles: filteredRubros, proveedoresDisponibles: filteredProvs };
