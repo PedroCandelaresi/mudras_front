@@ -143,7 +143,7 @@ export default function GlobalStockAssignmentPage() {
                             '&:hover': { bgcolor: verdeMilitar.primaryHover }
                         }}
                     >
-                        Asignación Masiva
+                        Asignación Global
                     </Button>
                 </Box>
 
