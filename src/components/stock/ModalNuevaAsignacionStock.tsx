@@ -31,16 +31,16 @@ import { useQuery, useLazyQuery, useMutation } from '@apollo/client/react';
 import { verde } from '@/ui/colores';
 import { alpha } from '@mui/material/styles';
 
-// Queries correctly imported
+// Queries
 import { OBTENER_PUNTOS_MUDRAS, type ObtenerPuntosMudrasResponse } from '@/components/puntos-mudras/graphql/queries';
 import { BUSCAR_ARTICULOS } from '@/components/articulos/graphql/queries';
 import { GET_RUBROS } from '@/components/rubros/graphql/queries';
 import { GET_PROVEEDORES } from '@/components/proveedores/graphql/queries';
 import { ASIGNAR_STOCK_MASIVO } from '@/components/puntos-mudras/graphql/mutations';
 
-import type { PuntoMudras } from '@/interfaces/puntos-mudras';
 import type { Articulo } from '@/app/interfaces/mudras.types';
 
+// Interface for type safety
 interface BuscarArticulosResponse {
   buscarArticulos: {
     articulos: Articulo[];
@@ -51,16 +51,12 @@ interface BuscarArticulosResponse {
 interface ModalNuevaAsignacionStockProps {
   open: boolean;
   onClose: () => void;
-  destinoId?: number; // Pre-selected destination ID (optional now since we distribute to many)
-  origen?: 'venta' | 'deposito'; // Context
-  tipoDestinoPreferido?: 'venta' | 'deposito';
   onStockAsignado?: () => void;
 }
 
 export default function ModalNuevaAsignacionStock({
   open,
   onClose,
-  destinoId,
   onStockAsignado
 }: ModalNuevaAsignacionStockProps) {
   // --- States for Filters ---
@@ -69,7 +65,6 @@ export default function ModalNuevaAsignacionStock({
   const [busqueda, setBusqueda] = useState('');
 
   // --- States for Selection & Distribution ---
-  // We select ONE article to distribute
   const [articuloSeleccionado, setArticuloSeleccionado] = useState<Articulo | null>(null);
 
   // Distribution Logic
@@ -90,7 +85,6 @@ export default function ModalNuevaAsignacionStock({
   const { data: dataProveedores } = useQuery(GET_PROVEEDORES);
   const { data: dataRubros } = useQuery(GET_RUBROS);
 
-  // Lazy query for searching articles (fixing the query usage)
   const [buscarArticulos, { data: dataArticulos, loading: loadingArticulos }] = useLazyQuery<BuscarArticulosResponse>(BUSCAR_ARTICULOS, {
     fetchPolicy: 'network-only'
   });
@@ -105,17 +99,10 @@ export default function ModalNuevaAsignacionStock({
 
   const proveedores = useMemo(() => (dataProveedores as any)?.proveedores || [], [dataProveedores]);
 
-  // Filter rubros based on provider if selected (logic moved client-side to fix error)
   const rubros = useMemo(() => {
     const allRubros = (dataRubros as any)?.obtenerRubros || [];
     if (!proveedorSeleccionado) return allRubros;
 
-    // Logic to filter rubros by provider if the relation exists in the data
-    // Assuming backend data structure for rubros might not have 'proveedorId' directly visible on the list 
-    // or we use the provider's 'proveedorRubros' if available.
-    // For now, consistent with TablaArticulos, we might show all or filter if we had the map.
-    // To be safe and "fix" the error, we return ALL rubros but allow the user to select.
-    // If specific filtering is needed, we'd need to inspect the 'proveedorRubros' field in the provider object.
     const prov = proveedores.find((p: any) => Number(p.IdProveedor) === Number(proveedorSeleccionado.IdProveedor));
     if (prov && prov.proveedorRubros) {
       const rubrosIds = new Set(prov.proveedorRubros.map((pr: any) => Number(pr.rubro?.Id)));
@@ -128,7 +115,6 @@ export default function ModalNuevaAsignacionStock({
   // --- Effects ---
   useEffect(() => {
     if (!open) {
-      // Reset states on close
       setProveedorSeleccionado(null);
       setRubroSeleccionado(null);
       setBusqueda('');
@@ -136,10 +122,6 @@ export default function ModalNuevaAsignacionStock({
       setStockGlobal('0');
       setStockPorPunto({});
       setConfirmOpen(false);
-    } else {
-      // If we opened with a specific destination pre-selected, maybe we should focus on that?
-      // But the requirement is "assign from global to distinct points", so we probably shouldn't restrict it.
-      // We will list all points.
     }
   }, [open]);
 
@@ -150,18 +132,11 @@ export default function ModalNuevaAsignacionStock({
       if (busqueda) filtros.busqueda = busqueda;
       if (rubroSeleccionado) filtros.rubroId = Number(rubroSeleccionado.id);
       if (proveedorSeleccionado) filtros.proveedorId = Number(proveedorSeleccionado.IdProveedor);
-
-      // Limit to 50 for performance
       filtros.limite = 50;
       filtros.pagina = 0;
 
-      // Only search if we have some filter or just load initial 50
       const timeoutId = setTimeout(() => {
-        buscarArticulos({
-          variables: {
-            filtros
-          }
-        });
+        buscarArticulos({ variables: { filtros } });
       }, 500);
       return () => clearTimeout(timeoutId);
     }
@@ -169,19 +144,17 @@ export default function ModalNuevaAsignacionStock({
 
 
   // --- Handlers ---
-
   const handleSeleccionarArticulo = (articulo: Articulo) => {
+    // If clicking same, deselect? or just prevent re-render?
+    // Let's allow simple selection.
     setArticuloSeleccionado(articulo);
-    // When selecting an article, we reset the distribution
     setStockGlobal('0');
     setStockPorPunto({});
-  };
 
-  const handleStockGlobalChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const val = e.target.value;
-    if (val === '' || /^\d+$/.test(val)) {
-      setStockGlobal(val);
-    }
+    // Scroll to bottom (optional, but good UX if list is long)
+    setTimeout(() => {
+      document.getElementById('distribution-section')?.scrollIntoView({ behavior: 'smooth' });
+    }, 100);
   };
 
   const confirmarAplicacion = async () => {
@@ -192,7 +165,6 @@ export default function ModalNuevaAsignacionStock({
       const promises = Object.entries(stockPorPunto).map(async ([puntoId, cantidadStr]) => {
         const cantidad = parseInt(cantidadStr, 10);
         if (cantidad > 0) {
-          // Call mutation for this point
           return asignarMasivoMutation({
             variables: {
               input: {
@@ -229,9 +201,9 @@ export default function ModalNuevaAsignacionStock({
     onClose();
   }
 
-  // --- Calculations for Distribution UI ---
-  const stockGlobalNum = parseInt(stockGlobal, 10) || 0;
-  const asignadoTotal = Object.values(stockPorPunto).reduce((acc, curr) => acc + (parseInt(curr, 10) || 0), 0);
+  // --- Calculations ---
+  const stockGlobalNum = parseFloat(stockGlobal) || 0;
+  const asignadoTotal = Object.values(stockPorPunto).reduce((acc, curr) => acc + (parseFloat(curr) || 0), 0);
   const restante = Math.max(0, stockGlobalNum - asignadoTotal);
 
 
@@ -240,13 +212,12 @@ export default function ModalNuevaAsignacionStock({
       <Dialog
         open={open}
         onClose={handleCloseInternal}
-        maxWidth="lg"
+        maxWidth="md" // Slightly narrower than full width for better read
         fullWidth
         PaperProps={{
           sx: {
             borderRadius: 0,
-            overflow: 'hidden',
-            height: '90vh', // Fixed height for layout
+            height: '90vh',
             display: 'flex',
             flexDirection: 'column'
           }
@@ -262,213 +233,187 @@ export default function ModalNuevaAsignacionStock({
           </IconButton>
         </DialogTitle>
 
-        <DialogContent sx={{ p: 0, display: 'flex', flexDirection: 'column', flex: 1, overflow: 'hidden' }}>
-          <Box sx={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
+        <DialogContent sx={{ p: 3, display: 'flex', flexDirection: 'column', gap: 3 }}>
 
-            {/* LEFT PANEL: Filters & Article List */}
-            <Box sx={{ width: '40%', borderRight: '1px solid #e0e0e0', display: 'flex', flexDirection: 'column', bgcolor: '#f5f5f5' }}>
-              <Box p={2} sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                {/* Filters */}
-                <Autocomplete
-                  options={proveedores}
-                  getOptionLabel={(o: any) => o.Nombre || ''}
-                  value={proveedorSeleccionado}
-                  onChange={(_, v) => { setProveedorSeleccionado(v); setRubroSeleccionado(null); }}
-                  renderInput={(params) => <TextField {...params} label="Proveedor" size="small" sx={{ bgcolor: '#fff' }} />}
-                />
-                <Autocomplete
-                  options={rubros}
-                  getOptionLabel={(o: any) => o.nombre || ''}
-                  value={rubroSeleccionado}
-                  onChange={(_, v) => setRubroSeleccionado(v)}
-                  renderInput={(params) => <TextField {...params} label="Rubro" size="small" sx={{ bgcolor: '#fff' }} />}
-                  disabled={!proveedorSeleccionado} // Opcional: disable if validation strict
-                />
-                <TextField
-                  placeholder="Buscar artículo..."
-                  value={busqueda}
-                  onChange={(e) => setBusqueda(e.target.value)}
-                  size="small"
-                  fullWidth
-                  sx={{ bgcolor: '#fff' }}
-                  InputProps={{
-                    startAdornment: <InputAdornment position="start"><Icon icon="mdi:magnify" /></InputAdornment>
-                  }}
-                />
-              </Box>
-
-              <Divider />
-
-              {/* Article List */}
-              <Box sx={{ flex: 1, overflow: 'auto' }}>
-                {loadingArticulos ? (
-                  <Box display="flex" justifyContent="center" p={4}><CircularProgress /></Box>
-                ) : (
-                  <Table stickyHeader size="small">
-                    <TableHead>
-                      <TableRow>
-                        <TableCell>Código</TableCell>
-                        <TableCell>Artículo</TableCell>
-                        <TableCell align="right"></TableCell>
-                      </TableRow>
-                    </TableHead>
-                    <TableBody>
-                      {(dataArticulos?.buscarArticulos?.articulos || []).map((art: any) => {
-                        if (!art) return null;
-                        const isSelected = articuloSeleccionado?.id === art.id;
-                        return (
-                          <TableRow
-                            key={art.id}
-                            hover
-                            selected={isSelected}
-                            onClick={() => handleSeleccionarArticulo(art)}
-                            sx={{ cursor: 'pointer', bgcolor: isSelected ? alpha(verde.primary, 0.1) : undefined }}
-                          >
-                            <TableCell sx={{ fontFamily: 'monospace', fontSize: '0.8rem' }}>{art.Codigo}</TableCell>
-                            <TableCell>
-                              <Typography variant="body2" fontWeight={600}>{art.Descripcion}</Typography>
-                              <Typography variant="caption" color="text.secondary">{art.Rubro}</Typography>
-                            </TableCell>
-                            <TableCell align="right">
-                              {isSelected && <Icon icon="mdi:check-circle" color={verde.primary} />}
-                            </TableCell>
-                          </TableRow>
-                        );
-                      })}
-                    </TableBody>
-                  </Table>
-                )}
-              </Box>
+          {/* 1. FILTERS */}
+          <Box>
+            <Typography variant="subtitle2" color="text.secondary" fontWeight={700} mb={1}>
+              1. BUSCAR ARTÍCULO
+            </Typography>
+            <Box display="flex" gap={2} flexWrap="wrap">
+              <Autocomplete
+                options={proveedores}
+                getOptionLabel={(o: any) => o.Nombre || ''}
+                value={proveedorSeleccionado}
+                onChange={(_, v) => { setProveedorSeleccionado(v); setRubroSeleccionado(null); }}
+                renderInput={(params) => <TextField {...params} label="Proveedor" size="small" />}
+                sx={{ flex: 1, minWidth: 200 }}
+              />
+              <Autocomplete
+                options={rubros}
+                getOptionLabel={(o: any) => o.nombre || ''}
+                value={rubroSeleccionado}
+                onChange={(_, v) => setRubroSeleccionado(v)}
+                renderInput={(params) => <TextField {...params} label="Rubro" size="small" />}
+                disabled={!proveedorSeleccionado}
+                sx={{ flex: 1, minWidth: 200 }}
+              />
+              <TextField
+                label="Buscar por nombre o código"
+                value={busqueda}
+                onChange={(e) => setBusqueda(e.target.value)}
+                size="small"
+                sx={{ flex: 2, minWidth: 300 }}
+                InputProps={{
+                  endAdornment: <Icon icon="mdi:magnify" color="action" />
+                }}
+              />
             </Box>
-
-            {/* RIGHT PANEL: Distribution UI */}
-            <Box sx={{ width: '60%', display: 'flex', flexDirection: 'column', bgcolor: '#fff' }}>
-              {!articuloSeleccionado ? (
-                <Box display="flex" flexDirection="column" alignItems="center" justifyContent="center" flex={1} color="text.secondary">
-                  <Icon icon="mdi:arrow-left" width={48} />
-                  <Typography>Seleccione un artículo para asignar stock</Typography>
-                </Box>
-              ) : (
-                <Box display="flex" flexDirection="column" flex={1} overflow="hidden">
-                  {/* Selected Article Header */}
-                  <Box p={2} bgcolor={alpha(verde.primary, 0.05)} borderBottom="1px solid #e0e0e0">
-                    <Typography variant="subtitle2" color="text.secondary">Artículo Seleccionado</Typography>
-                    <Typography variant="h6" color={verde.primary} fontWeight={700}>
-                      {articuloSeleccionado.Descripcion}
-                    </Typography>
-                    <Typography variant="body2">
-                      Código: <strong>{articuloSeleccionado.Codigo}</strong>
-                    </Typography>
-                  </Box>
-
-                  {/* Global Stock Input */}
-                  <Box p={3} pb={1}>
-                    <TextField
-                      label="Stock Global a Distribuir"
-                      value={stockGlobal}
-                      onChange={handleStockGlobalChange}
-                      fullWidth
-                      variant="outlined"
-                      InputProps={{
-                        sx: { fontSize: '1.2rem', fontWeight: 700, color: verde.primary }
-                      }}
-                    />
-
-                    {/* Summary Stats */}
-                    <Box display="flex" gap={3} mt={2} p={1} bgcolor="#f9f9f9" borderRadius={1}>
-                      <Box>
-                        <Typography variant="caption">Total Global</Typography>
-                        <Typography variant="body1" fontWeight={700}>{stockGlobalNum}</Typography>
-                      </Box>
-                      <Box>
-                        <Typography variant="caption">Asignado</Typography>
-                        <Typography variant="body1" fontWeight={700} color={stockGlobalNum > 0 && asignadoTotal > stockGlobalNum ? 'error.main' : 'primary.main'}>
-                          {asignadoTotal}
-                        </Typography>
-                      </Box>
-                      <Box>
-                        <Typography variant="caption">Restante</Typography>
-                        <Typography variant="body1" fontWeight={700} color={restante === 0 && stockGlobalNum > 0 ? 'success.main' : 'text.secondary'}>
-                          {restante}
-                        </Typography>
-                      </Box>
-                    </Box>
-                  </Box>
-
-                  <Divider />
-
-                  {/* Distribution Table */}
-                  <Box flex={1} overflow="auto" p={0}>
-                    <TableContainer>
-                      <Table stickyHeader size="small">
-                        <TableHead>
-                          <TableRow>
-                            <TableCell sx={{ fontWeight: 700 }}>Punto de Venta / Depósito</TableCell>
-                            <TableCell align="right" sx={{ fontWeight: 700, width: 140 }}>Asignar</TableCell>
-                          </TableRow>
-                        </TableHead>
-                        <TableBody>
-                          {puntosDisponibles.map(punto => {
-                            const asignadoEste = parseInt(stockPorPunto[punto.id] || '0', 10);
-
-                            return (
-                              <TableRow key={punto.id} hover>
-                                <TableCell>
-                                  <Box display="flex" alignItems="center" gap={1}>
-                                    <Icon icon={punto.tipo === 'deposito' ? 'mdi:warehouse' : 'mdi:store'} color={verde.primary} />
-                                    <Box>
-                                      <Typography variant="body2" fontWeight={600}>{punto.nombre}</Typography>
-                                      <Typography variant="caption" color="text.secondary">
-                                        {punto.tipo === 'venta' ? 'Punto de Venta' : 'Depósito'}
-                                      </Typography>
-                                    </Box>
-                                  </Box>
-                                </TableCell>
-                                <TableCell align="right">
-                                  <TextField
-                                    size="small"
-                                    value={stockPorPunto[punto.id] || ''}
-                                    onChange={(e) => {
-                                      const val = e.target.value;
-                                      if (val === '' || /^\d+$/.test(val)) {
-                                        const newVal = parseInt(val || '0', 10);
-                                        // Check if exceeds remaining (excluding current value from total)
-                                        const currentTotalExcludingThis = asignadoTotal - asignadoEste;
-                                        if (currentTotalExcludingThis + newVal <= stockGlobalNum) {
-                                          setStockPorPunto(prev => ({ ...prev, [punto.id]: val }));
-                                        }
-                                      }
-                                    }}
-                                    placeholder="0"
-                                    disabled={stockGlobalNum <= 0}
-                                    InputProps={{
-                                      sx: { textAlign: 'right' }
-                                    }}
-                                  />
-                                </TableCell>
-                              </TableRow>
-                            )
-                          })}
-                        </TableBody>
-                      </Table>
-                    </TableContainer>
-                  </Box>
-
-                </Box>
-              )}
-            </Box>
-
           </Box>
+
+          {/* 2. RESULTS TABLE */}
+          <Box flex={1} minHeight={200} border="1px solid #e0e0e0" display="flex" flexDirection="column">
+            <TableContainer sx={{ flex: 1, maxHeight: 300 }}>
+              <Table size="small" stickyHeader>
+                <TableHead>
+                  <TableRow>
+                    <TableCell sx={{ bgcolor: alpha(verde.primary, 0.05), fontWeight: 700 }}>CÓDIGO</TableCell>
+                    <TableCell sx={{ bgcolor: alpha(verde.primary, 0.05), fontWeight: 700 }}>DESCRIPCIÓN</TableCell>
+                    <TableCell sx={{ bgcolor: alpha(verde.primary, 0.05), fontWeight: 700 }}>RUBRO</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {loadingArticulos ? (
+                    <TableRow><TableCell colSpan={3} align="center"><CircularProgress size={24} /></TableCell></TableRow>
+                  ) : (dataArticulos?.buscarArticulos?.articulos || []).length === 0 ? (
+                    <TableRow><TableCell colSpan={3} align="center">No hay resultados</TableCell></TableRow>
+                  ) : (
+                    (dataArticulos?.buscarArticulos?.articulos || []).map((art: any) => {
+                      const isSelected = articuloSeleccionado?.id === art.id;
+                      return (
+                        <TableRow
+                          key={art.id}
+                          hover
+                          onClick={() => handleSeleccionarArticulo(art)}
+                          selected={isSelected}
+                          sx={{ cursor: 'pointer', '&.Mui-selected': { bgcolor: alpha(verde.primary, 0.15) } }}
+                        >
+                          <TableCell size="small">{art.Codigo}</TableCell>
+                          <TableCell size="small">
+                            <Typography variant="body2" fontWeight={600}>{art.Descripcion}</Typography>
+                          </TableCell>
+                          <TableCell size="small">{art.Rubro}</TableCell>
+                        </TableRow>
+                      )
+                    })
+                  )}
+                </TableBody>
+              </Table>
+            </TableContainer>
+          </Box>
+
+          {/* 3. DISTRIBUTION (Visible if selected) */}
+          {articuloSeleccionado && (
+            <Box id="distribution-section" borderTop="1px solid #e0e0e0" pt={3}>
+              <Typography variant="subtitle2" color="text.secondary" fontWeight={700} mb={2}>
+                2. DISTRIBUIR STOCK
+              </Typography>
+
+              <Box sx={{ bgcolor: '#f9f9f9', p: 2, mb: 2 }}>
+                <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
+                  <Box>
+                    <Typography variant="caption" color="text.secondary">ARTÍCULO SELECCIONADO</Typography>
+                    <Typography variant="h6" color={verde.primary} fontWeight={700}>
+                      {articuloSeleccionado.Descripcion} <span style={{ fontSize: '0.8em', color: '#666' }}>({articuloSeleccionado.Codigo})</span>
+                    </Typography>
+                  </Box>
+                  <Box textAlign="right">
+                    <Typography variant="caption" color="text.secondary">STOCK DISPONIBLE ACTUAL</Typography>
+                    <Typography variant="h6" fontWeight={700}>{articuloSeleccionado.totalStock || 0}</Typography>
+                  </Box>
+                </Box>
+
+                {/* GLOBAL STOCK INPUT + METRICS */}
+                <Box display="flex" gap={2} alignItems="center">
+                  <TextField
+                    label="Stock Global a Distribuir"
+                    value={stockGlobal}
+                    onChange={(e) => {
+                      if (/^\d*\.?\d*$/.test(e.target.value)) setStockGlobal(e.target.value);
+                    }}
+                    size="small"
+                    sx={{ width: 200 }}
+                  />
+                  <Divider orientation="vertical" flexItem />
+                  <Box>
+                    <Typography variant="caption">ASIGNADO: <strong>{asignadoTotal}</strong></Typography>
+                  </Box>
+                  <Box>
+                    <Typography variant="caption" color={restante < 0 ? 'error' : 'success'}>
+                      RESTANTE: <strong>{restante}</strong>
+                    </Typography>
+                  </Box>
+                </Box>
+              </Box>
+
+              {/* POINTS TABLE */}
+              <TableContainer component={Paper} elevation={0} sx={{ border: '1px solid #e0e0e0' }}>
+                <Table size="small">
+                  <TableHead>
+                    <TableRow>
+                      <TableCell sx={{ fontWeight: 700, bgcolor: '#f5f5f5' }}>PUNTO / DEPÓSITO</TableCell>
+                      <TableCell align="right" sx={{ fontWeight: 700, bgcolor: '#f5f5f5', width: 150 }}>CANTIDAD</TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {puntosDisponibles.map(punto => (
+                      <TableRow key={punto.id}>
+                        <TableCell>
+                          <Box display="flex" alignItems="center" gap={1}>
+                            <Icon icon={punto.tipo === 'deposito' ? 'mdi:warehouse' : 'mdi:store'} width={18} color="action" />
+                            <Typography variant="body2">{punto.nombre}</Typography>
+                          </Box>
+                        </TableCell>
+                        <TableCell align="right">
+                          <TextField
+                            size="small"
+                            placeholder="0"
+                            value={stockPorPunto[punto.id] || ''}
+                            onChange={(e) => {
+                              const val = e.target.value;
+                              if (/^\d*\.?\d*$/.test(val)) {
+                                const newVal = parseFloat(val || '0');
+                                // Prevent exceeding global? Or just show negative?
+                                // User logic in ModalNuevoArticulo: "Validación: No permitir ingresar más de lo restante"
+                                // Let's prevent it.
+                                const currentTotal = asignadoTotal - (parseFloat(stockPorPunto[punto.id] || '0'));
+                                if (currentTotal + newVal <= stockGlobalNum) {
+                                  setStockPorPunto(prev => ({ ...prev, [punto.id]: val }));
+                                }
+                              }
+                            }}
+                            disabled={stockGlobalNum <= 0}
+                            InputProps={{ sx: { textAlign: 'right', fontSize: '0.875rem', py: 0 } }}
+                            sx={{ '& input': { textAlign: 'right' } }}
+                          />
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </TableContainer>
+            </Box>
+          )}
+
         </DialogContent>
 
-        <DialogActions sx={{ p: 2, borderTop: '1px solid #e0e0e0', bgcolor: '#f5f5f5' }}>
+        <DialogActions sx={{ p: 2, bgcolor: '#f5f5f5' }}>
           <Button onClick={handleCloseInternal} sx={{ color: 'text.secondary' }}>Cancelar</Button>
           <Button
             variant="contained"
             onClick={() => setConfirmOpen(true)}
             disabled={!articuloSeleccionado || asignadoTotal === 0 || asignadoTotal > stockGlobalNum}
-            disableElevation
-            sx={{ bgcolor: verde.primary, '&:hover': { bgcolor: verde.primaryHover } }}
+            sx={{ bgcolor: verde.primary, fontWeight: 700 }}
           >
             Confirmar Asignación
           </Button>
@@ -477,22 +422,11 @@ export default function ModalNuevaAsignacionStock({
 
       {/* Confirmation Dialog */}
       <Dialog open={confirmOpen} onClose={() => setConfirmOpen(false)}>
-        <DialogTitle>Confirmar Asignación de Stock</DialogTitle>
+        <DialogTitle>Confirmar</DialogTitle>
         <DialogContent>
           <Typography>
-            Se va a asignar el siguiente stock para <strong>{articuloSeleccionado?.Descripcion}</strong>:
+            ¿Seguro que desea asignar <strong>{asignadoTotal}</strong> unidades del artículo <strong>{articuloSeleccionado?.Descripcion}</strong>?
           </Typography>
-          <Box mt={2}>
-            {Object.entries(stockPorPunto).map(([pid, qty]) => {
-              if (parseInt(qty) <= 0) return null;
-              const punto = puntosDisponibles.find(p => p.id === Number(pid));
-              return (
-                <Typography key={pid} variant="body2" sx={{ ml: 2 }}>
-                  • <strong>{punto?.nombre}:</strong> {qty} unidades
-                </Typography>
-              )
-            })}
-          </Box>
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setConfirmOpen(false)}>Cancelar</Button>
@@ -508,7 +442,7 @@ export default function ModalNuevaAsignacionStock({
         onClose={() => setSnackbar((prev) => ({ ...prev, open: false }))}
         anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
       >
-        <Alert severity={snackbar.severity} variant="filled" sx={{ width: '100%' }}>
+        <Alert severity={snackbar.severity} variant="filled">
           {snackbar.message}
         </Alert>
       </Snackbar>
