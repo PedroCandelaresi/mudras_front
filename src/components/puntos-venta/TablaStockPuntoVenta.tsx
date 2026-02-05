@@ -31,7 +31,7 @@ import { calcularPrecioDesdeArticulo } from '@/utils/precioVenta';
 import { Icon } from '@iconify/react';
 import { CheckBoxOutlineBlank as CheckBoxOutlineBlankIcon, CheckBox as CheckBoxIcon } from '@mui/icons-material';
 import { grisVerdoso } from '@/ui/colores';
-import { IconFileSpreadsheet, IconFileTypePdf, IconRefresh } from '@tabler/icons-react';
+import { IconFileSpreadsheet, IconFileTypePdf, IconRefresh, IconSearch, IconEye, IconEdit, IconTrash } from '@tabler/icons-react';
 import { exportToExcel, exportToPdf, ExportColumn } from '@/utils/exportUtils';
 import MudrasLoader from '@/components/ui/MudrasLoader';
 import { Divider } from '@mui/material';
@@ -273,7 +273,7 @@ const TablaStockPuntoVenta: React.FC<Props> = ({
               onChange={(e) => setBusquedaDraft(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && ejecutarBusqueda()}
               InputProps={{
-                startAdornment: <InputAdornment position="start"><Icon icon="mdi:magnify" color="#757575" /></InputAdornment>,
+                startAdornment: <InputAdornment position="start"><IconSearch size={18} color="#757575" /></InputAdornment>,
                 sx: {
                   borderRadius: 1, // Match TablaArticulos
                   bgcolor: '#f9f9f9',
@@ -283,24 +283,22 @@ const TablaStockPuntoVenta: React.FC<Props> = ({
                 }
               }}
             />
-            {busquedaAplicada && (
-              <Button
-                variant="outlined"
-                onClick={limpiarFiltros}
-                startIcon={<IconRefresh size={18} />}
-                sx={{
-                  borderRadius: 0,
-                  textTransform: 'none',
-                  color: '#757575',
-                  borderColor: '#e0e0e0',
-                  height: 40,
-                  px: 2,
-                  '&:hover': { borderColor: '#bdbdbd', bgcolor: '#f5f5f5' }
-                }}
-              >
-                Limpiar
-              </Button>
-            )}
+            <Button
+              variant="outlined"
+              onClick={limpiarFiltros}
+              startIcon={<IconRefresh size={18} />}
+              sx={{
+                borderRadius: 0,
+                textTransform: 'none',
+                color: '#757575',
+                borderColor: '#e0e0e0',
+                height: 40,
+                px: 2,
+                '&:hover': { borderColor: '#bdbdbd', bgcolor: '#f5f5f5' }
+              }}
+            >
+              Limpiar
+            </Button>
           </Box>
         </Box>
 
@@ -511,7 +509,7 @@ const TablaStockPuntoVenta: React.FC<Props> = ({
                               </Box>
                             ) : (
                               <Box width={40} height={40} bgcolor="#f5f5f5" border="1px solid #e0e0e0" display="grid" sx={{ placeItems: 'center', borderRadius: 0 }}>
-                                <Icon icon="mdi:image-off-outline" color="#bdbdbd" />
+                                <Icon icon="mdi:image-off-outline" color="#bdbdbd" width={20} />
                               </Box>
                             )}
                           </TableCell>
@@ -593,7 +591,7 @@ const TablaStockPuntoVenta: React.FC<Props> = ({
                                         '&:hover': { bgcolor: alpha('#1565c0', 0.1) }
                                       }}
                                     >
-                                      <Icon icon="mdi:eye" width={20} />
+                                      <IconEye size={20} />
                                     </IconButton>
                                   </Tooltip>
                                 )}
@@ -607,7 +605,7 @@ const TablaStockPuntoVenta: React.FC<Props> = ({
                                         '&:hover': { bgcolor: alpha('#2e7d32', 0.1) }
                                       }}
                                     >
-                                      <Icon icon="mdi:pencil" width={20} />
+                                      <IconEdit size={20} />
                                     </IconButton>
                                   </Tooltip>
                                 )}

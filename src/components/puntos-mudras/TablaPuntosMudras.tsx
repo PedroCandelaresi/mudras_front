@@ -25,7 +25,7 @@ import {
 } from '@mui/material';
 import { Store, Warehouse } from '@mui/icons-material';
 import { Icon } from '@iconify/react';
-import { IconEdit, IconEye, IconRefresh, IconTrash, IconInfoCircle, IconPhone, IconFileSpreadsheet, IconFileTypePdf } from '@tabler/icons-react'; // Added IconPhone
+import { IconEdit, IconEye, IconRefresh, IconTrash, IconInfoCircle, IconPhone, IconFileSpreadsheet, IconFileTypePdf, IconSearch } from '@tabler/icons-react';
 import { exportToExcel, exportToPdf, ExportColumn } from '@/utils/exportUtils';
 import MudrasLoader from '@/components/ui/MudrasLoader';
 import { useQuery, useMutation } from '@apollo/client/react';
@@ -191,7 +191,7 @@ export default function TablaPuntosMudras({ tipo, onEditarPunto, onVerInventario
               InputProps={{
                 startAdornment: (
                   <InputAdornment position="start">
-                    <Icon icon="mdi:magnify" color="#757575" />
+                    <IconSearch size={18} color="#757575" />
                   </InputAdornment>
                 ),
               }}
@@ -206,23 +206,22 @@ export default function TablaPuntosMudras({ tipo, onEditarPunto, onVerInventario
                 }
               }}
             />
-            {busqueda && (
-              <Button
-                variant="outlined"
-                startIcon={<IconRefresh size={18} />}
-                onClick={() => setBusqueda('')}
-                sx={{
-                  borderRadius: 0,
-                  textTransform: 'none',
-                  color: '#757575',
-                  borderColor: '#e0e0e0',
-                  height: 40,
-                  '&:hover': { borderColor: '#bdbdbd', bgcolor: '#f5f5f5' }
-                }}
-              >
-                Limpiar
-              </Button>
-            )}
+            <Button
+              variant="outlined"
+              startIcon={<IconRefresh size={18} />}
+              onClick={() => setBusqueda('')}
+              sx={{
+                borderRadius: 0,
+                textTransform: 'none',
+                color: '#757575',
+                borderColor: '#e0e0e0',
+                height: 40,
+                px: 2,
+                '&:hover': { borderColor: '#bdbdbd', bgcolor: '#f5f5f5' }
+              }}
+            >
+              Limpiar
+            </Button>
           </Box>
         </Box>
 
