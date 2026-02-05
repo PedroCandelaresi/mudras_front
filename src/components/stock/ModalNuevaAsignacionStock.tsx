@@ -52,13 +52,21 @@ interface ModalNuevaAsignacionStockProps {
   open: boolean;
   onClose: () => void;
   onStockAsignado?: () => void;
+  // Optional props for backward compatibility or future specific-destination features
+  destinoId?: number;
+  origen?: string;
+  tipoDestinoPreferido?: string;
 }
 
 export default function ModalNuevaAsignacionStock({
   open,
   onClose,
-  onStockAsignado
+  onStockAsignado,
+  destinoId,
+  origen,
+  tipoDestinoPreferido
 }: ModalNuevaAsignacionStockProps) {
+
   // --- States for Filters ---
   const [proveedorSeleccionado, setProveedorSeleccionado] = useState<{ IdProveedor: number; Nombre?: string } | null>(null);
   const [rubroSeleccionado, setRubroSeleccionado] = useState<{ id: number; nombre: string } | null>(null);
