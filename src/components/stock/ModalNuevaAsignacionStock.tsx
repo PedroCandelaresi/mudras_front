@@ -349,7 +349,18 @@ export default function ModalNuevaAsignacionStock({
             </Box>
 
             {/* 2. Results (Table) */}
-            <Box sx={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', p: 0, px: 0.5, mb: 0.5 }}>
+            <Box sx={{
+              flex: 1,
+              display: 'flex',
+              flexDirection: 'column',
+              overflow: 'hidden',
+              p: 4, // Large "airy" margin
+              '& .MuiTableContainer-root': {
+                maxHeight: '100%',
+                overflowY: 'auto',
+                border: `1px solid ${COLORS.border}`,
+              }
+            }}>
               <TablaArticulos
                 columns={columns as any}
                 controlledFilters={controlledFilters}
