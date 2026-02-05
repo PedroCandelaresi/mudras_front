@@ -341,6 +341,68 @@ const TablaArticulos: React.FC<ArticulosTableProps> = ({
   }, [rubroMap, proveedorMap]);
   // ----------------------------
 
+
+  // ==================== Filtros Bidireccionales ====================
+  // Construimos mapas para filtrar opciones disponibles
+  const { rubrosDisponibles, proveedoresDisponibles } = useMemo(() => {
+    const allProvs: any[] = (proveedoresData as any)?.proveedores || [];
+    const allRubros: any[] = (rubrosData as any)?.obtenerRubros || [];
+
+    // Mapas de relaciones
+    const provToRubros = new Map<number, Set<number>>();
+    const rubroToProvs = new Map<number, Set<number>>();
+
+    allProvs.forEach((p) => {
+      const pId = Number(p.IdProveedor);
+      const pRubros = (p.proveedorRubros || []).map((pr: any) => Number(pr.rubro?.Id));
+
+      if (p.rubroId) pRubros.push(Number(p.rubroId));
+
+      const rubroSet = new Set<number>(pRubros);
+      provToRubros.set(pId, rubroSet);
+
+      rubroSet.forEach(rId => {
+        if (!rubroToProvs.has(rId)) rubroToProvs.set(rId, new Set());
+        rubroToProvs.get(rId)?.add(pId);
+      });
+    });
+
+    // Filtros activos
+    const activeProvId = controlledFilters?.proveedorId ?? localFilters.proveedorId;
+    const activeRubroId = controlledFilters?.rubroId ?? localFilters.rubroId;
+
+    // Calcular proveedores disponibles
+    let filteredProvs = allProvs;
+    if (activeRubroId) {
+      const allowedProvs = rubroToProvs.get(activeRubroId);
+      if (allowedProvs) {
+        filteredProvs = allProvs.filter(p => allowedProvs.has(Number(p.IdProveedor)));
+      } else {
+        filteredProvs = [];
+      }
+    }
+
+    // Calcular rubros disponibles
+    let filteredRubros = allRubros;
+    if (activeProvId) {
+      const allowedRubros = provToRubros.get(activeProvId);
+      if (allowedRubros) {
+        filteredRubros = allRubros.filter(r => allowedRubros.has(Number(r.id)));
+      } else {
+        filteredRubros = [];
+      }
+    }
+
+    return {
+      rubrosDisponibles: filteredRubros,
+      proveedoresDisponibles: filteredProvs
+    };
+  }, [proveedoresData, rubrosData, controlledFilters?.proveedorId, localFilters.proveedorId, controlledFilters?.rubroId, localFilters.rubroId]);
+
+  // Alias para mantener compatibilidad si se usaba otro nombre, o para claridad
+  const rubrosFiltrados = rubrosDisponibles;
+  const proveedoresFiltradosLista = proveedoresDisponibles;
+
   // const { data: statsData } = useQuery<{ estadisticasArticulos?: { totalUnidades?: number } }>(GET_ESTADISTICAS_ARTICULOS, { fetchPolicy: 'cache-first' });
 
   const articulosRaw: Articulo[] = (data?.buscarArticulos?.articulos ?? []).filter((a): a is Articulo => !!a);
@@ -783,33 +845,7 @@ const TablaArticulos: React.FC<ArticulosTableProps> = ({
     }
   };
 
-  const rubrosFiltrados = useMemo(() => {
-    const todosRubros = (rubrosData as any)?.obtenerRubros || [];
-    const idsProveedores = localFilters.proveedorIds || [];
 
-    if (idsProveedores.length === 0) {
-      return todosRubros;
-    }
-
-    const todosProveedores = (proveedoresData as any)?.proveedores || [];
-    const rubroIdsPermitidos = new Set<number>();
-
-    idsProveedores.forEach((pid: number) => {
-      const prov = todosProveedores.find((p: any) => Number(p.IdProveedor) === pid);
-      if (prov?.proveedorRubros) {
-        prov.proveedorRubros.forEach((pr: any) => {
-          // Handle case sensitivity safely
-          const rId = pr.rubro?.id || pr.rubro?.Id;
-          if (rId) rubroIdsPermitidos.add(Number(rId));
-        });
-      }
-    });
-
-    // If providers are selected but have no assigned rubros, technically the list should be empty (or all? usually intersection -> empty)
-    // However, if the user picks a provider that has NO configured rubros, seeing "No options" is correct.
-
-    return todosRubros.filter((r: any) => rubroIdsPermitidos.has(Number(r.id)));
-  }, [rubrosData, proveedoresData, localFilters.proveedorIds]);
 
   /* ---------- Toolbar ---------- */
   const toolbar = (
@@ -901,153 +937,66 @@ const TablaArticulos: React.FC<ArticulosTableProps> = ({
       <Divider />
 
       {/* --- Fila 2: Exportación + Combos --- */}
+      {/* --- Fila 2: Exportación + Combos --- */}
       <Box display="flex" justifyContent="space-between" alignItems="center" flexWrap="wrap" gap={2}>
         {/* Left: Export Buttons */}
         <Box display="flex" gap={2}>
           <Button
             variant="outlined"
-            startIcon={<IconFileSpreadsheet size={20} />}
+            startIcon={<IconFileSpreadsheet size={18} />}
             onClick={() => handleExportar('excel')}
-            disabled={exporting}
-            sx={{
-              borderRadius: 1,
-              textTransform: 'none',
-              color: '#1D6F42',
-              borderColor: '#1D6F42',
-              height: 40,
-              px: 3,
-              fontWeight: 600,
-              '&:hover': { bgcolor: alpha('#1D6F42', 0.08), borderColor: '#1D6F42' }
-            }}
+            sx={{ borderRadius: 0, textTransform: 'none', color: '#1D6F42', borderColor: '#1D6F42' }}
           >
-            {exporting ? 'Exportando...' : 'Excel'}
+            Excel
           </Button>
           <Button
             variant="outlined"
-            startIcon={<IconFileTypePdf size={20} />}
+            startIcon={<IconFileTypePdf size={18} />}
             onClick={() => handleExportar('pdf')}
-            disabled={exporting}
-            sx={{
-              borderRadius: 1,
-              textTransform: 'none',
-              color: '#d32f2f',
-              borderColor: '#d32f2f',
-              height: 40,
-              px: 3,
-              fontWeight: 600,
-              '&:hover': { bgcolor: alpha('#d32f2f', 0.08), borderColor: '#d32f2f' }
-            }}
+            sx={{ borderRadius: 0, textTransform: 'none', color: '#B71C1C', borderColor: '#B71C1C' }}
           >
-            {exporting ? 'Exportando...' : 'PDF'}
+            PDF
           </Button>
         </Box>
 
         {/* Right: Combos (Proveedor -> Rubro) */}
-        <Box display="flex" gap={2} alignItems="center" flexWrap="wrap">
+        <Box display="flex" alignItems="center" gap={2} flexWrap="wrap">
           {/* --- Proveedores --- */}
           <Autocomplete
-            multiple
-            limitTags={1}
-            id="checkboxes-proveedores"
-            options={(proveedoresData as any)?.proveedores || []}
-            disableCloseOnSelect
+            id="combo-proveedor"
+            options={proveedoresFiltradosLista}
             getOptionLabel={(option: any) => option.Nombre || ''}
-            value={((proveedoresData as any)?.proveedores || []).filter((p: any) => localFilters.proveedorIds?.includes(Number(p.IdProveedor)))}
+            value={proveedoresFiltradosLista.find((p: any) => Number(p.IdProveedor) === (controlledFilters?.proveedorId ?? localFilters.proveedorId)) || null}
             onChange={(_, newValue) => {
-              const newIds = newValue.map((v: any) => Number(v.IdProveedor));
-
-              // When providers change, we should also validate if selected Rubros are still valid?
-              // The user didn't explicitly ask for this, but it's good UX.
-              // However, simple dependent filtering just updates the OPTIONS. Existing selections might remain or be cleared.
-              // Let's assume standard behavior: just update newIds.
-
+              const newId = newValue ? Number(newValue.IdProveedor) : undefined;
               if (controlledFilters) {
-                onFiltersChange?.({
-                  ...filtrosServidor,
-                  proveedorIds: newIds,
-                  pagina: 0,
-                });
+                onFiltersChange?.({ ...filtrosServidor, proveedorId: newId, pagina: 0 });
               } else {
-                setLocalFilters(prev => ({ ...prev, proveedorIds: newIds }));
+                setLocalFilters(prev => ({ ...prev, proveedorId: newId }));
                 setPage(0);
               }
             }}
-            renderOption={(props, option: any, { selected }) => (
-              <li {...props}>
-                <Checkbox
-                  icon={<CheckBoxOutlineBlankIcon fontSize="small" />}
-                  checkedIcon={<CheckBoxIcon fontSize="small" />}
-                  style={{ marginRight: 8 }}
-                  checked={selected}
-                />
-                {option.Nombre}
-              </li>
-            )}
-            style={{ width: 280 }}
-            renderInput={(params) => (
-              <TextField
-                {...params}
-                label="Proveedores"
-                placeholder="Seleccionar..."
-                size="small"
-                sx={{
-                  '& .MuiOutlinedInput-root': {
-                    borderRadius: 1,
-                    bgcolor: '#fff',
-                  }
-                }}
-              />
-            )}
+            style={{ width: 250 }}
+            renderInput={(params) => <TextField {...params} label="Proveedor" size="small" placeholder="Todos" sx={{ bgcolor: 'white' }} />}
           />
 
           {/* --- Rubros --- */}
           <Autocomplete
-            multiple
-            limitTags={1}
-            id="checkboxes-rubros"
+            id="combo-rubro"
             options={rubrosFiltrados}
-            disableCloseOnSelect
             getOptionLabel={(option: any) => option.nombre || option.Rubro || ''}
-            value={rubrosFiltrados.filter((r: any) => localFilters.rubroIds?.includes(Number(r.id)))}
+            value={rubrosFiltrados.find((r: any) => Number(r.id) === (controlledFilters?.rubroId ?? localFilters.rubroId)) || null}
             onChange={(_, newValue) => {
-              const newIds = newValue.map((v: any) => Number(v.id));
+              const newId = newValue ? Number(newValue.id) : undefined;
               if (controlledFilters) {
-                onFiltersChange?.({
-                  ...filtrosServidor,
-                  rubroIds: newIds,
-                  pagina: 0,
-                });
+                onFiltersChange?.({ ...filtrosServidor, rubroId: newId, pagina: 0 });
               } else {
-                setLocalFilters(prev => ({ ...prev, rubroIds: newIds }));
+                setLocalFilters(prev => ({ ...prev, rubroId: newId }));
                 setPage(0);
               }
             }}
-            renderOption={(props, option: any, { selected }) => (
-              <li {...props}>
-                <Checkbox
-                  icon={<CheckBoxOutlineBlankIcon fontSize="small" />}
-                  checkedIcon={<CheckBoxIcon fontSize="small" />}
-                  style={{ marginRight: 8 }}
-                  checked={selected}
-                />
-                {option.nombre || option.Rubro}
-              </li>
-            )}
-            style={{ width: 280 }}
-            renderInput={(params) => (
-              <TextField
-                {...params}
-                label="Rubros"
-                placeholder="Seleccionar..."
-                size="small"
-                sx={{
-                  '& .MuiOutlinedInput-root': {
-                    borderRadius: 1,
-                    bgcolor: '#fff',
-                  }
-                }}
-              />
-            )}
+            style={{ width: 250 }}
+            renderInput={(params) => <TextField {...params} label="Rubro" size="small" placeholder="Todos" sx={{ bgcolor: 'white' }} />}
           />
         </Box>
       </Box>
