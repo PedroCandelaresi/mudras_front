@@ -141,8 +141,7 @@ const TablaStockPuntoVenta: React.FC<Props> = ({
 
     const columns: ExportColumn<any>[] = [
       { header: 'Código', key: 'codigo', width: 25 },
-      { header: 'Descripción', key: 'nombre', width: 60 },
-      { header: 'Rubro', key: (item: any) => item.rubro?.nombre || '-', width: 30 },
+      { header: 'Descripción', key: 'nombre', width: 90 }, // Increased width since Rubro is gone
       { header: 'Stock', key: 'stockAsignado', width: 20 },
       {
         header: 'Precio', key: (item: any) => {
@@ -239,20 +238,6 @@ const TablaStockPuntoVenta: React.FC<Props> = ({
                 }
               }}
             />
-            <Button
-              variant="contained"
-              disableElevation
-              onClick={ejecutarBusqueda}
-              sx={{
-                borderRadius: 0,
-                bgcolor: theme.primary,
-                fontWeight: 600,
-                textTransform: 'none',
-                '&:hover': { bgcolor: theme.primaryHover }
-              }}
-            >
-              Buscar
-            </Button>
             {busquedaAplicada && (
               <Button
                 variant="outlined"
