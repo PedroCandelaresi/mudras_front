@@ -955,12 +955,12 @@ const TablaArticulos: React.FC<ArticulosTableProps> = ({
       {/* --- Fila 2: Exportación + Combos --- */}
       <Box display="flex" justifyContent="space-between" alignItems="flex-start" flexWrap="nowrap" gap={2}>
         {/* Left: Export Buttons */}
-        <Box display="flex" gap={2} mt={0.5}>
+        <Box display="flex" gap={2}>
           <Button
             variant="outlined"
             startIcon={<IconFileSpreadsheet size={18} />}
             onClick={() => handleExportar('excel')}
-            sx={{ borderRadius: 0, textTransform: 'none', color: '#1D6F42', borderColor: '#1D6F42' }}
+            sx={{ borderRadius: 0, textTransform: 'none', color: '#1D6F42', borderColor: '#1D6F42', height: 40 }}
           >
             Excel
           </Button>
@@ -968,7 +968,7 @@ const TablaArticulos: React.FC<ArticulosTableProps> = ({
             variant="outlined"
             startIcon={<IconFileTypePdf size={18} />}
             onClick={() => handleExportar('pdf')}
-            sx={{ borderRadius: 0, textTransform: 'none', color: '#B71C1C', borderColor: '#B71C1C' }}
+            sx={{ borderRadius: 0, textTransform: 'none', color: '#B71C1C', borderColor: '#B71C1C', height: 40 }}
           >
             PDF
           </Button>
