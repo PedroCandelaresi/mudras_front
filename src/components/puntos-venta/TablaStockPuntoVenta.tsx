@@ -77,8 +77,8 @@ const TablaStockPuntoVenta: React.FC<Props> = ({
     const allRubrosMap = new Map();
     const allProvsMap = new Map();
 
-    const provToRubros = new Map<number, Set<number>>();
-    const rubroToProvs = new Map<number, Set<number>>();
+    const provToRubros = new Map<string, Set<string>>();
+    const rubroToProvs = new Map<string, Set<string>>();
 
     // 1. Build Maps and Lists from Articulos
     articulos.forEach(item => {
