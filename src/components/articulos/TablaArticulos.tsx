@@ -368,36 +368,50 @@ const TablaArticulos: React.FC<ArticulosTableProps> = ({
     });
 
     // Filtros activos
-    const activeProvId = controlledFilters?.proveedorId ?? localFilters.proveedorId;
-    const activeRubroId = controlledFilters?.rubroId ?? localFilters.rubroId;
+    const activeProvIds = controlledFilters?.proveedorIds ?? localFilters.proveedorIds ?? [];
+    const activeRubroIds = controlledFilters?.rubroIds ?? localFilters.rubroIds ?? [];
 
     // Calcular proveedores disponibles
     let filteredProvs = allProvs;
-    if (activeRubroId) {
-      const allowedProvs = rubroToProvs.get(activeRubroId);
-      if (allowedProvs) {
-        filteredProvs = allProvs.filter(p => allowedProvs.has(Number(p.IdProveedor)));
-      } else {
-        filteredProvs = [];
-      }
+    if (activeRubroIds.length > 0) {
+      // Union logic: providers that have AT LEAST ONE of the selected rubros
+      const allowedProvs = new Set<number>();
+      let hasAnyRubroWithProvs = false;
+
+      activeRubroIds.forEach((rId: number) => {
+        const provsForRubro = rubroToProvs.get(rId);
+        if (provsForRubro) {
+          hasAnyRubroWithProvs = true;
+          provsForRubro.forEach(pId => allowedProvs.add(pId));
+        }
+      });
+
+      // If none of the selected rubros have providers, the result should logically be empty.
+      // Or if rubros exist but no providers are mapped? Empty.
+      filteredProvs = allProvs.filter(p => allowedProvs.has(Number(p.IdProveedor)));
     }
 
     // Calcular rubros disponibles
     let filteredRubros = allRubros;
-    if (activeProvId) {
-      const allowedRubros = provToRubros.get(activeProvId);
-      if (allowedRubros) {
-        filteredRubros = allRubros.filter(r => allowedRubros.has(Number(r.id)));
-      } else {
-        filteredRubros = [];
-      }
+    if (activeProvIds.length > 0) {
+      // Union logic: rubros offered by AT LEAST ONE of the selected providers
+      const allowedRubros = new Set<number>();
+
+      activeProvIds.forEach((pId: number) => {
+        const rubrosForProv = provToRubros.get(pId);
+        if (rubrosForProv) {
+          rubrosForProv.forEach(rId => allowedRubros.add(rId));
+        }
+      });
+
+      filteredRubros = allRubros.filter(r => allowedRubros.has(Number(r.id)));
     }
 
     return {
       rubrosDisponibles: filteredRubros,
       proveedoresDisponibles: filteredProvs
     };
-  }, [proveedoresData, rubrosData, controlledFilters?.proveedorId, localFilters.proveedorId, controlledFilters?.rubroId, localFilters.rubroId]);
+  }, [proveedoresData, rubrosData, controlledFilters?.proveedorIds, localFilters.proveedorIds, controlledFilters?.rubroIds, localFilters.rubroIds]);
 
   // Alias para mantener compatibilidad si se usaba otro nombre, o para claridad
   const rubrosFiltrados = rubrosDisponibles;
@@ -963,40 +977,74 @@ const TablaArticulos: React.FC<ArticulosTableProps> = ({
         <Box display="flex" alignItems="center" gap={2} flexWrap="wrap">
           {/* --- Proveedores --- */}
           <Autocomplete
-            id="combo-proveedor"
+            multiple
+            limitTags={1}
+            disableCloseOnSelect
+            id="checkboxes-proveedores"
             options={proveedoresFiltradosLista}
             getOptionLabel={(option: any) => option.Nombre || ''}
-            value={proveedoresFiltradosLista.find((p: any) => Number(p.IdProveedor) === (controlledFilters?.proveedorId ?? localFilters.proveedorId)) || null}
+            value={proveedoresFiltradosLista.filter((p: any) => {
+              const currentIds = controlledFilters?.proveedorIds ?? localFilters.proveedorIds ?? [];
+              return currentIds.includes(Number(p.IdProveedor));
+            })}
             onChange={(_, newValue) => {
-              const newId = newValue ? Number(newValue.IdProveedor) : undefined;
+              const newIds = newValue.map((v: any) => Number(v.IdProveedor));
               if (controlledFilters) {
-                onFiltersChange?.({ ...filtrosServidor, proveedorId: newId, pagina: 0 });
+                onFiltersChange?.({ ...filtrosServidor, proveedorIds: newIds, pagina: 0 });
               } else {
-                setLocalFilters(prev => ({ ...prev, proveedorId: newId }));
+                setLocalFilters(prev => ({ ...prev, proveedorIds: newIds }));
                 setPage(0);
               }
             }}
+            renderOption={(props, option: any, { selected }) => (
+              <li {...props}>
+                <Checkbox
+                  icon={<CheckBoxOutlineBlankIcon fontSize="small" />}
+                  checkedIcon={<CheckBoxIcon fontSize="small" />}
+                  style={{ marginRight: 8 }}
+                  checked={selected}
+                />
+                {option.Nombre}
+              </li>
+            )}
             style={{ width: 250 }}
-            renderInput={(params) => <TextField {...params} label="Proveedor" size="small" placeholder="Todos" sx={{ bgcolor: 'white' }} />}
+            renderInput={(params) => <TextField {...params} label="Proveedores" size="small" placeholder="Seleccionar..." sx={{ bgcolor: 'white' }} />}
           />
 
           {/* --- Rubros --- */}
           <Autocomplete
-            id="combo-rubro"
+            multiple
+            limitTags={1}
+            disableCloseOnSelect
+            id="checkboxes-rubros"
             options={rubrosFiltrados}
             getOptionLabel={(option: any) => option.nombre || option.Rubro || ''}
-            value={rubrosFiltrados.find((r: any) => Number(r.id) === (controlledFilters?.rubroId ?? localFilters.rubroId)) || null}
+            value={rubrosFiltrados.filter((r: any) => {
+              const currentIds = controlledFilters?.rubroIds ?? localFilters.rubroIds ?? [];
+              return currentIds.includes(Number(r.id));
+            })}
             onChange={(_, newValue) => {
-              const newId = newValue ? Number(newValue.id) : undefined;
+              const newIds = newValue.map((v: any) => Number(v.id));
               if (controlledFilters) {
-                onFiltersChange?.({ ...filtrosServidor, rubroId: newId, pagina: 0 });
+                onFiltersChange?.({ ...filtrosServidor, rubroIds: newIds, pagina: 0 });
               } else {
-                setLocalFilters(prev => ({ ...prev, rubroId: newId }));
+                setLocalFilters(prev => ({ ...prev, rubroIds: newIds }));
                 setPage(0);
               }
             }}
+            renderOption={(props, option: any, { selected }) => (
+              <li {...props}>
+                <Checkbox
+                  icon={<CheckBoxOutlineBlankIcon fontSize="small" />}
+                  checkedIcon={<CheckBoxIcon fontSize="small" />}
+                  style={{ marginRight: 8 }}
+                  checked={selected}
+                />
+                {option.nombre || option.Rubro}
+              </li>
+            )}
             style={{ width: 250 }}
-            renderInput={(params) => <TextField {...params} label="Rubro" size="small" placeholder="Todos" sx={{ bgcolor: 'white' }} />}
+            renderInput={(params) => <TextField {...params} label="Rubros" size="small" placeholder="Seleccionar..." sx={{ bgcolor: 'white' }} />}
           />
         </Box>
       </Box>
