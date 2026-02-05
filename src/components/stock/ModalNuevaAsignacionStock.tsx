@@ -27,7 +27,7 @@ import {
 } from '@mui/material';
 import { Icon } from '@iconify/react';
 import { useQuery, useMutation, useLazyQuery } from '@apollo/client/react';
-import { verde, azul } from '@/ui/colores'; // Using similar palette to ModalDetallesProveedor if appropriate, or keep verde since it is stock? User said "elegante". Let's stick to system colors but clean.
+import { verde, azul } from '@/ui/colores';
 import { alpha, darken } from '@mui/material/styles';
 
 // Components
@@ -59,12 +59,15 @@ export default function ModalNuevaAsignacionStock({
   onClose,
   onStockAsignado
 }: ModalNuevaAsignacionStockProps) {
-  // Styles for "Elegante" look (similar to ModalDetallesProveedor)
+  // Styles for "Elegante" look
   const COLORS = {
     primary: verde.primary,
     secondary: verde.headerBorder || '#2e7d32',
     textStrong: darken(verde.primary, 0.4),
-    headerText: '#fff'
+    headerText: '#fff',
+    bgLight: '#f8f9fa',
+    border: '#e0e0e0',
+    selectionBg: alpha(verde.primary, 0.08)
   };
 
   // --- States for Filters ---
@@ -134,20 +137,45 @@ export default function ModalNuevaAsignacionStock({
       setStockGlobal('0');
       setStockPorPunto({});
       setConfirmOpen(false);
+      setStockActualPorPunto({});
     }
   }, [open]);
 
   // --- Columns for TablaArticulos ---
-  const handleSelectClick = useCallback((art: Articulo) => {
+  const handleSelectClick = useCallback(async (art: Articulo) => {
     setArticuloSeleccionado(art);
-    setStockGlobal('0'); // Reset stock when changing article
+    setStockGlobal('0');
     setStockPorPunto({});
-  }, []);
+    setStockActualPorPunto({});
+
+    // Fetch specific stock details for this article
+    try {
+      const { data } = await obtenerStockDetalle({
+        variables: {
+          filtros: {
+            busqueda: art.Codigo,
+            limite: 1
+          }
+        }
+      });
+
+      const match = data?.obtenerArticulosDisponibles?.articulos?.find(a => a.Codigo === art.Codigo);
+      if (match && match.asignacionesPuntos) {
+        const map: Record<number, number> = {};
+        match.asignacionesPuntos.forEach(ap => {
+          map[ap.puntoVentaId] = ap.cantidadAsignada;
+        });
+        setStockActualPorPunto(map);
+      }
+    } catch (err) {
+      console.error("Error fetching stock details", err);
+    }
+  }, [obtenerStockDetalle]);
 
   const columns = useMemo(() => [
-    { key: 'codigo', header: 'Código', width: '15%' },
-    { key: 'descripcion', header: 'Descripción', width: '40%' },
-    { key: 'rubro', header: 'Rubro', width: '20%' },
+    { key: 'codigo', header: 'Código', width: '20%' },
+    { key: 'descripcion', header: 'Descripción', width: '55%' },
+    // RUBRO COLUMN REMOVED
     { key: 'stock', header: 'Stock Total', width: '10%', align: 'center' },
     {
       key: 'acciones',
@@ -164,7 +192,7 @@ export default function ModalNuevaAsignacionStock({
           sx={{
             borderRadius: 20,
             textTransform: 'none',
-            borderColor: '#e0e0e0',
+            borderColor: COLORS.border,
             color: articuloSeleccionado?.id === art.id ? '#fff' : 'text.secondary'
           }}
         >
@@ -172,7 +200,7 @@ export default function ModalNuevaAsignacionStock({
         </Button>
       )
     }
-  ], [articuloSeleccionado, handleSelectClick]);
+  ], [articuloSeleccionado, handleSelectClick, COLORS.border]);
 
   // --- Filters for TablaArticulos ---
   const controlledFilters = useMemo(() => {
@@ -244,9 +272,9 @@ export default function ModalNuevaAsignacionStock({
         PaperProps={{
           elevation: 4,
           sx: {
-            borderRadius: 0, // Sharp aesthetic
+            borderRadius: 0,
             bgcolor: '#ffffff',
-            height: `${VH_MAX}vh`, // Taller modal
+            height: `${VH_MAX}vh`,
             maxHeight: `${VH_MAX}vh`,
           },
         }}
@@ -255,71 +283,72 @@ export default function ModalNuevaAsignacionStock({
         <Box sx={{
           bgcolor: COLORS.primary,
           color: COLORS.headerText,
-          px: 4,
-          py: 2.5,
+          px: 5, // Increased padding
+          py: 3, // Increased padding
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
           borderBottom: `4px solid ${COLORS.secondary}`,
         }}>
-          <Box display="flex" alignItems="center" gap={2}>
-            <Icon icon="mdi:package-variant-plus" width={28} height={28} />
+          <Box display="flex" alignItems="center" gap={3}>
+            <Icon icon="mdi:package-variant-plus" width={32} height={32} />
             <Box>
-              <Typography variant="h6" fontWeight={700} letterSpacing={0.5}>
+              <Typography variant="h5" fontWeight={700} letterSpacing={1}>
                 ASIGNACIÓN GLOBAL DE STOCK
               </Typography>
-              <Typography variant="caption" sx={{ opacity: 0.9 }}>
+              <Typography variant="subtitle2" sx={{ opacity: 0.9, fontWeight: 400, mt: 0.5 }}>
                 Distribuye stock a múltiples depósitos y puntos de venta en una sola operación.
               </Typography>
             </Box>
           </Box>
-          <IconButton onClick={handleCloseInternal} sx={{ color: 'white' }}>
-            <Icon icon="mdi:close" width={28} />
+          <IconButton onClick={handleCloseInternal} sx={{ color: 'white', '&:hover': { bgcolor: 'rgba(255,255,255,0.1)' } }}>
+            <Icon icon="mdi:close" width={32} />
           </IconButton>
         </Box>
 
-        <DialogContent sx={{ p: 0, display: 'flex', bgcolor: '#f5f5f5', overflow: 'hidden' }}>
+        <DialogContent sx={{ p: 0, display: 'flex', bgcolor: COLORS.bgLight, overflow: 'hidden' }}>
 
           {/* LEFT: Selection Panel (70%) */}
-          <Box sx={{ flex: 7, display: 'flex', flexDirection: 'column', borderRight: '1px solid #e0e0e0', bgcolor: '#fff' }}>
+          <Box sx={{ flex: 7, display: 'flex', flexDirection: 'column', borderRight: `1px solid ${COLORS.border}`, bgcolor: '#fff' }}>
 
             {/* 1. Filters */}
-            <Box sx={{ p: 3, borderBottom: '1px solid #f0f0f0' }}>
-              <Typography variant="subtitle2" sx={{ mb: 2, fontWeight: 700, color: COLORS.textStrong, letterSpacing: 1 }}>
+            <Box sx={{ p: 4, borderBottom: `1px solid ${COLORS.border}` }}>
+              <Typography variant="h6" sx={{ mb: 3, fontWeight: 700, color: COLORS.textStrong, letterSpacing: 1, display: 'flex', alignItems: 'center', gap: 1 }}>
+                <Icon icon="mdi:magnify" />
                 1. BUSCAR ARTÍCULO
               </Typography>
-              <Box display="flex" gap={2} flexWrap="wrap">
+              <Box display="flex" gap={3} flexWrap="wrap">
                 <Autocomplete
                   options={proveedores}
                   getOptionLabel={(o: any) => o.Nombre || ''}
                   value={proveedorSeleccionado}
                   onChange={(_, v) => { setProveedorSeleccionado(v); setRubroSeleccionado(null); }}
-                  renderInput={(params) => <TextField {...params} label="Proveedor" placeholder="Seleccione proveedor" />}
-                  sx={{ flex: 1, minWidth: 220 }}
+                  renderInput={(params) => <TextField {...params} label="Proveedor" placeholder="Filtrar por proveedor" />}
+                  sx={{ flex: 1, minWidth: 240 }}
                 />
                 <Autocomplete
                   options={rubros}
                   getOptionLabel={(o: any) => o.nombre || ''}
                   value={rubroSeleccionado}
                   onChange={(_, v) => setRubroSeleccionado(v)}
-                  renderInput={(params) => <TextField {...params} label="Rubro" placeholder="Seleccione rubro" />}
+                  renderInput={(params) => <TextField {...params} label="Rubro" placeholder="Filtrar por rubro" />}
                   disabled={!proveedorSeleccionado}
-                  sx={{ flex: 1, minWidth: 220 }}
+                  sx={{ flex: 1, minWidth: 240 }}
                 />
                 <TextField
                   value={busqueda}
                   onChange={(e) => setBusqueda(e.target.value)}
-                  placeholder="Buscar por código o nombre..."
-                  sx={{ flex: 1.5, minWidth: 250 }}
+                  placeholder="Ingrese código o descripción..."
+                  sx={{ flex: 1.5, minWidth: 280 }}
                   InputProps={{
-                    startAdornment: <InputAdornment position="start"><Icon icon="mdi:magnify" /></InputAdornment>
+                    startAdornment: <InputAdornment position="start"><Icon icon="mdi:barcode-scan" /></InputAdornment>
                   }}
                 />
               </Box>
             </Box>
 
             {/* 2. Results (Table) */}
-            <Box sx={{ flex: 1, overflow: 'hidden', display: 'flex', flexDirection: 'column', p: 0 }}>
+            <Box sx={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', p: 0 }}>
               <TablaArticulos
                 columns={columns as any}
                 controlledFilters={controlledFilters}
@@ -333,42 +362,47 @@ export default function ModalNuevaAsignacionStock({
           </Box>
 
           {/* RIGHT: Distribution Panel (30%) */}
-          <Box sx={{ flex: 3, display: 'flex', flexDirection: 'column', bgcolor: '#f9fafb', borderLeft: '1px solid #e0e0e0' }}>
-            <Box sx={{ p: 3, flex: 1, display: 'flex', flexDirection: 'column', overflowY: 'auto' }}>
+          <Box sx={{ flex: 3, display: 'flex', flexDirection: 'column', bgcolor: '#f9fafb', borderLeft: `1px solid ${COLORS.border}` }}>
+            <Box sx={{ p: 4, flex: 1, display: 'flex', flexDirection: 'column', overflowY: 'auto' }}>
 
-              <Typography variant="subtitle2" sx={{ mb: 2, fontWeight: 700, color: COLORS.textStrong, letterSpacing: 1 }}>
+              <Typography variant="h6" sx={{ mb: 3, fontWeight: 700, color: COLORS.textStrong, letterSpacing: 1, display: 'flex', alignItems: 'center', gap: 1 }}>
+                <Icon icon="mdi:dolly" />
                 2. DISTRIBUIR STOCK
               </Typography>
 
               {!articuloSeleccionado ? (
                 <Box display="flex" flexDirection="column" alignItems="center" justifyContent="center" flex={1} color="text.secondary" sx={{ opacity: 0.6 }}>
-                  <Icon icon="mdi:cursor-default-click-outline" width={64} style={{ marginBottom: 16 }} />
-                  <Typography align="center" variant="body1">
-                    Seleccione un artículo de la lista<br />para comenzar la distribución.
+                  <Icon icon="mdi:cursor-default-click-outline" width={80} style={{ marginBottom: 24, opacity: 0.5 }} />
+                  <Typography align="center" variant="h6" fontWeight={500}>
+                    Seleccione un artículo
+                  </Typography>
+                  <Typography align="center" variant="body2">
+                    para visualizar stock y asignar cantidades.
                   </Typography>
                 </Box>
               ) : (
                 <>
                   {/* Selected Info Card */}
-                  <Paper variant="outlined" sx={{ p: 2, mb: 3, bgcolor: '#fff', borderColor: verde.primary }}>
-                    <Typography variant="caption" color="text.secondary" fontWeight={600}>
+                  <Paper elevation={0} variant="outlined" sx={{ p: 3, mb: 4, bgcolor: '#fff', borderColor: COLORS.secondary, borderRadius: 2 }}>
+                    <Typography variant="overline" color="text.secondary" fontWeight={700}>
                       ARTÍCULO SELECCIONADO
                     </Typography>
-                    <Typography variant="h6" fontWeight={700} color={COLORS.textStrong} sx={{ lineHeight: 1.2, mb: 0.5 }}>
+                    <Typography variant="h6" fontWeight={700} color={COLORS.textStrong} sx={{ lineHeight: 1.3, mb: 2 }}>
                       {articuloSeleccionado.Descripcion}
                     </Typography>
+                    <Divider sx={{ mb: 2 }} />
                     <Box display="flex" justifyContent="space-between" alignItems="center">
-                      <Chip label={articuloSeleccionado.Codigo} size="small" variant="outlined" />
-                      <Typography variant="caption">
-                        Stock actual: <strong>{articuloSeleccionado.totalStock || articuloSeleccionado.Stock || 0}</strong>
+                      <Chip label={articuloSeleccionado.Codigo} sx={{ fontWeight: 600 }} variant="outlined" />
+                      <Typography variant="body2">
+                        Stock Global Actual: <strong>{articuloSeleccionado.totalStock || articuloSeleccionado.Stock || 0}</strong>
                       </Typography>
                     </Box>
                   </Paper>
 
                   {/* Global Input */}
-                  <Box sx={{ mb: 4 }}>
-                    <Typography variant="caption" fontWeight={600} color="text.secondary" sx={{ mb: 1, display: 'block' }}>
-                      CANTIDAD TOTAL A DISTRIBUIR
+                  <Box sx={{ mb: 5 }}>
+                    <Typography variant="subtitle2" fontWeight={700} color="text.secondary" sx={{ mb: 1.5, display: 'block', textTransform: 'uppercase' }}>
+                      Paso 1: Definir Total a Distribuir
                     </Typography>
                     <TextField
                       fullWidth
@@ -378,80 +412,89 @@ export default function ModalNuevaAsignacionStock({
                       }}
                       placeholder="0"
                       InputProps={{
-                        sx: { fontSize: '1.5rem', fontWeight: 700, color: verde.primary, bgcolor: '#fff' }
+                        sx: { fontSize: '2rem', fontWeight: 700, color: COLORS.primary, bgcolor: '#fff', textAlign: 'center' }
                       }}
+                      sx={{ mb: 1 }}
                     />
 
                     {/* Metrics */}
                     <Box display="flex" justifyContent="space-between" mt={1} px={1}>
                       <Box>
-                        <Typography variant="caption" display="block">ASIGNADO</Typography>
-                        <Typography variant="body2" fontWeight={700} color={asignadoTotal > stockGlobalNum ? 'error.main' : 'text.primary'}>
+                        <Typography variant="caption" display="block" fontWeight={600} color="text.secondary">ASIGNADO</Typography>
+                        <Typography variant="h6" fontWeight={700} color={asignadoTotal > stockGlobalNum ? 'error.main' : 'text.primary'}>
                           {asignadoTotal}
                         </Typography>
                       </Box>
                       <Box textAlign="right">
-                        <Typography variant="caption" display="block">RESTANTE</Typography>
-                        <Typography variant="body2" fontWeight={700} color={restante === 0 && stockGlobalNum > 0 ? 'success.main' : 'text.primary'}>
+                        <Typography variant="caption" display="block" fontWeight={600} color="text.secondary">RESTANTE</Typography>
+                        <Typography variant="h6" fontWeight={700} color={restante === 0 && stockGlobalNum > 0 ? 'success.main' : 'text.primary'}>
                           {restante}
                         </Typography>
                       </Box>
                     </Box>
                   </Box>
 
-                  <Divider sx={{ mb: 3 }} />
+                  <Divider sx={{ mb: 4 }} />
 
                   {/* Points List */}
-                  <Typography variant="caption" fontWeight={600} color="text.secondary" sx={{ mb: 1.5, display: 'block' }}>
-                    ASIGNAR POR PUNTO
+                  <Typography variant="subtitle2" fontWeight={700} color="text.secondary" sx={{ mb: 2, display: 'block', textTransform: 'uppercase' }}>
+                    Paso 2: Distribuir por Punto
                   </Typography>
 
-                  <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
-                    {loadingStockDetalle ? <CircularProgress size={24} sx={{ alignSelf: 'center', my: 2 }} /> : puntosDisponibles.map(punto => {
+                  <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                    {loadingStockDetalle ? <CircularProgress size={32} sx={{ alignSelf: 'center', my: 4 }} /> : puntosDisponibles.map(punto => {
                       const valStr = stockPorPunto[punto.id] || '';
-                      const val = parseFloat(valStr || '0');
+
                       const actual = stockActualPorPunto[punto.id] || 0;
-                      const final = actual + val;
+                      const aAsignar = parseFloat(valStr || '0');
+                      const final = actual + aAsignar;
 
                       return (
-                        <Paper key={punto.id} elevation={0} sx={{ p: 2, border: '1px solid #e0e0e0', bgcolor: '#fff' }}>
-                          <Box display="flex" justifyContent="space-between" alignItems="center" mb={1}>
+                        <Paper key={punto.id} elevation={0} sx={{ p: 2.5, border: `1px solid ${COLORS.border}`, bgcolor: '#fff', borderRadius: 2 }}>
+                          <Box display="flex" justifyContent="space-between" alignItems="flex-start" mb={2}>
                             <Box>
-                              <Box display="flex" alignItems="center" gap={1}>
-                                <Icon icon={punto.tipo === 'deposito' ? 'mdi:warehouse' : 'mdi:store'} width={18} color={COLORS.secondary} />
-                                <Typography variant="body2" fontWeight={600}>{punto.nombre}</Typography>
+                              <Box display="flex" alignItems="center" gap={1} mb={0.5}>
+                                <Icon icon={punto.tipo === 'deposito' ? 'mdi:warehouse' : 'mdi:store'} width={20} color={COLORS.secondary} />
+                                <Typography variant="subtitle1" fontWeight={700}>{punto.nombre}</Typography>
                               </Box>
-                              <Typography variant="caption" color="text.secondary">
+                              <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
                                 Stock Actual: <strong>{actual}</strong>
                               </Typography>
                             </Box>
-                            <TextField
-                              size="small"
-                              value={valStr}
-                              onChange={(e) => {
-                                const v = e.target.value;
-                                if (/^\d*\.?\d*$/.test(v)) {
-                                  const newVal = parseFloat(v || '0');
-                                  const currentExcluding = asignadoTotal - (parseFloat(valStr || '0'));
-                                  if (currentExcluding + newVal <= stockGlobalNum) {
-                                    setStockPorPunto(prev => ({ ...prev, [punto.id]: v }));
+
+                            <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
+                              <Typography variant="caption" color="text.secondary" sx={{ mb: 0.5 }}>Asignar</Typography>
+                              <TextField
+                                size="small"
+                                value={valStr}
+                                onChange={(e) => {
+                                  const v = e.target.value;
+                                  if (/^\d*\.?\d*$/.test(v)) {
+                                    const newVal = parseFloat(v || '0');
+                                    const currentExcluding = asignadoTotal - (parseFloat(valStr || '0'));
+                                    if (currentExcluding + newVal <= stockGlobalNum) {
+                                      setStockPorPunto(prev => ({ ...prev, [punto.id]: v }));
+                                    }
                                   }
-                                }
-                              }}
-                              placeholder="0"
-                              disabled={stockGlobalNum <= 0}
-                              sx={{ width: 90 }}
-                              InputProps={{ sx: { textAlign: 'right', fontWeight: 600 } }}
-                            />
+                                }}
+                                placeholder="0"
+                                disabled={stockGlobalNum <= 0}
+                                sx={{ width: 100 }}
+                                InputProps={{ sx: { textAlign: 'right', fontWeight: 700 } }}
+                              />
+                            </Box>
                           </Box>
 
-                          <Box display="flex" justifyContent="flex-end" alignItems="center" pt={1} borderTop="1px dashed #eee">
-                            <Typography variant="caption" color="text.secondary" mr={1}>
-                              Stock Final:
+                          <Box display="flex" justifyContent="space-between" alignItems="center" pt={1.5} borderTop={`1px dashed ${COLORS.border}`}>
+                            <Typography variant="body2" color="text.secondary">
+                              Stock Final Estimado
                             </Typography>
-                            <Typography variant="body2" fontWeight={700} color="primary.main">
-                              {final}
-                            </Typography>
+                            <Box display="flex" alignItems="center" gap={1}>
+                              <Icon icon="mdi:arrow-right" width={16} color="#bdbdbd" />
+                              <Typography variant="h6" fontWeight={700} color="primary.main">
+                                {final}
+                              </Typography>
+                            </Box>
                           </Box>
                         </Paper>
                       )
@@ -462,25 +505,33 @@ export default function ModalNuevaAsignacionStock({
             </Box>
 
             {/* Footer Actions */}
-            <Box sx={{ p: 3, borderTop: '1px solid #e0e0e0', bgcolor: '#fff' }}>
+            <Box sx={{ p: 4, borderTop: `1px solid ${COLORS.border}`, bgcolor: '#fff' }}>
               <Button
                 fullWidth
                 variant="contained"
                 size="large"
                 onClick={() => setConfirmOpen(true)}
                 disabled={!articuloSeleccionado || asignadoTotal === 0 || asignadoTotal > stockGlobalNum}
+                startIcon={<Icon icon="mdi:check-circle" />}
                 sx={{
                   bgcolor: COLORS.primary,
                   fontWeight: 700,
                   py: 1.5,
+                  mb: 1.5,
                   borderRadius: 1,
-                  fontSize: '1rem'
+                  fontSize: '1.1rem',
+                  textTransform: 'none',
+                  boxShadow: 2
                 }}
               >
-                CONFIRMAR ASIGNACIÓN
+                Confirmar Operación
               </Button>
-              <Button fullWidth onClick={handleCloseInternal} sx={{ mt: 1, color: 'text.secondary' }}>
-                Cancelar Operación
+              <Button
+                fullWidth
+                onClick={handleCloseInternal}
+                sx={{ textTransform: 'none', color: 'text.secondary' }}
+              >
+                Cancelar y cerrar
               </Button>
             </Box>
           </Box>
@@ -490,18 +541,26 @@ export default function ModalNuevaAsignacionStock({
 
       {/* Confirmation Dialog */}
       <Dialog open={confirmOpen} onClose={() => setConfirmOpen(false)}>
-        <DialogContent sx={{ pb: 1, pt: 3 }}>
+        <DialogContent sx={{ pb: 1, pt: 3, px: 4 }}>
           <Typography variant="h6" fontWeight={700} color={COLORS.textStrong} align="center" gutterBottom>
             Confirmar Asignación
           </Typography>
           <Typography align="center" color="text.secondary">
-            Se asignarán <strong>{asignadoTotal}</strong> unidades de<br />
-            <strong>{articuloSeleccionado?.Descripcion}</strong>
+            Está a punto de asignar <strong>{asignadoTotal}</strong> unidades en total.<br />
+            Esta acción actualizará el stock en los puntos seleccionados.
           </Typography>
+          <Paper variant="outlined" sx={{ mt: 3, p: 2, bgcolor: COLORS.bgLight, border: `1px solid ${COLORS.border}` }}>
+            <Typography variant="subtitle2" fontWeight={700} align="center">
+              {articuloSeleccionado?.Descripcion}
+            </Typography>
+            <Typography variant="body2" align="center" color="text.secondary">
+              Cod: {articuloSeleccionado?.Codigo}
+            </Typography>
+          </Paper>
         </DialogContent>
         <DialogActions sx={{ justifyContent: 'center', pb: 3, pt: 2, gap: 2 }}>
-          <Button onClick={() => setConfirmOpen(false)} variant="outlined" color="inherit">Cancelar</Button>
-          <Button onClick={confirmarAplicacion} autoFocus variant="contained" disabled={asignando} sx={{ bgcolor: COLORS.primary }}>
+          <Button onClick={() => setConfirmOpen(false)} variant="outlined" color="inherit">Revisar</Button>
+          <Button onClick={confirmarAplicacion} autoFocus variant="contained" disabled={asignando} sx={{ bgcolor: COLORS.primary, px: 4 }}>
             {asignando ? 'Procesando...' : 'Confirmar'}
           </Button>
         </DialogActions>
