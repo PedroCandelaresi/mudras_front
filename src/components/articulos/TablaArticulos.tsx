@@ -620,6 +620,36 @@ const TablaArticulos: React.FC<ArticulosTableProps> = ({
         <Typography variant="body2" fontWeight={700} sx={{ color: '#2b4735' }}>
           {a.Descripcion || '-'}
         </Typography>
+        <Stack direction="row" spacing={0.5} mt={0.5}>
+          {a.Rubro && (
+            <Chip
+              label={a.Rubro}
+              size="small"
+              variant="outlined"
+              sx={{
+                height: 20,
+                fontSize: '0.65rem',
+                color: verdeMilitar.primary,
+                borderColor: alpha(verdeMilitar.primary, 0.3),
+                '& .MuiChip-label': { px: 1 }
+              }}
+            />
+          )}
+          {a.proveedor?.Nombre && (
+            <Chip
+              label={a.proveedor.Nombre}
+              size="small"
+              variant="outlined"
+              sx={{
+                height: 20,
+                fontSize: '0.65rem',
+                color: '#1565c0', // Blue distinct from Rubro
+                borderColor: alpha('#1565c0', 0.3),
+                '& .MuiChip-label': { px: 1 }
+              }}
+            />
+          )}
+        </Stack>
       </Box>
     ),
     imagen: (a) => (
@@ -886,7 +916,7 @@ const TablaArticulos: React.FC<ArticulosTableProps> = ({
               onClick={onCreateClick}
               disableElevation
               sx={{
-                borderRadius: 1, // Slightly rounded for "site aesthetic" if needed, or 0 if strict
+                borderRadius: 0,
                 textTransform: 'none',
                 bgcolor: verdeMilitar.primary,
                 fontWeight: 600,
@@ -935,7 +965,7 @@ const TablaArticulos: React.FC<ArticulosTableProps> = ({
             startIcon={<IconRefresh size={18} />}
             onClick={limpiarFiltros}
             sx={{
-              borderRadius: 1,
+              borderRadius: 0,
               textTransform: 'none',
               color: '#757575',
               borderColor: '#e0e0e0',
