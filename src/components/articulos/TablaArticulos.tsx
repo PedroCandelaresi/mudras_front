@@ -1126,10 +1126,10 @@ const TablaArticulos: React.FC<ArticulosTableProps> = ({
       elevation={0}
       sx={{
         borderRadius: 0,
-        border: '1px solid #e0e0e0',
         bgcolor: '#ffffff',
-        overflow: 'auto',
-        ...tableContainerSx
+        overflow: 'auto', // Essential for sticky header
+        border: '1px solid #e0e0e0', // Default border
+        ...tableContainerSx // Allow override
       }}
     >
       <Table

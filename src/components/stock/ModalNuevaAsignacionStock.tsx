@@ -414,7 +414,7 @@ export default function ModalNuevaAsignacionStock({
               p: 4,
               minHeight: 0 // Crucial for nested flex scrolling
             }}>
-              <Box sx={{ flex: 1, overflow: 'hidden', border: `1px solid ${COLORS.border}`, borderRadius: 1, display: 'flex', flexDirection: 'column' }}>
+              <Box sx={{ flex: 1, overflow: 'hidden', borderRadius: 1, display: 'flex', flexDirection: 'column', border: `1px solid ${COLORS.border}` }}>
                 <Box sx={{ flex: 1, minHeight: 0 }}>
                   <TablaArticulos
                     columns={columns as any}
@@ -432,6 +432,7 @@ export default function ModalNuevaAsignacionStock({
                     tableContainerSx={{
                       flex: 1,
                       minHeight: 0,
+                      border: 'none', // Remove default border from TableContainer
                     }}
                   />
                 </Box>
