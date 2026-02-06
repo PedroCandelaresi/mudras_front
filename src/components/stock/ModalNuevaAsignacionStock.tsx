@@ -163,7 +163,6 @@ export default function ModalNuevaAsignacionStock({
   }, [open]);
 
   // --- Columns for TablaArticulos ---
-  // --- Columns for TablaArticulos ---
   const handleSelectClick = useCallback(async (art: Articulo) => {
     // Toggle logic: if already selected, deselect
     if (String(articuloSeleccionado?.id) === String(art.id)) {
@@ -414,7 +413,7 @@ export default function ModalNuevaAsignacionStock({
               p: 4,
               minHeight: 0 // Crucial for nested flex scrolling
             }}>
-              <Box sx={{ flex: 1, overflow: 'hidden', borderRadius: 1, display: 'flex', flexDirection: 'column', border: `1px solid ${COLORS.border}` }}>
+              <Box sx={{ flex: 1, overflow: 'hidden', borderRadius: 0, display: 'flex', flexDirection: 'column' }}>
                 <Box sx={{ flex: 1, minHeight: 0 }}>
                   <TablaArticulos
                     columns={columns as any}
