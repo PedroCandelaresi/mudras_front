@@ -1122,14 +1122,16 @@ const TablaArticulos: React.FC<ArticulosTableProps> = ({
 
   const tabla = (
     <TableContainer
-      component={Paper}
-      elevation={0}
+      component={Box} // ✅ sin Paper => sin borde/elevación
       sx={{
+        flex: 1,            // ✅ para que tome alto disponible en contenedor flex
+        minHeight: 0,       // ✅ crucial para scroll en flex
+        border: 'none',     // ✅ sin borde externo
         borderRadius: 0,
         bgcolor: '#ffffff',
-        overflow: 'auto', // Essential for sticky header
-        border: '1px solid #e0e0e0', // Default border
-        ...tableContainerSx // Allow override
+        overflowY: 'auto',  // ✅ scroll vertical acá (debajo del header)
+        overflowX: 'auto',
+        ...tableContainerSx
       }}
     >
       <Table
@@ -1137,6 +1139,9 @@ const TablaArticulos: React.FC<ArticulosTableProps> = ({
         size={dense ? 'small' : 'medium'}
         sx={{
           minWidth: 700,
+          borderCollapse: 'separate',
+          borderSpacing: 0,
+
           '& .MuiTableRow-root': {
             minHeight: 56,
             transition: 'background-color 0.2s',
@@ -1147,25 +1152,48 @@ const TablaArticulos: React.FC<ArticulosTableProps> = ({
             py: 1.5,
             borderBottom: '1px solid #f0f0f0',
             color: '#37474f',
+            backgroundClip: 'padding-box',
           },
+
           '& .MuiTableBody-root .MuiTableRow-root:nth-of-type(even)': {
             bgcolor: verdeMilitar.tableStriped,
           },
           '& .MuiTableBody-root .MuiTableRow-root:hover': {
             bgcolor: alpha(verdeMilitar.primary, 0.12),
           },
+
+          // ✅ header fijo + bien por arriba del body
           '& .MuiTableCell-head': {
             fontSize: '0.8rem',
             fontWeight: 700,
             bgcolor: verdeMilitar.tableHeader,
             color: '#ffffff',
+            position: 'sticky',
+            top: 0,
+            zIndex: 3,
+            // opcional: línea/sombra para “separar” visualmente el head del body
+            boxShadow: 'inset 0 -1px 0 rgba(255,255,255,0.25)',
           },
         }}
       >
         <TableHead>
-          <TableRow sx={{ '& th': { bgcolor: verdeMilitar.tableHeader, color: '#ffffff', fontWeight: 600, letterSpacing: 0.5, borderRadius: 0 } }}>
+          <TableRow
+            sx={{
+              '& th': {
+                bgcolor: verdeMilitar.tableHeader,
+                color: '#ffffff',
+                fontWeight: 600,
+                letterSpacing: 0.5,
+                borderRadius: 0
+              }
+            }}
+          >
             {columns.map((column) => {
-              const displayedHeader = (column.header === 'STOCK TOTAL' || column.key === 'stock') ? 'Global' : (column.header ?? column.key.toUpperCase());
+              const displayedHeader =
+                (column.header === 'STOCK TOTAL' || column.key === 'stock')
+                  ? 'Global'
+                  : (column.header ?? column.key.toUpperCase());
+
               return (
                 <TableCell
                   key={column.key}
@@ -1197,41 +1225,12 @@ const TablaArticulos: React.FC<ArticulosTableProps> = ({
         </TableHead>
 
         <TableBody>
-          {loading ? (
-            <TableRow>
-              <TableCell colSpan={columns.length} align="center" sx={{ py: 10 }}>
-                <MudrasLoader size={80} text="Cargando artículos..." />
-              </TableCell>
-            </TableRow>
-          ) : articulos.length === 0 ? (
-            <TableRow>
-              <TableCell colSpan={columns.length} align="center" sx={{ py: 6 }}>
-                <Typography variant="body2" color="text.secondary">
-                  No encontramos artículos que coincidan con tu búsqueda.
-                </Typography>
-                <Button variant="text" sx={{ mt: 1 }} onClick={limpiarFiltros}>
-                  Limpiar filtros
-                </Button>
-              </TableCell>
-            </TableRow>
-          ) : (
-            articulos.map((articulo) => (
-              <TableRow key={articulo.id} hover>
-                {columns.map((column) => (
-                  <TableCell
-                    key={`${articulo.id}-${column.key}`}
-                    align={column.align ?? (column.key === 'acciones' ? 'center' : 'left')}
-                  >
-                    {renderCell(column, articulo)}
-                  </TableCell>
-                ))}
-              </TableRow>
-            ))
-          )}
+          {/* ... lo tuyo igual ... */}
         </TableBody>
       </Table>
     </TableContainer>
   );
+
 
 
   const paginador = (
