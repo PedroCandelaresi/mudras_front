@@ -125,6 +125,7 @@ type ArticulosTableProps = {
    * (e.g. detalles de rubro/proveedor) los handlers externos siguen teniendo prioridad.
    */
   useInternalModals?: boolean;
+  tableContainerSx?: React.CSSProperties | import('@mui/system').SxProps<import('@mui/material').Theme>;
 };
 
 /* ======================== Estética ======================== */
@@ -192,6 +193,7 @@ const TablaArticulos: React.FC<ArticulosTableProps> = ({
   dense = true,
   onDataLoaded,
   useInternalModals = true,
+  tableContainerSx,
 }) => {
   const [page, setPage] = useState(initialServerFilters?.pagina ?? 0);
   const [rowsPerPage, setRowsPerPage] = useState(initialServerFilters?.limite ?? defaultPageSize);
@@ -1125,6 +1127,7 @@ const TablaArticulos: React.FC<ArticulosTableProps> = ({
         border: '1px solid #e0e0e0',
         bgcolor: '#ffffff',
         overflow: 'auto',
+        ...tableContainerSx
       }}
     >
       <Table

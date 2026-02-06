@@ -38,7 +38,12 @@ import { OBTENER_PUNTOS_MUDRAS, type ObtenerPuntosMudrasResponse } from '@/compo
 import { GET_RUBROS } from '@/components/rubros/graphql/queries';
 import { GET_PROVEEDORES } from '@/components/proveedores/graphql/queries';
 import { ASIGNAR_STOCK_MASIVO } from '@/components/puntos-mudras/graphql/mutations';
-import { OBTENER_STOCK_PUNTO_MUDRAS, type ObtenerStockPuntoMudrasResponse } from '@/components/puntos-mudras/graphql/queries';
+import {
+  OBTENER_STOCK_PUNTO_MUDRAS,
+  BUSCAR_ARTICULOS_PARA_ASIGNACION,
+  type ObtenerStockPuntoMudrasResponse,
+  type BuscarArticulosParaAsignacionResponse
+} from '@/components/puntos-mudras/graphql/queries';
 
 import type { Articulo } from '@/app/interfaces/mudras.types';
 
@@ -99,6 +104,9 @@ export default function ModalNuevaAsignacionStock({
   const { data: dataRubros } = useQuery(GET_RUBROS);
 
   const [asignarMasivoMutation] = useMutation(ASIGNAR_STOCK_MASIVO);
+  const [buscarArticuloEnPunto] = useLazyQuery<BuscarArticulosParaAsignacionResponse>(BUSCAR_ARTICULOS_PARA_ASIGNACION, {
+    fetchPolicy: 'network-only' // Ensure we get fresh stock data
+  });
 
 
   const [stockActualPorPunto, setStockActualPorPunto] = useState<Record<string, number>>({});
@@ -165,38 +173,42 @@ export default function ModalNuevaAsignacionStock({
     setArticuloSeleccionado(art);
     setStockGlobal('0');
     setStockPorPunto({});
-    setStockActualPorPunto({});
+    setStockActualPorPunto({}); // Clear previous stock data
 
-    // The logic to fetch specific point stock for THIS article was relying on a query that doesn't exist
-    // 'OBTENER_ARTICULOS_DISPONIBLES' was removed because it was invalid.
-    // However, we need to know the stock of this article in each point.
-    // The query 'OBTENER_STOCK_PUNTO_MUDRAS' gets all articles for a point, not one article for all points.
+    // Fetch stock for this article in each point
+    if (art.Codigo) {
+      const newStockMap: Record<string, number> = {};
 
-    // For now, we will assume 0 or handle it differently if the backend doesn't support "stock per point per article" easily.
-    // But wait, the backend has 'obtenerDetalleVenta', 'buscarArticulosCaja'... 
-    // And 'obtenerStockPuntoMudras(puntoMudrasId)' returns list of articles in that point.
+      // We process points in parallel to speed up
+      const promises = puntosDisponibles.map(async (punto) => {
+        try {
+          const { data } = await buscarArticuloEnPunto({
+            variables: {
+              busqueda: art.Codigo,
+              destinoId: punto.id
+            }
+          });
 
-    // To get the stock of ONE article across ALL points, we'd need to query all points or have a specific query.
-    // Since 'BUSCAR_ARTICULOS_PARA_ASIGNACION' returns 'stockEnDestino' (single number?), it might not be enough distribution.
+          const found = data?.buscarArticulosParaAsignacion?.[0];
+          if (found) {
+            // stockEnDestino is usually what we want: stock IN that point
+            // fallback to stockDisponible if stockEnDestino is missing (though backend should provide it)
+            const stockEnPunto = found.stockEnDestino ?? 0;
+            newStockMap[String(punto.id)] = stockEnPunto;
+          } else {
+            newStockMap[String(punto.id)] = 0;
+          }
+        } catch (err) {
+          console.error(`Error fetching stock for point ${punto.id}:`, err);
+          newStockMap[String(punto.id)] = 0;
+        }
+      });
 
-    // Workaround: We will loop points and try to find the article in the pre-loaded data if possible, 
-    // or we might need to query 'movimientosStock'? 
+      await Promise.all(promises);
+      setStockActualPorPunto(newStockMap);
+    }
 
-    // Actually, 'OBTENER_STOCK_PUNTO_MUDRAS' gets ALL stock for a point. calling it for every point is heavy.
-    // Let's rely on 'stockDisponible' from the main table for now, and default point stock to 0 unless we find a better way.
-    // The user's original bug was "it shows 0". 
-
-    // Re-reading schema:
-    // type ArticuloConStockPuntoMudras { stockAsignado: Float!, stockTotal: Float! ... }
-    // query obtenerStockPuntoMudras(puntoMudrasId: Int!) -> [ArticuloConStockPuntoMudras!]
-
-    // We can't efficienty query "Article X in all Points". The backend design seems Point-Centric.
-    // BUT! 'Articulo' type has 'totalStock'. 
-    // If the user wants to see "Current Stock" in the distribution card (per point), we need that info.
-    // without a direct query, we might have to accept 0 for now or fetch *something*.
-
-    // Let's remove the broken query call for now to stop the crash.
-  }, [articuloSeleccionado]);
+  }, [articuloSeleccionado, puntosDisponibles, buscarArticuloEnPunto]);
 
   const columns = useMemo(() => [
     { key: 'codigo', header: 'Código', width: '20%' },
@@ -393,7 +405,6 @@ export default function ModalNuevaAsignacionStock({
             </Box>
 
             {/* 2. Results (Table) */}
-            {/* 2. Results (Table) */}
             <Box sx={{
               flex: 1,
               display: 'flex',
@@ -402,7 +413,7 @@ export default function ModalNuevaAsignacionStock({
               p: 4, // Large "airy" margin
             }}>
               <Box sx={{ flex: 1, overflow: 'hidden', border: `1px solid ${COLORS.border}`, borderRadius: 1 }}>
-                <Box sx={{ height: '100%', overflowY: 'auto' }}>
+                <Box sx={{ height: '100%' }}>
                   <TablaArticulos
                     columns={columns as any}
                     controlledFilters={controlledFilters}
@@ -411,6 +422,10 @@ export default function ModalNuevaAsignacionStock({
                     defaultPageSize={50}
                     rowsPerPageOptions={[20, 50, 100]}
                     dense
+                    tableContainerSx={{
+                      height: '100%',
+                      maxHeight: '100%',
+                    }}
                   />
                 </Box>
               </Box>

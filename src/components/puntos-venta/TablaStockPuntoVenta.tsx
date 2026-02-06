@@ -5,7 +5,6 @@ import {
   Alert,
   Box,
   Chip,
-  Skeleton,
   Table,
   TableBody,
   TableCell,
