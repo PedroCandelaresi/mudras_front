@@ -233,6 +233,13 @@ const TablaArticulos: React.FC<ArticulosTableProps> = ({
     setGlobalSearchDraft(controlledFilters?.busqueda ?? globalInput);
   }, [controlledFilters?.busqueda, globalInput]);
 
+  // Sync rowsPerPage from controlledFilters if provided
+  useEffect(() => {
+    if (controlledFilters?.limite !== undefined && controlledFilters.limite !== rowsPerPage) {
+      setRowsPerPage(controlledFilters.limite);
+    }
+  }, [controlledFilters?.limite, rowsPerPage]);
+
   const client = useApolloClient();
   const [exporting, setExporting] = useState(false);
 
