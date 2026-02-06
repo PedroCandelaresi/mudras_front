@@ -103,7 +103,7 @@ export default function ModalNuevaAsignacionStock({
     fetchPolicy: 'network-only'
   });
 
-  const [stockActualPorPunto, setStockActualPorPunto] = useState<Record<number, number>>({});
+  const [stockActualPorPunto, setStockActualPorPunto] = useState<Record<string, number>>({});
 
   // --- Derived Data ---
   const puntosDisponibles = useMemo(() =>
@@ -125,6 +125,20 @@ export default function ModalNuevaAsignacionStock({
     }
     return allRubros;
   }, [dataRubros, proveedorSeleccionado, proveedores]);
+
+  // --- Clear Handlers ---
+  const handleClearFilters = () => {
+    setProveedorSeleccionado(null);
+    setRubroSeleccionado(null);
+    setBusqueda('');
+  };
+
+  const handleClearSelection = () => {
+    setArticuloSeleccionado(null);
+    setStockGlobal('0');
+    setStockPorPunto({});
+    setStockActualPorPunto({});
+  };
 
   // --- Effects ---
   useEffect(() => {
@@ -161,10 +175,11 @@ export default function ModalNuevaAsignacionStock({
 
       const match = data?.obtenerArticulosDisponibles?.articulos?.find(a => a.Codigo === art.Codigo);
       if (match && match.asignacionesPuntos) {
-        const map: Record<number, number> = {};
+        const map: Record<string, number> = {};
         match.asignacionesPuntos.forEach(ap => {
-          map[ap.puntoVentaId] = ap.cantidadAsignada;
+          map[String(ap.puntoVentaId)] = ap.cantidadAsignada;
         });
+        console.log("Stock match:", match); // Debug
         setStockActualPorPunto(map);
       }
     } catch (err) {
@@ -312,12 +327,18 @@ export default function ModalNuevaAsignacionStock({
           {/* LEFT: Selection Panel (70%) */}
           <Box sx={{ flex: 7, display: 'flex', flexDirection: 'column', borderRight: `1px solid ${COLORS.border}`, bgcolor: '#fff' }}>
 
-            {/* 1. Filters */}
             <Box sx={{ p: 4, borderBottom: `1px solid ${COLORS.border}` }}>
-              <Typography variant="h6" sx={{ mb: 3, fontWeight: 700, color: COLORS.textStrong, letterSpacing: 1, display: 'flex', alignItems: 'center', gap: 1 }}>
-                <Icon icon="mdi:magnify" />
-                1. BUSCAR ARTÍCULO
-              </Typography>
+              <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
+                <Typography variant="h6" sx={{ fontWeight: 700, color: COLORS.textStrong, letterSpacing: 1, display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <Icon icon="mdi:magnify" />
+                  1. BUSCAR ARTÍCULO
+                </Typography>
+                {(proveedorSeleccionado || rubroSeleccionado || busqueda) && (
+                  <Button size="small" onClick={handleClearFilters} startIcon={<Icon icon="mdi:filter-off" />} color="inherit">
+                    Limpiar Filtros
+                  </Button>
+                )}
+              </Box>
               <Box display="flex" gap={3} flexWrap="wrap">
                 <Autocomplete
                   options={proveedores}
@@ -395,7 +416,14 @@ export default function ModalNuevaAsignacionStock({
               ) : (
                 <>
                   {/* Selected Info Card */}
-                  <Paper elevation={0} variant="outlined" sx={{ p: 3, mb: 4, bgcolor: '#fff', borderColor: COLORS.secondary, borderRadius: 2 }}>
+                  <Paper elevation={0} variant="outlined" sx={{ p: 3, mb: 4, bgcolor: '#fff', borderColor: COLORS.secondary, borderRadius: 2, position: 'relative' }}>
+                    <IconButton
+                      size="small"
+                      onClick={handleClearSelection}
+                      sx={{ position: 'absolute', top: 8, right: 8, color: 'text.secondary' }}
+                    >
+                      <Icon icon="mdi:close" />
+                    </IconButton>
                     <Typography variant="overline" color="text.secondary" fontWeight={700}>
                       ARTÍCULO SELECCIONADO
                     </Typography>
@@ -457,7 +485,7 @@ export default function ModalNuevaAsignacionStock({
                     {loadingStockDetalle ? <CircularProgress size={32} sx={{ alignSelf: 'center', my: 4 }} /> : puntosDisponibles.map(punto => {
                       const valStr = stockPorPunto[punto.id] || '';
 
-                      const actual = stockActualPorPunto[punto.id] || 0;
+                      const actual = stockActualPorPunto[String(punto.id)] || 0;
                       const aAsignar = parseFloat(valStr || '0');
                       const final = actual + aAsignar;
 
