@@ -23,7 +23,8 @@ import {
   Snackbar,
   InputAdornment,
   CircularProgress,
-  Chip
+  Chip,
+  Tooltip
 } from '@mui/material';
 import { Icon } from '@iconify/react';
 import { useQuery, useMutation, useLazyQuery } from '@apollo/client/react';
@@ -409,11 +410,12 @@ export default function ModalNuevaAsignacionStock({
               flex: 1,
               display: 'flex',
               flexDirection: 'column',
-              overflow: 'hidden', // Wrapper handles overflow
-              p: 4, // Large "airy" margin
+              overflow: 'hidden',
+              p: 4,
+              minHeight: 0 // Crucial for nested flex scrolling
             }}>
-              <Box sx={{ flex: 1, overflow: 'hidden', border: `1px solid ${COLORS.border}`, borderRadius: 1 }}>
-                <Box sx={{ height: '100%' }}>
+              <Box sx={{ flex: 1, overflow: 'hidden', border: `1px solid ${COLORS.border}`, borderRadius: 1, display: 'flex', flexDirection: 'column' }}>
+                <Box sx={{ flex: 1, minHeight: 0 }}>
                   <TablaArticulos
                     columns={columns as any}
                     controlledFilters={controlledFilters}
@@ -433,7 +435,7 @@ export default function ModalNuevaAsignacionStock({
           </Box>
 
           {/* RIGHT: Distribution Panel (30%) */}
-          <Box sx={{ flex: 3, display: 'flex', flexDirection: 'column', bgcolor: '#f9fafb', borderLeft: `1px solid ${COLORS.border}` }}>
+          <Box sx={{ flex: 3, display: 'flex', flexDirection: 'column', bgcolor: '#f9fafb', borderLeft: `1px solid ${COLORS.border}`, minHeight: 0 }}>
             <Box sx={{ p: 4, flex: 1, display: 'flex', flexDirection: 'column', overflowY: 'auto' }}>
 
               <Typography variant="h6" sx={{ mb: 3, fontWeight: 700, color: COLORS.textStrong, letterSpacing: 1, display: 'flex', alignItems: 'center', gap: 1 }}>
@@ -540,26 +542,50 @@ export default function ModalNuevaAsignacionStock({
                               </Typography>
                             </Box>
 
-                            <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
-                              <Typography variant="caption" color="text.secondary" sx={{ mb: 0.5 }}>Asignar</Typography>
-                              <TextField
-                                size="small"
-                                value={valStr}
-                                onChange={(e) => {
-                                  const v = e.target.value;
-                                  if (/^\d*\.?\d*$/.test(v)) {
-                                    const newVal = parseFloat(v || '0');
-                                    const currentExcluding = asignadoTotal - (parseFloat(valStr || '0'));
-                                    if (currentExcluding + newVal <= stockGlobalNum) {
-                                      setStockPorPunto(prev => ({ ...prev, [punto.id]: v }));
-                                    }
-                                  }
-                                }}
-                                placeholder="0"
-                                disabled={stockGlobalNum <= 0}
-                                sx={{ width: 100 }}
-                                InputProps={{ sx: { textAlign: 'right', fontWeight: 700 } }}
-                              />
+                            <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 1 }}>
+                              <Box display="flex" alignItems="center" gap={1}>
+                                {restante > 0 && (
+                                  <Tooltip title="Asignar todo el restante">
+                                    <IconButton
+                                      size="small"
+                                      sx={{
+                                        color: COLORS.primary,
+                                        bgcolor: alpha(COLORS.primary, 0.1),
+                                        '&:hover': { bgcolor: alpha(COLORS.primary, 0.2) },
+                                        width: 28,
+                                        height: 28
+                                      }}
+                                      onClick={() => {
+                                        const nuevoValor = aAsignar + restante;
+                                        setStockPorPunto(prev => ({ ...prev, [punto.id]: String(nuevoValor) }));
+                                      }}
+                                    >
+                                      <Icon icon="mdi:arrow-up-bold" width={18} />
+                                    </IconButton>
+                                  </Tooltip>
+                                )}
+                                <Box>
+                                  <Typography variant="caption" color="text.secondary" sx={{ mb: 0.5, display: 'block', textAlign: 'right' }}>Asignar</Typography>
+                                  <TextField
+                                    size="small"
+                                    value={valStr}
+                                    onChange={(e) => {
+                                      const v = e.target.value;
+                                      if (/^\d*\.?\d*$/.test(v)) {
+                                        const newVal = parseFloat(v || '0');
+                                        const currentExcluding = asignadoTotal - (parseFloat(valStr || '0'));
+                                        if (currentExcluding + newVal <= stockGlobalNum) {
+                                          setStockPorPunto(prev => ({ ...prev, [punto.id]: v }));
+                                        }
+                                      }
+                                    }}
+                                    placeholder="0"
+                                    disabled={stockGlobalNum <= 0}
+                                    sx={{ width: 100 }}
+                                    InputProps={{ sx: { textAlign: 'right', fontWeight: 700 } }}
+                                  />
+                                </Box>
+                              </Box>
                             </Box>
                           </Box>
 
@@ -589,7 +615,7 @@ export default function ModalNuevaAsignacionStock({
                 variant="contained"
                 size="large"
                 onClick={() => setConfirmOpen(true)}
-                disabled={!articuloSeleccionado || asignadoTotal === 0 || asignadoTotal > stockGlobalNum}
+                disabled={!articuloSeleccionado || stockGlobalNum <= 0 || asignadoTotal !== stockGlobalNum}
                 startIcon={<Icon icon="mdi:check-circle" />}
                 sx={{
                   bgcolor: COLORS.primary,
