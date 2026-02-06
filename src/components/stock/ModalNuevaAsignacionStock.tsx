@@ -81,8 +81,38 @@ export default function ModalNuevaAsignacionStock({
   const [rubroSeleccionado, setRubroSeleccionado] = useState<{ id: number; nombre: string } | null>(null);
   const [busqueda, setBusqueda] = useState('');
 
+  // Pagination State
+  const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(50);
+
   // --- States for Selection & Distribution ---
   const [articuloSeleccionado, setArticuloSeleccionado] = useState<Articulo | null>(null);
+
+  // --- Effects ---
+  useEffect(() => {
+    if (!open) {
+      // Reset logic
+      setProveedorSeleccionado(null);
+      setRubroSeleccionado(null);
+      setBusqueda('');
+      setPage(0);
+      setRowsPerPage(50);
+      setArticuloSeleccionado(null);
+      // ...
+    }
+  }, [open]);
+
+  // Reset page when filters change
+  useEffect(() => {
+    setPage(0);
+  }, [proveedorSeleccionado, rubroSeleccionado, busqueda]);
+
+
+  // --- Columns for TablaArticulos ---
+  // ... (keeping columns definition) ...
+
+  // --- Filters for TablaArticulos ---
+
 
   // Distribution Logic
   const [stockGlobal, setStockGlobal] = useState<string>('0');
@@ -138,6 +168,7 @@ export default function ModalNuevaAsignacionStock({
     setProveedorSeleccionado(null);
     setRubroSeleccionado(null);
     setBusqueda('');
+    setPage(0);
   };
 
   const handleClearSelection = () => {
@@ -154,6 +185,8 @@ export default function ModalNuevaAsignacionStock({
       setProveedorSeleccionado(null);
       setRubroSeleccionado(null);
       setBusqueda('');
+      setPage(0);
+      setRowsPerPage(50);
       setArticuloSeleccionado(null);
       setStockGlobal('0');
       setStockPorPunto({});
@@ -242,12 +275,15 @@ export default function ModalNuevaAsignacionStock({
 
   // --- Filters for TablaArticulos ---
   const controlledFilters = useMemo(() => {
-    const filters: any = {};
+    const filters: any = {
+      pagina: page,
+      limite: rowsPerPage
+    };
     if (proveedorSeleccionado) filters.proveedorId = Number(proveedorSeleccionado.IdProveedor);
     if (rubroSeleccionado) filters.rubroId = Number(rubroSeleccionado.id);
     if (busqueda) filters.busqueda = busqueda;
     return filters;
-  }, [proveedorSeleccionado, rubroSeleccionado, busqueda]);
+  }, [proveedorSeleccionado, rubroSeleccionado, busqueda, page, rowsPerPage]);
 
 
   // --- Submit Handler ---
@@ -418,6 +454,10 @@ export default function ModalNuevaAsignacionStock({
                   <TablaArticulos
                     columns={columns as any}
                     controlledFilters={controlledFilters}
+                    onFiltersChange={(newFilters) => {
+                      if (newFilters.pagina !== undefined) setPage(newFilters.pagina);
+                      if (newFilters.limite !== undefined) setRowsPerPage(newFilters.limite);
+                    }}
                     showToolbar={false}
                     allowCreate={false}
                     defaultPageSize={50}
