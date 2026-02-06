@@ -126,6 +126,7 @@ type ArticulosTableProps = {
    */
   useInternalModals?: boolean;
   tableContainerSx?: React.CSSProperties | import('@mui/system').SxProps<import('@mui/material').Theme>;
+  rootSx?: React.CSSProperties | import('@mui/system').SxProps<import('@mui/material').Theme>;
 };
 
 /* ======================== Estética ======================== */
@@ -194,6 +195,7 @@ const TablaArticulos: React.FC<ArticulosTableProps> = ({
   onDataLoaded,
   useInternalModals = true,
   tableContainerSx,
+  rootSx,
 }) => {
   const [page, setPage] = useState(initialServerFilters?.pagina ?? 0);
   const [rowsPerPage, setRowsPerPage] = useState(initialServerFilters?.limite ?? defaultPageSize);
@@ -1323,10 +1325,8 @@ const TablaArticulos: React.FC<ArticulosTableProps> = ({
 
   return (
     <>
-      <Box sx={{ width: '100%' }}>
+      <Box sx={{ width: '100%', ...rootSx }}>
         {showToolbar && toolbar}
-
-
 
         {tabla}
         {paginador}

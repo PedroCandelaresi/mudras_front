@@ -424,9 +424,14 @@ export default function ModalNuevaAsignacionStock({
                     defaultPageSize={50}
                     rowsPerPageOptions={[20, 50, 100]}
                     dense
-                    tableContainerSx={{
+                    rootSx={{
                       height: '100%',
-                      maxHeight: '100%',
+                      display: 'flex',
+                      flexDirection: 'column',
+                    }}
+                    tableContainerSx={{
+                      flex: 1,
+                      minHeight: 0,
                     }}
                   />
                 </Box>
