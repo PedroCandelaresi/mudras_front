@@ -89,28 +89,19 @@ export const REASIGNAR_STOCK = gql`
   }
 `;
 
-export const OBTENER_ARTICULOS_DISPONIBLES = gql`
-  query ObtenerArticulosDisponibles($filtros: FiltrosArticulosDisponiblesInput) {
-    obtenerArticulosDisponibles(filtros: $filtros) {
-      articulos {
-        id
-        Codigo
-        Descripcion
-        PrecioVenta
-        stockTotal
-        stockDisponible
-        stockAsignado
-        rubro {
-          Id
-          Rubro
-        }
-        asignacionesPuntos {
-          puntoVentaId
-          puntoVentaNombre
-          cantidadAsignada
-        }
-      }
-      total
+export const BUSCAR_ARTICULOS_PARA_ASIGNACION = gql`
+  query BuscarArticulosParaAsignacion($busqueda: String, $proveedorId: Int, $rubro: String) {
+    buscarArticulosParaAsignacion(busqueda: $busqueda, proveedorId: $proveedorId, rubro: $rubro) {
+      id
+      nombre
+      codigo
+      precio
+      stockTotal
+      stockAsignado
+      stockDisponible
+      stockEnDestino
+      rubro
+      proveedor
     }
   }
 `;
@@ -191,37 +182,21 @@ export interface ReasignarStockResponse {
   };
 }
 
-export interface ArticuloDisponible {
-  id: number;
-  Codigo: string;
-  Descripcion: string;
-  PrecioVenta: number;
+export interface ArticuloFiltrado {
+  id: string; // The backend defines ID! which is usually string
+  nombre: string;
+  codigo: string;
+  precio: number;
   stockTotal: number;
-  stockDisponible: number;
   stockAsignado: number;
-  rubro: {
-    Id: number;
-    Rubro: string;
-  };
-  asignacionesPuntos: Array<{
-    puntoVentaId: number;
-    puntoVentaNombre: string;
-    cantidadAsignada: number;
-  }>;
+  stockDisponible: number;
+  stockEnDestino: number;
+  rubro: string;
+  proveedor: string;
 }
 
-export interface ObtenerArticulosDisponiblesResponse {
-  obtenerArticulosDisponibles: {
-    articulos: ArticuloDisponible[];
-    total: number;
-  };
+export interface BuscarArticulosParaAsignacionResponse {
+  buscarArticulosParaAsignacion: ArticuloFiltrado[];
 }
 
-export interface FiltrosArticulosDisponiblesInput {
-  busqueda?: string;
-  soloConStock?: boolean;
-  soloSinAsignar?: boolean;
-  puntoVentaId?: number;
-  limite?: number;
-  offset?: number;
-}
+
