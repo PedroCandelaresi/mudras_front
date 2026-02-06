@@ -156,7 +156,14 @@ export default function ModalNuevaAsignacionStock({
   }, [open]);
 
   // --- Columns for TablaArticulos ---
+  // --- Columns for TablaArticulos ---
   const handleSelectClick = useCallback(async (art: Articulo) => {
+    // Toggle logic: if already selected, deselect
+    if (articuloSeleccionado?.id === art.id) {
+      handleClearSelection();
+      return;
+    }
+
     setArticuloSeleccionado(art);
     setStockGlobal('0');
     setStockPorPunto({});
@@ -211,7 +218,7 @@ export default function ModalNuevaAsignacionStock({
             color: articuloSeleccionado?.id === art.id ? '#fff' : 'text.secondary'
           }}
         >
-          {articuloSeleccionado?.id === art.id ? "Seleccionado" : "Elegir"}
+          {articuloSeleccionado?.id === art.id ? "Deseleccionar" : "Elegir"}
         </Button>
       )
     }
@@ -334,8 +341,20 @@ export default function ModalNuevaAsignacionStock({
                   1. BUSCAR ARTÍCULO
                 </Typography>
                 {(proveedorSeleccionado || rubroSeleccionado || busqueda) && (
-                  <Button size="small" onClick={handleClearFilters} startIcon={<Icon icon="mdi:filter-off" />} color="inherit">
-                    Limpiar Filtros
+                  <Button
+                    variant="outlined"
+                    size="small"
+                    onClick={handleClearFilters}
+                    startIcon={<Icon icon="mdi:refresh" />}
+                    sx={{
+                      textTransform: 'none',
+                      color: 'text.secondary',
+                      borderColor: COLORS.border,
+                      borderRadius: 1,
+                      height: 32
+                    }}
+                  >
+                    Limpiar
                   </Button>
                 )}
               </Box>
