@@ -244,14 +244,14 @@ export default function ModalNuevaAsignacionStock({
   }, [articuloSeleccionado, puntosDisponibles, buscarArticuloEnPunto]);
 
   const columns = useMemo(() => [
-    { key: 'codigo', header: 'Código', width: '20%' },
-    { key: 'descripcion', header: 'Descripción', width: '55%' },
+    { key: 'codigo', header: 'Código', width: '15%' },
+    { key: 'descripcion', header: 'Descripción', width: '50%' },
     // RUBRO COLUMN REMOVED
     { key: 'stock', header: 'Stock Total', width: '10%', align: 'center' },
     {
       key: 'acciones',
       header: 'Seleccionar',
-      width: '15%',
+      width: '25%',
       align: 'center',
       render: (art: any) => (
         <Button
