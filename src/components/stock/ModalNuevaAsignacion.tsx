@@ -27,11 +27,11 @@ import {
   Tab
 } from '@mui/material';
 import { Icon } from '@iconify/react';
-import {
-  OBTENER_ARTICULOS_DISPONIBLES,
-  type ObtenerArticulosDisponiblesResponse,
-  type ArticuloDisponible,
-} from '@/components/stock/graphql/queries';
+//   OBTENER_ARTICULOS_DISPONIBLES,
+//   type ObtenerArticulosDisponiblesResponse,
+//   type ArticuloDisponible,
+// } from '@/components/stock/graphql/queries';
+import { gql } from '@apollo/client';
 import {
   CREAR_ASIGNACION_STOCK,
   type CrearAsignacionStockInput,
@@ -57,7 +57,7 @@ function ModalNuevaAsignacion({
   onAsignacionCreada
 }: Props) {
   const [tabValue, setTabValue] = useState(0);
-  const [articuloSeleccionado, setArticuloSeleccionado] = useState<ArticuloDisponible | null>(null);
+  const [articuloSeleccionado, setArticuloSeleccionado] = useState<any | null>(null);
   const [tipoAsignacion, setTipoAsignacion] = useState<TipoAsignacion>('cantidad');
   const [cantidad, setCantidad] = useState<string>('0');
   const [porcentaje, setPorcentaje] = useState<string>('0');
@@ -73,16 +73,17 @@ function ModalNuevaAsignacion({
   const [busquedaArticulos, setBusquedaArticulos] = useState('');
 
   // Query para buscar artículos
-  const { data: articulosData, loading: loadingArticulos } = useQuery<ObtenerArticulosDisponiblesResponse>(OBTENER_ARTICULOS_DISPONIBLES, {
-    variables: {
-      filtros: {
-        busqueda: busquedaArticulos,
-        soloConStock: true,
-        limite: 50
-      }
-    },
-    skip: !busquedaArticulos
-  });
+  const { data: articulosData, loading: loadingArticulos } = useQuery<any>(gql`query Placeholder { placeholder }`, { skip: true });
+  //   const { data: articulosData, loading: loadingArticulos } = useQuery<ObtenerArticulosDisponiblesResponse>(OBTENER_ARTICULOS_DISPONIBLES, {
+  //     variables: {
+  //       filtros: {
+  //         busqueda: busquedaArticulos,
+  //         soloConStock: true,
+  //         limite: 50
+  //       }
+  //     },
+  //     skip: !busquedaArticulos
+  //   });
 
   // Mutation para crear asignación
   const [crearAsignacion] = useMutation<CrearAsignacionResponse>(CREAR_ASIGNACION_STOCK);

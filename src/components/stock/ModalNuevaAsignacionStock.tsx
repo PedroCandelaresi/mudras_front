@@ -393,27 +393,27 @@ export default function ModalNuevaAsignacionStock({
             </Box>
 
             {/* 2. Results (Table) */}
+            {/* 2. Results (Table) */}
             <Box sx={{
               flex: 1,
               display: 'flex',
               flexDirection: 'column',
-              overflow: 'hidden',
+              overflow: 'hidden', // Wrapper handles overflow
               p: 4, // Large "airy" margin
-              '& .MuiTableContainer-root': {
-                maxHeight: '100%',
-                overflowY: 'auto',
-                border: `1px solid ${COLORS.border}`,
-              }
             }}>
-              <TablaArticulos
-                columns={columns as any}
-                controlledFilters={controlledFilters}
-                showToolbar={false}
-                allowCreate={false}
-                defaultPageSize={50}
-                rowsPerPageOptions={[20, 50, 100]}
-                dense
-              />
+              <Box sx={{ flex: 1, overflow: 'hidden', border: `1px solid ${COLORS.border}`, borderRadius: 1 }}>
+                <Box sx={{ height: '100%', overflowY: 'auto' }}>
+                  <TablaArticulos
+                    columns={columns as any}
+                    controlledFilters={controlledFilters}
+                    showToolbar={false}
+                    allowCreate={false}
+                    defaultPageSize={50}
+                    rowsPerPageOptions={[20, 50, 100]}
+                    dense
+                  />
+                </Box>
+              </Box>
             </Box>
           </Box>
 
