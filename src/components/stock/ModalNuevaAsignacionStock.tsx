@@ -38,7 +38,7 @@ import { TablaArticulos } from '@/components/articulos';
 import { OBTENER_PUNTOS_MUDRAS, type ObtenerPuntosMudrasResponse } from '@/components/puntos-mudras/graphql/queries';
 import { GET_RUBROS } from '@/components/rubros/graphql/queries';
 import { GET_PROVEEDORES } from '@/components/proveedores/graphql/queries';
-import { ASIGNAR_STOCK_MASIVO } from '@/components/puntos-mudras/graphql/mutations';
+import { MODIFICAR_STOCK_PUNTO } from '@/components/puntos-mudras/graphql/mutations';
 import {
   OBTENER_STOCK_PUNTO_MUDRAS,
   BUSCAR_ARTICULOS_PARA_ASIGNACION,
@@ -134,7 +134,7 @@ export default function ModalNuevaAsignacionStock({
   const { data: dataProveedores } = useQuery(GET_PROVEEDORES);
   const { data: dataRubros } = useQuery(GET_RUBROS);
 
-  const [asignarMasivoMutation] = useMutation(ASIGNAR_STOCK_MASIVO);
+  const [modificarStockPunto] = useMutation(MODIFICAR_STOCK_PUNTO);
   const [buscarArticuloEnPunto] = useLazyQuery<BuscarArticulosParaAsignacionResponse>(BUSCAR_ARTICULOS_PARA_ASIGNACION, {
     fetchPolicy: 'network-only' // Ensure we get fresh stock data
   });
@@ -293,19 +293,17 @@ export default function ModalNuevaAsignacionStock({
 
     try {
       const promises = Object.entries(stockPorPunto).map(async ([puntoId, cantidadStr]) => {
-        const cantidad = parseInt(cantidadStr, 10);
-        if (cantidad > 0) {
-          return asignarMasivoMutation({
+        const cantidadAsignada = parseFloat(cantidadStr);
+        if (cantidadAsignada > 0) {
+          // Calcular stock final: lo que había + lo que asigno
+          const stockActual = stockActualPorPunto[puntoId] || 0;
+          const nuevaCantidad = stockActual + cantidadAsignada;
+
+          return modificarStockPunto({
             variables: {
-              input: {
-                destinoId: Number(puntoId),
-                articulos: [
-                  {
-                    articuloId: Number(articuloSeleccionado.id),
-                    cantidad: cantidad
-                  }
-                ]
-              }
+              puntoMudrasId: Number(puntoId),
+              articuloId: Number(articuloSeleccionado.id),
+              nuevaCantidad: nuevaCantidad
             }
           });
         }
