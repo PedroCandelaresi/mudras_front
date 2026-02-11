@@ -522,8 +522,8 @@ const TablaMatrizStock: React.FC<TablaMatrizStockProps> = ({ onTransferir }) => 
             </Box>
 
             {/* --- Table --- */}
-            <TableContainer component={Paper} elevation={0} sx={{ borderRadius: 0, border: '1px solid #e0e0e0', maxHeight: 'calc(100vh - 300px)' }}>
-                <Table stickyHeader size="small">
+            <TableContainer component={Paper} elevation={0} sx={{ borderRadius: 0, border: '1px solid #e0e0e0' }}>
+                <Table size="small">
                     <TableHead>
                         <TableRow>
                             {columns.map(col => (
