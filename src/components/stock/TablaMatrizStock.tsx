@@ -32,7 +32,8 @@ import { alpha, darken } from '@mui/material/styles';
 import { useQuery, useApolloClient } from '@apollo/client/react';
 import {
     IconSearch, IconRefresh, IconDotsVertical,
-    IconFileTypePdf, IconFileSpreadsheet, IconArrowRight, IconPlus
+    IconFileTypePdf, IconFileSpreadsheet, IconArrowRight, IconPlus,
+    IconChevronLeft, IconChevronRight
 } from '@tabler/icons-react';
 import { Icon } from '@iconify/react';
 import MudrasLoader from '@/components/ui/MudrasLoader';
@@ -616,6 +617,19 @@ const TablaMatrizStock: React.FC<TablaMatrizStockProps> = ({ onTransferir }) => 
                         Página {paginaActual} de {Math.max(1, totalPaginas)}
                     </Typography>
 
+                    <IconButton
+                        size="small"
+                        disabled={page === 0}
+                        onClick={() => setPage(prev => prev - 1)}
+                        sx={{
+                            borderRadius: 0,
+                            border: '1px solid #e0e0e0',
+                            '&:hover': { borderColor: azulMarino.primary, bgcolor: alpha(azulMarino.primary, 0.05) }
+                        }}
+                    >
+                        <IconChevronLeft size={18} />
+                    </IconButton>
+
                     {generarNumerosPaginas().map((num, idx) =>
                         num === '...' ? (
                             <Box key={`ellipsis-${idx}`} sx={{ px: 1, color: 'text.secondary' }}>...</Box>
@@ -643,6 +657,19 @@ const TablaMatrizStock: React.FC<TablaMatrizStockProps> = ({ onTransferir }) => 
                             </Button>
                         )
                     )}
+
+                    <IconButton
+                        size="small"
+                        disabled={page >= totalPaginas - 1}
+                        onClick={() => setPage(prev => prev + 1)}
+                        sx={{
+                            borderRadius: 0,
+                            border: '1px solid #e0e0e0',
+                            '&:hover': { borderColor: azulMarino.primary, bgcolor: alpha(azulMarino.primary, 0.05) }
+                        }}
+                    >
+                        <IconChevronRight size={18} />
+                    </IconButton>
                 </Stack>
             </Box>
 
