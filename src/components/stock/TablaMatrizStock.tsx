@@ -302,7 +302,7 @@ const TablaMatrizStock: React.FC<TablaMatrizStockProps> = ({ onTransferir }) => 
         };
 
         return [...baseCols, ...dynamicCols, actionCol];
-    }, [puntosUnicos, themeColor]);
+    }, [puntosUnicos]);
 
 
     // --- Handlers ---
