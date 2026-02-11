@@ -34,6 +34,8 @@ import {
   Divider,
   Stack,
 } from '@mui/material';
+import PaginacionMudras from '@/components/ui/PaginacionMudras';
+import { grisRojizo } from "@/ui/colores";
 import {
   IconSearch,
   IconEye,
@@ -72,6 +74,7 @@ export const HistorialVentas: React.FC = () => {
     pagina: 1,
     limite: 150,
   });
+  const tableTopRef = React.useRef<HTMLDivElement>(null);
   const [ventaSeleccionada, setVentaSeleccionada] = useState<VentaCaja | null>(null);
   const [modalDetalleAbierto, setModalDetalleAbierto] = useState(false);
 
@@ -102,19 +105,21 @@ export const HistorialVentas: React.FC = () => {
     }));
   };
 
-  const handlePaginaChange = (event: unknown, nuevaPagina: number) => {
+  const handlePageChange = (newPage: number) => {
     setFiltros(prev => ({
       ...prev,
-      pagina: nuevaPagina + 1,
+      pagina: newPage + 1,
     }));
+    tableTopRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
-  const handleLimiteChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleRowsPerPageChange = (newRowsPerPage: number) => {
     setFiltros(prev => ({
       ...prev,
-      limite: parseInt(event.target.value, 10),
+      limite: newRowsPerPage,
       pagina: 1,
     }));
+    tableTopRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
   const handleVerDetalle = (venta: VentaCaja) => {
@@ -316,6 +321,17 @@ export const HistorialVentas: React.FC = () => {
 
           {!loading && !error && (
             <>
+              <Box ref={tableTopRef} />
+              <PaginacionMudras
+                page={(filtros.pagina || 1) - 1}
+                rowsPerPage={filtros.limite || 150}
+                total={totalRegistros}
+                onPageChange={handlePageChange}
+                onRowsPerPageChange={handleRowsPerPageChange}
+                itemLabel="ventas"
+                accentColor={grisRojizo.primary}
+                rowsPerPageOptions={[50, 100, 150, 300, 500]}
+              />
               <TableContainer>
                 <Table>
                   <TableHead>
@@ -390,18 +406,15 @@ export const HistorialVentas: React.FC = () => {
                 </Table>
               </TableContainer>
 
-              <TablePagination
-                component="div"
-                count={totalRegistros}
+              <PaginacionMudras
                 page={(filtros.pagina || 1) - 1}
-                onPageChange={handlePaginaChange}
                 rowsPerPage={filtros.limite || 150}
-                onRowsPerPageChange={handleLimiteChange}
+                total={totalRegistros}
+                onPageChange={handlePageChange}
+                onRowsPerPageChange={handleRowsPerPageChange}
+                itemLabel="ventas"
+                accentColor={grisRojizo.primary}
                 rowsPerPageOptions={[50, 100, 150, 300, 500]}
-                labelRowsPerPage="Filas por página:"
-                labelDisplayedRows={({ from, to, count }) =>
-                  `${from}-${to} de ${count !== -1 ? count : `más de ${to}`}`
-                }
               />
             </>
           )}

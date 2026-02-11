@@ -37,6 +37,7 @@ import {
 } from '@tabler/icons-react';
 import { exportToExcel, exportToPdf, ExportColumn } from '@/utils/exportUtils';
 import MudrasLoader from '@/components/ui/MudrasLoader';
+import PaginacionMudras from '@/components/ui/PaginacionMudras';
 import { Icon } from '@iconify/react';
 import { BUSCAR_ARTICULOS, GET_ESTADISTICAS_ARTICULOS } from '@/components/articulos/graphql/queries';
 import { GET_RUBROS } from '@/components/rubros/graphql/queries';
@@ -197,6 +198,7 @@ const TablaArticulos: React.FC<ArticulosTableProps> = ({
   tableContainerSx,
   rootSx,
 }) => {
+  const tableTopRef = React.useRef<HTMLDivElement>(null);
   const [page, setPage] = useState(initialServerFilters?.pagina ?? 0);
   const [rowsPerPage, setRowsPerPage] = useState(initialServerFilters?.limite ?? defaultPageSize);
   const [globalInput, setGlobalInput] = useState(initialServerFilters?.busqueda ?? '');
@@ -500,8 +502,7 @@ const TablaArticulos: React.FC<ArticulosTableProps> = ({
     });
   }, [onFiltersChange, filtrosServidor, globalSearch, estadoActual]);
 
-  const handleChangeRowsPerPage = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = parseInt(e.target.value, 10);
+  const handleChangeRowsPerPage = (value: number) => {
     if (!controlledFilters) {
       setRowsPerPage(value);
       setPage(0);
@@ -513,9 +514,10 @@ const TablaArticulos: React.FC<ArticulosTableProps> = ({
       limite: value,
       pagina: 0,
     });
+    tableTopRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
-  const handleChangePage = (_: unknown, newPage: number) => {
+  const handleChangePage = (newPage: number) => {
     if (!controlledFilters) setPage(newPage);
     onFiltersChange?.({
       ...filtrosServidor,
@@ -523,6 +525,7 @@ const TablaArticulos: React.FC<ArticulosTableProps> = ({
       estado: estadoActual,
       pagina: newPage,
     });
+    tableTopRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
   useEffect(() => {
@@ -1242,66 +1245,15 @@ const TablaArticulos: React.FC<ArticulosTableProps> = ({
 
 
   const paginador = (
-    <Box
-      sx={{
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        mt: 3,
-      }}
-    >
-      <Typography variant="caption" color="text.secondary">
-        Mostrando {Math.min(rowsPerPage, articulos.length)} de {total} artículos
-      </Typography>
-
-      <Stack direction="row" spacing={1} alignItems="center">
-        <TextField
-          select
-          size="small"
-          value={String(rowsPerPage)}
-          onChange={handleChangeRowsPerPage}
-          sx={{ minWidth: 80 }}
-        >
-          {rowsPerPageOptions.map((option) => (
-            <MenuItem key={option} value={option}>
-              {option}
-            </MenuItem>
-          ))}
-        </TextField>
-
-        <Typography variant="body2" color="text.secondary">
-          Página {paginaActual} de {Math.max(1, totalPaginas)}
-        </Typography>
-
-        {generarNumerosPaginas().map((num, idx) =>
-          num === '...' ? (
-            <Box key={`ellipsis-${idx}`} sx={{ px: 1, color: 'text.secondary' }}>...</Box>
-          ) : (
-            <Button
-              key={num}
-              variant={Number(num) === paginaActual ? 'contained' : 'outlined'}
-              size="small"
-              sx={{
-                minWidth: 32,
-                px: 1,
-                borderRadius: 0,
-                borderColor: Number(num) === paginaActual ? 'transparent' : '#e0e0e0',
-                bgcolor: Number(num) === paginaActual ? verde.primary : 'transparent',
-                color: Number(num) === paginaActual ? '#fff' : 'text.primary',
-                '&:hover': {
-                  borderColor: verde.primary,
-                  bgcolor: Number(num) === paginaActual ? verde.primaryHover : alpha(verde.primary, 0.05)
-                }
-              }}
-              onClick={() => handleChangePage(null as unknown as Event, Number(num) - 1)}
-              disabled={num === paginaActual}
-            >
-              {num}
-            </Button>
-          )
-        )}
-      </Stack>
-    </Box>
+    <PaginacionMudras
+      page={controlledFilters?.pagina ?? page}
+      rowsPerPage={controlledFilters?.limite ?? rowsPerPage}
+      total={total}
+      onPageChange={handleChangePage}
+      onRowsPerPageChange={handleChangeRowsPerPage}
+      rowsPerPageOptions={rowsPerPageOptions}
+      accentColor={verde.primary}
+    />
   );
 
 
@@ -1334,6 +1286,9 @@ const TablaArticulos: React.FC<ArticulosTableProps> = ({
     <>
       <Box sx={{ width: '100%', ...rootSx }}>
         {showToolbar && toolbar}
+
+        <Box ref={tableTopRef} />
+        {paginador}
 
         {tabla}
         {paginador}

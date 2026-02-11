@@ -23,6 +23,7 @@ import {
   Divider,
   MenuItem,
 } from '@mui/material';
+import PaginacionMudras from '@/components/ui/PaginacionMudras';
 import { alpha } from '@mui/material/styles';
 import { useQuery } from '@apollo/client/react';
 import {
@@ -90,6 +91,7 @@ interface Props {
 }
 
 const TablaUsuarios: React.FC<Props> = () => {
+  const tableTopRef = React.useRef<HTMLDivElement>(null);
   /* ---------- Estado de tabla / filtros ---------- */
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(100);
@@ -150,6 +152,17 @@ const TablaUsuarios: React.FC<Props> = () => {
   }, [data]);
 
   const total = data?.usuariosAdmin?.total ?? 0;
+
+  const handlePageChange = (newPage: number) => {
+    setPage(newPage);
+    tableTopRef.current?.scrollIntoView({ behavior: 'smooth' });
+  };
+
+  const handleRowsPerPageChange = (newRowsPerPage: number) => {
+    setRowsPerPage(newRowsPerPage);
+    setPage(0);
+    tableTopRef.current?.scrollIntoView({ behavior: 'smooth' });
+  };
 
   /* ---------- Handlers ---------- */
   const handleNuevoUsuario = () => {
@@ -470,15 +483,30 @@ const TablaUsuarios: React.FC<Props> = () => {
     <>
       <Box sx={{ width: '100%' }}>
         {toolbar}
-        {tabla}
-        <TablePagination
-          component="div"
-          count={total}
+
+        <Box ref={tableTopRef} />
+        <PaginacionMudras
           page={page}
-          onPageChange={(_, p) => setPage(p)}
           rowsPerPage={rowsPerPage}
-          onRowsPerPageChange={(e) => { setRowsPerPage(parseInt(e.target.value, 10)); setPage(0); }}
-          rowsPerPageOptions={[20, 50, 100]}
+          total={total}
+          onPageChange={handlePageChange}
+          onRowsPerPageChange={handleRowsPerPageChange}
+          itemLabel="usuarios"
+          accentColor={azul.primary}
+          rowsPerPageOptions={[20, 50, 100, 150]}
+        />
+
+        {tabla}
+
+        <PaginacionMudras
+          page={page}
+          rowsPerPage={rowsPerPage}
+          total={total}
+          onPageChange={handlePageChange}
+          onRowsPerPageChange={handleRowsPerPageChange}
+          itemLabel="usuarios"
+          accentColor={azul.primary}
+          rowsPerPageOptions={[20, 50, 100, 150]}
         />
       </Box>
 

@@ -41,6 +41,7 @@ import {
   type ObtenerHistorialVentasResponse,
 } from "@/components/ventas/caja-registradora/graphql/queries";
 import SearchToolbar from "@/components/ui/SearchToolbar";
+import PaginacionMudras from "@/components/ui/PaginacionMudras";
 import ModalDetalleVenta from "./ModalDetalleVenta";
 import { VentasFilterBar } from "./VentasFilterBar";
 import { startOfDay, endOfDay, startOfWeek, endOfWeek, startOfMonth, endOfMonth } from 'date-fns';
@@ -71,6 +72,7 @@ const formatInArgentina = (
 };
 
 export function TablaVentas() {
+  const tableTopRef = React.useRef<HTMLDivElement>(null);
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(50);
   const [busqueda, setBusqueda] = useState("");
@@ -206,8 +208,18 @@ export function TablaVentas() {
 
   // Server-side pagination details
   const totalRegistros = data?.obtenerHistorialVentas?.total || 0;
-  const totalPaginas = data?.obtenerHistorialVentas?.totalPaginas || 0;
   const resumen = data?.obtenerHistorialVentas?.resumen;
+
+  const handlePageChange = (newPage: number) => {
+    setPage(newPage);
+    tableTopRef.current?.scrollIntoView({ behavior: 'smooth' });
+  };
+
+  const handleRowsPerPageChange = (newRowsPerPage: number) => {
+    setRowsPerPage(newRowsPerPage);
+    setPage(0);
+    tableTopRef.current?.scrollIntoView({ behavior: 'smooth' });
+  };
 
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
@@ -290,6 +302,18 @@ export function TablaVentas() {
               </Button>
             </Box>
           }
+        />
+
+        <Box ref={tableTopRef} />
+        <PaginacionMudras
+          page={page}
+          rowsPerPage={rowsPerPage}
+          total={totalRegistros}
+          onPageChange={handlePageChange}
+          onRowsPerPageChange={handleRowsPerPageChange}
+          itemLabel="ventas"
+          accentColor={grisRojizo.primary}
+          rowsPerPageOptions={[50, 100, 150, 300, 500]}
         />
 
         <TableContainer sx={{ maxHeight: 650 }}>
@@ -396,55 +420,16 @@ export function TablaVentas() {
           </Table>
         </TableContainer>
 
-        {/* Pagination */}
-        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', p: 2, borderTop: '1px solid', borderColor: 'divider' }}>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-            <Typography variant="body2" color="text.secondary">
-              Filas por página:
-            </Typography>
-            <TextField
-              select
-              size="small"
-              value={rowsPerPage}
-              onChange={(e) => { setRowsPerPage(parseInt(e.target.value, 10)); setPage(0); }}
-              sx={{
-                minWidth: 70,
-                '& .MuiOutlinedInput-root': { bgcolor: 'background.paper' }
-              }}
-            >
-              {[50, 100, 150, 300, 500].map((option) => (
-                <MenuItem key={option} value={option}>
-                  {option}
-                </MenuItem>
-              ))}
-            </TextField>
-            <Typography variant="body2" color="text.secondary">
-              Total: {totalRegistros}
-            </Typography>
-          </Box>
-
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-            <Button
-              size="small"
-              onClick={() => setPage(Math.max(0, page - 1))}
-              disabled={page === 0}
-              variant="outlined"
-            >
-              Anterior
-            </Button>
-            <Typography variant="body2">
-              Página {page + 1} de {totalPaginas}
-            </Typography>
-            <Button
-              size="small"
-              onClick={() => setPage(Math.min(totalPaginas - 1, page + 1))}
-              disabled={page >= totalPaginas - 1}
-              variant="outlined"
-            >
-              Siguiente
-            </Button>
-          </Box>
-        </Box>
+        <PaginacionMudras
+          page={page}
+          rowsPerPage={rowsPerPage}
+          total={totalRegistros}
+          onPageChange={handlePageChange}
+          onRowsPerPageChange={handleRowsPerPageChange}
+          itemLabel="ventas"
+          accentColor={grisRojizo.primary}
+          rowsPerPageOptions={[50, 100, 150, 300, 500]}
+        />
 
         <ModalDetalleVenta
           open={Boolean(ventaSeleccionada)}

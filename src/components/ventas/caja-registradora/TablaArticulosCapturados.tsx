@@ -11,7 +11,6 @@ import {
   TableContainer,
   TableHead,
   TableRow,
-  TablePagination,
   TextField,
   Checkbox,
   Stack,
@@ -19,6 +18,7 @@ import {
   Divider,
   IconButton,
 } from '@mui/material';
+import PaginacionMudras from '@/components/ui/PaginacionMudras';
 import { alpha } from '@mui/material/styles';
 import {
   IconTrash,
@@ -79,6 +79,7 @@ export const TablaArticulosCapturados: React.FC<TablaArticulosCapturadosProps> =
   onToggleSeleccion,
   onToggleSeleccionTodos,
 }) => {
+  const tableTopRef = React.useRef<HTMLDivElement>(null);
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(150);
   const [editando, setEditando] = useState<number | null>(null);
@@ -144,14 +145,15 @@ export const TablaArticulosCapturados: React.FC<TablaArticulosCapturadosProps> =
     setCantidadTemporal(valor);
   };
 
-  const handleChangePage = (_: unknown, nuevaPagina: number) => {
-    setPage(nuevaPagina);
+  const handlePageChange = (newPage: number) => {
+    setPage(newPage);
+    tableTopRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
-  const handleChangeRowsPerPage = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const nuevaCantidad = parseInt(event.target.value, 10);
-    setRowsPerPage(nuevaCantidad);
+  const handleRowsPerPageChange = (newRowsPerPage: number) => {
+    setRowsPerPage(newRowsPerPage);
     setPage(0);
+    tableTopRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
   if (articulos.length === 0) {
@@ -214,6 +216,18 @@ export const TablaArticulosCapturados: React.FC<TablaArticulosCapturadosProps> =
       </Box>
 
       <Divider sx={{ mb: 2 }} />
+
+      <Box ref={tableTopRef} />
+      <PaginacionMudras
+        page={page}
+        rowsPerPage={rowsPerPage}
+        total={articulos.length}
+        onPageChange={handlePageChange}
+        onRowsPerPageChange={handleRowsPerPageChange}
+        itemLabel="artículos"
+        accentColor={grisRojizo.primary}
+        rowsPerPageOptions={[50, 100, 150, 300, 500]}
+      />
 
       <TableContainer sx={{ bgcolor: '#fff', borderRadius: 0, border: `1px solid ${grisRojizo.borderInner}` }}>
         <Table size="small" stickyHeader>
@@ -374,16 +388,15 @@ export const TablaArticulosCapturados: React.FC<TablaArticulosCapturadosProps> =
         </Table>
       </TableContainer>
 
-      <TablePagination
-        component="div"
-        count={articulos.length}
+      <PaginacionMudras
         page={page}
-        onPageChange={handleChangePage}
         rowsPerPage={rowsPerPage}
-        onRowsPerPageChange={handleChangeRowsPerPage}
+        total={articulos.length}
+        onPageChange={handlePageChange}
+        onRowsPerPageChange={handleRowsPerPageChange}
+        itemLabel="artículos"
+        accentColor={grisRojizo.primary}
         rowsPerPageOptions={[50, 100, 150, 300, 500]}
-        labelRowsPerPage="Filas por página"
-        sx={{ mt: 'auto', borderTop: `1px solid ${grisRojizo.borderInner}` }}
       />
     </Paper>
   );

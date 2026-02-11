@@ -37,6 +37,7 @@ import {
 } from '@tabler/icons-react';
 import { Icon } from '@iconify/react';
 import MudrasLoader from '@/components/ui/MudrasLoader';
+import PaginacionMudras from '@/components/ui/PaginacionMudras';
 import { OBTENER_MATRIZ_STOCK, OBTENER_PUNTOS_MUDRAS, type MatrizStockItem } from '@/components/puntos-mudras/graphql/queries';
 import { GET_RUBROS } from '@/components/rubros/graphql/queries';
 import { GET_PROVEEDORES } from '@/components/proveedores/graphql/queries';
@@ -77,10 +78,22 @@ const themeColor = azulMarino;
 const TablaMatrizStock: React.FC<TablaMatrizStockProps> = ({ onTransferir }) => {
     // --- Estados de Filtros ---
     const [globalSearch, setGlobalSearch] = useState('');
+    const tableTopRef = React.useRef<HTMLDivElement>(null);
     const [globalSearchDraft, setGlobalSearchDraft] = useState('');
     const [filtros, setFiltros] = useState<FiltrosServidor>({});
     const [page, setPage] = useState(0);
     const [rowsPerPage, setRowsPerPage] = useState(150);
+
+    const handlePageChange = (newPage: number) => {
+        setPage(newPage);
+        tableTopRef.current?.scrollIntoView({ behavior: 'smooth' });
+    };
+
+    const handleRowsPerPageChange = (newRowsPerPage: number) => {
+        setRowsPerPage(newRowsPerPage);
+        setPage(0);
+        tableTopRef.current?.scrollIntoView({ behavior: 'smooth' });
+    };
 
     // --- Modal Transferencia ---
     const [modalTransferenciaOpen, setModalTransferenciaOpen] = useState(false);
@@ -542,6 +555,18 @@ const TablaMatrizStock: React.FC<TablaMatrizStockProps> = ({ onTransferir }) => 
                 </Box>
             </Box>
 
+            <Box ref={tableTopRef} />
+
+            {/* --- Top Pagination --- */}
+            <PaginacionMudras
+                page={page}
+                rowsPerPage={rowsPerPage}
+                total={filteredData.length}
+                onPageChange={handlePageChange}
+                onRowsPerPageChange={handleRowsPerPageChange}
+                accentColor={azulMarino.primary}
+            />
+
             {/* --- Table --- */}
             <TableContainer component={Paper} elevation={0} sx={{ borderRadius: 0, border: '1px solid #e0e0e0' }}>
                 <Table size="small">
@@ -583,95 +608,14 @@ const TablaMatrizStock: React.FC<TablaMatrizStockProps> = ({ onTransferir }) => 
                 </Table>
             </TableContainer>
             {/* --- Pagination --- */}
-            <Box
-                sx={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    mt: 3,
-                }}
-            >
-                <Typography variant="caption" color="text.secondary">
-                    Mostrando {Math.min(rowsPerPage, paginatedData.length)} de {filteredData.length} artículos
-                </Typography>
-
-                <Stack direction="row" spacing={1} alignItems="center">
-                    <TextField
-                        select
-                        size="small"
-                        value={String(rowsPerPage)}
-                        onChange={(e) => {
-                            setRowsPerPage(parseInt(e.target.value, 10));
-                            setPage(0);
-                        }}
-                        sx={{ minWidth: 80 }}
-                    >
-                        {[25, 50, 100, 150, 200].map((option) => (
-                            <MenuItem key={option} value={option}>
-                                {option}
-                            </MenuItem>
-                        ))}
-                    </TextField>
-
-                    <Typography variant="body2" color="text.secondary">
-                        Página {paginaActual} de {Math.max(1, totalPaginas)}
-                    </Typography>
-
-                    <IconButton
-                        size="small"
-                        disabled={page === 0}
-                        onClick={() => setPage(prev => prev - 1)}
-                        sx={{
-                            borderRadius: 0,
-                            border: '1px solid #e0e0e0',
-                            '&:hover': { borderColor: azulMarino.primary, bgcolor: alpha(azulMarino.primary, 0.05) }
-                        }}
-                    >
-                        <IconChevronLeft size={18} />
-                    </IconButton>
-
-                    {generarNumerosPaginas().map((num, idx) =>
-                        num === '...' ? (
-                            <Box key={`ellipsis-${idx}`} sx={{ px: 1, color: 'text.secondary' }}>...</Box>
-                        ) : (
-                            <Button
-                                key={num}
-                                variant={Number(num) === paginaActual ? 'contained' : 'outlined'}
-                                size="small"
-                                sx={{
-                                    minWidth: 32,
-                                    px: 1,
-                                    borderRadius: 0,
-                                    borderColor: Number(num) === paginaActual ? 'transparent' : '#e0e0e0',
-                                    bgcolor: Number(num) === paginaActual ? azulMarino.primary : 'transparent',
-                                    color: Number(num) === paginaActual ? '#fff' : 'text.primary',
-                                    '&:hover': {
-                                        borderColor: azulMarino.primary,
-                                        bgcolor: Number(num) === paginaActual ? azulMarino.primary : alpha(azulMarino.primary, 0.05)
-                                    }
-                                }}
-                                onClick={() => setPage(Number(num) - 1)}
-                                disabled={num === paginaActual}
-                            >
-                                {num}
-                            </Button>
-                        )
-                    )}
-
-                    <IconButton
-                        size="small"
-                        disabled={page >= totalPaginas - 1}
-                        onClick={() => setPage(prev => prev + 1)}
-                        sx={{
-                            borderRadius: 0,
-                            border: '1px solid #e0e0e0',
-                            '&:hover': { borderColor: azulMarino.primary, bgcolor: alpha(azulMarino.primary, 0.05) }
-                        }}
-                    >
-                        <IconChevronRight size={18} />
-                    </IconButton>
-                </Stack>
-            </Box>
+            <PaginacionMudras
+                page={page}
+                rowsPerPage={rowsPerPage}
+                total={filteredData.length}
+                onPageChange={handlePageChange}
+                onRowsPerPageChange={handleRowsPerPageChange}
+                accentColor={azulMarino.primary}
+            />
 
             {/* --- Modales --- */}
             {modalTransferenciaOpen && (
