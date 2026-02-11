@@ -79,7 +79,7 @@ const TablaMatrizStock: React.FC<TablaMatrizStockProps> = ({ onTransferir }) => 
     const [globalSearchDraft, setGlobalSearchDraft] = useState('');
     const [filtros, setFiltros] = useState<FiltrosServidor>({});
     const [page, setPage] = useState(0);
-    const [rowsPerPage, setRowsPerPage] = useState(50);
+    const [rowsPerPage, setRowsPerPage] = useState(150);
 
     // --- Modal Transferencia ---
     const [modalTransferenciaOpen, setModalTransferenciaOpen] = useState(false);
@@ -226,6 +226,26 @@ const TablaMatrizStock: React.FC<TablaMatrizStockProps> = ({ onTransferir }) => 
     const paginatedData = useMemo(() => {
         return filteredData.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
     }, [filteredData, page, rowsPerPage]);
+
+    const totalPaginas = Math.ceil(filteredData.length / rowsPerPage);
+    const paginaActual = page + 1;
+
+    const generarNumerosPaginas = () => {
+        const paginas: (number | '...')[] = [];
+        const maxVisible = 7;
+        if (totalPaginas <= maxVisible) {
+            for (let i = 1; i <= totalPaginas; i++) paginas.push(i);
+        } else if (paginaActual <= 4) {
+            for (let i = 1; i <= 5; i++) paginas.push(i);
+            paginas.push('...', totalPaginas);
+        } else if (paginaActual >= totalPaginas - 3) {
+            paginas.push(1, '...');
+            for (let i = totalPaginas - 4; i <= totalPaginas; i++) paginas.push(i);
+        } else {
+            paginas.push(1, '...', paginaActual - 1, paginaActual, paginaActual + 1, '...', totalPaginas);
+        }
+        return paginas;
+    };
 
     // --- Columnas Dinámicas ---
     const puntosUnicos = useMemo(() => {
@@ -561,18 +581,70 @@ const TablaMatrizStock: React.FC<TablaMatrizStockProps> = ({ onTransferir }) => 
                     </TableBody>
                 </Table>
             </TableContainer>
-            <TablePagination
-                rowsPerPageOptions={[25, 50, 100]}
-                component="div"
-                count={filteredData.length}
-                rowsPerPage={rowsPerPage}
-                page={page}
-                onPageChange={(e, newPage) => setPage(newPage)}
-                onRowsPerPageChange={(e) => {
-                    setRowsPerPage(parseInt(e.target.value, 10));
-                    setPage(0);
+            {/* --- Pagination --- */}
+            <Box
+                sx={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    mt: 3,
                 }}
-            />
+            >
+                <Typography variant="caption" color="text.secondary">
+                    Mostrando {Math.min(rowsPerPage, paginatedData.length)} de {filteredData.length} artículos
+                </Typography>
+
+                <Stack direction="row" spacing={1} alignItems="center">
+                    <TextField
+                        select
+                        size="small"
+                        value={String(rowsPerPage)}
+                        onChange={(e) => {
+                            setRowsPerPage(parseInt(e.target.value, 10));
+                            setPage(0);
+                        }}
+                        sx={{ minWidth: 80 }}
+                    >
+                        {[25, 50, 100, 150, 200].map((option) => (
+                            <MenuItem key={option} value={option}>
+                                {option}
+                            </MenuItem>
+                        ))}
+                    </TextField>
+
+                    <Typography variant="body2" color="text.secondary">
+                        Página {paginaActual} de {Math.max(1, totalPaginas)}
+                    </Typography>
+
+                    {generarNumerosPaginas().map((num, idx) =>
+                        num === '...' ? (
+                            <Box key={`ellipsis-${idx}`} sx={{ px: 1, color: 'text.secondary' }}>...</Box>
+                        ) : (
+                            <Button
+                                key={num}
+                                variant={Number(num) === paginaActual ? 'contained' : 'outlined'}
+                                size="small"
+                                sx={{
+                                    minWidth: 32,
+                                    px: 1,
+                                    borderRadius: 0,
+                                    borderColor: Number(num) === paginaActual ? 'transparent' : '#e0e0e0',
+                                    bgcolor: Number(num) === paginaActual ? azulMarino.primary : 'transparent',
+                                    color: Number(num) === paginaActual ? '#fff' : 'text.primary',
+                                    '&:hover': {
+                                        borderColor: azulMarino.primary,
+                                        bgcolor: Number(num) === paginaActual ? azulMarino.primary : alpha(azulMarino.primary, 0.05)
+                                    }
+                                }}
+                                onClick={() => setPage(Number(num) - 1)}
+                                disabled={num === paginaActual}
+                            >
+                                {num}
+                            </Button>
+                        )
+                    )}
+                </Stack>
+            </Box>
 
             {/* --- Modales --- */}
             {modalTransferenciaOpen && (
