@@ -263,7 +263,6 @@ export const OBTENER_MATRIZ_STOCK = gql`
       codigo
       nombre
       rubro
-      proveedorId
       stockTotal
       stockPorPunto {
         puntoId
@@ -279,7 +278,6 @@ export interface MatrizStockItem {
   codigo: string;
   nombre: string;
   rubro: string;
-  proveedorId?: number;
   stockTotal: number;
   stockPorPunto: {
     puntoId: string;

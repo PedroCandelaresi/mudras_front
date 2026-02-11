@@ -152,14 +152,6 @@ const TablaMatrizStock: React.FC<TablaMatrizStockProps> = ({ onTransferir }) => 
         return { rubrosDisponibles: filteredRubros, proveedoresDisponibles: filteredProvs };
     }, [proveedoresData, rubrosData, filtros.proveedorIds, filtros.rubroIds]);
 
-    const proveedorMap = useMemo(() => {
-        const provs = (proveedoresData as any)?.proveedores || [];
-        return new Map<number, string>(
-            provs.map((p: any) => [Number(p.IdProveedor), p.Nombre])
-        );
-    }, [proveedoresData]);
-
-
     // --- Columnas Dinámicas ---
     const puntosUnicos = useMemo(() => {
         const puntosMap = new Map<string, string>(); // id -> nombre
@@ -277,19 +269,6 @@ const TablaMatrizStock: React.FC<TablaMatrizStockProps> = ({ onTransferir }) => 
                                     sx={{
                                         color: verdeMilitar.primary,
                                         borderColor: alpha(verdeMilitar.primary, 0.3),
-                                        height: 20,
-                                        fontSize: '0.7rem'
-                                    }}
-                                />
-                            )}
-                            {item.proveedorId && proveedorMap.get(item.proveedorId) && (
-                                <Chip
-                                    label={proveedorMap.get(item.proveedorId)}
-                                    size="small"
-                                    variant="outlined"
-                                    sx={{
-                                        color: darken(verdeMilitar.primary, 0.4),
-                                        borderColor: alpha(darken(verdeMilitar.primary, 0.4), 0.3),
                                         height: 20,
                                         fontSize: '0.7rem'
                                     }}
