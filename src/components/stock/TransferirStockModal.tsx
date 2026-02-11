@@ -144,22 +144,13 @@ export default function TransferirStockModal({
         setPage(0);
     }, [proveedorSeleccionado, rubroSeleccionado, busqueda]);
 
-    // Update stock when origin changes
-    useEffect(() => {
-        if (articuloSeleccionado && origen) {
-            fetchStockOrigen();
-        } else {
-            setStockEnOrigen(0);
-        }
-    }, [articuloSeleccionado, origen]);
-
-    const fetchStockOrigen = async () => {
-        if (!articuloSeleccionado?.Codigo || !origen) return;
+    const fetchStockOrigen = useCallback(async () => {
+        if (!articuloSeleccionado?.codigo || !origen) return;
         setCargandoStock(true);
         try {
             const { data } = await buscarStockEnPunto({
                 variables: {
-                    busqueda: articuloSeleccionado.Codigo,
+                    busqueda: articuloSeleccionado.codigo,
                     destinoId: Number(origen)
                 }
             });
@@ -171,17 +162,26 @@ export default function TransferirStockModal({
         } finally {
             setCargandoStock(false);
         }
-    };
+    }, [articuloSeleccionado, origen, buscarStockEnPunto]);
+
+    // Update stock when origin changes
+    useEffect(() => {
+        if (articuloSeleccionado && origen) {
+            fetchStockOrigen();
+        } else {
+            setStockEnOrigen(0);
+        }
+    }, [articuloSeleccionado, origen, fetchStockOrigen]);
 
     // --- Handlers ---
-    const handleClearFilters = () => {
+    const handleClearFilters = useCallback(() => {
         setProveedorSeleccionado(null);
         setRubroSeleccionado(null);
         setBusqueda('');
         setPage(0);
-    };
+    }, []);
 
-    const handleClearSelection = () => {
+    const handleClearSelection = useCallback(() => {
         setArticuloSeleccionado(null);
         setOrigen('');
         setDestino('');
@@ -189,9 +189,9 @@ export default function TransferirStockModal({
         setMotivo('');
         setStockEnOrigen(0);
         setConfirmOpen(false);
-    };
+    }, []);
 
-    const handleSelectArticle = (art: any) => {
+    const handleSelectArticle = useCallback((art: any) => {
         if (articuloSeleccionado?.id === art.id) {
             handleClearSelection();
         } else {
@@ -200,7 +200,7 @@ export default function TransferirStockModal({
             setDestino('');
             setCantidad('');
         }
-    };
+    }, [articuloSeleccionado, handleClearSelection]);
 
     const handleSubmit = async () => {
         if (!articuloSeleccionado || !origen || !destino || !cantidad) return;
@@ -222,9 +222,6 @@ export default function TransferirStockModal({
             if (onTransferenciaRealizada) onTransferenciaRealizada();
             window.dispatchEvent(new CustomEvent('stockGlobalActualizado'));
 
-            // Optional: Close modal or just clear selection to allow another transfer
-            // handleClearSelection(); 
-            // For now, let's close it to be consistent with assignment modal behavior
             handleCloseInternal();
 
         } catch (err: any) {
@@ -268,7 +265,7 @@ export default function TransferirStockModal({
                 </Button>
             )
         }
-    ], [articuloSeleccionado, COLORS.border]);
+    ], [articuloSeleccionado, COLORS.border, handleSelectArticle]);
 
     const controlledFilters = useMemo(() => {
         const filters: any = { pagina: page, limite: rowsPerPage };
