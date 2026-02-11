@@ -24,6 +24,7 @@ import {
     Autocomplete,
     Checkbox,
     LinearProgress,
+    TablePagination,
 } from '@mui/material';
 import CheckBoxOutlineBlankIcon from '@mui/icons-material/CheckBoxOutlineBlank';
 import CheckBoxIcon from '@mui/icons-material/CheckBox';
@@ -79,6 +80,8 @@ const TablaMatrizStock: React.FC<TablaMatrizStockProps> = ({ onTransferir }) => 
     const [globalSearch, setGlobalSearch] = useState('');
     const [globalSearchDraft, setGlobalSearchDraft] = useState('');
     const [filtros, setFiltros] = useState<FiltrosServidor>({});
+    const [page, setPage] = useState(0);
+    const [rowsPerPage, setRowsPerPage] = useState(50);
 
     // --- Modal Transferencia ---
     const [modalTransferenciaOpen, setModalTransferenciaOpen] = useState(false);
@@ -104,6 +107,11 @@ const TablaMatrizStock: React.FC<TablaMatrizStockProps> = ({ onTransferir }) => 
     );
 
     const matrizData = data?.obtenerMatrizStock || [];
+
+    // Pagination Logic
+    const paginatedData = useMemo(() => {
+        return matrizData.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
+    }, [matrizData, page, rowsPerPage]);
 
     // --- Filtros Bidireccionales (Rubros/Proveedores) ---
     const { data: rubrosData } = useQuery(GET_RUBROS, { fetchPolicy: 'cache-first' });
@@ -379,11 +387,8 @@ const TablaMatrizStock: React.FC<TablaMatrizStockProps> = ({ onTransferir }) => 
             {/* --- Toolbar (Clone of TablaArticulos) --- */}
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mb: 3, p: 2, bgcolor: '#ffffff', borderBottom: '1px solid #f0f0f0' }}>
                 <Box display="flex" justifyContent="space-between" alignItems="center" flexWrap="wrap" gap={2}>
-                    {/* Left: Title or Actions */}
+                    {/* Left: Actions (Title removed as it's in the Tab) */}
                     <Box display="flex" alignItems="center" gap={2}>
-                        <Typography variant="h6" color={themeColor.primary} fontWeight={700}>
-                            Asignaciones
-                        </Typography>
                         <Button
                             variant="contained"
                             startIcon={<IconPlus size={18} />}
@@ -505,7 +510,7 @@ const TablaMatrizStock: React.FC<TablaMatrizStockProps> = ({ onTransferir }) => 
                         ) : matrizData.length === 0 ? (
                             <TableRow><TableCell colSpan={columns.length} align="center" sx={{ py: 5 }}><Typography>No hay datos</Typography></TableCell></TableRow>
                         ) : (
-                            matrizData.map(item => (
+                            paginatedData.map(item => (
                                 <TableRow key={item.id} hover sx={{ '&:nth-of-type(even)': { bgcolor: themeColor.alternateRow } }}>
                                     {columns.map(col => (
                                         <TableCell key={col.key} align={col.align}>
@@ -518,6 +523,18 @@ const TablaMatrizStock: React.FC<TablaMatrizStockProps> = ({ onTransferir }) => 
                     </TableBody>
                 </Table>
             </TableContainer>
+            <TablePagination
+                rowsPerPageOptions={[25, 50, 100]}
+                component="div"
+                count={matrizData.length}
+                rowsPerPage={rowsPerPage}
+                page={page}
+                onPageChange={(e, newPage) => setPage(newPage)}
+                onRowsPerPageChange={(e) => {
+                    setRowsPerPage(parseInt(e.target.value, 10));
+                    setPage(0);
+                }}
+            />
 
             {/* --- Modales --- */}
             {modalTransferenciaOpen && (
