@@ -31,7 +31,7 @@ import { alpha } from '@mui/material/styles';
 import { useQuery, useApolloClient } from '@apollo/client/react';
 import {
     IconSearch, IconRefresh, IconDotsVertical,
-    IconFileTypePdf, IconFileSpreadsheet, IconArrowRight
+    IconFileTypePdf, IconFileSpreadsheet, IconArrowRight, IconPlus
 } from '@tabler/icons-react';
 import { Icon } from '@iconify/react';
 import MudrasLoader from '@/components/ui/MudrasLoader';
@@ -216,6 +216,12 @@ const TablaMatrizStock: React.FC<TablaMatrizStockProps> = ({ onTransferir }) => 
         setModalTransferenciaOpen(true);
     };
 
+    const handleNuevaAsignacion = () => {
+        setTransferItem(null);
+        setTransferOrigen(null);
+        setModalTransferenciaOpen(true);
+    };
+
     const ejecutarBusqueda = () => {
         setGlobalSearch(globalSearchDraft);
     };
@@ -253,9 +259,9 @@ const TablaMatrizStock: React.FC<TablaMatrizStockProps> = ({ onTransferir }) => 
                                     }}
                                 />
                             )}
-                            {item.proveedor && (
+                            {(item as any).proveedor && (
                                 <Chip
-                                    label={item.proveedor}
+                                    label={(item as any).proveedor}
                                     size="small"
                                     variant="outlined"
                                     sx={{
@@ -291,7 +297,7 @@ const TablaMatrizStock: React.FC<TablaMatrizStockProps> = ({ onTransferir }) => 
                 { header: 'Código', key: 'codigo', width: 15 },
                 { header: 'Descripción', key: 'nombre', width: 40 },
                 { header: 'Rubro', key: 'rubro', width: 20 },
-                { header: 'Proveedor', key: 'proveedor', width: 20 },
+                // { header: 'Proveedor', key: 'proveedor', width: 20 },
                 { header: 'Total', key: 'stockTotal', width: 10 },
             ];
 
@@ -323,9 +329,24 @@ const TablaMatrizStock: React.FC<TablaMatrizStockProps> = ({ onTransferir }) => 
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mb: 3, p: 2, bgcolor: '#ffffff', borderBottom: '1px solid #f0f0f0' }}>
                 <Box display="flex" justifyContent="space-between" alignItems="center" flexWrap="wrap" gap={2}>
                     {/* Left: Title or Actions */}
-                    <Typography variant="h6" color={themeColor.primary} fontWeight={700}>
-                        Asignaciones
-                    </Typography>
+                    <Box display="flex" alignItems="center" gap={2}>
+                        <Typography variant="h6" color={themeColor.primary} fontWeight={700}>
+                            Asignaciones
+                        </Typography>
+                        <Button
+                            variant="contained"
+                            startIcon={<IconPlus size={18} />}
+                            onClick={handleNuevaAsignacion}
+                            sx={{
+                                bgcolor: themeColor.primary,
+                                '&:hover': { bgcolor: alpha(themeColor.primary, 0.9) },
+                                textTransform: 'none',
+                                borderRadius: 1
+                            }}
+                        >
+                            Nueva Asignación
+                        </Button>
+                    </Box>
 
                     {/* Right: Search + Limpiar */}
                     <Box display="flex" alignItems="center" gap={2} flexWrap="wrap">
