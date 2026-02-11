@@ -43,7 +43,7 @@ import { exportToExcel, exportToPdf, ExportColumn } from '@/utils/exportUtils';
 import TransferirStockModal from './TransferirStockModal';
 
 /* ======================== Tipos ======================== */
-type MatrizColumnKey = 'codigo' | 'descripcion' | 'rubro' | 'stockTotal' | 'acciones' | string;
+type MatrizColumnKey = 'codigo' | 'descripcion' | 'rubro' | 'proveedor' | 'stockTotal' | 'acciones' | string;
 
 export type ColumnDef = {
     key: MatrizColumnKey;
@@ -168,7 +168,6 @@ const TablaMatrizStock: React.FC<TablaMatrizStockProps> = ({ onTransferir }) => 
         const baseCols: ColumnDef[] = [
             { key: 'codigo', header: 'Código', width: 100 },
             { key: 'descripcion', header: 'Descripción', width: 300 },
-            { key: 'rubro', header: 'Rubro', width: 150 },
             { key: 'stockTotal', header: 'Total', width: 100, align: 'center' },
         ];
 
@@ -235,11 +234,41 @@ const TablaMatrizStock: React.FC<TablaMatrizStockProps> = ({ onTransferir }) => 
             case 'codigo':
                 return <Chip label={item.codigo} size="small" sx={{ borderRadius: 1, bgcolor: '#f5f5f5', fontWeight: 600 }} />;
             case 'descripcion':
-                return <Typography variant="body2" fontWeight={600} color={headerBg}>{item.nombre}</Typography>;
-            case 'rubro':
-                return item.rubro ? (
-                    <Chip label={item.rubro} size="small" variant="outlined" sx={{ color: themeColor.primary, borderColor: alpha(themeColor.primary, 0.3) }} />
-                ) : null;
+                return (
+                    <Box display="flex" flexDirection="column" gap={0.5}>
+                        <Typography variant="body2" fontWeight={600} color={headerBg}>
+                            {item.nombre}
+                        </Typography>
+                        <Box display="flex" gap={0.5} flexWrap="wrap">
+                            {item.rubro && (
+                                <Chip
+                                    label={item.rubro}
+                                    size="small"
+                                    variant="outlined"
+                                    sx={{
+                                        color: themeColor.primary,
+                                        borderColor: alpha(themeColor.primary, 0.3),
+                                        height: 20,
+                                        fontSize: '0.7rem'
+                                    }}
+                                />
+                            )}
+                            {item.proveedor && (
+                                <Chip
+                                    label={item.proveedor}
+                                    size="small"
+                                    variant="outlined"
+                                    sx={{
+                                        color: themeColor.textStrong,
+                                        borderColor: alpha(themeColor.textStrong, 0.3),
+                                        height: 20,
+                                        fontSize: '0.7rem'
+                                    }}
+                                />
+                            )}
+                        </Box>
+                    </Box>
+                );
             case 'stockTotal':
                 return <Typography variant="body2" fontWeight={700}>{item.stockTotal}</Typography>;
             default:
@@ -262,6 +291,7 @@ const TablaMatrizStock: React.FC<TablaMatrizStockProps> = ({ onTransferir }) => 
                 { header: 'Código', key: 'codigo', width: 15 },
                 { header: 'Descripción', key: 'nombre', width: 40 },
                 { header: 'Rubro', key: 'rubro', width: 20 },
+                { header: 'Proveedor', key: 'proveedor', width: 20 },
                 { header: 'Total', key: 'stockTotal', width: 10 },
             ];
 
@@ -294,7 +324,7 @@ const TablaMatrizStock: React.FC<TablaMatrizStockProps> = ({ onTransferir }) => 
                 <Box display="flex" justifyContent="space-between" alignItems="center" flexWrap="wrap" gap={2}>
                     {/* Left: Title or Actions */}
                     <Typography variant="h6" color={themeColor.primary} fontWeight={700}>
-                        Matriz de Stock
+                        Asignaciones
                     </Typography>
 
                     {/* Right: Search + Limpiar */}
