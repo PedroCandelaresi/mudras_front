@@ -38,6 +38,8 @@ import MudrasLoader from '@/components/ui/MudrasLoader';
 import { OBTENER_MATRIZ_STOCK, OBTENER_PUNTOS_MUDRAS, type MatrizStockItem } from '@/components/puntos-mudras/graphql/queries';
 import { GET_RUBROS } from '@/components/rubros/graphql/queries';
 import { GET_PROVEEDORES } from '@/components/proveedores/graphql/queries';
+import { GET_ARTICULOS } from '@/components/articulos/graphql/queries';
+import type { Articulo } from '@/app/interfaces/mudras.types';
 import { azulMarino, verde, azul, verdeMilitar } from '@/ui/colores';
 import { exportToExcel, exportToPdf, ExportColumn } from '@/utils/exportUtils';
 import TransferirStockModal from './TransferirStockModal';
@@ -106,17 +108,42 @@ const TablaMatrizStock: React.FC<TablaMatrizStockProps> = ({ onTransferir }) => 
     // --- Filtros Bidireccionales (Rubros/Proveedores) ---
     const { data: rubrosData } = useQuery(GET_RUBROS, { fetchPolicy: 'cache-first' });
     const { data: proveedoresData } = useQuery(GET_PROVEEDORES, { fetchPolicy: 'cache-first' });
+    const { data: articulosData } = useQuery(GET_ARTICULOS, { fetchPolicy: 'cache-first' });
+
+    // Mapa de ArticuloID -> ProveedorID para "unir" los datos en el cliente
+    const articleProviderMap = useMemo(() => {
+        const map = new Map<string, number>();
+        const arts = (articulosData as any)?.articulos || [];
+        arts.forEach((a: Articulo) => {
+            if (a.id && a.idProveedor) {
+                map.set(String(a.id), a.idProveedor);
+            }
+        });
+        return map;
+    }, [articulosData]);
+
+    // Mapa de ProveedorID -> Info para mostrar el Chip
+    const proveedorInfoMap = useMemo(() => {
+        const map = new Map<number, string>();
+        const provs = (proveedoresData as any)?.proveedores || [];
+        provs.forEach((p: any) => {
+            map.set(Number(p.IdProveedor), p.Nombre);
+        });
+        return map;
+    }, [proveedoresData]);
 
     const { rubrosDisponibles, proveedoresDisponibles } = useMemo(() => {
         const allProvs: any[] = (proveedoresData as any)?.proveedores || [];
         const allRubros: any[] = (rubrosData as any)?.obtenerRubros || [];
 
+        // Mapas de relaciones (copiado de TablaArticulos)
         const provToRubros = new Map<number, Set<number>>();
         const rubroToProvs = new Map<number, Set<number>>();
 
         allProvs.forEach((p) => {
             const pId = Number(p.IdProveedor);
             const pRubros = (p.proveedorRubros || []).map((pr: any) => Number(pr.rubro?.Id));
+
             if (p.rubroId) pRubros.push(Number(p.rubroId));
 
             const rubroSet = new Set<number>(pRubros);
@@ -128,9 +155,11 @@ const TablaMatrizStock: React.FC<TablaMatrizStockProps> = ({ onTransferir }) => 
             });
         });
 
+        // Filtros activos
         const activeProvIds = filtros.proveedorIds || [];
         const activeRubroIds = filtros.rubroIds || [];
 
+        // Calcular proveedores disponibles
         let filteredProvs = allProvs;
         if (activeRubroIds.length > 0) {
             const allowedProvs = new Set<number>();
@@ -140,6 +169,7 @@ const TablaMatrizStock: React.FC<TablaMatrizStockProps> = ({ onTransferir }) => 
             filteredProvs = allProvs.filter(p => allowedProvs.has(Number(p.IdProveedor)));
         }
 
+        // Calcular rubros disponibles
         let filteredRubros = allRubros;
         if (activeProvIds.length > 0) {
             const allowedRubros = new Set<number>();
@@ -274,6 +304,23 @@ const TablaMatrizStock: React.FC<TablaMatrizStockProps> = ({ onTransferir }) => 
                                     }}
                                 />
                             )}
+                            {(() => {
+                                const provId = articleProviderMap.get(String(item.id));
+                                const provName = provId ? proveedorInfoMap.get(provId) : null;
+                                return provName ? (
+                                    <Chip
+                                        label={provName}
+                                        size="small"
+                                        variant="outlined"
+                                        sx={{
+                                            color: darken(verdeMilitar.primary, 0.4),
+                                            borderColor: alpha(darken(verdeMilitar.primary, 0.4), 0.3),
+                                            height: 20,
+                                            fontSize: '0.7rem'
+                                        }}
+                                    />
+                                ) : null;
+                            })()}
                         </Box>
                     </Box>
                 );
