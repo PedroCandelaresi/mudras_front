@@ -20,7 +20,9 @@ import {
   TableHead,
   TableRow,
   Paper,
-  IconButton
+  IconButton,
+  Tooltip,
+  Chip
 } from '@mui/material';
 import { alpha, darken } from '@mui/material/styles';
 import { useMutation, useQuery, useApolloClient } from '@apollo/client/react';
@@ -320,14 +322,18 @@ const ModalNuevoArticulo = ({ open, onClose, articulo, onSuccess, accentColor }:
           const results = await Promise.all(promises);
 
           const nuevoStockPorPunto: Record<string, string> = {};
+          let sumaTotal = 0;
+
           results.forEach(res => {
             if (res) {
               nuevoStockPorPunto[res.puntoId] = String(res.cantidad);
+              sumaTotal += res.cantidad;
             }
           });
 
           setForm(prev => ({
             ...prev,
+            stock: String(sumaTotal), // Actualizamos el stock global con la suma real
             stockPorPunto: { ...prev.stockPorPunto, ...nuevoStockPorPunto }
           }));
 
@@ -486,7 +492,24 @@ const ModalNuevoArticulo = ({ open, onClose, articulo, onSuccess, accentColor }:
     }
   };
 
-  const botonHabilitado = form.descripcion.trim().length > 0 && form.costo.trim().length > 0 && !saving;
+  const botonHabilitado = useMemo(() => {
+    // Validaciones básicas
+    if (!form.descripcion.trim()) return false;
+    if (!form.costo.trim()) return false;
+    if (saving) return false;
+
+    // Validación de STOCK
+    const stockTotal = parseNumericInput(form.stock);
+    if (stockTotal > 0) {
+      const asignadoTotal = Object.values(form.stockPorPunto).reduce((acc, curr) => acc + (parseFloat(curr) || 0), 0);
+      // Debe estar completamente asignado (con margen de error por float)
+      if (Math.abs(stockTotal - asignadoTotal) > 0.01) {
+        return false;
+      }
+    }
+
+    return true;
+  }, [form, saving]);
 
   return (
     <Dialog
@@ -782,158 +805,178 @@ const ModalNuevoArticulo = ({ open, onClose, articulo, onSuccess, accentColor }:
               {selectedProveedor?.PorcentajeRecargoProveedor ?? 0}% / -
               {selectedProveedor?.PorcentajeDescuentoProveedor ?? 0}%
             </Typography>
-            <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)' }, gap: 1.5 }}>
-              <TextField
-                label="Stock total / Inicial"
-                name="stock"
-                value={form.stock}
-                onChange={handleNumericChange}
-                inputMode="decimal"
-                fullWidth
-                // Si se quiere bloquear en edición, usar: disabled={editando}
-                // El usuario pidió ingresar cantidad inicial, así que lo habilitamos.
-                helperText="Stock global inicial"
-                disabled={!canEditStock}
-                sx={{
-                  '& .MuiOutlinedInput-root': {
-                    borderRadius: 0,
-                    background: '#ffffff',
-                    '& fieldset': { borderColor: COLORS.inputBorder },
-                    '&:hover fieldset': { borderColor: COLORS.inputBorderHover },
-                    '&.Mui-focused fieldset': { borderColor: COLORS.primary },
-                  },
-                }}
-              />
-              <TextField
-                label="Stock mínimo"
-                name="stockMinimo"
-                value={form.stockMinimo}
-                onChange={handleNumericChange}
-                inputMode="decimal"
-                fullWidth
-                sx={{
-                  '& .MuiOutlinedInput-root': {
-                    borderRadius: 0,
-                    background: '#ffffff',
-                    '& fieldset': { borderColor: COLORS.inputBorder },
-                    '&:hover fieldset': { borderColor: COLORS.inputBorderHover },
-                    '&.Mui-focused fieldset': { borderColor: COLORS.primary },
-                  },
-                }}
-              />
-            </Box>
 
-            <Box sx={{ mt: 3 }}>
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-                <Typography variant="subtitle2" color={COLORS.textStrong}>
-                  Distribución de Stock
+            {/* STOCK DISTRIBUTION UI */}
+            <Box sx={{ gridColumn: { xs: '1 / -1', sm: '1 / -1' }, mt: 2, p: 3, bgcolor: '#f9fafb', border: `1px solid ${alpha(COLORS.primary, 0.1)}`, borderRadius: 2 }}>
+              <Typography variant="subtitle1" fontWeight={700} color={COLORS.textStrong} sx={{ mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
+                <Icon icon="mdi:dolly" />
+                DISTRIBUCIÓN DE STOCK INICIAL
+              </Typography>
+
+              {/* Global Input */}
+              <Box sx={{ mb: 3 }}>
+                <Typography variant="subtitle2" fontWeight={700} color="text.secondary" sx={{ mb: 1, display: 'block', textTransform: 'uppercase', fontSize: '0.75rem' }}>
+                  Paso 1: Definir Total a Ingresar
                 </Typography>
-                <Box sx={{ display: 'flex', gap: 2 }}>
-                  <Typography variant="caption" color="text.secondary">
-                    Global: <strong>{form.stock || 0}</strong>
-                  </Typography>
-                  <Typography variant="caption" color={
-                    (Object.values(form.stockPorPunto).reduce((acc, curr) => acc + (parseFloat(curr) || 0), 0) > (parseFloat(form.stock) || 0))
-                      ? 'error.main'
-                      : 'success.main'
-                  }>
-                    Asignado: <strong>{Object.values(form.stockPorPunto).reduce((acc, curr) => acc + (parseFloat(curr) || 0), 0)}</strong>
-                  </Typography>
-                  <Typography variant="caption" color="text.secondary">
-                    Restante: <strong>{Math.max(0, (parseFloat(form.stock) || 0) - Object.values(form.stockPorPunto).reduce((acc, curr) => acc + (parseFloat(curr) || 0), 0))}</strong>
-                  </Typography>
+                <TextField
+                  fullWidth
+                  name="stock"
+                  value={form.stock}
+                  onChange={handleNumericChange}
+                  placeholder="0"
+                  disabled={!canEditStock}
+                  InputProps={{
+                    sx: { fontSize: '1.5rem', fontWeight: 700, color: COLORS.primary, bgcolor: '#fff', textAlign: 'center' }
+                  }}
+                  sx={{ mb: 1 }}
+                />
+
+                {/* Metrics */}
+                <Box display="flex" justifyContent="space-between" mt={1} px={1}>
+                  <Box>
+                    <Typography variant="caption" display="block" fontWeight={600} color="text.secondary">ASIGNADO</Typography>
+                    <Typography variant="h6" fontWeight={700} color={
+                      (() => {
+                        const total = parseNumericInput(form.stock);
+                        const asignado = Object.values(form.stockPorPunto).reduce((acc, curr) => acc + (parseFloat(curr) || 0), 0);
+                        return asignado > total ? 'error.main' : 'text.primary';
+                      })()
+                    }>
+                      {Object.values(form.stockPorPunto).reduce((acc, curr) => acc + (parseFloat(curr) || 0), 0)}
+                    </Typography>
+                  </Box>
+                  <Box textAlign="right">
+                    <Typography variant="caption" display="block" fontWeight={600} color="text.secondary">RESTANTE</Typography>
+                    <Typography variant="h6" fontWeight={700} color={
+                      (() => {
+                        const total = parseNumericInput(form.stock);
+                        const asignado = Object.values(form.stockPorPunto).reduce((acc, curr) => acc + (parseFloat(curr) || 0), 0);
+                        const restante = Math.max(0, total - asignado);
+                        return restante === 0 && total > 0 ? 'success.main' : 'text.primary';
+                      })()
+                    }>
+                      {Math.max(0, parseNumericInput(form.stock) - Object.values(form.stockPorPunto).reduce((acc, curr) => acc + (parseFloat(curr) || 0), 0))}
+                    </Typography>
+                  </Box>
                 </Box>
               </Box>
 
-              {(!puntosMudras || puntosMudras.length === 0) ? (
-                <Typography variant="body2" color="text.secondary" sx={{ fontStyle: 'italic' }}>
-                  No hay puntos de venta/depósitos disponibles para asignar stock.
-                </Typography>
-              ) : loadingStock ? (
-                <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}>
-                  <CircularProgress size={24} />
-                </Box>
-              ) : (
-                <TableContainer component={Paper} elevation={0} sx={{ border: `1px solid ${COLORS.inputBorder}`, borderRadius: 0 }}>
-                  <Table size="small">
-                    <TableHead sx={{ bgcolor: alpha(COLORS.primary, 0.05) }}>
-                      <TableRow>
-                        <TableCell sx={{ fontWeight: 600, color: COLORS.textStrong }}>Punto / Depósito</TableCell>
-                        <TableCell align="right" sx={{ fontWeight: 600, color: COLORS.textStrong, width: 150 }}>Cantidad Asignada</TableCell>
-                      </TableRow>
-                    </TableHead>
-                    <TableBody>
-                      {puntosMudras.map((punto: any) => {
-                        const stockGlobal = parseFloat(form.stock) || 0;
-                        const asignadoTotal = Object.entries(form.stockPorPunto).reduce((acc, [id, val]) => acc + (parseFloat(val) || 0), 0);
-                        const asignadoEstePunto = parseFloat(form.stockPorPunto[punto.id] || '0');
-                        const restanteGlobal = Math.max(0, stockGlobal - (asignadoTotal - asignadoEstePunto));
+              <Divider sx={{ mb: 3 }} />
 
-                        return (
-                          <TableRow key={punto.id} sx={{ '&:last-child td, &:last-child th': { border: 0 } }}>
-                            <TableCell component="th" scope="row">
-                              <Typography variant="body2" color="text.primary">
-                                {punto.nombre}
-                              </Typography>
-                              {punto.esDeposito && (
-                                <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
-                                  (Depósito)
+              {/* Points List */}
+              <Typography variant="subtitle2" fontWeight={700} color="text.secondary" sx={{ mb: 2, display: 'block', textTransform: 'uppercase', fontSize: '0.75rem' }}>
+                Paso 2: Distribuir por Punto
+              </Typography>
+
+              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                {loadingStock ? (
+                  <Box sx={{ display: 'flex', justifyContent: 'center', p: 3 }}>
+                    <CircularProgress size={24} />
+                  </Box>
+                ) : (
+                  puntosMudras
+                    .filter((p: any) => p.activo)
+                    .sort((a: any, b: any) => a.nombre.localeCompare(b.nombre))
+                    .map((punto: any) => {
+                      const valStr = form.stockPorPunto[punto.id] || '';
+                      const stockTotal = parseNumericInput(form.stock);
+                      const asignadoTotal = Object.values(form.stockPorPunto).reduce((acc, curr) => acc + (parseFloat(curr) || 0), 0);
+                      const currentVal = parseFloat(valStr || '0');
+                      const restante = Math.max(0, stockTotal - asignadoTotal);
+
+                      // Stock actual en DB (si editamos)
+                      // Nota: stockPorPunto NO tiene el stock actual, tiene la asignación NUEVA.
+                      // Deberíamos mostrar el stock actual visualmente pero no sumarlo a la asignación de ingreso.
+                      // El requerimiento original era "asignar el stock global... a los distintos puntos".
+                      // En creación: stock global es lo que entra.
+                      // En edición: stock global podría ser aumentar stock?
+                      // El modal original tenía "Stock" que mapeaba a `stock` field.
+                      // Asumiremos que este input "stockPorPunto" es para ASIGNAR EL VALOR INGRESADO EN "STOCK TOTAL".
+
+                      return (
+                        <Paper key={punto.id} elevation={0} sx={{ p: 2, border: `1px solid ${COLORS.inputBorder}`, bgcolor: '#fff', borderRadius: 1 }}>
+                          <Box display="flex" justifyContent="space-between" alignItems="center">
+                            <Box>
+                              <Box display="flex" alignItems="center" gap={1} mb={0.5}>
+                                <Icon icon={punto.tipo === 'deposito' ? 'mdi:warehouse' : 'mdi:store'} width={20} color={COLORS.primary} />
+                                <Typography variant="subtitle2" fontWeight={700}>{punto.nombre}</Typography>
+                              </Box>
+                              {editando && (
+                                <Typography variant="caption" color="text.secondary">
+                                  {/* Aquí idealmente mostraríamos el stock actual que trajimos en useEffect */}
+                                  Stock actual: {
+                                    // Recuperar valor original si lo tenemos, o fallback a lo que sea
+                                    // Como no tenemos el stock 'original' por punto guardado en state separado fácilmente accesible aquí sin recorrer,
+                                    // simplificamos. En el useEffect de carga poblamos `stockPorPunto` con el actual? 
+                                    // Si poblamos `stockPorPunto` con el actual, entonces `form.stock` debería ser la SUMA de stocks actuales?
+                                    // REVISAR LOGICA DE CARGA:
+                                    // En useEffect: setForm(.. stockPorPunto: { ...nuevoStockPorPunto } ..)
+                                    // O sea que stockPorPunto YA trae valores.
+                                    // Entonces `stock` (global) debería reflejar la suma de esos valores al abrir modal editar.
+                                    // Ver abajo corrección en useEffect.
+
+                                    // Si es edición, el usuario puede querer sumar o corregir.
+                                    // Si corregimos, el input es el valor final.
+                                    "Consultar"
+                                  }
                                 </Typography>
                               )}
-                            </TableCell>
-                            <TableCell align="right">
+                            </Box>
+
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                              {restante > 0 && (
+                                <Tooltip title="Asignar restante">
+                                  <IconButton
+                                    size="small"
+                                    sx={{
+                                      color: COLORS.primary,
+                                      bgcolor: alpha(COLORS.primary, 0.1),
+                                      '&:hover': { bgcolor: alpha(COLORS.primary, 0.2) },
+                                      width: 28, // Smaller
+                                      height: 28
+                                    }}
+                                    onClick={() => {
+                                      const nuevoValor = currentVal + restante;
+                                      setForm(prev => ({
+                                        ...prev,
+                                        stockPorPunto: { ...prev.stockPorPunto, [punto.id]: String(nuevoValor) }
+                                      }));
+                                    }}
+                                  >
+                                    <Icon icon="mdi:arrow-up-bold" width={16} />
+                                  </IconButton>
+                                </Tooltip>
+                              )}
                               <TextField
-                                value={form.stockPorPunto[punto.id] || ''}
-                                onChange={(e) => {
-                                  const val = e.target.value;
-
-                                  // Check regex before updating
-                                  if (val !== '' && !/^\d+[.,]?\d*$/.test(val)) return;
-
-                                  const numVal = parseFloat(val);
-
-                                  // Validación: No permitir ingresar más de lo restante
-                                  if (!isNaN(numVal) && numVal > restanteGlobal) {
-                                    // Implementación: Bloquear si excede.
-                                    return;
-                                  }
-
-                                  setForm(prev => ({
-                                    ...prev,
-                                    stockPorPunto: {
-                                      ...prev.stockPorPunto,
-                                      [punto.id]: val
-                                    }
-                                  }));
-                                }}
-                                inputMode="decimal"
                                 size="small"
-                                placeholder="0"
-                                InputProps={{
-                                  sx: {
-                                    borderRadius: 1,
-                                    '& input': { textAlign: 'right', py: 0.5 }
+                                value={valStr}
+                                onChange={(e) => {
+                                  const v = e.target.value;
+                                  if (/^\d*\.?\d*$/.test(v)) {
+                                    const newVal = parseFloat(v || '0');
+                                    const currentExcluding = asignadoTotal - currentVal;
+                                    // Validamos que no se pase del total
+                                    if (currentExcluding + newVal <= stockTotal + 0.01) { // +0.01 margen float
+                                      setForm(prev => ({
+                                        ...prev,
+                                        stockPorPunto: { ...prev.stockPorPunto, [punto.id]: v }
+                                      }));
+                                    }
                                   }
                                 }}
-                                disabled={stockGlobal <= 0} // Deshabilitar si no hay stock global
-                                sx={{ width: '100%' }}
+                                placeholder="0"
+                                disabled={stockTotal <= 0}
+                                sx={{ width: 90 }}
+                                InputProps={{ sx: { textAlign: 'right', fontWeight: 700 } }}
                               />
-                            </TableCell>
-                          </TableRow>
-                        );
-                      })}
-                    </TableBody>
-                    {/* Fila de resumen si se desea, por ahora el header tiene los totales */}
-                  </Table>
-                </TableContainer>
-              )}
+                            </Box>
+                          </Box>
+                        </Paper>
+                      );
+                    })
+                )}
+              </Box>
             </Box>
-
-            {error && (
-              <Typography variant="body2" color="error">
-                {error}
-              </Typography>
-            )}
           </Box>
         </DialogContent>
 
@@ -959,12 +1002,13 @@ const ModalNuevoArticulo = ({ open, onClose, articulo, onSuccess, accentColor }:
           </Button>
         </DialogActions>
       </Box>
+
       <ModalSubirImagen
         open={modalUploadOpen}
         onClose={() => setModalUploadOpen(false)}
         onUploadSuccess={(url) => setForm(prev => ({ ...prev, imagenUrl: url }))}
       />
-    </Dialog >
+    </Dialog>
   );
 };
 
