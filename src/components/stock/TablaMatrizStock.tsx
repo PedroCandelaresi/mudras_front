@@ -152,6 +152,13 @@ const TablaMatrizStock: React.FC<TablaMatrizStockProps> = ({ onTransferir }) => 
         return { rubrosDisponibles: filteredRubros, proveedoresDisponibles: filteredProvs };
     }, [proveedoresData, rubrosData, filtros.proveedorIds, filtros.rubroIds]);
 
+    const proveedorMap = useMemo(() => {
+        const provs = (proveedoresData as any)?.proveedores || [];
+        return new Map<number, string>(
+            provs.map((p: any) => [Number(p.IdProveedor), p.Nombre])
+        );
+    }, [proveedoresData]);
+
 
     // --- Columnas Dinámicas ---
     const puntosUnicos = useMemo(() => {
@@ -180,9 +187,25 @@ const TablaMatrizStock: React.FC<TablaMatrizStockProps> = ({ onTransferir }) => 
             render: (item) => {
                 const stock = item.stockPorPunto.find(sp => sp.puntoId === p.id)?.cantidad || 0;
                 return (
-                    <Typography variant="body2" fontWeight={stock > 0 ? 600 : 400} color={stock > 0 ? 'text.primary' : 'text.disabled'}>
-                        {stock}
-                    </Typography>
+                    <Box display="flex" alignItems="center" justifyContent="center" gap={1}>
+                        <Typography variant="body2" fontWeight={stock > 0 ? 600 : 400} color={stock > 0 ? 'text.primary' : 'text.disabled'}>
+                            {stock}
+                        </Typography>
+                        <Tooltip title={`Transferir desde ${p.nombre}`}>
+                            <IconButton
+                                size="small"
+                                onClick={() => handleOpenTransfer(item, Number(p.id))}
+                                sx={{
+                                    opacity: 0.6,
+                                    '&:hover': { opacity: 1, color: themeColor.primary },
+                                    width: 24,
+                                    height: 24
+                                }}
+                            >
+                                <IconArrowRight size={16} />
+                            </IconButton>
+                        </Tooltip>
+                    </Box>
                 );
             }
         }));
@@ -259,9 +282,9 @@ const TablaMatrizStock: React.FC<TablaMatrizStockProps> = ({ onTransferir }) => 
                                     }}
                                 />
                             )}
-                            {(item as any).proveedor && (
+                            {item.proveedorId && proveedorMap.get(item.proveedorId) && (
                                 <Chip
-                                    label={(item as any).proveedor}
+                                    label={proveedorMap.get(item.proveedorId)}
                                     size="small"
                                     variant="outlined"
                                     sx={{
