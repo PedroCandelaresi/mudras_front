@@ -38,7 +38,7 @@ import { GET_PROVEEDORES } from '@/components/proveedores/graphql/queries';
 import MenuItem from '@mui/material/MenuItem';
 import { calcularPrecioVenta, obtenerCostoReferencia } from '@/utils/precioVenta';
 import { OBTENER_PUNTOS_MUDRAS, OBTENER_STOCK_PUNTO_MUDRAS, BUSCAR_ARTICULOS_PARA_ASIGNACION } from '@/components/puntos-mudras/graphql/queries';
-import { MODIFICAR_STOCK_PUNTO } from '@/components/puntos-mudras/graphql/mutations';
+import { AJUSTAR_STOCK } from '@/components/stock/graphql/mutations';
 import { usePermisos } from '@/lib/permisos';
 
 type FormState = {
@@ -166,7 +166,7 @@ const ModalNuevoArticulo = ({ open, onClose, articulo, onSuccess, accentColor }:
   const [actualizarArticulo] = useMutation(ACTUALIZAR_ARTICULO, {
     refetchQueries: [{ query: BUSCAR_ARTICULOS }],
   });
-  const [modificarStockPunto] = useMutation(MODIFICAR_STOCK_PUNTO);
+  const [ajustarStock] = useMutation(AJUSTAR_STOCK);
 
   // Consultar puntos mudras
   const { data: dataPuntos } = useQuery(OBTENER_PUNTOS_MUDRAS);
@@ -470,11 +470,14 @@ const ModalNuevoArticulo = ({ open, onClose, articulo, onSuccess, accentColor }:
         const promesasTicket = Object.entries(form.stockPorPunto).map(async ([puntoId, cantidadStr]) => {
           const cant = parseFloat(cantidadStr);
           if (!isNaN(cant) && cant > 0) { // Solo enviamos si hay cantidad positiva explícita
-            await modificarStockPunto({
+            await ajustarStock({
               variables: {
-                puntoMudrasId: Number(puntoId),
-                articuloId: Number(articuloGuardadoId),
-                nuevaCantidad: cant
+                input: {
+                  puntoMudrasId: Number(puntoId),
+                  articuloId: Number(articuloGuardadoId),
+                  nuevaCantidad: cant,
+                  motivo: 'Stock Inicial nuevo artículo'
+                }
               }
             });
           }

@@ -38,7 +38,7 @@ import { TablaArticulos } from '@/components/articulos';
 import { OBTENER_PUNTOS_MUDRAS, type ObtenerPuntosMudrasResponse } from '@/components/puntos-mudras/graphql/queries';
 import { GET_RUBROS } from '@/components/rubros/graphql/queries';
 import { GET_PROVEEDORES } from '@/components/proveedores/graphql/queries';
-import { MODIFICAR_STOCK_PUNTO } from '@/components/puntos-mudras/graphql/mutations';
+import { AJUSTAR_STOCK } from '@/components/stock/graphql/mutations';
 import {
   OBTENER_STOCK_PUNTO_MUDRAS,
   BUSCAR_ARTICULOS_PARA_ASIGNACION,
@@ -134,7 +134,7 @@ export default function ModalNuevaAsignacionStock({
   const { data: dataProveedores } = useQuery(GET_PROVEEDORES);
   const { data: dataRubros } = useQuery(GET_RUBROS);
 
-  const [modificarStockPunto] = useMutation(MODIFICAR_STOCK_PUNTO);
+  const [ajustarStock] = useMutation(AJUSTAR_STOCK);
   const [buscarArticuloEnPunto] = useLazyQuery<BuscarArticulosParaAsignacionResponse>(BUSCAR_ARTICULOS_PARA_ASIGNACION, {
     fetchPolicy: 'network-only' // Ensure we get fresh stock data
   });
@@ -299,11 +299,14 @@ export default function ModalNuevaAsignacionStock({
           const stockActual = stockActualPorPunto[puntoId] || 0;
           const nuevaCantidad = stockActual + cantidadAsignada;
 
-          return modificarStockPunto({
+          return ajustarStock({
             variables: {
-              puntoMudrasId: Number(puntoId),
-              articuloId: Number(articuloSeleccionado.id),
-              nuevaCantidad: nuevaCantidad
+              input: {
+                puntoMudrasId: Number(puntoId),
+                articuloId: Number(articuloSeleccionado.id),
+                nuevaCantidad: nuevaCantidad,
+                motivo: 'Asignación de stock global'
+              }
             }
           });
         }

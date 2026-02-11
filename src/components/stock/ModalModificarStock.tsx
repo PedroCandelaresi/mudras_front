@@ -24,7 +24,8 @@ import {
   Tooltip
 } from '@mui/material';
 import { Icon } from '@iconify/react';
-// import { useMutation } from '@apollo/client';
+import { useMutation } from '@apollo/client/react';
+import { AJUSTAR_STOCK } from '@/components/stock/graphql/mutations';
 import { PuntoMudras } from '@/interfaces/puntos-mudras';
 import { verde } from '@/ui/colores';
 
@@ -54,6 +55,8 @@ export default function ModalModificarStock({
   const [stockPorPuntos, setStockPorPuntos] = useState<StockPorPunto[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+
+  const [ajustarStock] = useMutation(AJUSTAR_STOCK);
 
   useEffect(() => {
     if (articulo && puntosVenta.length > 0) {
@@ -113,12 +116,37 @@ export default function ModalModificarStock({
     setLoading(true);
 
     try {
-      // Aquí iría la mutation para actualizar el stock
-      // Por ahora simulamos la operación
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      // Create an array of promises for each modified point
+      const promises = stockPorPuntos
+        .filter(punto => {
+          // Only update points where stock actually changed
+          const nuevo = parseFloat(punto.stockNuevo) || 0;
+          return nuevo !== punto.stockActual;
+        })
+        .map(async (punto) => {
+          const nuevoStock = parseFloat(punto.stockNuevo) || 0;
 
-      onStockActualizado();
-      onClose();
+          return ajustarStock({
+            variables: {
+              input: {
+                puntoMudrasId: punto.puntoVentaId,
+                articuloId: Number(articulo.id),
+                nuevaCantidad: nuevoStock,
+                motivo: 'Ajuste manual desde ficha de artículo'
+              }
+            }
+          });
+        });
+
+      if (promises.length > 0) {
+        await Promise.all(promises);
+        onStockActualizado();
+        onClose();
+      } else {
+        // No changes made
+        onClose();
+      }
+
     } catch (err: any) {
       setError(err.message || 'Error al actualizar el stock');
     } finally {

@@ -139,21 +139,21 @@ export default function IngresoStockModal({
             if (articuloPreseleccionado) {
                 const stockPunto = articuloPreseleccionado.stockPorPunto?.find((s: any) => s.puntoId === puntoDestino);
                 stockActual = stockPunto?.cantidad || 0;
-            } else {
-                // Caso búsqueda: No tenemos el stock por punto en la respuesta de búsqueda ligera.
-                await ajustarStock({
-                    variables: {
-                        input: {
-                            puntoMudrasId: Number(puntoDestino),
-                            articuloId: Number(selectedArticle.id),
-                            nuevaCantidad: Number(cantidad),
-                            motivo: motivo || 'Ajuste de stock desde panel global'
-                        }
-                    }
-                });
-                onClose();
-                window.dispatchEvent(new CustomEvent('stockGlobalActualizado'));
             }
+
+            // Execute mutation for both cases
+            await ajustarStock({
+                variables: {
+                    input: {
+                        puntoMudrasId: Number(puntoDestino),
+                        articuloId: Number(selectedArticle.id),
+                        nuevaCantidad: Number(cantidad),
+                        motivo: motivo || 'Ajuste de stock desde panel global'
+                    }
+                }
+            });
+            onClose();
+            window.dispatchEvent(new CustomEvent('stockGlobalActualizado'));
         } catch (err: any) {
             setError(err.message || 'Error al realizar el ajuste');
         }

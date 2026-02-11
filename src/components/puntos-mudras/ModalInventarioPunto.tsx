@@ -16,7 +16,8 @@ import {
   type ArticuloConStockPuntoMudras,
 } from '@/components/puntos-mudras/graphql/queries';
 import Tooltip from '@mui/material/Tooltip';
-import { MODIFICAR_STOCK_PUNTO, TRANSFERIR_STOCK_PUNTO } from '@/components/puntos-mudras/graphql/mutations';
+import { TRANSFERIR_STOCK_PUNTO } from '@/components/puntos-mudras/graphql/mutations';
+import { AJUSTAR_STOCK } from '@/components/stock/graphql/mutations';
 import { verde } from '@/ui/colores';
 
 type Props = { open: boolean; onClose: () => void; punto: { id: number; nombre: string; tipo: 'venta' | 'deposito' } | null };
@@ -27,7 +28,7 @@ const ModalInventarioPunto: React.FC<Props> = ({ open, onClose, punto }) => {
   const puntoId = punto?.id ?? 0;
   const { data, loading, error, refetch } = useQuery<ObtenerStockPuntoMudrasResponse>(OBTENER_STOCK_PUNTO_MUDRAS, { skip: !open || !puntoId, variables: { puntoMudrasId: puntoId }, fetchPolicy: 'cache-and-network' });
   const items: ArticuloInventario[] = data?.obtenerStockPuntoMudras ?? [];
-  const [modificar] = useMutation(MODIFICAR_STOCK_PUNTO);
+  const [ajustarStock] = useMutation(AJUSTAR_STOCK);
   const [transferir] = useMutation(TRANSFERIR_STOCK_PUNTO);
   const [destinoId, setDestinoId] = useState('');
   const { data: puntosData } = useQuery<ObtenerPuntosMudrasResponse>(OBTENER_PUNTOS_MUDRAS, { fetchPolicy: 'cache-and-network' });
@@ -46,7 +47,16 @@ const ModalInventarioPunto: React.FC<Props> = ({ open, onClose, punto }) => {
     if (!Number.isFinite(nuevaCantidad)) return;
     if (nuevaCantidad === actual) return;
     try {
-      await modificar({ variables: { puntoMudrasId: puntoId, articuloId, nuevaCantidad } });
+      await ajustarStock({
+        variables: {
+          input: {
+            puntoMudrasId: Number(puntoId),
+            articuloId: Number(articuloId),
+            nuevaCantidad: nuevaCantidad,
+            motivo: 'Ajuste manual desde inventario'
+          }
+        }
+      });
       setAjustes((prev) => ({ ...prev, [articuloId]: '' }));
       setSnack({ open: true, msg: 'Stock actualizado', sev: 'success' });
       refetch();

@@ -34,11 +34,13 @@ import {
   IconNotes,
   IconRefresh,
   IconFileTypePdf,
-  IconFileSpreadsheet
+  IconFileSpreadsheet,
+  IconFilterOff
 } from '@tabler/icons-react';
 import { exportToExcel, exportToPdf, ExportColumn } from '@/utils/exportUtils';
 
 import { GET_MOVIMIENTOS_STOCK_FULL } from '@/components/articulos/graphql/queries';
+import { USUARIOS_ADMIN_QUERY } from '@/components/usuarios/graphql/queries';
 import { borgoña } from '@/ui/colores';
 
 // -- Interfaces locales --
@@ -125,8 +127,18 @@ const TablaMovimientosStock = () => {
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(50);
   const [filtroTipo, setFiltroTipo] = useState<string>('');
+  const [fechaDesde, setFechaDesde] = useState<string>('');
+  const [fechaHasta, setFechaHasta] = useState<string>('');
+  const [usuarioId, setUsuarioId] = useState<number | ''>('');
   const [exporting, setExporting] = useState(false);
   const client = useApolloClient();
+
+  // Query Usuarios
+  const { data: dataUsuarios } = useQuery(USUARIOS_ADMIN_QUERY, {
+    variables: { filtros: { limite: 100, pagina: 0 } }, // Traemos los primeros 100 usuarios, debería ser suficiente para filtros comunes
+    fetchPolicy: 'cache-first',
+  });
+  const usuarios = useMemo(() => (dataUsuarios as any)?.usuariosAdmin?.items || [], [dataUsuarios]);
 
   // Query Apollo
   const { data, loading, error, refetch } = useQuery<MovimientosFullData>(GET_MOVIMIENTOS_STOCK_FULL, {
@@ -135,6 +147,9 @@ const TablaMovimientosStock = () => {
         offset: page * rowsPerPage,
         limite: rowsPerPage,
         tipoMovimiento: filtroTipo || undefined,
+        fechaDesde: fechaDesde || undefined,
+        fechaHasta: fechaHasta || undefined,
+        usuarioId: usuarioId ? Number(usuarioId) : undefined,
       }
     },
     fetchPolicy: 'cache-and-network',
@@ -154,6 +169,14 @@ const TablaMovimientosStock = () => {
 
   const handleRefresh = () => {
     void refetch();
+  };
+
+  const limpiarFiltros = () => {
+    setFiltroTipo('');
+    setFechaDesde('');
+    setFechaHasta('');
+    setUsuarioId('');
+    setPage(0);
   };
 
   // Paginación helper
@@ -183,6 +206,9 @@ const TablaMovimientosStock = () => {
             offset: 0,
             limite: 100000,
             tipoMovimiento: filtroTipo || undefined,
+            fechaDesde: fechaDesde || undefined,
+            fechaHasta: fechaHasta || undefined,
+            usuarioId: usuarioId ? Number(usuarioId) : undefined,
           }
         },
         fetchPolicy: 'network-only',
@@ -204,6 +230,12 @@ const TablaMovimientosStock = () => {
 
       const filterParts: string[] = [];
       if (filtroTipo) filterParts.push(`Tipo: ${getTipoLabel(filtroTipo)}`);
+      if (fechaDesde) filterParts.push(`Desde: ${fechaDesde}`);
+      if (fechaHasta) filterParts.push(`Hasta: ${fechaHasta}`);
+      if (usuarioId) {
+        const u = usuarios.find((u: any) => Number(u.id) === Number(usuarioId));
+        if (u) filterParts.push(`Usuario: ${u.username}`);
+      }
       const filterSummary = filterParts.join(' | ');
 
       if (type === 'excel') {
@@ -224,31 +256,108 @@ const TablaMovimientosStock = () => {
     <Box
       sx={{
         display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
+        flexDirection: 'column',
+        gap: 2,
         mb: 3,
         p: 2,
         bgcolor: '#ffffff',
       }}
     >
-      {/* IZQUIERDA: Título */}
-      <Box display="flex" alignItems="center" gap={1}>
-        <IconNotes size={24} color={borgoña.primary} />
-        <Typography variant="h6" color={borgoña.textStrong} fontWeight={700}>
-          MOVIMIENTOS DE STOCK
-        </Typography>
+      <Box display="flex" justifyContent="space-between" alignItems="center">
+        {/* IZQUIERDA: Título */}
+        <Box display="flex" alignItems="center" gap={1}>
+          <IconNotes size={24} color={borgoña.primary} />
+          <Typography variant="h6" color={borgoña.textStrong} fontWeight={700}>
+            MOVIMIENTOS DE STOCK
+          </Typography>
+        </Box>
+
+        {/* DERECHA: Botones Acción */}
+        <Box display="flex" gap={1}>
+          <Button
+            variant="outlined"
+            size="small"
+            startIcon={<IconFileSpreadsheet size={18} />}
+            onClick={() => handleExportar('excel')}
+            disabled={exporting}
+            sx={{ borderRadius: 0, textTransform: 'none', color: '#1D6F42', borderColor: '#1D6F42', '&:hover': { bgcolor: alpha('#1D6F42', 0.1), borderColor: '#1D6F42' } }}
+          >
+            Excel
+          </Button>
+          <Button
+            variant="outlined"
+            size="small"
+            startIcon={<IconFileTypePdf size={18} />}
+            onClick={() => handleExportar('pdf')}
+            disabled={exporting}
+            sx={{ borderRadius: 0, textTransform: 'none', color: '#D32F2F', borderColor: '#D32F2F', '&:hover': { bgcolor: alpha('#D32F2F', 0.1), borderColor: '#D32F2F' } }}
+          >
+            PDF
+          </Button>
+          <Button
+            variant="outlined"
+            startIcon={<IconRefresh size={18} />}
+            onClick={handleRefresh}
+            sx={{
+              borderRadius: 0,
+              textTransform: 'none',
+              color: '#757575',
+              borderColor: '#e0e0e0',
+              '&:hover': { borderColor: '#bdbdbd', bgcolor: '#f5f5f5' }
+            }}
+          >
+            Actualizar
+          </Button>
+        </Box>
       </Box>
 
-      {/* DERECHA: Filtros y Actualizar */}
-      <Box display="flex" alignItems="center" gap={2}>
+      {/* FILTROS */}
+      <Box display="flex" gap={2} flexWrap="wrap" alignItems="center">
+        <TextField
+          label="Desde"
+          type="date"
+          size="small"
+          value={fechaDesde}
+          onChange={(e) => { setFechaDesde(e.target.value); setPage(0); }}
+          InputLabelProps={{ shrink: true }}
+          sx={{
+            width: 150,
+            '& .MuiOutlinedInput-root': {
+              borderRadius: 0,
+              bgcolor: '#f5f5f5',
+              '& fieldset': { borderColor: '#e0e0e0' },
+              '&:hover fieldset': { borderColor: '#bdbdbd' },
+              '&.Mui-focused fieldset': { borderColor: borgoña.primary },
+            }
+          }}
+        />
+        <TextField
+          label="Hasta"
+          type="date"
+          size="small"
+          value={fechaHasta}
+          onChange={(e) => { setFechaHasta(e.target.value); setPage(0); }}
+          InputLabelProps={{ shrink: true }}
+          sx={{
+            width: 150,
+            '& .MuiOutlinedInput-root': {
+              borderRadius: 0,
+              bgcolor: '#f5f5f5',
+              '& fieldset': { borderColor: '#e0e0e0' },
+              '&:hover fieldset': { borderColor: '#bdbdbd' },
+              '&.Mui-focused fieldset': { borderColor: borgoña.primary },
+            }
+          }}
+        />
+
         <TextField
           select
           size="small"
-          label="Tipo de Movimiento"
+          label="Tipo"
           value={filtroTipo}
           onChange={(e) => { setFiltroTipo(e.target.value); setPage(0); }}
           sx={{
-            minWidth: 200,
+            minWidth: 150,
             '& .MuiOutlinedInput-root': {
               borderRadius: 0,
               bgcolor: '#f5f5f5',
@@ -267,41 +376,45 @@ const TablaMovimientosStock = () => {
           <MenuItem value="devolucion">Devolución</MenuItem>
         </TextField>
 
-        <Button
-          variant="outlined"
-          startIcon={<IconRefresh size={18} />}
-          onClick={handleRefresh}
+        <TextField
+          select
+          size="small"
+          label="Usuario"
+          value={usuarioId}
+          onChange={(e) => { setUsuarioId(e.target.value === '' ? '' : Number(e.target.value)); setPage(0); }}
           sx={{
-            borderRadius: 0,
-            textTransform: 'none',
-            color: '#757575',
-            borderColor: '#e0e0e0',
-            height: 40,
-            '&:hover': { borderColor: '#bdbdbd', bgcolor: '#f5f5f5' }
+            minWidth: 200,
+            '& .MuiOutlinedInput-root': {
+              borderRadius: 0,
+              bgcolor: '#f5f5f5',
+              '& fieldset': { borderColor: '#e0e0e0' },
+              '&:hover fieldset': { borderColor: '#bdbdbd' },
+              '&.Mui-focused fieldset': { borderColor: borgoña.primary },
+            }
           }}
         >
-          Actualizar
-        </Button>
-        <Button
-          variant="outlined"
-          size="small"
-          startIcon={<IconFileSpreadsheet size={18} />}
-          onClick={() => handleExportar('excel')}
-          disabled={exporting}
-          sx={{ borderRadius: 0, textTransform: 'none', color: '#1D6F42', borderColor: '#1D6F42', '&:hover': { bgcolor: alpha('#1D6F42', 0.1), borderColor: '#1D6F42' }, height: 40 }}
-        >
-          Excel
-        </Button>
-        <Button
-          variant="outlined"
-          size="small"
-          startIcon={<IconFileTypePdf size={18} />}
-          onClick={() => handleExportar('pdf')}
-          disabled={exporting}
-          sx={{ borderRadius: 0, textTransform: 'none', color: '#D32F2F', borderColor: '#D32F2F', '&:hover': { bgcolor: alpha('#D32F2F', 0.1), borderColor: '#D32F2F' }, height: 40 }}
-        >
-          PDF
-        </Button>
+          <MenuItem value="">Todos</MenuItem>
+          {usuarios.map((user: any) => (
+            <MenuItem key={user.id} value={user.id}>
+              {user.username} {user.displayName ? `(${user.displayName})` : ''}
+            </MenuItem>
+          ))}
+        </TextField>
+
+        {(filtroTipo || fechaDesde || fechaHasta || usuarioId) && (
+          <Button
+            size="small"
+            startIcon={<IconFilterOff size={16} />}
+            onClick={limpiarFiltros}
+            sx={{
+              textTransform: 'none',
+              color: 'text.secondary',
+              '&:hover': { bgcolor: 'transparent', textDecoration: 'underline' }
+            }}
+          >
+            Limpiar filtros
+          </Button>
+        )}
       </Box>
     </Box>
   );

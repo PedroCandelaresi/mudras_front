@@ -1,13 +1,14 @@
+import { gql } from '@apollo/client';
 
-export {
-  ACTUALIZAR_STOCK_PUNTO_MUDRAS,
-  CREAR_ASIGNACION_STOCK,
-  DESAFECTAR_STOCK,
-  REASIGNAR_STOCK,
-  type DistribucionStockInput,
-  type ActualizarStockResponse,
-  type CrearAsignacionStockInput,
-  type CrearAsignacionResponse,
-  type DesafectarStockResponse,
-  type ReasignarStockResponse,
-} from './queries';
+export const AJUSTAR_STOCK = gql`
+  mutation AjustarStock($input: AjustarStockInput!) {
+    ajustarStock(input: $input)
+  }
+`;
+
+export interface AjustarStockInput {
+  puntoMudrasId: number;
+  articuloId: number;
+  nuevaCantidad: number;
+  motivo: string;
+}

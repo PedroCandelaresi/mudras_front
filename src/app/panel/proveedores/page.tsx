@@ -4,9 +4,10 @@ import { Box } from '@mui/material';
 import PageContainer from '@/components/container/PageContainer';
 import ProveedoresTable from '@/components/proveedores/TablaProveedores';
 import TablaPedidos from '@/components/pedidos/TablaPedidos';
+import TablaRubros from '@/components/rubros/TablaRubros';
 import StylizedTabbedPanel, { type StylizedTabDefinition } from '@/components/ui/StylizedTabbedPanel';
 import { Icon } from '@iconify/react';
-import { azul, azulOscuro } from '@/ui/colores';
+import { azul, azulOscuro, verdeMilitar } from '@/ui/colores';
 
 const tabs: StylizedTabDefinition[] = [
   {
@@ -14,6 +15,12 @@ const tabs: StylizedTabDefinition[] = [
     label: 'Proveedores',
     icon: <Icon icon="mdi:account-group" />,
     color: azul.primary,
+  },
+  {
+    key: 'rubros',
+    label: 'Rubros',
+    icon: <Icon icon="mdi:tag" />,
+    color: verdeMilitar.primary,
   },
   {
     key: 'pedidos',
@@ -25,14 +32,14 @@ const tabs: StylizedTabDefinition[] = [
 
 export default function Proveedores() {
   const [userRole] = useState<'admin' | 'diseñadora' | 'vendedor'>('admin');
-  const [activeTab, setActiveTab] = useState<'proveedores' | 'pedidos'>('proveedores');
+  const [activeTab, setActiveTab] = useState<'proveedores' | 'pedidos' | 'rubros'>('proveedores');
 
   return (
     <PageContainer title="Proveedores - Mudras" description="Gestión de proveedores">
       <StylizedTabbedPanel
         tabs={tabs}
         activeKey={activeTab}
-        onChange={(key) => setActiveTab(key as 'proveedores' | 'pedidos')}
+        onChange={(key) => setActiveTab(key as any)}
       >
         <Box sx={{ pt: 1 }}>
           {activeTab === 'proveedores' && (
@@ -49,6 +56,18 @@ export default function Proveedores() {
                   console.log('Nuevo proveedor');
                 }}
               />
+            </Box>
+          )}
+
+          {activeTab === 'rubros' && (
+            <Box
+              sx={{
+                borderRadius: 0,
+                bgcolor: '#ffffff',
+                transition: 'background-color .2s ease',
+              }}
+            >
+              <TablaRubros puedeCrear={userRole === 'admin' || userRole === 'diseñadora'} />
             </Box>
           )}
 

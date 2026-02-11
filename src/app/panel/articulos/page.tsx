@@ -5,7 +5,6 @@ import { Box } from '@mui/material';
 import PageContainer from '@/components/container/PageContainer';
 
 import TablaArticulos from '@/components/articulos/TablaArticulos';
-import TablaRubros from '@/components/rubros/TablaRubros';
 import TablaMovimientosStock from '@/components/stock/TablaMovimientosStock';
 import ModalNuevoArticulo from '@/components/articulos/ModalNuevoArticulo';
 import ModalModificarStock from '@/components/articulos/ModalModificarStock';
@@ -15,12 +14,11 @@ import StylizedTabbedPanel, { type StylizedTabDefinition } from '@/components/ui
 
 const tabs: StylizedTabDefinition[] = [
   { key: 'articulos', label: 'Artículos', icon: <Icon icon="mdi:cube-outline" />, color: verdeMilitar.primary },
-  { key: 'rubros', label: 'Rubros', icon: <Icon icon="mdi:tag" />, color: verdeMilitar.primary },
   { key: 'movimientos', label: 'Movimientos de Stock', icon: <Icon icon="mdi:swap-horizontal" />, color: verdeMilitar.primary },
 ];
 
 export default function ArticulosPage() {
-  const [activeTab, setActiveTab] = useState<'articulos' | 'rubros' | 'movimientos'>('articulos');
+  const [activeTab, setActiveTab] = useState<'articulos' | 'movimientos'>('articulos');
   const [modalNuevoOpen, setModalNuevoOpen] = useState(false);
   const [modalStockOpen, setModalStockOpen] = useState(false);
   const [articuloSeleccionado, setArticuloSeleccionado] = useState<Articulo | null>(null);
@@ -75,15 +73,7 @@ export default function ArticulosPage() {
             </Box>
           )}
 
-          {activeTab === 'rubros' && (
-            <Box sx={{
-              borderRadius: 0,
-              bgcolor: '#ffffff',
-              transition: 'background-color .2s ease',
-            }}>
-              <TablaRubros puedeCrear={userRole === 'admin' || userRole === 'diseñadora'} />
-            </Box>
-          )}
+
 
           {activeTab === 'movimientos' && (
             <Box sx={{
