@@ -806,6 +806,25 @@ const ModalNuevoArticulo = ({ open, onClose, articulo, onSuccess, accentColor }:
               {selectedProveedor?.PorcentajeDescuentoProveedor ?? 0}%
             </Typography>
 
+            <TextField
+              label="Stock Mínimo (Alerta crítica)"
+              name="stockMinimo"
+              value={form.stockMinimo}
+              onChange={handleNumericChange}
+              inputMode="decimal"
+              fullWidth
+              helperText="Se mostrará una alerta cuando el stock global sea menor o igual a este valor"
+              sx={{
+                '& .MuiOutlinedInput-root': {
+                  borderRadius: 0,
+                  background: '#ffffff',
+                  '& fieldset': { borderColor: COLORS.inputBorder },
+                  '&:hover fieldset': { borderColor: COLORS.inputBorderHover },
+                  '&.Mui-focused fieldset': { borderColor: COLORS.primary },
+                },
+              }}
+            />
+
             {/* STOCK DISTRIBUTION UI */}
             <Box sx={{ gridColumn: { xs: '1 / -1', sm: '1 / -1' }, mt: 2, p: 3, bgcolor: '#f9fafb', border: `1px solid ${alpha(COLORS.primary, 0.1)}`, borderRadius: 2 }}>
               <Typography variant="subtitle1" fontWeight={700} color={COLORS.textStrong} sx={{ mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
