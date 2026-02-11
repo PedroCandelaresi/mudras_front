@@ -60,8 +60,6 @@ export type ColumnDef = {
 /* ======================== Filtros ======================== */
 type FiltrosServidor = {
     busqueda?: string;
-    rubro?: string;
-    proveedorId?: number;
     rubroIds?: number[];
     proveedorIds?: number[];
 };
@@ -97,10 +95,6 @@ const TablaMatrizStock: React.FC<TablaMatrizStockProps> = ({ onTransferir }) => 
         {
             variables: {
                 busqueda: globalSearch || undefined,
-                rubro: filtros.rubro || undefined,
-                proveedorId: filtros.proveedorId || undefined,
-                // Nota: El backend de matriz podría necesitar actualizarse para soportar arrays de IDs si queremos filtro múltiple real en la query
-                // Por ahora mapeamos el primero si existe o usamos lógica de cliente si el backend no soporta múltiple
             },
             fetchPolicy: 'cache-and-network',
         }
@@ -512,8 +506,7 @@ const TablaMatrizStock: React.FC<TablaMatrizStockProps> = ({ onTransferir }) => 
                             value={rubrosDisponibles.filter((r: any) => (filtros.rubroIds || []).includes(Number(r.id)))}
                             onChange={(_, newValue) => {
                                 const ids = newValue.map((v: any) => Number(v.id));
-                                const names = newValue.map((v: any) => v.nombre || v.Rubro).join(','); // Hack if query uses string
-                                setFiltros(prev => ({ ...prev, rubroIds: ids, rubro: names }));
+                                setFiltros(prev => ({ ...prev, rubroIds: ids }));
                             }}
                             renderOption={(props, option: any, { selected }) => (
                                 <li {...props}>
