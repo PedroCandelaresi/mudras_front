@@ -255,3 +255,37 @@ export interface ObtenerRelacionesProveedorRubroResponse {
 export interface ObtenerEstadisticasProveedorRubroResponse {
   obtenerEstadisticasProveedorRubro: EstadisticasProveedorRubro;
 }
+
+export const OBTENER_MATRIZ_STOCK = gql`
+  query ObtenerMatrizStock($busqueda: String, $rubro: String, $proveedorId: Int) {
+    obtenerMatrizStock(busqueda: $busqueda, rubro: $rubro, proveedorId: $proveedorId) {
+      id
+      codigo
+      nombre
+      rubro
+      stockTotal
+      stockPorPunto {
+        puntoId
+        puntoNombre
+        cantidad
+      }
+    }
+  }
+`;
+
+export interface MatrizStockItem {
+  id: string;
+  codigo: string;
+  nombre: string;
+  rubro: string;
+  stockTotal: number;
+  stockPorPunto: {
+    puntoId: string;
+    puntoNombre: string;
+    cantidad: number;
+  }[];
+}
+
+export interface ObtenerMatrizStockResponse {
+  obtenerMatrizStock: MatrizStockItem[];
+}

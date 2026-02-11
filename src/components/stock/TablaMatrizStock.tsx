@@ -1,265 +1,440 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React, { useEffect, useMemo, useState, useCallback } from 'react';
 import {
     Box,
+    Button,
+    Chip,
+    Divider,
+    IconButton,
+    InputAdornment,
+    Menu,
+    MenuItem,
+    Paper,
+    Stack,
     Table,
     TableBody,
     TableCell,
     TableContainer,
     TableHead,
     TableRow,
-    Typography,
-    Paper,
-    Chip,
-    Tooltip,
-    IconButton,
-    TablePagination,
     TextField,
-    InputAdornment,
-    CircularProgress
+    Tooltip,
+    Typography,
+    Autocomplete,
+    Checkbox,
+    LinearProgress,
 } from '@mui/material';
-import { alpha, darken } from '@mui/material/styles';
+import CheckBoxOutlineBlankIcon from '@mui/icons-material/CheckBoxOutlineBlank';
+import CheckBoxIcon from '@mui/icons-material/CheckBox';
+import { alpha } from '@mui/material/styles';
+import { useQuery, useApolloClient } from '@apollo/client/react';
+import {
+    IconSearch, IconRefresh, IconDotsVertical,
+    IconFileTypePdf, IconFileSpreadsheet, IconArrowRight
+} from '@tabler/icons-react';
 import { Icon } from '@iconify/react';
-import { IconArrowsLeftRight } from '@tabler/icons-react';
-import { verdeMilitar } from '@/ui/colores';
+import MudrasLoader from '@/components/ui/MudrasLoader';
+import { OBTENER_MATRIZ_STOCK, OBTENER_PUNTOS_MUDRAS, type MatrizStockItem } from '@/components/puntos-mudras/graphql/queries';
+import { GET_RUBROS } from '@/components/rubros/graphql/queries';
+import { GET_PROVEEDORES } from '@/components/proveedores/graphql/queries';
+import { azulMarino, verde, azul } from '@/ui/colores';
+import { exportToExcel, exportToPdf, ExportColumn } from '@/utils/exportUtils';
+import TransferirStockModal from './TransferirStockModal';
 
-export interface StockPunto {
-    puntoId: number;
-    puntoNombre: string;
-    cantidad: number;
-}
+/* ======================== Tipos ======================== */
+type MatrizColumnKey = 'codigo' | 'descripcion' | 'rubro' | 'stockTotal' | 'acciones' | string;
 
-export interface ArticuloMatriz {
-    id: number;
-    codigo?: string;
-    nombre: string;
+export type ColumnDef = {
+    key: MatrizColumnKey;
+    header?: string;
+    width?: string | number;
+    render?: (item: MatrizStockItem) => React.ReactNode;
+    align?: 'left' | 'center' | 'right';
+    isDynamic?: boolean;
+};
+
+/* ======================== Filtros ======================== */
+type FiltrosServidor = {
+    busqueda?: string;
     rubro?: string;
-    stockTotal: number;
-    stockPorPunto: StockPunto[];
-}
+    proveedorId?: number;
+    rubroIds?: number[];
+    proveedorIds?: number[];
+};
 
-export interface PuntoMudras {
-    id: number;
-    nombre: string;
-    tipo: 'venta' | 'deposito';
-    activo: boolean;
-}
+type TablaMatrizStockProps = {
+    onTransferir?: (item: MatrizStockItem, puntoId?: number) => void;
+};
 
-interface TablaMatrizStockProps {
-    articulos: ArticuloMatriz[];
-    puntos: PuntoMudras[];
-    loading: boolean;
-    onTransferir: (articulo: ArticuloMatriz, puntoOriginId?: number) => void;
-}
+/* ======================== Estética ======================== */
+// Usamos Azul Marino como base para diferenciar de Artículos (Verde Militar)
+const headerBg = azulMarino.primary;
+const themeColor = azulMarino;
 
-const TablaMatrizStock: React.FC<TablaMatrizStockProps> = ({
-    articulos,
-    puntos,
-    loading,
-    onTransferir
-}) => {
-    const [page, setPage] = useState(0);
-    const [rowsPerPage, setRowsPerPage] = useState(50);
-    const [localSearch, setLocalSearch] = useState('');
+const TablaMatrizStock: React.FC<TablaMatrizStockProps> = ({ onTransferir }) => {
+    // --- Estados de Filtros ---
+    const [globalSearch, setGlobalSearch] = useState('');
+    const [globalSearchDraft, setGlobalSearchDraft] = useState('');
+    const [filtros, setFiltros] = useState<FiltrosServidor>({});
 
-    // Client-side filtering for immediate feedback if the list is loaded,
-    // though the page likely does server-side filtering too. 
-    // We'll trust the passed 'articulos' are already filtered by server if needed,
-    // but if we want strictly client side pagination on the result set:
+    // --- Modal Transferencia ---
+    const [modalTransferenciaOpen, setModalTransferenciaOpen] = useState(false);
+    const [transferItem, setTransferItem] = useState<MatrizStockItem | null>(null);
+    const [transferOrigen, setTransferOrigen] = useState<number | null>(null);
 
-    const filteredArticulos = useMemo(() => {
-        if (!localSearch) return articulos;
-        const lower = localSearch.toLowerCase();
-        return articulos.filter(a =>
-            (a.nombre?.toLowerCase().includes(lower)) ||
-            (a.codigo?.toLowerCase().includes(lower))
-        );
-    }, [articulos, localSearch]);
+    // --- Data Fetching ---
+    const { data: puntosData } = useQuery(OBTENER_PUNTOS_MUDRAS, { fetchPolicy: 'cache-first' });
+    const puntos = (puntosData as any)?.obtenerPuntosMudras?.filter((p: any) => p.activo) || [];
 
-    const displayedArticulos = useMemo(() => {
-        return filteredArticulos.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
-    }, [filteredArticulos, page, rowsPerPage]);
+    const { data, loading, error, refetch } = useQuery<{ obtenerMatrizStock: MatrizStockItem[] }>(
+        OBTENER_MATRIZ_STOCK,
+        {
+            variables: {
+                busqueda: globalSearch || undefined,
+                rubro: filtros.rubro || undefined,
+                proveedorId: filtros.proveedorId || undefined,
+                // Nota: El backend de matriz podría necesitar actualizarse para soportar arrays de IDs si queremos filtro múltiple real en la query
+                // Por ahora mapeamos el primero si existe o usamos lógica de cliente si el backend no soporta múltiple
+            },
+            fetchPolicy: 'cache-and-network',
+        }
+    );
 
-    const handleChangePage = (event: unknown, newPage: number) => {
-        setPage(newPage);
+    const matrizData = data?.obtenerMatrizStock || [];
+
+    // --- Filtros Bidireccionales (Rubros/Proveedores) ---
+    const { data: rubrosData } = useQuery(GET_RUBROS, { fetchPolicy: 'cache-first' });
+    const { data: proveedoresData } = useQuery(GET_PROVEEDORES, { fetchPolicy: 'cache-first' });
+
+    const { rubrosDisponibles, proveedoresDisponibles } = useMemo(() => {
+        const allProvs: any[] = (proveedoresData as any)?.proveedores || [];
+        const allRubros: any[] = (rubrosData as any)?.obtenerRubros || [];
+
+        const provToRubros = new Map<number, Set<number>>();
+        const rubroToProvs = new Map<number, Set<number>>();
+
+        allProvs.forEach((p) => {
+            const pId = Number(p.IdProveedor);
+            const pRubros = (p.proveedorRubros || []).map((pr: any) => Number(pr.rubro?.Id));
+            if (p.rubroId) pRubros.push(Number(p.rubroId));
+
+            const rubroSet = new Set<number>(pRubros);
+            provToRubros.set(pId, rubroSet);
+
+            rubroSet.forEach(rId => {
+                if (!rubroToProvs.has(rId)) rubroToProvs.set(rId, new Set());
+                rubroToProvs.get(rId)?.add(pId);
+            });
+        });
+
+        const activeProvIds = filtros.proveedorIds || [];
+        const activeRubroIds = filtros.rubroIds || [];
+
+        let filteredProvs = allProvs;
+        if (activeRubroIds.length > 0) {
+            const allowedProvs = new Set<number>();
+            activeRubroIds.forEach((rId: number) => {
+                rubroToProvs.get(rId)?.forEach(pId => allowedProvs.add(pId));
+            });
+            filteredProvs = allProvs.filter(p => allowedProvs.has(Number(p.IdProveedor)));
+        }
+
+        let filteredRubros = allRubros;
+        if (activeProvIds.length > 0) {
+            const allowedRubros = new Set<number>();
+            activeProvIds.forEach((pId: number) => {
+                provToRubros.get(pId)?.forEach(rId => allowedRubros.add(rId));
+            });
+            filteredRubros = allRubros.filter(r => allowedRubros.has(Number(r.id)));
+        }
+
+        return { rubrosDisponibles: filteredRubros, proveedoresDisponibles: filteredProvs };
+    }, [proveedoresData, rubrosData, filtros.proveedorIds, filtros.rubroIds]);
+
+
+    // --- Columnas Dinámicas ---
+    const puntosUnicos = useMemo(() => {
+        const puntosMap = new Map<string, string>(); // id -> nombre
+        matrizData.forEach(item => {
+            item.stockPorPunto.forEach(sp => {
+                puntosMap.set(sp.puntoId, sp.puntoNombre);
+            });
+        });
+        return Array.from(puntosMap.entries()).map(([id, nombre]) => ({ id, nombre }));
+    }, [matrizData]);
+
+    const columns = useMemo<ColumnDef[]>(() => {
+        const baseCols: ColumnDef[] = [
+            { key: 'codigo', header: 'Código', width: 100 },
+            { key: 'descripcion', header: 'Descripción', width: 300 },
+            { key: 'rubro', header: 'Rubro', width: 150 },
+            { key: 'stockTotal', header: 'Total', width: 100, align: 'center' },
+        ];
+
+        const dynamicCols: ColumnDef[] = puntosUnicos.map(p => ({
+            key: `punto_${p.id}`,
+            header: p.nombre,
+            width: 100,
+            align: 'center',
+            isDynamic: true,
+            render: (item) => {
+                const stock = item.stockPorPunto.find(sp => sp.puntoId === p.id)?.cantidad || 0;
+                return (
+                    <Typography variant="body2" fontWeight={stock > 0 ? 600 : 400} color={stock > 0 ? 'text.primary' : 'text.disabled'}>
+                        {stock}
+                    </Typography>
+                );
+            }
+        }));
+
+        const actionCol: ColumnDef = {
+            key: 'acciones',
+            header: 'Acciones',
+            width: 100,
+            align: 'center',
+            render: (item) => (
+                <Tooltip title="Transferir stock">
+                    <IconButton
+                        size="small"
+                        onClick={() => handleOpenTransfer(item)}
+                        sx={{ color: themeColor.primary }}
+                    >
+                        <IconArrowRight size={20} />
+                    </IconButton>
+                </Tooltip>
+            )
+        };
+
+        return [...baseCols, ...dynamicCols, actionCol];
+    }, [puntosUnicos, themeColor]);
+
+
+    // --- Handlers ---
+    const handleOpenTransfer = (item: MatrizStockItem, origenId?: number) => {
+        setTransferItem(item);
+        setTransferOrigen(origenId || null);
+        setModalTransferenciaOpen(true);
     };
 
-    const handleChangeRowsPerPage = (event: React.ChangeEvent<HTMLInputElement>) => {
-        setRowsPerPage(parseInt(event.target.value, 10));
-        setPage(0);
+    const ejecutarBusqueda = () => {
+        setGlobalSearch(globalSearchDraft);
     };
 
-    const COLORS = {
-        header: verdeMilitar.primary, // Using the militar green from the theme
-        headerText: '#FFFFFF',
-        stripe: verdeMilitar.tableStriped,
-        hover: alpha(verdeMilitar.primary, 0.12),
-        textPrimary: '#2b4735', // Darker green for text
+    const limpiarFiltros = () => {
+        setGlobalSearch('');
+        setGlobalSearchDraft('');
+        setFiltros({});
     };
+
+    // --- Render Cell ---
+    const renderCell = (col: ColumnDef, item: MatrizStockItem) => {
+        if (col.render) return col.render(item);
+
+        switch (col.key) {
+            case 'codigo':
+                return <Chip label={item.codigo} size="small" sx={{ borderRadius: 1, bgcolor: '#f5f5f5', fontWeight: 600 }} />;
+            case 'descripcion':
+                return <Typography variant="body2" fontWeight={600} color={headerBg}>{item.nombre}</Typography>;
+            case 'rubro':
+                return item.rubro ? (
+                    <Chip label={item.rubro} size="small" variant="outlined" sx={{ color: themeColor.primary, borderColor: alpha(themeColor.primary, 0.3) }} />
+                ) : null;
+            case 'stockTotal':
+                return <Typography variant="body2" fontWeight={700}>{item.stockTotal}</Typography>;
+            default:
+                return null;
+        }
+    };
+
+    // --- Export ---
+    const client = useApolloClient();
+    const [exporting, setExporting] = useState(false);
+
+    const handleExportar = async (type: 'pdf' | 'excel') => {
+        try {
+            setExporting(true);
+            // Re-fetch all data for export if needed, or use current data
+            // For simplicity using current data
+            const exportData = matrizData;
+
+            const exportCols: ExportColumn<MatrizStockItem>[] = [
+                { header: 'Código', key: 'codigo', width: 15 },
+                { header: 'Descripción', key: 'nombre', width: 40 },
+                { header: 'Rubro', key: 'rubro', width: 20 },
+                { header: 'Total', key: 'stockTotal', width: 10 },
+            ];
+
+            puntosUnicos.forEach(p => {
+                exportCols.push({
+                    header: p.nombre,
+                    key: (item) => item.stockPorPunto.find(sp => sp.puntoId === p.id)?.cantidad || 0,
+                    width: 15
+                });
+            });
+
+            const timestamp = new Date().toISOString().split('T')[0];
+            if (type === 'excel') {
+                exportToExcel(exportData, exportCols, `Stock_Global_${timestamp}`, 'Matriz de Stock');
+            } else {
+                await exportToPdf(exportData, exportCols, `Stock_Global_${timestamp}`, 'Matriz de Stock Global', 'Filtros aplicados');
+            }
+        } catch (e) {
+            console.error(e);
+        } finally {
+            setExporting(false);
+        }
+    };
+
 
     return (
-        <Paper elevation={0} sx={{ width: '100%', border: '1px solid #e0e0e0', borderRadius: 0, overflow: 'hidden' }}>
+        <Box sx={{ width: '100%' }}>
+            {/* --- Toolbar (Clone of TablaArticulos) --- */}
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mb: 3, p: 2, bgcolor: '#ffffff', borderBottom: '1px solid #f0f0f0' }}>
+                <Box display="flex" justifyContent="space-between" alignItems="center" flexWrap="wrap" gap={2}>
+                    {/* Left: Title or Actions */}
+                    <Typography variant="h6" color={themeColor.primary} fontWeight={700}>
+                        Matriz de Stock
+                    </Typography>
 
-            {/* Optional internal toolbar if we move logic here, but Page handles main filters. 
-          We can keep a local search here or rely on parent. 
-          Let's assume parent handles main search, but client-side quick filter is nice for pagination.
-      */}
-
-            <TableContainer sx={{ maxHeight: 'calc(100vh - 280px)' }}>
-                {loading ? (
-                    <Box display="flex" justifyContent="center" alignItems="center" height={400}>
-                        <CircularProgress sx={{ color: COLORS.header }} />
+                    {/* Right: Search + Limpiar */}
+                    <Box display="flex" alignItems="center" gap={2} flexWrap="wrap">
+                        <TextField
+                            placeholder="Buscar descripción o código..."
+                            size="small"
+                            value={globalSearchDraft}
+                            onChange={(e) => setGlobalSearchDraft(e.target.value)}
+                            onKeyDown={(e) => e.key === 'Enter' && ejecutarBusqueda()}
+                            InputProps={{
+                                startAdornment: <InputAdornment position="start"><IconSearch size={18} color="#757575" /></InputAdornment>
+                            }}
+                            sx={{ minWidth: 350, '& .MuiOutlinedInput-root': { bgcolor: '#f9f9f9' } }}
+                        />
+                        <Button
+                            variant="outlined"
+                            startIcon={<IconRefresh size={18} />}
+                            onClick={limpiarFiltros}
+                            sx={{ borderRadius: 0, textTransform: 'none', color: '#757575', borderColor: '#e0e0e0', height: 40 }}
+                        >
+                            Limpiar
+                        </Button>
                     </Box>
-                ) : (
-                    <Table stickyHeader size="small" sx={{
-                        '& .MuiTableRow-root': { minHeight: 56, transition: 'background-color 0.2s' },
-                        '& .MuiTableCell-root': { fontSize: '0.85rem', px: 2, py: 1.5, borderBottom: '1px solid #f0f0f0', color: '#37474f' },
-                        '& .MuiTableBody-root .MuiTableRow-root:nth-of-type(even)': { bgcolor: COLORS.stripe },
-                        '& .MuiTableBody-root .MuiTableRow-root:hover': { bgcolor: COLORS.hover },
-                        '& .MuiTableCell-head': {
-                            fontSize: '0.8rem',
-                            fontWeight: 700,
-                            bgcolor: COLORS.header,
-                            color: COLORS.headerText,
-                            letterSpacing: '0.5px'
-                        },
-                    }}>
-                        <TableHead>
-                            <TableRow>
-                                <TableCell sx={{ minWidth: 120 }}>CÓDIGO</TableCell>
-                                <TableCell sx={{ width: '25%', minWidth: 250 }}>ARTÍCULO</TableCell>
-                                <TableCell align="center" sx={{ minWidth: 100, bgcolor: darken(COLORS.header, 0.1) }}>TOTAL</TableCell> {/* Highlight Total */}
-                                {puntos.map((punto) => (
-                                    <TableCell key={punto.id} align="center" sx={{ minWidth: 120 }}>
-                                        <Box display="flex" flexDirection="column" alignItems="center">
-                                            <span>{punto.nombre}</span>
-                                            <Typography variant="caption" sx={{ opacity: 0.8, fontWeight: 400, textTransform: 'none' }}>
-                                                {punto.tipo === 'deposito' ? '(Depósito)' : '(Venta)'}
-                                            </Typography>
-                                        </Box>
-                                    </TableCell>
-                                ))}
-                                <TableCell align="center" sx={{ minWidth: 80 }}>ACCIONES</TableCell>
-                            </TableRow>
-                        </TableHead>
-                        <TableBody>
-                            {displayedArticulos.map((articulo) => (
-                                <TableRow key={articulo.id} hover>
-                                    <TableCell>
-                                        <Chip
-                                            label={articulo.codigo || '—'}
-                                            size="small"
-                                            variant={articulo.codigo ? 'filled' : 'outlined'}
-                                            sx={{
-                                                borderRadius: 1,
-                                                bgcolor: articulo.codigo ? '#eeeeee' : 'transparent',
-                                                fontWeight: 600,
-                                                color: '#424242',
-                                                height: 24
-                                            }}
-                                        />
-                                    </TableCell>
-                                    <TableCell>
-                                        <Box>
-                                            <Typography variant="body2" fontWeight={700} sx={{ color: COLORS.textPrimary }}>
-                                                {articulo.nombre}
-                                            </Typography>
-                                            {articulo.rubro && (
-                                                <Typography variant="caption" color="text.secondary">
-                                                    {articulo.rubro}
-                                                </Typography>
-                                            )}
-                                        </Box>
-                                    </TableCell>
-                                    <TableCell align="center">
-                                        <Typography variant="body2" fontWeight={800} color="text.primary">
-                                            {articulo.stockTotal}
-                                        </Typography>
-                                    </TableCell>
-                                    {puntos.map((punto) => {
-                                        const stockPunto = articulo.stockPorPunto.find((s) => s.puntoId === punto.id);
-                                        const cantidad = stockPunto?.cantidad || 0;
-                                        return (
-                                            <TableCell key={punto.id} align="center">
-                                                <Box
-                                                    sx={{
-                                                        display: 'flex',
-                                                        alignItems: 'center',
-                                                        justifyContent: 'center',
-                                                        gap: 1
-                                                    }}
-                                                >
-                                                    <Typography
-                                                        color={cantidad > 0 ? 'textPrimary' : 'textSecondary'}
-                                                        fontWeight={cantidad > 0 ? 700 : 400}
-                                                        sx={{ opacity: cantidad === 0 ? 0.5 : 1 }}
-                                                    >
-                                                        {cantidad}
-                                                    </Typography>
-                                                    {cantidad > 0 && (
-                                                        <Tooltip title={`Transferir desde ${punto.nombre}`}>
-                                                            <IconButton
-                                                                size="small"
-                                                                onClick={() => onTransferir(articulo, punto.id)}
-                                                                sx={{
-                                                                    color: COLORS.header,
-                                                                    width: 24,
-                                                                    height: 24,
-                                                                    padding: 0.5,
-                                                                    opacity: 0,
-                                                                    transition: 'opacity 0.2s',
-                                                                    '.MuiTableRow-root:hover &': { opacity: 1 } // Only show on hover
-                                                                }}
-                                                            >
-                                                                <IconArrowsLeftRight size={14} />
-                                                            </IconButton>
-                                                        </Tooltip>
-                                                    )}
-                                                </Box>
-                                            </TableCell>
-                                        );
-                                    })}
-                                    <TableCell align="center">
-                                        <Tooltip title="Transferir Stock">
-                                            <IconButton
-                                                onClick={() => onTransferir(articulo)}
-                                                sx={{
-                                                    color: COLORS.header,
-                                                    transition: 'transform 0.2s',
-                                                    '&:hover': { bgcolor: alpha(COLORS.header, 0.1), transform: 'scale(1.1)' }
-                                                }}
-                                            >
-                                                <IconArrowsLeftRight size={20} />
-                                            </IconButton>
-                                        </Tooltip>
-                                    </TableCell>
-                                </TableRow>
-                            ))}
-                            {displayedArticulos.length === 0 && (
-                                <TableRow>
-                                    <TableCell colSpan={4 + puntos.length} align="center" sx={{ py: 8 }}>
-                                        <Typography variant="body1" color="text.secondary" fontStyle="italic">
-                                            No se encontraron artículos con los filtros actuales.
-                                        </Typography>
-                                    </TableCell>
-                                </TableRow>
+                </Box>
+
+                <Divider />
+
+                {/* --- Filters Row --- */}
+                <Box display="flex" justifyContent="space-between" alignItems="flex-start" flexWrap="nowrap" gap={2}>
+                    {/* Export */}
+                    <Box display="flex" gap={2}>
+                        <Button variant="outlined" startIcon={<IconFileSpreadsheet size={18} />} onClick={() => handleExportar('excel')} sx={{ borderRadius: 0, color: '#1D6F42', borderColor: '#1D6F42' }}>Excel</Button>
+                        <Button variant="outlined" startIcon={<IconFileTypePdf size={18} />} onClick={() => handleExportar('pdf')} sx={{ borderRadius: 0, color: '#B71C1C', borderColor: '#B71C1C' }}>PDF</Button>
+                    </Box>
+
+                    {/* Combos */}
+                    <Box display="flex" gap={2} sx={{ flexGrow: 1 }}>
+                        <Autocomplete
+                            multiple
+                            disableCloseOnSelect
+                            options={proveedoresDisponibles}
+                            getOptionLabel={(option: any) => option.Nombre || ''}
+                            value={proveedoresDisponibles.filter((p: any) => (filtros.proveedorIds || []).includes(Number(p.IdProveedor)))}
+                            onChange={(_, newValue) => {
+                                const ids = newValue.map((v: any) => Number(v.IdProveedor));
+                                setFiltros(prev => ({ ...prev, proveedorIds: ids, proveedorId: ids[0] })); // Set single ID too for compat
+                            }}
+                            renderOption={(props, option: any, { selected }) => (
+                                <li {...props}>
+                                    <Checkbox icon={<CheckBoxOutlineBlankIcon fontSize="small" />} checkedIcon={<CheckBoxIcon fontSize="small" />} checked={selected} style={{ marginRight: 8 }} />
+                                    {option.Nombre}
+                                </li>
                             )}
-                        </TableBody>
-                    </Table>
-                )}
+                            renderInput={(params) => <TextField {...params} label="Proveedores" size="small" />}
+                            fullWidth
+                        />
+                        <Autocomplete
+                            multiple
+                            disableCloseOnSelect
+                            options={rubrosDisponibles}
+                            getOptionLabel={(option: any) => option.nombre || option.Rubro || ''}
+                            value={rubrosDisponibles.filter((r: any) => (filtros.rubroIds || []).includes(Number(r.id)))}
+                            onChange={(_, newValue) => {
+                                const ids = newValue.map((v: any) => Number(v.id));
+                                const names = newValue.map((v: any) => v.nombre || v.Rubro).join(','); // Hack if query uses string
+                                setFiltros(prev => ({ ...prev, rubroIds: ids, rubro: names }));
+                            }}
+                            renderOption={(props, option: any, { selected }) => (
+                                <li {...props}>
+                                    <Checkbox icon={<CheckBoxOutlineBlankIcon fontSize="small" />} checkedIcon={<CheckBoxIcon fontSize="small" />} checked={selected} style={{ marginRight: 8 }} />
+                                    {option.nombre || option.Rubro}
+                                </li>
+                            )}
+                            renderInput={(params) => <TextField {...params} label="Rubros" size="small" />}
+                            fullWidth
+                        />
+                    </Box>
+                </Box>
+            </Box>
+
+            {/* --- Table --- */}
+            <TableContainer component={Paper} elevation={0} sx={{ borderRadius: 0, border: '1px solid #e0e0e0', maxHeight: 'calc(100vh - 300px)' }}>
+                <Table stickyHeader size="small">
+                    <TableHead>
+                        <TableRow>
+                            {columns.map(col => (
+                                <TableCell
+                                    key={col.key}
+                                    align={col.align}
+                                    sx={{
+                                        bgcolor: themeColor.headerBg,
+                                        color: themeColor.headerText,
+                                        fontWeight: 700,
+                                        minWidth: col.width
+                                    }}
+                                >
+                                    {col.header}
+                                </TableCell>
+                            ))}
+                        </TableRow>
+                    </TableHead>
+                    <TableBody>
+                        {loading ? (
+                            <TableRow><TableCell colSpan={columns.length} align="center" sx={{ py: 5 }}><MudrasLoader /></TableCell></TableRow>
+                        ) : matrizData.length === 0 ? (
+                            <TableRow><TableCell colSpan={columns.length} align="center" sx={{ py: 5 }}><Typography>No hay datos</Typography></TableCell></TableRow>
+                        ) : (
+                            matrizData.map(item => (
+                                <TableRow key={item.id} hover sx={{ '&:nth-of-type(even)': { bgcolor: themeColor.alternateRow } }}>
+                                    {columns.map(col => (
+                                        <TableCell key={col.key} align={col.align}>
+                                            {renderCell(col, item)}
+                                        </TableCell>
+                                    ))}
+                                </TableRow>
+                            ))
+                        )}
+                    </TableBody>
+                </Table>
             </TableContainer>
-            <TablePagination
-                rowsPerPageOptions={[20, 50, 100, 200]}
-                component="div"
-                count={filteredArticulos.length}
-                rowsPerPage={rowsPerPage}
-                page={page}
-                onPageChange={handleChangePage}
-                onRowsPerPageChange={handleChangeRowsPerPage}
-                labelRowsPerPage="Filas por página:"
-            />
-        </Paper>
+
+            {/* --- Modales --- */}
+            {transferItem && (
+                <TransferirStockModal
+                    open={modalTransferenciaOpen}
+                    onClose={() => {
+                        setModalTransferenciaOpen(false);
+                        setTransferItem(null);
+                    }}
+                    puntos={puntos}
+                    articuloPreseleccionado={transferItem}
+                    origenPreseleccionado={transferOrigen}
+                    onTransferenciaRealizada={() => {
+                        refetch();
+                        window.dispatchEvent(new CustomEvent('stockGlobalActualizado'));
+                    }}
+                />
+            )}
+        </Box>
     );
 };
 

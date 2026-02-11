@@ -126,6 +126,23 @@ export default function TransferirStockModal({
     );
 
     // --- Effects ---
+    const handleClearFilters = useCallback(() => {
+        setProveedorSeleccionado(null);
+        setRubroSeleccionado(null);
+        setBusqueda('');
+        setPage(0);
+    }, []);
+
+    const handleClearSelection = useCallback(() => {
+        setArticuloSeleccionado(null);
+        setOrigen('');
+        setDestino('');
+        setCantidad('');
+        setMotivo('');
+        setStockEnOrigen(0);
+        setConfirmOpen(false);
+    }, []);
+
     useEffect(() => {
         if (open) {
             handleClearFilters();
@@ -138,7 +155,16 @@ export default function TransferirStockModal({
                 setOrigen(origenPreseleccionado);
             }
         }
-    }, [open, articuloPreseleccionado, origenPreseleccionado]);
+    }, [open, articuloPreseleccionado, origenPreseleccionado, handleClearFilters, handleClearSelection]);
+
+    // Auto-select destination only if simplified mode (articuloPreseleccionado exists)
+    useEffect(() => {
+        if (articuloPreseleccionado && origen && puntos.length === 2) {
+            const other = puntos.find(p => p.id !== origen);
+            if (other) setDestino(other.id);
+        }
+    }, [articuloPreseleccionado, origen, puntos]);
+
 
     useEffect(() => {
         setPage(0);
@@ -174,23 +200,6 @@ export default function TransferirStockModal({
     }, [articuloSeleccionado, origen, fetchStockOrigen]);
 
     // --- Handlers ---
-    const handleClearFilters = useCallback(() => {
-        setProveedorSeleccionado(null);
-        setRubroSeleccionado(null);
-        setBusqueda('');
-        setPage(0);
-    }, []);
-
-    const handleClearSelection = useCallback(() => {
-        setArticuloSeleccionado(null);
-        setOrigen('');
-        setDestino('');
-        setCantidad('');
-        setMotivo('');
-        setStockEnOrigen(0);
-        setConfirmOpen(false);
-    }, []);
-
     const handleSelectArticle = useCallback((art: any) => {
         if (articuloSeleccionado?.id === art.id) {
             handleClearSelection();
@@ -285,20 +294,23 @@ export default function TransferirStockModal({
         cantidadNum > 0 &&
         cantidadNum <= stockEnOrigen;
 
+    // --- Render Simplified View ---
+    const isSimplified = !!articuloPreseleccionado;
+
     return (
         <>
             <Dialog
                 open={open}
                 onClose={handleCloseInternal}
-                maxWidth="xl"
+                maxWidth={isSimplified ? "sm" : "xl"}
                 fullWidth
                 PaperProps={{
                     elevation: 4,
                     sx: {
                         borderRadius: 0,
                         bgcolor: '#ffffff',
-                        height: `${VH_MAX}vh`,
-                        maxHeight: `${VH_MAX}vh`,
+                        height: isSimplified ? 'auto' : `${VH_MAX}vh`,
+                        maxHeight: isSimplified ? 'auto' : `${VH_MAX}vh`,
                     },
                 }}
             >
@@ -307,108 +319,114 @@ export default function TransferirStockModal({
                     borderRadius: 0,
                     bgcolor: COLORS.primary,
                     color: COLORS.headerText,
-                    px: 5,
-                    py: 3,
+                    px: isSimplified ? 3 : 5,
+                    py: isSimplified ? 2 : 3,
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'space-between',
                     borderBottom: `4px solid ${COLORS.secondary}`,
                 }}>
                     <Box display="flex" alignItems="center" gap={3}>
-                        <Icon icon="mdi:transfer" width={32} height={32} />
+                        <Icon icon="mdi:transfer" width={isSimplified ? 24 : 32} height={isSimplified ? 24 : 32} />
                         <Box>
-                            <Typography variant="h5" fontWeight={700} letterSpacing={1}>
+                            <Typography variant={isSimplified ? "h6" : "h5"} fontWeight={700} letterSpacing={1}>
                                 TRANSFERENCIA DE STOCK
                             </Typography>
-                            <Typography variant="subtitle2" sx={{ opacity: 0.9, fontWeight: 400, mt: 0.5 }}>
-                                Mueve stock entre depósitos y puntos de venta.
-                            </Typography>
+                            {!isSimplified && (
+                                <Typography variant="subtitle2" sx={{ opacity: 0.9, fontWeight: 400, mt: 0.5 }}>
+                                    Mueve stock entre depósitos y puntos de venta.
+                                </Typography>
+                            )}
                         </Box>
                     </Box>
                     <IconButton onClick={handleCloseInternal} sx={{ color: 'white', '&:hover': { bgcolor: 'rgba(255,255,255,0.1)' } }}>
-                        <Icon icon="mdi:close" width={32} />
+                        <Icon icon="mdi:close" width={isSimplified ? 24 : 32} />
                     </IconButton>
                 </Box>
 
-                <DialogContent sx={{ p: 0, display: 'flex', bgcolor: COLORS.bgLight, overflow: 'hidden' }}>
+                <DialogContent sx={{ p: 0, display: 'flex', bgcolor: COLORS.bgLight, overflow: 'hidden', flexDirection: isSimplified ? 'column' : 'row' }}>
 
-                    {/* LEFT: Selection Panel (65%) */}
-                    <Box sx={{ flex: 65, display: 'flex', flexDirection: 'column', borderRight: `1px solid ${COLORS.border}`, bgcolor: '#fff' }}>
-                        <Box sx={{ p: 4, borderBottom: `1px solid ${COLORS.border}` }}>
-                            <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
-                                <Typography variant="h6" sx={{ fontWeight: 700, color: COLORS.textStrong, letterSpacing: 1, display: 'flex', alignItems: 'center', gap: 1 }}>
-                                    <Icon icon="mdi:magnify" />
-                                    1. BUSCAR ARTÍCULO
-                                </Typography>
-                                {(proveedorSeleccionado || rubroSeleccionado || busqueda) && (
-                                    <Button
-                                        variant="outlined"
+                    {/* LEFT: Selection Panel (Only visible if NOT simplified) */}
+                    {!isSimplified && (
+                        <Box sx={{ flex: 65, display: 'flex', flexDirection: 'column', borderRight: `1px solid ${COLORS.border}`, bgcolor: '#fff' }}>
+                            <Box sx={{ p: 4, borderBottom: `1px solid ${COLORS.border}` }}>
+                                <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
+                                    <Typography variant="h6" sx={{ fontWeight: 700, color: COLORS.textStrong, letterSpacing: 1, display: 'flex', alignItems: 'center', gap: 1 }}>
+                                        <Icon icon="mdi:magnify" />
+                                        1. BUSCAR ARTÍCULO
+                                    </Typography>
+                                    {(proveedorSeleccionado || rubroSeleccionado || busqueda) && (
+                                        <Button
+                                            variant="outlined"
+                                            size="small"
+                                            onClick={handleClearFilters}
+                                            startIcon={<Icon icon="mdi:refresh" />}
+                                            sx={{ textTransform: 'none', color: 'text.secondary', borderColor: COLORS.border }}
+                                        >
+                                            Limpiar
+                                        </Button>
+                                    )}
+                                </Box>
+                                <Box display="flex" gap={2} flexWrap="wrap">
+                                    <Autocomplete
+                                        options={proveedores}
+                                        getOptionLabel={(o: any) => o.Nombre || ''}
+                                        value={proveedorSeleccionado}
+                                        onChange={(_, v) => { setProveedorSeleccionado(v); setRubroSeleccionado(null); }}
+                                        renderInput={(params) => <TextField {...params} label="Proveedor" size="small" />}
+                                        sx={{ flex: 1, minWidth: 200 }}
+                                    />
+                                    <Autocomplete
+                                        options={rubros}
+                                        getOptionLabel={(o: any) => o.nombre || ''}
+                                        value={rubroSeleccionado}
+                                        onChange={(_, v) => setRubroSeleccionado(v)}
+                                        renderInput={(params) => <TextField {...params} label="Rubro" size="small" />}
+                                        disabled={!proveedorSeleccionado}
+                                        sx={{ flex: 1, minWidth: 200 }}
+                                    />
+                                    <TextField
+                                        value={busqueda}
+                                        onChange={(e) => setBusqueda(e.target.value)}
+                                        placeholder="Código o descripción..."
                                         size="small"
-                                        onClick={handleClearFilters}
-                                        startIcon={<Icon icon="mdi:refresh" />}
-                                        sx={{ textTransform: 'none', color: 'text.secondary', borderColor: COLORS.border }}
-                                    >
-                                        Limpiar
-                                    </Button>
-                                )}
+                                        sx={{ flex: 1.5, minWidth: 250 }}
+                                        InputProps={{
+                                            startAdornment: <InputAdornment position="start"><Icon icon="mdi:barcode-scan" /></InputAdornment>
+                                        }}
+                                    />
+                                </Box>
                             </Box>
-                            <Box display="flex" gap={2} flexWrap="wrap">
-                                <Autocomplete
-                                    options={proveedores}
-                                    getOptionLabel={(o: any) => o.Nombre || ''}
-                                    value={proveedorSeleccionado}
-                                    onChange={(_, v) => { setProveedorSeleccionado(v); setRubroSeleccionado(null); }}
-                                    renderInput={(params) => <TextField {...params} label="Proveedor" size="small" />}
-                                    sx={{ flex: 1, minWidth: 200 }}
-                                />
-                                <Autocomplete
-                                    options={rubros}
-                                    getOptionLabel={(o: any) => o.nombre || ''}
-                                    value={rubroSeleccionado}
-                                    onChange={(_, v) => setRubroSeleccionado(v)}
-                                    renderInput={(params) => <TextField {...params} label="Rubro" size="small" />}
-                                    disabled={!proveedorSeleccionado}
-                                    sx={{ flex: 1, minWidth: 200 }}
-                                />
-                                <TextField
-                                    value={busqueda}
-                                    onChange={(e) => setBusqueda(e.target.value)}
-                                    placeholder="Código o descripción..."
-                                    size="small"
-                                    sx={{ flex: 1.5, minWidth: 250 }}
-                                    InputProps={{
-                                        startAdornment: <InputAdornment position="start"><Icon icon="mdi:barcode-scan" /></InputAdornment>
+
+                            <Box sx={{ flex: 1, p: 4, minHeight: 0, display: 'flex', flexDirection: 'column' }}>
+                                <TablaArticulos
+                                    columns={columns as any}
+                                    controlledFilters={controlledFilters}
+                                    onFiltersChange={(newFilters) => {
+                                        if (newFilters.pagina !== undefined) setPage(newFilters.pagina);
+                                        if (newFilters.limite !== undefined) setRowsPerPage(newFilters.limite);
                                     }}
+                                    showToolbar={false}
+                                    allowCreate={false}
+                                    defaultPageSize={50}
+                                    rowsPerPageOptions={[20, 50, 100]}
+                                    dense
+                                    rootSx={{ height: '100%', display: 'flex', flexDirection: 'column' }}
+                                    tableContainerSx={{ flex: 1, minHeight: 0, border: 'none' }}
                                 />
                             </Box>
                         </Box>
+                    )}
 
-                        <Box sx={{ flex: 1, p: 4, minHeight: 0, display: 'flex', flexDirection: 'column' }}>
-                            <TablaArticulos
-                                columns={columns as any}
-                                controlledFilters={controlledFilters}
-                                onFiltersChange={(newFilters) => {
-                                    if (newFilters.pagina !== undefined) setPage(newFilters.pagina);
-                                    if (newFilters.limite !== undefined) setRowsPerPage(newFilters.limite);
-                                }}
-                                showToolbar={false}
-                                allowCreate={false}
-                                defaultPageSize={50}
-                                rowsPerPageOptions={[20, 50, 100]}
-                                dense
-                                rootSx={{ height: '100%', display: 'flex', flexDirection: 'column' }}
-                                tableContainerSx={{ flex: 1, minHeight: 0, border: 'none' }}
-                            />
-                        </Box>
-                    </Box>
-
-                    {/* RIGHT: Action Panel (35%) */}
-                    <Box sx={{ flex: 35, display: 'flex', flexDirection: 'column', bgcolor: '#f9fafb', borderLeft: `1px solid ${COLORS.border}`, minHeight: 0, overflowY: 'auto' }}>
+                    {/* RIGHT: Action Panel (Always visible, but larger if simplified) */}
+                    <Box sx={{ flex: isSimplified ? 1 : 35, display: 'flex', flexDirection: 'column', bgcolor: '#f9fafb', borderLeft: !isSimplified ? `1px solid ${COLORS.border}` : 'none', minHeight: 0, overflowY: 'auto' }}>
                         <Box sx={{ p: 4, flex: 1 }}>
-                            <Typography variant="h6" sx={{ mb: 3, fontWeight: 700, color: COLORS.textStrong, letterSpacing: 1, display: 'flex', alignItems: 'center', gap: 1 }}>
-                                <Icon icon="mdi:dolly" />
-                                2. TRANSFERIR
-                            </Typography>
+                            {!isSimplified && (
+                                <Typography variant="h6" sx={{ mb: 3, fontWeight: 700, color: COLORS.textStrong, letterSpacing: 1, display: 'flex', alignItems: 'center', gap: 1 }}>
+                                    <Icon icon="mdi:dolly" />
+                                    2. TRANSFERIR
+                                </Typography>
+                            )}
 
                             {!articuloSeleccionado ? (
                                 <Box display="flex" flexDirection="column" alignItems="center" justifyContent="center" height="60%" color="text.secondary" sx={{ opacity: 0.6 }}>
@@ -426,11 +444,13 @@ export default function TransferirStockModal({
                                                     ARTÍCULO
                                                 </Typography>
                                                 <Typography variant="subtitle1" fontWeight={700} color={COLORS.textStrong}>
-                                                    {articuloSeleccionado.Descripcion}
+                                                    {articuloSeleccionado.nombre || articuloSeleccionado.Descripcion}
                                                 </Typography>
-                                                <Chip label={articuloSeleccionado.Codigo} size="small" sx={{ mt: 0.5, fontWeight: 600 }} />
+                                                <Chip label={articuloSeleccionado.codigo || articuloSeleccionado.Codigo} size="small" sx={{ mt: 0.5, fontWeight: 600 }} />
                                             </Box>
-                                            <IconButton size="small" onClick={handleClearSelection}><Icon icon="mdi:close" /></IconButton>
+                                            {!isSimplified && (
+                                                <IconButton size="small" onClick={handleClearSelection}><Icon icon="mdi:close" /></IconButton>
+                                            )}
                                         </Box>
                                     </Paper>
 
@@ -444,7 +464,7 @@ export default function TransferirStockModal({
                                                 value={origen}
                                                 onChange={(e) => {
                                                     setOrigen(Number(e.target.value));
-                                                    setDestino(''); // Clear destination if origin changes to avoid equality
+                                                    setDestino(''); // Clear destination if origin changes
                                                 }}
                                                 size="small"
                                                 sx={{ bgcolor: '#fff' }}
@@ -599,3 +619,4 @@ export default function TransferirStockModal({
         </>
     );
 }
+
