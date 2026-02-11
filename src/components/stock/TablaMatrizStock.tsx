@@ -27,7 +27,7 @@ import {
 } from '@mui/material';
 import CheckBoxOutlineBlankIcon from '@mui/icons-material/CheckBoxOutlineBlank';
 import CheckBoxIcon from '@mui/icons-material/CheckBox';
-import { alpha } from '@mui/material/styles';
+import { alpha, darken } from '@mui/material/styles';
 import { useQuery, useApolloClient } from '@apollo/client/react';
 import {
     IconSearch, IconRefresh, IconDotsVertical,
@@ -38,7 +38,7 @@ import MudrasLoader from '@/components/ui/MudrasLoader';
 import { OBTENER_MATRIZ_STOCK, OBTENER_PUNTOS_MUDRAS, type MatrizStockItem } from '@/components/puntos-mudras/graphql/queries';
 import { GET_RUBROS } from '@/components/rubros/graphql/queries';
 import { GET_PROVEEDORES } from '@/components/proveedores/graphql/queries';
-import { azulMarino, verde, azul } from '@/ui/colores';
+import { azulMarino, verde, azul, verdeMilitar } from '@/ui/colores';
 import { exportToExcel, exportToPdf, ExportColumn } from '@/utils/exportUtils';
 import TransferirStockModal from './TransferirStockModal';
 
@@ -252,8 +252,8 @@ const TablaMatrizStock: React.FC<TablaMatrizStockProps> = ({ onTransferir }) => 
                                     size="small"
                                     variant="outlined"
                                     sx={{
-                                        color: themeColor.primary,
-                                        borderColor: alpha(themeColor.primary, 0.3),
+                                        color: verdeMilitar.primary,
+                                        borderColor: alpha(verdeMilitar.primary, 0.3),
                                         height: 20,
                                         fontSize: '0.7rem'
                                     }}
@@ -265,8 +265,8 @@ const TablaMatrizStock: React.FC<TablaMatrizStockProps> = ({ onTransferir }) => 
                                     size="small"
                                     variant="outlined"
                                     sx={{
-                                        color: themeColor.textStrong,
-                                        borderColor: alpha(themeColor.textStrong, 0.3),
+                                        color: darken(verdeMilitar.primary, 0.4),
+                                        borderColor: alpha(darken(verdeMilitar.primary, 0.4), 0.3),
                                         height: 20,
                                         fontSize: '0.7rem'
                                     }}
@@ -469,7 +469,7 @@ const TablaMatrizStock: React.FC<TablaMatrizStockProps> = ({ onTransferir }) => 
             </TableContainer>
 
             {/* --- Modales --- */}
-            {transferItem && (
+            {modalTransferenciaOpen && (
                 <TransferirStockModal
                     open={modalTransferenciaOpen}
                     onClose={() => {
