@@ -213,20 +213,22 @@ const TablaMatrizStock: React.FC<TablaMatrizStockProps> = ({ onTransferir }) => 
                         <Typography variant="body2" fontWeight={stock > 0 ? 600 : 400} color={stock > 0 ? 'text.primary' : 'text.disabled'}>
                             {stock}
                         </Typography>
-                        <Tooltip title={`Transferir desde ${p.nombre}`}>
-                            <IconButton
-                                size="small"
-                                onClick={() => handleOpenTransfer(item, Number(p.id))}
-                                sx={{
-                                    opacity: 0.6,
-                                    '&:hover': { opacity: 1, color: themeColor.primary },
-                                    width: 24,
-                                    height: 24
-                                }}
-                            >
-                                <IconArrowRight size={16} />
-                            </IconButton>
-                        </Tooltip>
+                        {stock > 0 && (
+                            <Tooltip title={`Transferir desde ${p.nombre}`}>
+                                <IconButton
+                                    size="small"
+                                    onClick={() => handleOpenTransfer(item, Number(p.id))}
+                                    sx={{
+                                        opacity: 0.6,
+                                        '&:hover': { opacity: 1, color: themeColor.primary },
+                                        width: 24,
+                                        height: 24
+                                    }}
+                                >
+                                    <IconArrowRight size={16} />
+                                </IconButton>
+                            </Tooltip>
+                        )}
                     </Box>
                 );
             }
