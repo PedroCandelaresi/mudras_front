@@ -1,4 +1,5 @@
 'use client'
+import Image from 'next/image';
 import PageContainer from '@/components/container/PageContainer';
 import { Grid, Box, Typography } from '@mui/material';
 
@@ -26,13 +27,14 @@ export default function Dashboard() {
               minHeight="60vh"
             >
               <Box mb={2}>
-                <img
+                <Image
                   src="/logo.svg"
                   alt="Mudras Logo"
+                  width={300}
+                  height={100}
                   style={{
-                    width: '300px',
-                    height: 'auto',
-                    opacity: 0.8
+                    opacity: 0.8,
+                    height: 'auto'
                   }}
                 />
               </Box>

@@ -106,53 +106,9 @@ const TablaMatrizStock: React.FC<TablaMatrizStockProps> = ({ onTransferir }) => 
         }
     );
 
-    const matrizData = data?.obtenerMatrizStock || [];
+    const matrizData = useMemo(() => data?.obtenerMatrizStock || [], [data]);
 
-    // --- Filtering & Pagination Logic ---
-    const filteredData = useMemo(() => {
-        let result = [...matrizData];
 
-        // 1. Busqueda Global
-        if (globalSearch) {
-            const search = globalSearch.toLowerCase();
-            result = result.filter(item =>
-                (item.nombre || '').toLowerCase().includes(search) ||
-                (item.codigo || '').toLowerCase().includes(search) ||
-                (item.rubro || '').toLowerCase().includes(search)
-            );
-        }
-
-        // 2. Filtro por Proveedores (Client-side join)
-        if (filtros.proveedorIds && filtros.proveedorIds.length > 0) {
-            const allowedProvs = new Set(filtros.proveedorIds);
-            result = result.filter(item => {
-                const provId = articleProviderMap.get(String(item.id));
-                return provId && allowedProvs.has(provId);
-            });
-        }
-
-        // 3. Filtro por Rubros (Name matching)
-        if (filtros.rubroIds && filtros.rubroIds.length > 0) {
-            const allRubros: any[] = (rubrosData as any)?.obtenerRubros || [];
-            const allowedRubroNames = new Set(
-                allRubros
-                    .filter((r: any) => filtros.rubroIds?.includes(Number(r.id)))
-                    .map((r: any) => (r.nombre || '').toLowerCase())
-            );
-
-            if (allowedRubroNames.size > 0) {
-                result = result.filter(item =>
-                    item.rubro && allowedRubroNames.has(item.rubro.toLowerCase())
-                );
-            }
-        }
-
-        return result;
-    }, [matrizData, globalSearch, filtros.proveedorIds, filtros.rubroIds, articleProviderMap, rubrosData]);
-
-    const paginatedData = useMemo(() => {
-        return filteredData.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
-    }, [filteredData, page, rowsPerPage]);
 
     // --- Filtros Bidireccionales (Rubros/Proveedores) ---
     const { data: rubrosData } = useQuery(GET_RUBROS, { fetchPolicy: 'cache-first' });
@@ -230,6 +186,52 @@ const TablaMatrizStock: React.FC<TablaMatrizStockProps> = ({ onTransferir }) => 
 
         return { rubrosDisponibles: filteredRubros, proveedoresDisponibles: filteredProvs };
     }, [proveedoresData, rubrosData, filtros.proveedorIds, filtros.rubroIds]);
+
+    // --- Filtering & Pagination Logic (Moved here to access maps) ---
+    const filteredData = useMemo(() => {
+        let result = [...matrizData];
+
+        // 1. Busqueda Global
+        if (globalSearch) {
+            const search = globalSearch.toLowerCase();
+            result = result.filter(item =>
+                (item.nombre || '').toLowerCase().includes(search) ||
+                (item.codigo || '').toLowerCase().includes(search) ||
+                (item.rubro || '').toLowerCase().includes(search)
+            );
+        }
+
+        // 2. Filtro por Proveedores (Client-side join)
+        if (filtros.proveedorIds && filtros.proveedorIds.length > 0) {
+            const allowedProvs = new Set(filtros.proveedorIds);
+            result = result.filter(item => {
+                const provId = articleProviderMap.get(String(item.id));
+                return provId && allowedProvs.has(provId);
+            });
+        }
+
+        // 3. Filtro por Rubros (Name matching)
+        if (filtros.rubroIds && filtros.rubroIds.length > 0) {
+            const allRubros: any[] = (rubrosData as any)?.obtenerRubros || [];
+            const allowedRubroNames = new Set(
+                allRubros
+                    .filter((r: any) => filtros.rubroIds?.includes(Number(r.id)))
+                    .map((r: any) => (r.nombre || '').toLowerCase())
+            );
+
+            if (allowedRubroNames.size > 0) {
+                result = result.filter(item =>
+                    item.rubro && allowedRubroNames.has(item.rubro.toLowerCase())
+                );
+            }
+        }
+
+        return result;
+    }, [matrizData, globalSearch, filtros.proveedorIds, filtros.rubroIds, articleProviderMap, rubrosData]);
+
+    const paginatedData = useMemo(() => {
+        return filteredData.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
+    }, [filteredData, page, rowsPerPage]);
 
     // --- Columnas Dinámicas ---
     const puntosUnicos = useMemo(() => {
