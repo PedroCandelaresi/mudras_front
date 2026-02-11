@@ -436,11 +436,14 @@ const TablaMatrizStock: React.FC<TablaMatrizStockProps> = ({ onTransferir }) => 
                             variant="contained"
                             startIcon={<IconPlus size={18} />}
                             onClick={handleNuevaAsignacion}
+                            disableElevation
                             sx={{
                                 bgcolor: themeColor.primary,
                                 '&:hover': { bgcolor: alpha(themeColor.primary, 0.9) },
                                 textTransform: 'none',
-                                // borderRadius: 1 // Match default rectangular style
+                                borderRadius: 0,
+                                fontWeight: 600,
+                                px: 3
                             }}
                         >
                             Nueva Asignación
@@ -464,7 +467,7 @@ const TablaMatrizStock: React.FC<TablaMatrizStockProps> = ({ onTransferir }) => 
                             variant="outlined"
                             startIcon={<IconRefresh size={18} />}
                             onClick={limpiarFiltros}
-                            sx={{ borderRadius: 0, textTransform: 'none', color: '#757575', borderColor: '#e0e0e0', height: 40 }}
+                            sx={{ borderRadius: 0, textTransform: 'none', color: '#757575', borderColor: '#e0e0e0', height: 40, fontWeight: 600 }}
                         >
                             Limpiar
                         </Button>
@@ -475,10 +478,9 @@ const TablaMatrizStock: React.FC<TablaMatrizStockProps> = ({ onTransferir }) => 
 
                 {/* --- Filters Row --- */}
                 <Box display="flex" justifyContent="space-between" alignItems="flex-start" flexWrap="nowrap" gap={2}>
-                    {/* Export */}
                     <Box display="flex" gap={2}>
-                        <Button variant="outlined" startIcon={<IconFileSpreadsheet size={18} />} onClick={() => handleExportar('excel')} sx={{ borderRadius: 0, color: '#1D6F42', borderColor: '#1D6F42' }}>Excel</Button>
-                        <Button variant="outlined" startIcon={<IconFileTypePdf size={18} />} onClick={() => handleExportar('pdf')} sx={{ borderRadius: 0, color: '#B71C1C', borderColor: '#B71C1C' }}>PDF</Button>
+                        <Button variant="outlined" startIcon={<IconFileSpreadsheet size={18} />} onClick={() => handleExportar('excel')} sx={{ borderRadius: 0, color: '#1D6F42', borderColor: '#1D6F42', fontWeight: 600, textTransform: 'none' }}>Excel</Button>
+                        <Button variant="outlined" startIcon={<IconFileTypePdf size={18} />} onClick={() => handleExportar('pdf')} sx={{ borderRadius: 0, color: '#B71C1C', borderColor: '#B71C1C', fontWeight: 600, textTransform: 'none' }}>PDF</Button>
                     </Box>
 
                     {/* Combos */}
