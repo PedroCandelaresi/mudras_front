@@ -23,8 +23,9 @@ import {
   Button,
   MenuItem,
 } from '@mui/material';
+import PaginacionMudras from '@/components/ui/PaginacionMudras';
 import { alpha } from '@mui/material/styles';
-import { useMemo, useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { useQuery, useMutation } from '@apollo/client/react';
 import {
   IconSearch,
@@ -78,6 +79,7 @@ const TablaRubros: React.FC<Props> = ({ onNuevoRubro, puedeCrear = true }) => {
   /* ---------- Estado de tabla / filtros ---------- */
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(150);
+  const tableTopRef = React.useRef<HTMLDivElement>(null);
 
   // Buscador general (input) y aplicado (filtro)
   const [filtroInput, setFiltroInput] = useState('');
@@ -214,27 +216,17 @@ const TablaRubros: React.FC<Props> = ({ onNuevoRubro, puedeCrear = true }) => {
   const totalPaginas = Math.ceil(total / rowsPerPage);
   const paginaActual = page + 1;
 
-  const generarNumerosPaginas = () => {
-    const paginas: (number | '...')[] = [];
-    const maxVisible = 7;
-    if (totalPaginas <= maxVisible) {
-      for (let i = 1; i <= totalPaginas; i++) paginas.push(i);
-    } else if (paginaActual <= 4) {
-      for (let i = 1; i <= 5; i++) paginas.push(i);
-      paginas.push('...', totalPaginas);
-    } else if (paginaActual >= totalPaginas - 3) {
-      paginas.push(1, '...');
-      for (let i = totalPaginas - 4; i <= totalPaginas; i++) paginas.push(i);
-    } else {
-      paginas.push(1, '...', paginaActual - 1, paginaActual, paginaActual + 1, '...', totalPaginas);
-    }
-    return paginas;
+
+
+  const handleChangePage = (newPage: number) => {
+    setPage(newPage);
+    tableTopRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
-  const handleChangePage = (_event: unknown, newPage: number) => setPage(newPage);
-  const handleChangeRowsPerPage = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setRowsPerPage(parseInt(event.target.value, 10));
+  const handleChangeRowsPerPage = (newRowsPerPage: number) => {
+    setRowsPerPage(newRowsPerPage);
     setPage(0);
+    tableTopRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
   const limpiarFiltros = () => {
@@ -284,7 +276,7 @@ const TablaRubros: React.FC<Props> = ({ onNuevoRubro, puedeCrear = true }) => {
           placeholder="Buscar rubros..."
           size="small"
           value={filtroInput}
-          onChange={(e) => setFiltroInput(e.target.value)}
+          onChange={(e) => { setFiltroInput(e.target.value); setPage(0); }}
           onKeyDown={(e) => {
             if (e.key === 'Enter') {
               setFiltro(filtroInput);
@@ -526,48 +518,7 @@ const TablaRubros: React.FC<Props> = ({ onNuevoRubro, puedeCrear = true }) => {
   );
 
   /* ---------- Paginador ---------- */
-  const paginador = (
-    <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mt: 3 }}>
-      <Typography variant="caption" color="text.secondary">
-        Mostrando {Math.min(rowsPerPage, rubros.length)} de {total} rubros
-      </Typography>
-      <Stack direction="row" spacing={1} alignItems="center">
-        <TextField select size="small" value={String(rowsPerPage)} onChange={handleChangeRowsPerPage} sx={{ minWidth: 80 }}>
-          {[50, 100, 150, 300, 500].map((option) => (<MenuItem key={option} value={option}>{option}</MenuItem>))}
-        </TextField>
-        <Typography variant="body2" color="text.secondary">
-          Página {paginaActual} de {Math.max(1, totalPaginas)}
-        </Typography>
-        {generarNumerosPaginas().map((num, idx) =>
-          num === '...' ? (
-            <Box key={idx} sx={{ px: 1, color: 'text.secondary' }}>...</Box>
-          ) : (
-            <Button
-              key={num}
-              variant={Number(num) === paginaActual ? 'contained' : 'outlined'}
-              size="small"
-              sx={{
-                minWidth: 32,
-                px: 1,
-                borderRadius: 0,
-                borderColor: Number(num) === paginaActual ? 'transparent' : '#e0e0e0',
-                bgcolor: Number(num) === paginaActual ? verdeMilitar.primary : 'transparent',
-                color: Number(num) === paginaActual ? '#fff' : 'text.primary',
-                '&:hover': {
-                  borderColor: verdeMilitar.primary,
-                  bgcolor: Number(num) === paginaActual ? verdeMilitar.primaryHover : alpha(verdeMilitar.primary, 0.05)
-                }
-              }}
-              onClick={() => handleChangePage(null as unknown as Event, Number(num) - 1)}
-              disabled={num === paginaActual}
-            >
-              {num}
-            </Button>
-          )
-        )}
-      </Stack>
-    </Box>
-  );
+
   /* ======================== Loading / Error ======================== */
   if (loading) {
     return (
@@ -608,9 +559,29 @@ const TablaRubros: React.FC<Props> = ({ onNuevoRubro, puedeCrear = true }) => {
   return (
     <>
       <Box sx={{ width: '100%' }}>
+        <Box ref={tableTopRef} />
         {toolbar}
+        <PaginacionMudras
+          page={page}
+          rowsPerPage={rowsPerPage}
+          total={total}
+          onPageChange={handleChangePage}
+          onRowsPerPageChange={handleChangeRowsPerPage}
+          itemLabel="rubros"
+          accentColor={verdeMilitar.primary}
+          rowsPerPageOptions={[50, 100, 150, 300, 500]}
+        />
         {tabla}
-        {paginador}
+        <PaginacionMudras
+          page={page}
+          rowsPerPage={rowsPerPage}
+          total={total}
+          onPageChange={handleChangePage}
+          onRowsPerPageChange={handleChangeRowsPerPage}
+          itemLabel="rubros"
+          accentColor={verdeMilitar.primary}
+          rowsPerPageOptions={[50, 100, 150, 300, 500]}
+        />
       </Box>
 
       {menuFiltros}

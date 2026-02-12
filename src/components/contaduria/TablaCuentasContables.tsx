@@ -62,7 +62,7 @@ const TablaCuentasContables: React.FC<Props> = ({ items = [] }) => {
         baseColor="#2e7d32"
         placeholder="Buscar cuentas (código, nombre, tipo)"
         searchValue={busqueda}
-        onSearchValueChange={setBusqueda}
+        onSearchValueChange={(v) => { setBusqueda(v); setPage(0); }}
         onSubmitSearch={() => setPage(0)}
         onClear={() => { setBusqueda(""); setPage(0); }}
       />

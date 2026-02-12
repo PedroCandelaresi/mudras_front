@@ -1,5 +1,6 @@
 'use client';
-import { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
+import PaginacionMudras from '@/components/ui/PaginacionMudras';
 import {
   Box,
   Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
@@ -39,6 +40,7 @@ export default function TablaStockPuntoVenta({
   const [loading, setLoading] = useState(false);
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(50);
+  const tableTopRef = React.useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const cargarStock = async () => {
@@ -97,9 +99,15 @@ export default function TablaStockPuntoVenta({
     [articulosFiltrados, page, rowsPerPage]
   );
 
-  const handleChangeRowsPerPage = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setRowsPerPage(parseInt(e.target.value, 10));
+  const handleChangePage = (newPage: number) => {
+    setPage(newPage);
+    tableTopRef.current?.scrollIntoView({ behavior: 'smooth' });
+  };
+
+  const handleChangeRowsPerPage = (newRowsPerPage: number) => {
+    setRowsPerPage(newRowsPerPage);
     setPage(0);
+    tableTopRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
   if (loading) {
@@ -180,6 +188,18 @@ export default function TablaStockPuntoVenta({
         </Box>
       </Box>
 
+      <Box ref={tableTopRef} />
+      <PaginacionMudras
+        page={page}
+        rowsPerPage={rowsPerPage}
+        total={articulosFiltrados.length}
+        onPageChange={handleChangePage}
+        onRowsPerPageChange={handleChangeRowsPerPage}
+        itemLabel="artículos"
+        accentColor="#5d4037"
+        rowsPerPageOptions={[50, 100, 150, 300, 500]}
+      />
+
       {/* Tabla */}
       <TableContainer component={Paper} elevation={0} sx={{ borderRadius: 0, border: '1px solid #e0e0e0' }}>
         <Table size="small">
@@ -244,46 +264,16 @@ export default function TablaStockPuntoVenta({
         </Table>
       </TableContainer>
 
-      {/* Pagination */}
-      <Box display="flex" justifyContent="space-between" alignItems="center" p={2} bgcolor="#fff" border="1px solid #e0e0e0">
-        <Typography variant="caption" color="text.secondary">
-          Mostrando {Math.min(rowsPerPage, articulosPaginados.length)} de {articulosFiltrados.length} artículos
-        </Typography>
-        <Box display="flex" alignItems="center" gap={2}>
-          <TextField
-            select
-            size="small"
-            value={String(rowsPerPage)}
-            onChange={handleChangeRowsPerPage}
-            sx={{ width: 80, '& .MuiOutlinedInput-root': { borderRadius: 0 } }}
-          >
-            {[50, 100, 150].map((opt) => (
-              <MenuItem key={opt} value={opt}>{opt}</MenuItem>
-            ))}
-          </TextField>
-          <Box display="flex" gap={1}>
-            <Button
-              variant="outlined"
-              disabled={page === 0}
-              onClick={() => setPage(p => p - 1)}
-              sx={{ borderRadius: 0, minWidth: 40, p: 1 }}
-            >
-              <Icon icon="mdi:chevron-left" />
-            </Button>
-            <Typography variant="body2" alignSelf="center">
-              Página {page + 1} de {Math.max(1, totalPaginas)}
-            </Typography>
-            <Button
-              variant="outlined"
-              disabled={page >= totalPaginas - 1}
-              onClick={() => setPage(p => p + 1)}
-              sx={{ borderRadius: 0, minWidth: 40, p: 1 }}
-            >
-              <Icon icon="mdi:chevron-right" />
-            </Button>
-          </Box>
-        </Box>
-      </Box>
+      <PaginacionMudras
+        page={page}
+        rowsPerPage={rowsPerPage}
+        total={articulosFiltrados.length}
+        onPageChange={handleChangePage}
+        onRowsPerPageChange={handleChangeRowsPerPage}
+        itemLabel="artículos"
+        accentColor="#5d4037"
+        rowsPerPageOptions={[50, 100, 150, 300, 500]}
+      />
     </Box>
   );
 }

@@ -39,6 +39,7 @@ import { PuntoMudras } from '@/interfaces/puntos-mudras';
 import ModalConfirmarEliminacion from '@/components/ui/ModalConfirmarEliminacion';
 import { grisRojizo } from '@/ui/colores';
 import SearchToolbar from '@/components/ui/SearchToolbar';
+import PaginacionMudras from '@/components/ui/PaginacionMudras';
 
 interface TablaPuntosMudrasProps {
   tipo: 'venta' | 'deposito';
@@ -55,6 +56,7 @@ export default function TablaPuntosMudras({ tipo, onEditarPunto, onVerInventario
   const [eliminando, setEliminando] = useState(false);
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(150);
+  const tableTopRef = React.useRef<HTMLDivElement>(null);
   const [snack, setSnack] = useState<{ open: boolean; msg: string; sev: 'success' | 'error' | 'info' }>({ open: false, msg: '', sev: 'success' });
 
   // Tema de colores
@@ -107,11 +109,13 @@ export default function TablaPuntosMudras({ tipo, onEditarPunto, onVerInventario
 
   const handleChangePage = (newPage: number) => {
     setPage(newPage);
+    tableTopRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
-  const handleChangeRowsPerPage = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setRowsPerPage(parseInt(event.target.value, 10));
+  const handleChangeRowsPerPage = (newRowsPerPage: number) => {
+    setRowsPerPage(newRowsPerPage);
     setPage(0);
+    tableTopRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
   const handleExportar = async (formato: 'excel' | 'pdf') => {
@@ -187,7 +191,7 @@ export default function TablaPuntosMudras({ tipo, onEditarPunto, onVerInventario
               placeholder={`Buscar ${tipo === 'venta' ? 'puntos' : 'depósitos'}...`}
               size="small"
               value={busqueda}
-              onChange={(e) => setBusqueda(e.target.value)}
+              onChange={(e) => { setBusqueda(e.target.value); setPage(0); }}
               InputProps={{
                 startAdornment: (
                   <InputAdornment position="start">
@@ -209,7 +213,7 @@ export default function TablaPuntosMudras({ tipo, onEditarPunto, onVerInventario
             <Button
               variant="outlined"
               startIcon={<IconRefresh size={18} />}
-              onClick={() => setBusqueda('')}
+              onClick={() => { setBusqueda(''); setPage(0); }}
               sx={{
                 borderRadius: 0,
                 textTransform: 'none',
@@ -263,7 +267,18 @@ export default function TablaPuntosMudras({ tipo, onEditarPunto, onVerInventario
 
   return (
     <Box>
+      <Box ref={tableTopRef} />
       {toolbar}
+      <PaginacionMudras
+        page={page}
+        rowsPerPage={rowsPerPage}
+        total={puntosFiltrados.length}
+        onPageChange={handleChangePage}
+        onRowsPerPageChange={handleChangeRowsPerPage}
+        itemLabel={tipo === 'venta' ? 'puntos' : 'depósitos'}
+        accentColor={paleta.primary}
+        rowsPerPageOptions={[50, 100, 150, 300, 500]}
+      />
 
       <TableContainer
         component={Paper}
@@ -398,55 +413,16 @@ export default function TablaPuntosMudras({ tipo, onEditarPunto, onVerInventario
         </Table>
       </TableContainer>
 
-      {/* Pagination Footer */}
-      <Box
-        sx={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          mt: 3,
-        }}
-      >
-        <Typography variant="caption" color="text.secondary">
-          Mostrando {Math.min(rowsPerPage, puntosPaginados.length)} de {puntosFiltrados.length} {tipo === 'venta' ? 'puntos' : 'depósitos'}
-        </Typography>
-
-        <Stack direction="row" spacing={1} alignItems="center">
-          <TextField
-            select
-            size="small"
-            value={String(rowsPerPage)}
-            onChange={handleChangeRowsPerPage}
-            sx={{ minWidth: 80 }}
-            InputProps={{ sx: { borderRadius: 0, fontSize: '0.875rem' } }}
-          >
-            {[50, 100, 150, 300, 500].map((option) => (
-              <MenuItem key={option} value={option}>
-                {option}
-              </MenuItem>
-            ))}
-          </TextField>
-
-          <Box display="flex" gap={1}>
-            <IconButton
-              size="small"
-              onClick={() => handleChangePage(page - 1)}
-              disabled={page === 0}
-              sx={{ borderRadius: 0, border: '1px solid #e0e0e0' }}
-            >
-              <Icon icon="mdi:chevron-left" />
-            </IconButton>
-            <IconButton
-              size="small"
-              onClick={() => handleChangePage(page + 1)}
-              disabled={page >= totalPaginas - 1}
-              sx={{ borderRadius: 0, border: '1px solid #e0e0e0' }}
-            >
-              <Icon icon="mdi:chevron-right" />
-            </IconButton>
-          </Box>
-        </Stack>
-      </Box>
+      <PaginacionMudras
+        page={page}
+        rowsPerPage={rowsPerPage}
+        total={puntosFiltrados.length}
+        onPageChange={handleChangePage}
+        onRowsPerPageChange={handleChangeRowsPerPage}
+        itemLabel={tipo === 'venta' ? 'puntos' : 'depósitos'}
+        accentColor={paleta.primary}
+        rowsPerPageOptions={[50, 100, 150, 300, 500]}
+      />
 
       {/* Modal Confirmación Eliminación */}
       <ModalConfirmarEliminacion
@@ -469,6 +445,6 @@ export default function TablaPuntosMudras({ tipo, onEditarPunto, onVerInventario
           {snack.msg}
         </Alert>
       </Snackbar>
-    </Box>
+    </Box >
   );
 }

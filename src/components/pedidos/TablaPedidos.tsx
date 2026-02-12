@@ -5,6 +5,7 @@ import {
   Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
   Typography, TextField, InputAdornment, Stack, Chip, Tooltip, IconButton, Paper, Button, MenuItem
 } from "@mui/material";
+import PaginacionMudras from "@/components/ui/PaginacionMudras";
 import {
   IconReceipt, IconCalendar, IconUser, IconEye, IconSearch, IconX, IconPlus
 } from "@tabler/icons-react";
@@ -27,6 +28,7 @@ interface Props {
 export function TablaPedidos({ items = [], puedeCrear = false, onNuevoPedido }: Props) {
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(50);
+  const tableTopRef = React.useRef<HTMLDivElement>(null);
   const [busqueda, setBusqueda] = useState("");
   const [pedidoSel, setPedidoSel] = useState<PedidoItem | null>(null);
 
@@ -40,7 +42,17 @@ export function TablaPedidos({ items = [], puedeCrear = false, onNuevoPedido }: 
     );
   }, [items, busqueda]);
 
-  const totalPaginas = Math.ceil(filtrados.length / rowsPerPage) || 1;
+  const handleChangePage = (newPage: number) => {
+    setPage(newPage);
+    tableTopRef.current?.scrollIntoView({ behavior: 'smooth' });
+  };
+
+  const handleChangeRowsPerPage = (newRowsPerPage: number) => {
+    setRowsPerPage(newRowsPerPage);
+    setPage(0);
+    tableTopRef.current?.scrollIntoView({ behavior: 'smooth' });
+  };
+
   const start = page * rowsPerPage;
   const paginados = useMemo(() => filtrados.slice(start, start + rowsPerPage), [filtrados, start, rowsPerPage]);
 
@@ -197,36 +209,16 @@ export function TablaPedidos({ items = [], puedeCrear = false, onNuevoPedido }: 
         </Table>
       </TableContainer>
 
-      {/* Pagination */}
-      <Box display="flex" justifyContent="space-between" alignItems="center" p={2} bgcolor="#fff" border="1px solid #e0e0e0">
-        <Typography variant="caption" color="text.secondary">
-          Mostrando {Math.min(rowsPerPage, paginados.length)} de {filtrados.length} pedidos
-        </Typography>
-        <Box display="flex" alignItems="center" gap={2}>
-          <TextField
-            select
-            size="small"
-            value={rowsPerPage}
-            onChange={(e) => { setRowsPerPage(parseInt(e.target.value as string, 10)); setPage(0); }}
-            sx={{ width: 80, '& .MuiOutlinedInput-root': { borderRadius: 0 } }}
-          >
-            {[50, 100, 150].map((opt) => (
-              <MenuItem key={opt} value={opt}>{opt}</MenuItem>
-            ))}
-          </TextField>
-          <Box display="flex" gap={1}>
-            <Button variant="outlined" disabled={page === 0} onClick={() => setPage(p => p - 1)} sx={{ borderRadius: 0, minWidth: 40, p: 1 }}>
-              {'<'}
-            </Button>
-            <Typography variant="body2" alignSelf="center">
-              Página {page + 1} de {Math.max(1, totalPaginas)}
-            </Typography>
-            <Button variant="outlined" disabled={page >= totalPaginas - 1} onClick={() => setPage(p => p + 1)} sx={{ borderRadius: 0, minWidth: 40, p: 1 }}>
-              {'>'}
-            </Button>
-          </Box>
-        </Box>
-      </Box>
+      <PaginacionMudras
+        page={page}
+        rowsPerPage={rowsPerPage}
+        total={filtrados.length}
+        onPageChange={handleChangePage}
+        onRowsPerPageChange={handleChangeRowsPerPage}
+        itemLabel="pedidos"
+        accentColor="#546e7a"
+        rowsPerPageOptions={[50, 100, 150, 300, 500]}
+      />
 
       {/* Basic modal for details (placeholder logic from original file) */}
       <ModalBase

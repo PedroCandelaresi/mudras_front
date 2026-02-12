@@ -350,12 +350,14 @@ const TablaMatrizStock: React.FC<TablaMatrizStockProps> = ({ onTransferir }) => 
 
     const ejecutarBusqueda = () => {
         setGlobalSearch(globalSearchDraft);
+        setPage(0);
     };
 
     const limpiarFiltros = () => {
         setGlobalSearch('');
         setGlobalSearchDraft('');
         setFiltros({});
+        setPage(0);
     };
 
     // --- Render Cell ---
@@ -522,6 +524,7 @@ const TablaMatrizStock: React.FC<TablaMatrizStockProps> = ({ onTransferir }) => 
                             onChange={(_, newValue) => {
                                 const ids = newValue.map((v: any) => Number(v.IdProveedor));
                                 setFiltros(prev => ({ ...prev, proveedorIds: ids, proveedorId: ids[0] })); // Set single ID too for compat
+                                setPage(0);
                             }}
                             renderOption={(props, option: any, { selected }) => (
                                 <li {...props}>
@@ -541,6 +544,7 @@ const TablaMatrizStock: React.FC<TablaMatrizStockProps> = ({ onTransferir }) => 
                             onChange={(_, newValue) => {
                                 const ids = newValue.map((v: any) => Number(v.id));
                                 setFiltros(prev => ({ ...prev, rubroIds: ids }));
+                                setPage(0);
                             }}
                             renderOption={(props, option: any, { selected }) => (
                                 <li {...props}>

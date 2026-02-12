@@ -22,6 +22,7 @@ import {
   MenuItem,
   Button
 } from '@mui/material';
+import PaginacionMudras from '@/components/ui/PaginacionMudras';
 import { alpha } from '@mui/material/styles';
 import { useQuery, useApolloClient } from '@apollo/client/react';
 import {
@@ -126,6 +127,7 @@ const TablaMovimientosStock = () => {
   // Estado de filtros y paginación
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(50);
+  const tableTopRef = React.useRef<HTMLDivElement>(null);
   const [filtroTipo, setFiltroTipo] = useState<string>('');
   const [fechaDesde, setFechaDesde] = useState<string>('');
   const [fechaHasta, setFechaHasta] = useState<string>('');
@@ -160,11 +162,15 @@ const TablaMovimientosStock = () => {
   const totalPaginas = Math.ceil(totalRegistros / rowsPerPage);
   const paginaActual = page + 1;
 
-  const handleChangePage = (newPage: number) => setPage(newPage);
+  const handleChangePage = (newPage: number) => {
+    setPage(newPage);
+    tableTopRef.current?.scrollIntoView({ behavior: 'smooth' });
+  };
 
-  const handleChangeRowsPerPage = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setRowsPerPage(parseInt(e.target.value, 10));
+  const handleChangeRowsPerPage = (newRowsPerPage: number) => {
+    setRowsPerPage(newRowsPerPage);
     setPage(0);
+    tableTopRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
   const handleRefresh = () => {
@@ -179,23 +185,7 @@ const TablaMovimientosStock = () => {
     setPage(0);
   };
 
-  // Paginación helper
-  const generarNumerosPaginas = () => {
-    const paginas: (number | '...')[] = [];
-    const maxVisible = 7;
-    if (totalPaginas <= maxVisible) {
-      for (let i = 1; i <= totalPaginas; i++) paginas.push(i);
-    } else if (paginaActual <= 4) {
-      for (let i = 1; i <= 5; i++) paginas.push(i);
-      paginas.push('...', totalPaginas);
-    } else if (paginaActual >= totalPaginas - 3) {
-      paginas.push(1, '...');
-      for (let i = totalPaginas - 4; i <= totalPaginas; i++) paginas.push(i);
-    } else {
-      paginas.push(1, '...', paginaActual - 1, paginaActual, paginaActual + 1, '...', totalPaginas);
-    }
-    return paginas;
-  };
+
   const handleExportar = async (type: 'pdf' | 'excel') => {
     try {
       setExporting(true);
@@ -625,49 +615,7 @@ const TablaMovimientosStock = () => {
     </TableContainer>
   );
 
-  /* ======================== Paginador ======================== */
-  const paginador = (
-    <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mt: 3 }}>
-      <Typography variant="caption" color="text.secondary">
-        Mostrando {Math.min(rowsPerPage, movimientos.length)} de {totalRegistros} movimientos
-      </Typography>
-      <Stack direction="row" spacing={1} alignItems="center">
-        <TextField select size="small" value={String(rowsPerPage)} onChange={handleChangeRowsPerPage} sx={{ minWidth: 80 }}>
-          {[50, 100, 150].map((option) => (<option key={option} value={option}>{option}</option>))}
-        </TextField>
-        <Typography variant="body2" color="text.secondary">
-          Página {paginaActual} de {Math.max(1, totalPaginas)}
-        </Typography>
-        {generarNumerosPaginas().map((num, idx) =>
-          num === '...' ? (
-            <Box key={idx} sx={{ px: 1, color: 'text.secondary' }}>...</Box>
-          ) : (
-            <Button
-              key={num}
-              variant={Number(num) === paginaActual ? 'contained' : 'outlined'}
-              size="small"
-              sx={{
-                minWidth: 32,
-                px: 1,
-                borderRadius: 0,
-                borderColor: Number(num) === paginaActual ? 'transparent' : '#e0e0e0',
-                bgcolor: Number(num) === paginaActual ? borgoña.primary : 'transparent',
-                color: Number(num) === paginaActual ? '#fff' : 'text.primary',
-                '&:hover': {
-                  borderColor: borgoña.primary,
-                  bgcolor: Number(num) === paginaActual ? borgoña.primaryHover : alpha(borgoña.primary, 0.05)
-                }
-              }}
-              onClick={() => setPage(Number(num) - 1)}
-              disabled={num === paginaActual}
-            >
-              {num}
-            </Button>
-          )
-        )}
-      </Stack>
-    </Box>
-  );
+
 
   if (error) {
     return (
@@ -689,9 +637,29 @@ const TablaMovimientosStock = () => {
 
   return (
     <Box sx={{ width: '100%' }}>
+      <Box ref={tableTopRef} />
       {toolbar}
+      <PaginacionMudras
+        page={page}
+        rowsPerPage={rowsPerPage}
+        total={totalRegistros}
+        onPageChange={handleChangePage}
+        onRowsPerPageChange={handleChangeRowsPerPage}
+        itemLabel="movimientos"
+        accentColor={borgoña.primary}
+        rowsPerPageOptions={[50, 100, 150, 300, 500]}
+      />
       {tabla}
-      {paginador}
+      <PaginacionMudras
+        page={page}
+        rowsPerPage={rowsPerPage}
+        total={totalRegistros}
+        onPageChange={handleChangePage}
+        onRowsPerPageChange={handleChangeRowsPerPage}
+        itemLabel="movimientos"
+        accentColor={borgoña.primary}
+        rowsPerPageOptions={[50, 100, 150, 300, 500]}
+      />
     </Box>
   );
 };

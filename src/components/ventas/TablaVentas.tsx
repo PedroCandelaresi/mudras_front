@@ -275,7 +275,7 @@ export function TablaVentas() {
           baseColor={grisRojizo.primary}
           placeholder="Buscar por Nº comprobante..."
           searchValue={busqueda}
-          onSearchValueChange={setBusqueda}
+          onSearchValueChange={(v) => { setBusqueda(v); setPage(0); }}
           onSubmitSearch={() => setPage(0)}
           onClear={() => { setBusqueda(""); setPage(0); }}
           customActions={

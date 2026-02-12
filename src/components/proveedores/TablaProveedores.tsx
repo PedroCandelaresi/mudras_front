@@ -9,6 +9,7 @@ import {
   Typography, Avatar, Skeleton, TextField, InputAdornment, Button,
   IconButton, Tooltip, Menu, Divider, Stack, MenuItem
 } from '@mui/material';
+import PaginacionMudras from '@/components/ui/PaginacionMudras';
 import { alpha } from '@mui/material/styles';
 import { useQuery } from '@apollo/client/react';
 
@@ -78,6 +79,7 @@ const TablaProveedores = forwardRef<TablaProveedoresHandle, Props>(({
   // estado tabla
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(150);
+  const tableTopRef = React.useRef<HTMLDivElement>(null);
   const [filtro, setFiltro] = useState('');
 
   // filtros por columna
@@ -127,22 +129,7 @@ const TablaProveedores = forwardRef<TablaProveedoresHandle, Props>(({
     [proveedoresFiltrados, page, rowsPerPage]
   );
 
-  const generarNumerosPaginas = () => {
-    const paginas: (number | '...')[] = [];
-    const maxVisible = 7;
-    if (totalPaginas <= maxVisible) {
-      for (let i = 1; i <= totalPaginas; i++) paginas.push(i);
-    } else if (paginaActual <= 4) {
-      for (let i = 1; i <= 5; i++) paginas.push(i);
-      paginas.push('...', totalPaginas);
-    } else if (paginaActual >= totalPaginas - 3) {
-      paginas.push(1, '...');
-      for (let i = totalPaginas - 4; i <= totalPaginas; i++) paginas.push(i);
-    } else {
-      paginas.push(1, '...', paginaActual - 1, paginaActual, paginaActual + 1, '...', totalPaginas);
-    }
-    return paginas;
-  };
+
 
   // acciones
   const handleViewProveedor = (p: Proveedor) => {
@@ -206,10 +193,15 @@ const TablaProveedores = forwardRef<TablaProveedoresHandle, Props>(({
     },
   }), [abrirModalCrear]);
 
-  const handleChangePage = (_: unknown, newPage: number) => setPage(newPage);
-  const handleChangeRowsPerPage = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setRowsPerPage(parseInt(e.target.value, 10));
+  const handleChangePage = (newPage: number) => {
+    setPage(newPage);
+    tableTopRef.current?.scrollIntoView({ behavior: 'smooth' });
+  };
+
+  const handleChangeRowsPerPage = (newRowsPerPage: number) => {
+    setRowsPerPage(newRowsPerPage);
     setPage(0);
+    tableTopRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
   // ... (rest of imports)
@@ -313,7 +305,7 @@ const TablaProveedores = forwardRef<TablaProveedoresHandle, Props>(({
           placeholder="Buscar proveedores..."
           size="small"
           value={filtro}
-          onChange={(e) => setFiltro(e.target.value)}
+          onChange={(e) => { setFiltro(e.target.value); setPage(0); }}
           onKeyDown={(e) => { if (e.key === 'Enter') setPage(0); }}
           InputProps={{
             startAdornment: (
@@ -576,57 +568,35 @@ const TablaProveedores = forwardRef<TablaProveedoresHandle, Props>(({
     </TableContainer>
   );
 
-  /* ======================== Paginador ======================== */
-  const paginador = (
-    <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mt: 3 }}>
-      <Typography variant="caption" color="text.secondary">
-        Mostrando {Math.min(rowsPerPage, proveedoresPaginados.length)} de {proveedoresFiltrados.length} proveedores
-      </Typography>
-      <Stack direction="row" spacing={1} alignItems="center">
-        <TextField select size="small" value={String(rowsPerPage)} onChange={handleChangeRowsPerPage} sx={{ minWidth: 80 }}>
-          {[50, 100, 150, 300, 500].map((option) => (<MenuItem key={option} value={option}>{option}</MenuItem>))}
-        </TextField>
-        <Typography variant="body2" color="text.secondary">
-          Página {paginaActual} de {Math.max(1, totalPaginas)}
-        </Typography>
-        {generarNumerosPaginas().map((num, idx) =>
-          num === '...' ? (
-            <Box key={idx} sx={{ px: 1, color: 'text.secondary' }}>...</Box>
-          ) : (
-            <Button
-              key={num}
-              variant={Number(num) === paginaActual ? 'contained' : 'outlined'}
-              size="small"
-              sx={{
-                minWidth: 32,
-                px: 1,
-                borderRadius: 0,
-                borderColor: Number(num) === paginaActual ? 'transparent' : '#e0e0e0',
-                bgcolor: Number(num) === paginaActual ? azul.primary : 'transparent',
-                color: Number(num) === paginaActual ? '#fff' : 'text.primary',
-                '&:hover': {
-                  borderColor: azul.primary,
-                  bgcolor: Number(num) === paginaActual ? azul.primaryHover : alpha(azul.primary, 0.05)
-                }
-              }}
-              onClick={() => setPage(Number(num) - 1)}
-              disabled={num === paginaActual}
-            >
-              {num}
-            </Button>
-          )
-        )}
-      </Stack>
-    </Box>
-  );
+
 
   /* ======================== Render ======================== */
   return (
     <>
       <Box sx={{ width: '100%' }}>
+        <Box ref={tableTopRef} />
         {toolbar}
+        <PaginacionMudras
+          page={page}
+          rowsPerPage={rowsPerPage}
+          total={proveedoresFiltrados.length}
+          onPageChange={handleChangePage}
+          onRowsPerPageChange={handleChangeRowsPerPage}
+          itemLabel="proveedores"
+          accentColor={azul.primary}
+          rowsPerPageOptions={[50, 100, 150, 300, 500]}
+        />
         {tabla}
-        {paginador}
+        <PaginacionMudras
+          page={page}
+          rowsPerPage={rowsPerPage}
+          total={proveedoresFiltrados.length}
+          onPageChange={handleChangePage}
+          onRowsPerPageChange={handleChangeRowsPerPage}
+          itemLabel="proveedores"
+          accentColor={azul.primary}
+          rowsPerPageOptions={[50, 100, 150, 300, 500]}
+        />
       </Box>
 
       {/* Menú de filtros por columna */}

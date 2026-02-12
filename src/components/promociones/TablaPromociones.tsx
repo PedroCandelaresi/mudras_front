@@ -110,7 +110,7 @@ const TablaPromociones: React.FC<Props> = ({ puedeCrear = true }) => {
         baseColor="#f9a825"
         placeholder="Buscar promociones (nombre, estado)"
         searchValue={busqueda}
-        onSearchValueChange={setBusqueda}
+        onSearchValueChange={(v) => { setBusqueda(v); setPage(0); }}
         onSubmitSearch={() => setPage(0)}
         onClear={() => { setBusqueda(""); setPage(0); }}
         canCreate={puedeCrear}

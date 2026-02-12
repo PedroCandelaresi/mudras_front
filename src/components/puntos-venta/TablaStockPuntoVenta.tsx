@@ -1,6 +1,7 @@
 'use client';
 /* eslint-disable @next/next/no-img-element */
-import { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
+import PaginacionMudras from '@/components/ui/PaginacionMudras';
 import {
   Alert,
   Box,
@@ -67,7 +68,8 @@ const TablaStockPuntoVenta: React.FC<Props> = ({
   const [busquedaAplicada, setBusquedaAplicada] = useState('');
 
   const [page, setPage] = useState(0);
-  const [rowsPerPage] = useState(50);
+  const [rowsPerPage, setRowsPerPage] = useState(50);
+  const tableTopRef = React.useRef<HTMLDivElement>(null);
   const [filtrosRubros, setFiltrosRubros] = useState<any[]>([]);
   const [filtrosProveedores, setFiltrosProveedores] = useState<any[]>([]);
 
@@ -233,10 +235,16 @@ const TablaStockPuntoVenta: React.FC<Props> = ({
 
   const showActions = Boolean(onEditStock || onViewDetails);
   const totalPaginas = Math.ceil(articulosFiltrados.length / rowsPerPage) || 1;
-  const articulosPaginados = useMemo(
-    () => articulosFiltrados.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage),
-    [articulosFiltrados, page, rowsPerPage]
-  );
+  const handleChangePage = (newPage: number) => {
+    setPage(newPage);
+    tableTopRef.current?.scrollIntoView({ behavior: 'smooth' });
+  };
+
+  const handleChangeRowsPerPage = (newRowsPerPage: number) => {
+    setRowsPerPage(newRowsPerPage);
+    setPage(0);
+    tableTopRef.current?.scrollIntoView({ behavior: 'smooth' });
+  };
 
   return (
     <Box>
@@ -440,201 +448,201 @@ const TablaStockPuntoVenta: React.FC<Props> = ({
                   {articulosFiltrados.length} artículos • {numberFormatter.format(totalUnidades)} unidades • {currencyFormatter.format(valorEstimado)} val. est.
                 </Typography>
               </Box>
-            </Paper>
+              <Box ref={tableTopRef} />
+              <PaginacionMudras
+                page={page}
+                rowsPerPage={rowsPerPage}
+                total={articulosFiltrados.length}
+                onPageChange={handleChangePage}
+                onRowsPerPageChange={handleChangeRowsPerPage}
+                itemLabel="artículos"
+                accentColor={theme.primary}
+                rowsPerPageOptions={[50, 100, 150, 300, 500]}
+              />
 
-            <Paper elevation={0} sx={{ border: '1px solid #e0e0e0', borderRadius: 0, overflow: 'hidden' }}>
-              <TableContainer>
-                <Table size="small" stickyHeader>
-                  <TableHead>
-                    <TableRow>
-                      {['IMAGEN', 'CÓDIGO', 'DESCRIPCIÓN', 'PRECIO', 'STOCK', ...(showActions ? ['ACCIONES'] : [])].map((head, idx) => (
-                        <TableCell
-                          key={idx}
-                          align={['PRECIO', 'STOCK'].includes(head) ? 'right' : head === 'ACCIONES' ? 'center' : 'left'}
-                          sx={{
-                            bgcolor: theme.headerBg,
-                            fontWeight: 700,
-                            color: theme.headerText,
-                            borderBottom: `2px solid ${theme.headerBorder}`, // Usar headerBorder para consistencia
-                            fontSize: '0.8rem',
-                            textTransform: 'uppercase',
-                            letterSpacing: '0.5px',
-                            py: 1.5
-                          }}
-                        >
-                          {head}
-                        </TableCell>
-                      ))}
-                    </TableRow>
-                  </TableHead>
-                  <TableBody>
-                    {loading ? (
+              <Paper elevation={0} sx={{ border: '1px solid #e0e0e0', borderRadius: 0, overflow: 'hidden' }}>
+                <TableContainer>
+                  <Table size="small" stickyHeader>
+                    <TableHead>
                       <TableRow>
-                        <TableCell colSpan={7} align="center" sx={{ py: 10 }}>
-                          <MudrasLoader size={80} text="Cargando stock..." />
-                        </TableCell>
-                      </TableRow>
-                    ) : articulosFiltrados.length === 0 ? (
-                      <TableRow>
-                        <TableCell colSpan={7} align="center" sx={{ py: 4 }}>
-                          {busquedaAplicada
-                            ? 'No hay resultados que coincidan con la búsqueda.'
-                            : 'Este punto aún no tiene stock cargado.'}
-                        </TableCell>
-                      </TableRow>
-                    ) : (
-                      articulosPaginados.map((item, idx) => (
-                        <TableRow
-                          key={item.id}
-                          hover
-                          sx={{
-                            bgcolor: idx % 2 === 0 ? '#ffffff' : theme.alternateRow,
-                            '&:hover': { bgcolor: alpha(theme.primary, 0.08) }
-                          }}
-                        >
-                          <TableCell>
-                            {item.articulo?.ImagenUrl ? (
-                              <Box
-                                sx={{
-                                  width: 40,
-                                  height: 40,
-                                  borderRadius: 0,
-                                  overflow: 'hidden',
-                                  border: '1px solid #e0e0e0',
-                                }}
-                              >
-                                <img
-                                  src={
-                                    item.articulo.ImagenUrl.startsWith('http') || item.articulo.ImagenUrl.startsWith('data:')
-                                      ? item.articulo.ImagenUrl
-                                      : `${process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:4000'}${item.articulo.ImagenUrl.startsWith('/') ? '' : '/'}${item.articulo.ImagenUrl}`
-                                  }
-                                  alt={item.nombre}
-                                  style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                                />
-                              </Box>
-                            ) : (
-                              <Box width={40} height={40} bgcolor="#f5f5f5" border="1px solid #e0e0e0" display="grid" sx={{ placeItems: 'center', borderRadius: 0 }}>
-                                <Icon icon="mdi:image-off-outline" color="#bdbdbd" width={20} />
-                              </Box>
-                            )}
+                        {['IMAGEN', 'CÓDIGO', 'DESCRIPCIÓN', 'PRECIO', 'STOCK', ...(showActions ? ['ACCIONES'] : [])].map((head, idx) => (
+                          <TableCell
+                            key={idx}
+                            align={['PRECIO', 'STOCK'].includes(head) ? 'right' : head === 'ACCIONES' ? 'center' : 'left'}
+                            sx={{
+                              bgcolor: theme.headerBg,
+                              fontWeight: 700,
+                              color: theme.headerText,
+                              borderBottom: `2px solid ${theme.headerBorder}`, // Usar headerBorder para consistencia
+                              fontSize: '0.8rem',
+                              textTransform: 'uppercase',
+                              letterSpacing: '0.5px',
+                              py: 1.5
+                            }}
+                          >
+                            {head}
                           </TableCell>
-                          <TableCell>
-                            <Chip
-                              label={item.codigo ?? 'Sin código'}
-                              size="small"
-                              sx={{ borderRadius: 0, bgcolor: '#e0e0e0', fontWeight: 600, color: 'text.primary', fontFamily: 'monospace' }}
-                            />
+                        ))}
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
+                      {loading ? (
+                        <TableRow>
+                          <TableCell colSpan={7} align="center" sx={{ py: 10 }}>
+                            <MudrasLoader size={80} text="Cargando stock..." />
                           </TableCell>
-                          <TableCell>
-                            <Box display="flex" flexDirection="column">
-                              <Typography variant="body2" fontWeight={500}>{item.nombre}</Typography>
-                              {(item.rubro?.nombre || item.articulo?.proveedor?.Nombre) && (
-                                <Stack direction="row" spacing={0.5} mt={0.5}>
-                                  {item.rubro?.nombre && (
-                                    <Chip
-                                      label={item.rubro.nombre}
-                                      size="small"
-                                      variant="outlined"
-                                      sx={{
-                                        height: 20,
-                                        fontSize: '0.65rem',
-                                        color: grisVerdoso.primary,
-                                        borderColor: alpha(grisVerdoso.primary, 0.3),
-                                        '& .MuiChip-label': { px: 1 }
-                                      }}
-                                    />
-                                  )}
-                                  {item.articulo?.proveedor?.Nombre && (
-                                    <Chip
-                                      label={item.articulo.proveedor.Nombre}
-                                      size="small"
-                                      variant="outlined"
-                                      sx={{
-                                        height: 20,
-                                        fontSize: '0.65rem',
-                                        color: '#1565c0', // Blue distinct from Rubro
-                                        borderColor: alpha('#1565c0', 0.3),
-                                        '& .MuiChip-label': { px: 1 }
-                                      }}
-                                    />
-                                  )}
-                                </Stack>
+                        </TableRow>
+                      ) : articulosFiltrados.length === 0 ? (
+                        <TableRow>
+                          <TableCell colSpan={7} align="center" sx={{ py: 4 }}>
+                            {busquedaAplicada
+                              ? 'No hay resultados que coincidan con la búsqueda.'
+                              : 'Este punto aún no tiene stock cargado.'}
+                          </TableCell>
+                        </TableRow>
+                      ) : (
+                        articulosFiltrados.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((item, idx) => (
+                          <TableRow
+                            key={item.id}
+                            hover
+                            sx={{
+                              bgcolor: idx % 2 === 0 ? '#ffffff' : theme.alternateRow,
+                              '&:hover': { bgcolor: alpha(theme.primary, 0.08) }
+                            }}
+                          >
+                            <TableCell>
+                              {item.articulo?.ImagenUrl ? (
+                                <Box
+                                  sx={{
+                                    width: 40,
+                                    height: 40,
+                                    borderRadius: 0,
+                                    overflow: 'hidden',
+                                    border: '1px solid #e0e0e0',
+                                  }}
+                                >
+                                  <img
+                                    src={
+                                      item.articulo.ImagenUrl.startsWith('http') || item.articulo.ImagenUrl.startsWith('data:')
+                                        ? item.articulo.ImagenUrl
+                                        : `${process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:4000'}${item.articulo.ImagenUrl.startsWith('/') ? '' : '/'}${item.articulo.ImagenUrl}`
+                                    }
+                                    alt={item.nombre}
+                                    style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                                  />
+                                </Box>
+                              ) : (
+                                <Box width={40} height={40} bgcolor="#f5f5f5" border="1px solid #e0e0e0" display="grid" sx={{ placeItems: 'center', borderRadius: 0 }}>
+                                  <Icon icon="mdi:image-off-outline" color="#bdbdbd" width={20} />
+                                </Box>
                               )}
-                            </Box>
-                          </TableCell>
-                          <TableCell align="right">
-                            {Number.isFinite(obtenerPrecioUnitario(item))
-                              ? currencyFormatter.format(obtenerPrecioUnitario(item))
-                              : '—'}
-                          </TableCell>
-                          <TableCell align="right">
-                            <Typography variant="body2" fontWeight={700} color={theme.textStrong}>
-                              {numberFormatter.format(Number(item.stockAsignado) || 0)}
-                            </Typography>
-                          </TableCell>
-
-                          {showActions && (
-                            <TableCell align="center">
-                              <Box display="flex" justifyContent="center" gap={0.5}>
-                                {onViewDetails && (
-                                  <Tooltip title="Ver detalles">
-                                    <IconButton
-                                      size="small"
-                                      onClick={() => onViewDetails(item)}
-                                      sx={{
-                                        color: '#1565c0', // Blue
-                                        '&:hover': { bgcolor: alpha('#1565c0', 0.1) }
-                                      }}
-                                    >
-                                      <IconEye size={20} />
-                                    </IconButton>
-                                  </Tooltip>
-                                )}
-                                {onEditStock && (
-                                  <Tooltip title="Editar stock">
-                                    <IconButton
-                                      size="small"
-                                      onClick={() => onEditStock(item)}
-                                      sx={{
-                                        color: '#2e7d32', // Green
-                                        '&:hover': { bgcolor: alpha('#2e7d32', 0.1) }
-                                      }}
-                                    >
-                                      <IconEdit size={20} />
-                                    </IconButton>
-                                  </Tooltip>
+                            </TableCell>
+                            <TableCell>
+                              <Chip
+                                label={item.codigo ?? 'Sin código'}
+                                size="small"
+                                sx={{ borderRadius: 0, bgcolor: '#e0e0e0', fontWeight: 600, color: 'text.primary', fontFamily: 'monospace' }}
+                              />
+                            </TableCell>
+                            <TableCell>
+                              <Box display="flex" flexDirection="column">
+                                <Typography variant="body2" fontWeight={500}>{item.nombre}</Typography>
+                                {(item.rubro?.nombre || item.articulo?.proveedor?.Nombre) && (
+                                  <Stack direction="row" spacing={0.5} mt={0.5}>
+                                    {item.rubro?.nombre && (
+                                      <Chip
+                                        label={item.rubro.nombre}
+                                        size="small"
+                                        variant="outlined"
+                                        sx={{
+                                          height: 20,
+                                          fontSize: '0.65rem',
+                                          color: grisVerdoso.primary,
+                                          borderColor: alpha(grisVerdoso.primary, 0.3),
+                                          '& .MuiChip-label': { px: 1 }
+                                        }}
+                                      />
+                                    )}
+                                    {item.articulo?.proveedor?.Nombre && (
+                                      <Chip
+                                        label={item.articulo.proveedor.Nombre}
+                                        size="small"
+                                        variant="outlined"
+                                        sx={{
+                                          height: 20,
+                                          fontSize: '0.65rem',
+                                          color: '#1565c0', // Blue distinct from Rubro
+                                          borderColor: alpha('#1565c0', 0.3),
+                                          '& .MuiChip-label': { px: 1 }
+                                        }}
+                                      />
+                                    )}
+                                  </Stack>
                                 )}
                               </Box>
                             </TableCell>
-                          )}
-                        </TableRow>
-                      ))
-                    )}
-                  </TableBody>
-                </Table>
-              </TableContainer>
-              {totalPaginas > 1 && (
-                <Box p={2} borderTop="1px solid #e0e0e0" display="flex" justifyContent="center" gap={1}>
-                  <Button
-                    size="small"
-                    disabled={page === 0}
-                    onClick={() => setPage(p => p - 1)}
-                    sx={{ borderRadius: 0, textTransform: 'none', color: '#757575' }}
-                  >
-                    Anterior
-                  </Button>
-                  <Typography variant="caption" sx={{ alignSelf: 'center' }}>Página {page + 1} de {totalPaginas}</Typography>
-                  <Button
-                    size="small"
-                    disabled={page >= totalPaginas - 1}
-                    onClick={() => setPage(p => p + 1)}
-                    sx={{ borderRadius: 0, textTransform: 'none', color: '#757575' }}
-                  >
-                    Siguiente
-                  </Button>
-                </Box>
-              )}
+                            <TableCell align="right">
+                              {Number.isFinite(obtenerPrecioUnitario(item))
+                                ? currencyFormatter.format(obtenerPrecioUnitario(item))
+                                : '—'}
+                            </TableCell>
+                            <TableCell align="right">
+                              <Typography variant="body2" fontWeight={700} color={theme.textStrong}>
+                                {numberFormatter.format(Number(item.stockAsignado) || 0)}
+                              </Typography>
+                            </TableCell>
+
+                            {showActions && (
+                              <TableCell align="center">
+                                <Box display="flex" justifyContent="center" gap={0.5}>
+                                  {onViewDetails && (
+                                    <Tooltip title="Ver detalles">
+                                      <IconButton
+                                        size="small"
+                                        onClick={() => onViewDetails(item)}
+                                        sx={{
+                                          color: '#1565c0', // Blue
+                                          '&:hover': { bgcolor: alpha('#1565c0', 0.1) }
+                                        }}
+                                      >
+                                        <IconEye size={20} />
+                                      </IconButton>
+                                    </Tooltip>
+                                  )}
+                                  {onEditStock && (
+                                    <Tooltip title="Editar stock">
+                                      <IconButton
+                                        size="small"
+                                        onClick={() => onEditStock(item)}
+                                        sx={{
+                                          color: '#2e7d32', // Green
+                                          '&:hover': { bgcolor: alpha('#2e7d32', 0.1) }
+                                        }}
+                                      >
+                                        <IconEdit size={20} />
+                                      </IconButton>
+                                    </Tooltip>
+                                  )}
+                                </Box>
+                              </TableCell>
+                            )}
+                          </TableRow>
+                        ))
+                      )}
+                    </TableBody>
+                  </Table>
+                </TableContainer>
+                <PaginacionMudras
+                  page={page}
+                  rowsPerPage={rowsPerPage}
+                  total={articulosFiltrados.length}
+                  onPageChange={handleChangePage}
+                  onRowsPerPageChange={handleChangeRowsPerPage}
+                  itemLabel="artículos"
+                  accentColor={theme.primary}
+                  rowsPerPageOptions={[50, 100, 150, 300, 500]}
+                />
+              </Paper>
             </Paper>
           </>
         )}
