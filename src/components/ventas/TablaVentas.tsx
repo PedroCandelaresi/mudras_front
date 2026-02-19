@@ -39,6 +39,8 @@ import { exportToExcel, exportToPdf, ExportColumn } from '@/utils/exportUtils';
 import {
   OBTENER_HISTORIAL_VENTAS,
   type ObtenerHistorialVentasResponse,
+  OBTENER_USUARIOS_AUTH,
+  type UsuariosAuthResponse,
 } from "@/components/ventas/caja-registradora/graphql/queries";
 import SearchToolbar from "@/components/ui/SearchToolbar";
 import PaginacionMudras from "@/components/ui/PaginacionMudras";
@@ -79,6 +81,17 @@ export function TablaVentas() {
   const [ventaSeleccionada, setVentaSeleccionada] = useState<VentaListado | null>(null);
   const [exporting, setExporting] = useState(false);
   const client = useApolloClient();
+
+  // Query para usuarios
+  const { data: userData } = useQuery<UsuariosAuthResponse>(OBTENER_USUARIOS_AUTH, {
+    variables: { 
+      filtros: { 
+        limite: 100,
+        offset: 0
+      } 
+    },
+    fetchPolicy: 'cache-and-network'
+  });
 
   // Filters State
   const [fechaDesde, setFechaDesde] = useState<Date | null>(startOfMonth(new Date()));
@@ -187,9 +200,26 @@ export function TablaVentas() {
       const filterParts: string[] = [];
       const f = queryVariables.filtros as any;
       if (f.fechaDesde && f.fechaHasta) {
-        filterParts.push(`Periodo: ${new Date(f.fechaDesde).toLocaleDateString()} - ${new Date(f.fechaHasta).toLocaleDateString()}`);
+        filterParts.push(`Período: ${new Date(f.fechaDesde).toLocaleDateString()} - ${new Date(f.fechaHasta).toLocaleDateString()}`);
       }
-      if (f.busqueda) filterParts.push(`Búsqueda: "${f.busqueda}"`);
+      if (f.numeroVenta) filterParts.push(`Comprobante: "${f.numeroVenta}"`);
+      if (f.usuarioAuthId) {
+        const usuarioSeleccionado = (userData?.usuariosAuth?.items || []).find(u => u.id === f.usuarioAuthId);
+        if (usuarioSeleccionado) {
+          filterParts.push(`Vendedor: "${usuarioSeleccionado.displayName || usuarioSeleccionado.email}"`);
+        }
+      }
+      if (f.medioPago) {
+        const medioLabel = {
+          'EFECTIVO': 'Efectivo',
+          'TARJETA_CREDITO': 'Tarjeta Crédito',
+          'TARJETA_DEBITO': 'Tarjeta Débito',
+          'TRANSFERENCIA': 'Transferencia',
+          'MERCADO_PAGO': 'Mercado Pago',
+          'CUENTA_CORRIENTE': 'Cuenta Corriente',
+        }[f.medioPago] || f.medioPago;
+        filterParts.push(`Medio Pago: "${medioLabel}"`);
+      }
 
       const filterSummary = filterParts.join(' | ');
 

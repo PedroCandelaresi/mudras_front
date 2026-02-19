@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useLazyQuery, useMutation } from '@apollo/client/react';
 import {
   Dialog,
@@ -77,9 +77,14 @@ const METODOS_PAGO = [
   { value: 'TARJETA_DEBITO', label: 'Tarjeta de Débito', icon: 'mdi:credit-card' },
   { value: 'TARJETA_CREDITO', label: 'Tarjeta de Crédito', icon: 'mdi:credit-card-multiple' },
   { value: 'TRANSFERENCIA', label: 'Transferencia', icon: 'mdi:bank-transfer' },
+  { value: 'QR_MODO', label: 'QR MODO', icon: 'mdi:qrcode' },
+  { value: 'QR_MERCADOPAGO', label: 'QR MercadoPago', icon: 'mdi:qrcode-scan' },
+  { value: 'OTRO', label: 'Otros', icon: 'mdi:dots-horizontal' },
+] as const;
+
+const METODOS_OTROS = [
   { value: 'CHEQUE', label: 'Cheque', icon: 'mdi:checkbook' },
   { value: 'CUENTA_CORRIENTE', label: 'Cuenta Corriente', icon: 'mdi:book-open-variant' },
-  { value: 'OTRO', label: 'Otro', icon: 'mdi:dots-horizontal' },
 ] as const;
 
 export const ModalConfirmacionVenta: React.FC<ModalConfirmacionVentaProps> = ({
@@ -97,20 +102,13 @@ export const ModalConfirmacionVenta: React.FC<ModalConfirmacionVentaProps> = ({
     metodoPago: 'EFECTIVO',
     monto: '0',
   });
-  const [dniCuit, setDniCuit] = useState<string>('');
-  const [nombreCliente, setNombreCliente] = useState<string>('');
-  const [razonSocialCliente, setRazonSocialCliente] = useState<string>('');
+  const [subMetodoOtro, setSubMetodoOtro] = useState<'CHEQUE' | 'CUENTA_CORRIENTE'>('CHEQUE');
   const [usuarios, setUsuarios] = useState<UsuarioOption[]>([]);
   const [cargandoUsuarios, setCargandoUsuarios] = useState<boolean>(false);
   const [errorUsuarios, setErrorUsuarios] = useState<string | null>(null);
   const [usuarioSeleccionado, setUsuarioSeleccionado] = useState<UsuarioOption | null>(null);
   const [perfilUsuarioId, setPerfilUsuarioId] = useState<string | null>(null);
   const [snack, setSnack] = useState<{ open: boolean; msg: string; sev: 'success' | 'error' | 'info' }>({ open: false, msg: '', sev: 'success' });
-
-  // Determine input type based on length (simplistic but effective for UX)
-  const esCuit = dniCuit.length === 11;
-  const showNombre = dniCuit.length > 0 && !esCuit;
-  const showRazonSocial = esCuit;
 
   const [obtenerUsuarios, { called: usuariosCalled, loading: usuariosLoading, data: usuariosData, error: usuariosError }] =
     useLazyQuery<UsuariosCajaRespuesta>(USUARIOS_CAJA_AUTH_QUERY, {
@@ -182,7 +180,6 @@ export const ModalConfirmacionVenta: React.FC<ModalConfirmacionVentaProps> = ({
   const totalPagos = pagos.reduce((sum, pago) => sum + pago.monto, 0);
   const diferencia = totalPagos - subtotal;
   const cambio = diferencia > 0 ? diferencia : 0;
-  const requiereDni = useMemo(() => pagos.some((p) => p.metodoPago !== 'EFECTIVO'), [pagos]);
 
   // Resetear formulario al abrir
   useEffect(() => {
@@ -192,9 +189,6 @@ export const ModalConfirmacionVenta: React.FC<ModalConfirmacionVentaProps> = ({
       metodoPago: 'EFECTIVO',
       monto: String(subtotal),
     });
-    setDniCuit('');
-    setNombreCliente('');
-    setRazonSocialCliente('');
     setUsuarioSeleccionado(null);
     setErrorUsuarios(null);
   }, [open, subtotal]);
@@ -229,11 +223,13 @@ export const ModalConfirmacionVenta: React.FC<ModalConfirmacionVentaProps> = ({
   const handleAgregarPago = () => {
     const montoNum = parseFloat(nuevoPago.monto) || 0;
     if (montoNum > 0) {
-      setPagos(prev => [...prev, { metodoPago: nuevoPago.metodoPago, monto: montoNum }]);
+      const metodoReal: MetodoPago = nuevoPago.metodoPago === 'OTRO' ? subMetodoOtro : nuevoPago.metodoPago;
+      setPagos(prev => [...prev, { metodoPago: metodoReal, monto: montoNum }]);
       setNuevoPago({
         metodoPago: 'EFECTIVO',
         monto: String(Math.max(0, subtotal - totalPagos - montoNum)),
       });
+      setSubMetodoOtro('CHEQUE');
     }
   };
 
@@ -244,10 +240,6 @@ export const ModalConfirmacionVenta: React.FC<ModalConfirmacionVentaProps> = ({
   const handleConfirmarVenta = () => {
     if (!puestoVentaIdSeleccionado || pagos.length === 0 || !usuarioSeleccionado) return;
     if (!puntoValido) return;
-    if (requiereDni && (!dniCuit || dniCuit.trim().length < 7)) {
-      alert('Para pagos no en efectivo se requiere DNI/CUIT del cliente');
-      return;
-    }
 
     const mapMetodoPago = (m: MetodoPago): MedioPagoCaja | null => {
       switch (m) {
@@ -255,6 +247,8 @@ export const ModalConfirmacionVenta: React.FC<ModalConfirmacionVentaProps> = ({
         case 'TARJETA_DEBITO': return 'DEBITO';
         case 'TARJETA_CREDITO': return 'CREDITO';
         case 'TRANSFERENCIA': return 'TRANSFERENCIA';
+        case 'QR_MODO':
+        case 'QR_MERCADOPAGO': return 'QR';
         case 'CUENTA_CORRIENTE': return 'CUENTA_CORRIENTE';
         case 'CHEQUE':
         case 'OTRO':
@@ -288,13 +282,10 @@ export const ModalConfirmacionVenta: React.FC<ModalConfirmacionVentaProps> = ({
       return;
     }
 
-    const input: CrearVentaCajaInput & { nombreCliente?: string; razonSocialCliente?: string } = {
+    const input: CrearVentaCajaInput = {
       tipoVenta: 'MOSTRADOR',
       usuarioAuthId: usuarioSeleccionado.id,
       puntoMudrasId: puntoMudrasIdSeleccionado!,
-      cuitCliente: dniCuit ? dniCuit.trim() : undefined,
-      nombreCliente: showNombre ? nombreCliente.trim() : undefined,
-      razonSocialCliente: showRazonSocial ? razonSocialCliente.trim() : undefined,
       detalles: articulos.map(art => ({
         articuloId: Number(art.id),
         cantidad: Number(art.cantidad),
@@ -308,7 +299,7 @@ export const ModalConfirmacionVenta: React.FC<ModalConfirmacionVentaProps> = ({
 
   const puedeConfirmar =
     pagos.length > 0 &&
-    Math.abs(diferencia) < 0.01 &&
+    diferencia >= -0.01 &&
     Boolean(usuarioSeleccionado) &&
     puntoValido;
 
@@ -415,46 +406,7 @@ export const ModalConfirmacionVenta: React.FC<ModalConfirmacionVentaProps> = ({
                     />
                   </Grid>
 
-                  <Grid size={{ xs: 12 }}>
-                    <TextField
-                      fullWidth
-                      size="small"
-                      label="DNI o CUIT del cliente (requerido si no es efectivo)"
-                      value={dniCuit}
-                      onChange={(e) => setDniCuit(e.target.value)}
-                      required={requiereDni}
-                      InputProps={{ sx: { borderRadius: 0 } }}
-                    />
-                    {showNombre && (
-                      <TextField
-                        label="Nombre / Apellido"
-                        value={nombreCliente}
-                        onChange={(e) => setNombreCliente(e.target.value)}
-                        placeholder="Nombre del cliente"
-                        size="small"
-                        fullWidth
-                        sx={{ mt: 2 }}
-                        InputProps={{ sx: { borderRadius: 0 } }}
-                      />
-                    )}
-                    {showRazonSocial && (
-                      <TextField
-                        label="Razón Social"
-                        value={razonSocialCliente}
-                        onChange={(e) => setRazonSocialCliente(e.target.value)}
-                        placeholder="Razón Social de la empresa"
-                        size="small"
-                        fullWidth
-                        sx={{ mt: 2 }}
-                        InputProps={{ sx: { borderRadius: 0 } }}
-                      />
-                    )}
-                    <Box mt={1}>
-                      <Typography variant="caption" color="text.secondary" sx={{ fontStyle: 'italic' }}>
-                        {esCuit ? 'Identificado como Empresa/Responsable' : (dniCuit.length > 0 ? 'Identificado como Consumidor/Persona' : 'Consumidor Final (Anónimo)')}
-                      </Typography>
-                    </Box>
-                  </Grid>
+
                 </Grid>
               </CardContent>
             </Card>
@@ -552,6 +504,28 @@ export const ModalConfirmacionVenta: React.FC<ModalConfirmacionVentaProps> = ({
                         </Select>
                       </FormControl>
                     </Grid>
+                    {nuevoPago.metodoPago === 'OTRO' && (
+                      <Grid size={{ xs: 12 }}>
+                        <FormControl fullWidth size="small">
+                          <InputLabel>Sub-método</InputLabel>
+                          <Select
+                            value={subMetodoOtro}
+                            onChange={(e) => setSubMetodoOtro(e.target.value as 'CHEQUE' | 'CUENTA_CORRIENTE')}
+                            label="Sub-método"
+                            sx={{ borderRadius: 0, bgcolor: '#fff' }}
+                          >
+                            {METODOS_OTROS.map((metodo) => (
+                              <MenuItem key={metodo.value} value={metodo.value}>
+                                <Box display="flex" alignItems="center" gap={1}>
+                                  <Icon icon={metodo.icon} width={16} height={16} />
+                                  {metodo.label}
+                                </Box>
+                              </MenuItem>
+                            ))}
+                          </Select>
+                        </FormControl>
+                      </Grid>
+                    )}
                     <Grid size={{ xs: 12, sm: 4 }}>
                       <TextField
                         fullWidth
@@ -595,7 +569,8 @@ export const ModalConfirmacionVenta: React.FC<ModalConfirmacionVentaProps> = ({
                       </TableHead>
                       <TableBody>
                         {pagos.map((pago, index) => {
-                          const metodo = METODOS_PAGO.find((m) => m.value === pago.metodoPago);
+                          const metodo = METODOS_PAGO.find((m) => m.value === pago.metodoPago)
+                            || METODOS_OTROS.find((m) => m.value === pago.metodoPago);
                           return (
                             <TableRow key={index} hover>
                               <TableCell>
@@ -603,7 +578,7 @@ export const ModalConfirmacionVenta: React.FC<ModalConfirmacionVentaProps> = ({
                                   {metodo && (
                                     <Icon icon={metodo.icon} width={16} height={16} color={grisRojizo.primary} />
                                   )}
-                                  {metodo?.label}
+                                  {metodo?.label || pago.metodoPago}
                                 </Box>
                               </TableCell>
                               <TableCell align="right">

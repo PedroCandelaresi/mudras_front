@@ -38,7 +38,13 @@ export function VentasFilterBar({
     const [quickDate, setQuickDate] = React.useState<'hoy' | 'semana' | 'mes' | null>(null);
 
     const { data: userData } = useQuery<UsuariosAuthResponse>(OBTENER_USUARIOS_AUTH, {
-        variables: { filtros: { limite: 100 } } // Fetch many/all
+        variables: { 
+            filtros: { 
+                limite: 100,
+                offset: 0
+            } 
+        },
+        fetchPolicy: 'cache-and-network'
     });
 
     const handleQuickDate = (event: React.MouseEvent<HTMLElement>, newAlignment: 'hoy' | 'semana' | 'mes' | null) => {

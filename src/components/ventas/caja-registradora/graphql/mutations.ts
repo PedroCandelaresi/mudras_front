@@ -68,6 +68,8 @@ export type MetodoPago =
   | 'TARJETA_DEBITO'
   | 'TARJETA_CREDITO'
   | 'TRANSFERENCIA'
+  | 'QR_MODO'
+  | 'QR_MERCADOPAGO'
   | 'CHEQUE'
   | 'CUENTA_CORRIENTE'
   | 'OTRO';

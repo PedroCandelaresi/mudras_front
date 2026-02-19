@@ -395,13 +395,13 @@ export interface PuestosVentaResponse {
 }
 
 export const OBTENER_USUARIOS_AUTH = gql`
-  query ObtenerUsuariosAuth {
-    usuariosAuth(filtros: { limite: 100 }) {
+  query ObtenerUsuariosAuth($filtros: ListarUsuariosAuthInput!) {
+    usuariosAuth(filtros: $filtros) {
       items {
         id
         displayName
         email
-        rol
+        roles
       }
       total
     }
@@ -414,7 +414,7 @@ export interface UsuariosAuthResponse {
       id: string;
       displayName: string;
       email: string;
-      rol: string;
+      roles: string[];
     }>;
     total: number;
   };
