@@ -2,6 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { Table, TableHead, TableBody, TableRow, TableCell, Chip, Tooltip, IconButton, TableContainer, Paper, Box } from '@mui/material';
 import PaginacionMudras from '@/components/ui/PaginacionMudras';
 import { Icon } from '@iconify/react';
+import { verdeMilitar } from '@/ui/colores';
 
 export type TablaGasto = {
   id: number;
@@ -17,10 +18,23 @@ export type TablaGasto = {
 
 type Props = { gastos: TablaGasto[]; onDelete?: (id: number) => void };
 
+type TablaGastosUiState = {
+  page: number;
+  rowsPerPage: number;
+};
+
+const tablaGastosUiStateCache = new Map<string, TablaGastosUiState>();
+
 const TablaGastos: React.FC<Props> = ({ gastos, onDelete }) => {
-  const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(50);
+  const cacheKey = 'tabla-gastos';
+  const cachedState = tablaGastosUiStateCache.get(cacheKey);
+  const [page, setPage] = useState(cachedState?.page ?? 0);
+  const [rowsPerPage, setRowsPerPage] = useState(cachedState?.rowsPerPage ?? 50);
   const tableTopRef = React.useRef<HTMLDivElement>(null);
+
+  React.useEffect(() => {
+    tablaGastosUiStateCache.set(cacheKey, { page, rowsPerPage });
+  }, [cacheKey, page, rowsPerPage]);
 
   const paginados = useMemo(() => {
     return gastos.slice(page * rowsPerPage, (page + 1) * rowsPerPage);
@@ -47,7 +61,7 @@ const TablaGastos: React.FC<Props> = ({ gastos, onDelete }) => {
         onPageChange={handleChangePage}
         onRowsPerPageChange={handleChangeRowsPerPage}
         itemLabel="gastos"
-        accentColor="#d32f2f"
+        accentColor={verdeMilitar.primary}
         rowsPerPageOptions={[50, 100, 150, 300, 500]}
       />
       <TableContainer component={Paper} elevation={0} sx={{ borderRadius: 0, border: '1px solid #e0e0e0' }}>
@@ -111,7 +125,7 @@ const TablaGastos: React.FC<Props> = ({ gastos, onDelete }) => {
         onPageChange={handleChangePage}
         onRowsPerPageChange={handleChangeRowsPerPage}
         itemLabel="gastos"
-        accentColor="#d32f2f"
+        accentColor={verdeMilitar.primary}
         rowsPerPageOptions={[50, 100, 150, 300, 500]}
       />
     </Box>

@@ -45,10 +45,10 @@ export default function ArticulosPage() {
               transition: 'background-color .2s ease',
             }}>
               <TablaArticulos
-                key={`articulos-${reloadKey}`}
                 title="Artículos"
                 showToolbar
                 showGlobalSearch
+                refreshTrigger={reloadKey}
                 allowCreate={userRole === 'admin' || userRole === 'diseñadora'}
                 onCreateClick={() => {
                   setArticuloSeleccionado(null);
@@ -89,9 +89,11 @@ export default function ArticulosPage() {
 
       <ModalNuevoArticulo
         open={modalNuevoOpen}
-        onClose={() => setModalNuevoOpen(false)}
+        onClose={() => {
+          setModalNuevoOpen(false);
+          setReloadKey((k) => k + 1);
+        }}
         articulo={articuloSeleccionado ?? undefined}
-        onSuccess={() => setReloadKey((k) => k + 1)}
       />
       <ModalModificarStock
         open={modalStockOpen}

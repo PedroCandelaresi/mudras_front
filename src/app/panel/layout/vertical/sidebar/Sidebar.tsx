@@ -7,9 +7,11 @@ import config from '@/app/context/config';
 import Image from "next/image";
 import Typography from "@mui/material/Typography";
 import Link from 'next/link';
+import { alpha } from "@mui/material/styles";
 
 import Scrollbar from "@/app/components/custom-scroll/Scrollbar";
 import { useContext } from "react";
+import { verdeMilitar } from "@/ui/colores";
 
 const Sidebar = () => {
   const lgUp = useMediaQuery((theme) => theme.breakpoints.up("lg"));
@@ -23,6 +25,8 @@ const Sidebar = () => {
   } = useContext(CustomizerContext);
 
   const SidebarWidth = config.sidebarWidth;
+  const sidebarBg = '#ffffff';
+  const sidebarBorder = alpha(verdeMilitar.primary, 0.22);
 
   // En escritorio distinguimos dos modos:
   // - Fijo (pinned): Drawer permanente que redimensiona el contenido.
@@ -126,15 +130,8 @@ const Sidebar = () => {
         '& .MuiDrawer-paper': {
           width: SidebarWidth,
           boxSizing: "border-box",
-          // Copper/Metallic Orange background (Lighter 20%)
-          backgroundImage:
-            'linear-gradient(135deg, #FFE0B2 0%, #FB8C00 100%), url("/textures/brushed-metal-1024.png")',
-          backgroundBlendMode: 'soft-light',
-          backgroundSize: 'cover, cover',
-          backgroundRepeat: 'no-repeat, repeat-y',
-          backgroundPosition: 'center, center',
-          backgroundColor: '#FB8C00',
-          borderRight: '1px solid rgba(0,0,0,0.1)',
+          backgroundColor: sidebarBg,
+          borderRight: `1px solid ${sidebarBorder}`,
           overflowX: "hidden",
           "&::-webkit-scrollbar": { display: "none" },
           scrollbarWidth: "none",
@@ -170,15 +167,8 @@ const Sidebar = () => {
         '& .MuiDrawer-paper': {
           width: SidebarWidth,
           boxSizing: "border-box",
-          // Copper/Metallic Orange background (Lighter 20%)
-          backgroundImage:
-            'linear-gradient(135deg, #FFE0B2 0%, #FB8C00 100%), url("/textures/brushed-metal-1024.png")',
-          backgroundBlendMode: 'soft-light',
-          backgroundSize: 'cover, cover',
-          backgroundRepeat: 'no-repeat, repeat-y',
-          backgroundPosition: 'center, center',
-          backgroundColor: '#FB8C00',
-          borderRight: '1px solid rgba(0,0,0,0.1)',
+          backgroundColor: sidebarBg,
+          borderRight: `1px solid ${sidebarBorder}`,
           overflowX: "hidden",
           "&::-webkit-scrollbar": { display: "none" },
           scrollbarWidth: "none",
@@ -211,14 +201,8 @@ const Sidebar = () => {
             width: SidebarWidth,
             border: "0 !important",
             boxShadow: (theme) => theme.shadows[8],
-            // Copper/Metallic Orange background (Lighter 20%)
-            backgroundImage:
-              'linear-gradient(135deg, #FFE0B2 0%, #FB8C00 100%), url("/textures/brushed-metal-1024.png")',
-            backgroundBlendMode: 'soft-light',
-            backgroundSize: 'cover, cover',
-            backgroundRepeat: 'no-repeat, repeat-y',
-            backgroundPosition: 'center, center',
-            backgroundColor: '#FB8C00',
+            backgroundColor: sidebarBg,
+            borderRight: `1px solid ${sidebarBorder}`,
           },
         },
       }}

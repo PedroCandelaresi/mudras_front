@@ -4,6 +4,7 @@ import { Box, Paper, Table, TableBody, TableCell, TableContainer, TableHead, Tab
 import PaginacionMudras from "@/components/ui/PaginacionMudras";
 import { IconSearch, IconReportMoney } from "@tabler/icons-react";
 import SearchToolbar from "@/components/ui/SearchToolbar";
+import { verdeMilitar } from "@/ui/colores";
 
 export interface CuentaContableItem {
   codigo: string;
@@ -16,11 +17,25 @@ interface Props {
   items?: CuentaContableItem[];
 }
 
+type TablaCuentasUiState = {
+  page: number;
+  rowsPerPage: number;
+  busqueda: string;
+};
+
+const tablaCuentasUiStateCache = new Map<string, TablaCuentasUiState>();
+
 const TablaCuentasContables: React.FC<Props> = ({ items = [] }) => {
   const tableTopRef = React.useRef<HTMLDivElement>(null);
-  const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(50);
-  const [busqueda, setBusqueda] = useState("");
+  const cacheKey = "tabla-cuentas-contables";
+  const cachedState = tablaCuentasUiStateCache.get(cacheKey);
+  const [page, setPage] = useState(cachedState?.page ?? 0);
+  const [rowsPerPage, setRowsPerPage] = useState(cachedState?.rowsPerPage ?? 50);
+  const [busqueda, setBusqueda] = useState(cachedState?.busqueda ?? "");
+
+  React.useEffect(() => {
+    tablaCuentasUiStateCache.set(cacheKey, { page, rowsPerPage, busqueda });
+  }, [cacheKey, page, rowsPerPage, busqueda]);
 
   const filtrados = useMemo(() => {
     const q = busqueda.trim().toLowerCase();
@@ -59,7 +74,7 @@ const TablaCuentasContables: React.FC<Props> = ({ items = [] }) => {
       <SearchToolbar
         title="Plan de Cuentas"
         icon={<IconReportMoney style={{ marginRight: 8, verticalAlign: 'middle' }} />}
-        baseColor="#2e7d32"
+        baseColor={verdeMilitar.primary}
         placeholder="Buscar cuentas (código, nombre, tipo)"
         searchValue={busqueda}
         onSearchValueChange={(v) => { setBusqueda(v); setPage(0); }}
@@ -75,12 +90,12 @@ const TablaCuentasContables: React.FC<Props> = ({ items = [] }) => {
         onPageChange={handlePageChange}
         onRowsPerPageChange={handleRowsPerPageChange}
         itemLabel="cuentas"
-        accentColor="#2e7d32"
+        accentColor={verdeMilitar.primary}
         rowsPerPageOptions={[20, 50, 100, 150]}
       />
 
       <TableContainer sx={{ borderRadius: 2, border: '1px solid', borderColor: 'grey.200', bgcolor: 'background.paper' }}>
-        <Table stickyHeader size="small" sx={{ '& .MuiTableCell-head': { bgcolor: '#2f3e2e', color: '#eef5ee' } }}>
+        <Table stickyHeader size="small" sx={{ '& .MuiTableCell-head': { bgcolor: verdeMilitar.primary, color: '#eef5ee' } }}>
           <TableHead>
             <TableRow>
               <TableCell sx={{ fontWeight: 700, color: '#eef5ee' }}>Código</TableCell>
@@ -116,7 +131,7 @@ const TablaCuentasContables: React.FC<Props> = ({ items = [] }) => {
         onPageChange={handlePageChange}
         onRowsPerPageChange={handleRowsPerPageChange}
         itemLabel="cuentas"
-        accentColor="#2e7d32"
+        accentColor={verdeMilitar.primary}
         rowsPerPageOptions={[20, 50, 100, 150]}
       />
     </Paper>

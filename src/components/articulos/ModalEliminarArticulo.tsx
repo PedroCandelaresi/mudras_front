@@ -17,7 +17,6 @@ import { IconAlertTriangle, IconX } from '@tabler/icons-react';
 import { useMutation } from '@apollo/client/react';
 import type { Articulo } from '@/app/interfaces/mudras.types';
 import { ELIMINAR_ARTICULO } from '@/components/articulos/graphql/mutations';
-import { BUSCAR_ARTICULOS } from '@/components/articulos/graphql/queries';
 
 type ArticuloMin = Pick<Articulo, 'id' | 'Codigo' | 'Descripcion'>;
 
@@ -36,9 +35,7 @@ export default function ModalEliminarArticulo({ open, onClose, articulo, textoCo
   const palabraCorrecta = 'ELIMINAR';
   const textoValido = textoConfirmacion === palabraCorrecta;
   const articuloId = useMemo(() => (articulo?.id != null ? Number(articulo.id) : null), [articulo?.id]);
-  const [eliminarArticulo, { loading }] = useMutation(ELIMINAR_ARTICULO, {
-    refetchQueries: [{ query: BUSCAR_ARTICULOS }],
-  });
+  const [eliminarArticulo, { loading }] = useMutation(ELIMINAR_ARTICULO);
   const [error, setError] = React.useState('');
 
   const handleConfirm = async () => {

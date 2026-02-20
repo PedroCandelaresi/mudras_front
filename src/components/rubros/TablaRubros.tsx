@@ -50,6 +50,16 @@ type Props = {
   puedeCrear?: boolean;
 };
 
+type TablaRubrosUiState = {
+  page: number;
+  rowsPerPage: number;
+  filtroInput: string;
+  filtro: string;
+  filtrosColumna: ColFilters;
+};
+
+const tablaRubrosUiStateCache = new Map<string, TablaRubrosUiState>();
+
 interface Rubro {
   id: number;
   nombre: string;
@@ -76,20 +86,22 @@ type ColKey = 'nombre' | 'codigo';
 type ColFilters = Partial<Record<ColKey, string>>;
 
 const TablaRubros: React.FC<Props> = ({ onNuevoRubro, puedeCrear = true }) => {
+  const cacheKey = 'tabla-rubros';
+  const cachedState = tablaRubrosUiStateCache.get(cacheKey);
   /* ---------- Estado de tabla / filtros ---------- */
-  const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(150);
+  const [page, setPage] = useState(cachedState?.page ?? 0);
+  const [rowsPerPage, setRowsPerPage] = useState(cachedState?.rowsPerPage ?? 150);
   const tableTopRef = React.useRef<HTMLDivElement>(null);
 
   // Buscador general (input) y aplicado (filtro)
-  const [filtroInput, setFiltroInput] = useState('');
-  const [filtro, setFiltro] = useState(''); // lo que viaja al servidor
+  const [filtroInput, setFiltroInput] = useState(cachedState?.filtroInput ?? '');
+  const [filtro, setFiltro] = useState(cachedState?.filtro ?? ''); // lo que viaja al servidor
 
   // Filtros por columna (UI + aplicado)
   const [menuAnchor, setMenuAnchor] = useState<null | HTMLElement>(null);
   const [columnaActiva, setColumnaActiva] = useState<null | ColKey>(null);
   const [filtroColInput, setFiltroColInput] = useState('');
-  const [filtrosColumna, setFiltrosColumna] = useState<ColFilters>({ nombre: '', codigo: '' });
+  const [filtrosColumna, setFiltrosColumna] = useState<ColFilters>(cachedState?.filtrosColumna ?? { nombre: '', codigo: '' });
 
   // Modales
   const [modalEditarOpen, setModalEditarOpen] = useState(false);
@@ -97,6 +109,16 @@ const TablaRubros: React.FC<Props> = ({ onNuevoRubro, puedeCrear = true }) => {
   const [modalEliminarOpen, setModalEliminarOpen] = useState(false);
   const [rubroSeleccionado, setRubroSeleccionado] = useState<RubroParaModal | null>(null);
   const [textoConfirmacion, setTextoConfirmacion] = useState('');
+
+  React.useEffect(() => {
+    tablaRubrosUiStateCache.set(cacheKey, {
+      page,
+      rowsPerPage,
+      filtroInput,
+      filtro,
+      filtrosColumna,
+    });
+  }, [cacheKey, page, rowsPerPage, filtroInput, filtro, filtrosColumna]);
 
   /* ---------- Build del término de búsqueda para el servidor ---------- */
   const busquedaServidor = useMemo(() => {

@@ -11,9 +11,11 @@ import { Theme } from '@mui/material/styles';
 import Typography from '@mui/material/Typography';
 import useMediaQuery from '@mui/material/useMediaQuery';
 import { styled, useTheme } from '@mui/material/styles';
+import { alpha } from '@mui/material/styles';
 import { CustomizerContext } from "@/app/context/customizerContext";
 import { useTranslation } from "react-i18next";
 import { ItemType } from "@/app/types/layout/sidebar";
+import { verdeMilitar } from "@/ui/colores";
 
 
 
@@ -48,25 +50,25 @@ export default function NavItem({
     backgroundColor: (level ?? 1) > 1 ? "transparent !important" : "inherit",
     color:
       (level ?? 1) > 1 && pathDirect === item?.href
-        ? `#E65100 !important` // Subitems selected: Orange (to stand out against silver)
-        : "rgba(0, 0, 0, 0.87)", // Default text: Black
+        ? `${verdeMilitar.primary} !important`
+        : "rgba(33, 47, 38, 0.88)",
     fontWeight: "700 !important", // Bold as requested
     paddingLeft: "8px", // Padding fijo para evitar desplazamientos
     minHeight: "32px",
     display: "flex",
     alignItems: "center",
     "&:hover": {
-      backgroundColor: "rgba(0, 0, 0, 0.15)", // Darker hover
-      color: "#000000",
+      backgroundColor: alpha(verdeMilitar.primary, 0.1),
+      color: verdeMilitar.primaryHover,
     },
     "&.Mui-selected": {
-      color: "#E65100", // Selected text: Dark Orange
-      backgroundColor: "rgba(255, 255, 255, 0.6)", // Semi-transparent White
+      color: verdeMilitar.primary,
+      backgroundColor: alpha(verdeMilitar.primary, 0.12),
       fontWeight: '800 !important',
-      boxShadow: '0 2px 6px rgba(0,0,0,0.1)', // slight pop
+      boxShadow: `0 2px 6px ${alpha(verdeMilitar.primary, 0.2)}`,
       "&:hover": {
-        backgroundColor: "rgba(255, 255, 255, 0.8)",
-        color: "#d84315",
+        backgroundColor: alpha(verdeMilitar.primary, 0.18),
+        color: verdeMilitar.primaryHover,
       },
     },
   }));

@@ -10,6 +10,7 @@ import {
 import { Icon } from '@iconify/react';
 
 import { PuntoMudras } from '@/interfaces/puntos-mudras';
+import { verdeMilitar } from '@/ui/colores';
 
 interface ArticuloStock {
   id: number;
@@ -28,19 +29,33 @@ interface Props {
   refetchTrigger: number;
 }
 
+type TablaStockPuntoUiState = {
+  filtroInput: string;
+  page: number;
+  rowsPerPage: number;
+};
+
+const tablaStockPuntoUiStateCache = new Map<string, TablaStockPuntoUiState>();
+
 export default function TablaStockPuntoVenta({
   puntoVenta,
   onModificarStock,
   onNuevaAsignacion,
   refetchTrigger,
 }: Props) {
+  const cacheKey = `tabla-stock-punto-${puntoVenta.id}`;
+  const cachedState = tablaStockPuntoUiStateCache.get(cacheKey);
   const [articulos, setArticulos] = useState<ArticuloStock[]>([]);
   const [filtro, setFiltro] = useState('');
-  const [filtroInput, setFiltroInput] = useState('');
+  const [filtroInput, setFiltroInput] = useState(cachedState?.filtroInput ?? '');
   const [loading, setLoading] = useState(false);
-  const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(50);
+  const [page, setPage] = useState(cachedState?.page ?? 0);
+  const [rowsPerPage, setRowsPerPage] = useState(cachedState?.rowsPerPage ?? 50);
   const tableTopRef = React.useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    tablaStockPuntoUiStateCache.set(cacheKey, { filtroInput, page, rowsPerPage });
+  }, [cacheKey, filtroInput, page, rowsPerPage]);
 
   useEffect(() => {
     const cargarStock = async () => {
@@ -175,12 +190,12 @@ export default function TablaStockPuntoVenta({
             startIcon={<Icon icon="mdi:plus" />}
             disableElevation
             sx={{
-              bgcolor: '#5d4037',
+              bgcolor: verdeMilitar.primary,
               color: '#fff',
               borderRadius: 0,
               textTransform: 'none',
               fontWeight: 600,
-              '&:hover': { bgcolor: '#4e342e' }
+              '&:hover': { bgcolor: verdeMilitar.primaryHover }
             }}
           >
             Nueva Asignación
@@ -196,7 +211,7 @@ export default function TablaStockPuntoVenta({
         onPageChange={handleChangePage}
         onRowsPerPageChange={handleChangeRowsPerPage}
         itemLabel="artículos"
-        accentColor="#5d4037"
+        accentColor={verdeMilitar.primary}
         rowsPerPageOptions={[50, 100, 150, 300, 500]}
       />
 
@@ -271,7 +286,7 @@ export default function TablaStockPuntoVenta({
         onPageChange={handleChangePage}
         onRowsPerPageChange={handleChangeRowsPerPage}
         itemLabel="artículos"
-        accentColor="#5d4037"
+        accentColor={verdeMilitar.primary}
         rowsPerPageOptions={[50, 100, 150, 300, 500]}
       />
     </Box>

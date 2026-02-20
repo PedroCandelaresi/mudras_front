@@ -55,7 +55,17 @@ interface Props {
   hideViewAction?: boolean;
   hideEditAction?: boolean;
   hideDeleteAction?: boolean;
+  refreshTrigger?: number;
 }
+
+type TablaProveedoresUiState = {
+  page: number;
+  rowsPerPage: number;
+  filtro: string;
+  filtrosColumna: ColFilters;
+};
+
+const tablaProveedoresUiStateCache = new Map<string, TablaProveedoresUiState>();
 
 /* ======================== Componente ======================== */
 const TablaProveedores = forwardRef<TablaProveedoresHandle, Props>(({
@@ -73,19 +83,22 @@ const TablaProveedores = forwardRef<TablaProveedoresHandle, Props>(({
   hideViewAction = false,
   hideEditAction = false,
   hideDeleteAction = false,
+  refreshTrigger,
 }, ref) => {
   const { data, loading, error, refetch } = useQuery<ProveedoresResponse>(GET_PROVEEDORES);
+  const cacheKey = 'tabla-proveedores';
+  const cachedState = tablaProveedoresUiStateCache.get(cacheKey);
 
   // estado tabla
-  const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(150);
+  const [page, setPage] = useState(cachedState?.page ?? 0);
+  const [rowsPerPage, setRowsPerPage] = useState(cachedState?.rowsPerPage ?? 150);
   const tableTopRef = React.useRef<HTMLDivElement>(null);
-  const [filtro, setFiltro] = useState('');
+  const [filtro, setFiltro] = useState(cachedState?.filtro ?? '');
 
   // filtros por columna
   const [menuAnchor, setMenuAnchor] = useState<null | HTMLElement>(null);
   const [columnaActiva, setColumnaActiva] = useState<null | ColKey>(null);
-  const [filtrosColumna, setFiltrosColumna] = useState<ColFilters>({});
+  const [filtrosColumna, setFiltrosColumna] = useState<ColFilters>(cachedState?.filtrosColumna ?? {});
   const [filtroColInput, setFiltroColInput] = useState('');
 
   // modales internos
@@ -185,7 +198,22 @@ const TablaProveedores = forwardRef<TablaProveedoresHandle, Props>(({
     setModalEditar(false);
     setModalEliminar(false);
     setProveedorSeleccionado(null);
+    refetch();
   };
+
+  React.useEffect(() => {
+    tablaProveedoresUiStateCache.set(cacheKey, {
+      page,
+      rowsPerPage,
+      filtro,
+      filtrosColumna,
+    });
+  }, [cacheKey, page, rowsPerPage, filtro, filtrosColumna]);
+
+  React.useEffect(() => {
+    if (refreshTrigger === undefined) return;
+    refetch();
+  }, [refreshTrigger, refetch]);
 
   useImperativeHandle(ref, () => ({
     abrirCrearProveedor: () => {

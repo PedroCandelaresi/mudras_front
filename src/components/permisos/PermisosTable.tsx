@@ -5,7 +5,7 @@ import { useQuery } from '@apollo/client/react';
 import { OBTENER_PERMISOS_QUERY } from '@/components/usuarios/graphql/queries';
 import { Box, Button, Chip, CircularProgress, IconButton, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Tooltip, TextField, Typography, Menu, Divider, Stack, Alert } from '@mui/material';
 import { IconEdit, IconTrash, IconSearch, IconAlertTriangle } from '@tabler/icons-react';
-import { grisNeutro } from '@/ui/colores';
+import { verdeMilitar } from '@/ui/colores';
 import SearchToolbar from '@/components/ui/SearchToolbar';
 
 export interface PermisoListado { id: string; resource: string; action: string; description?: string | null }
@@ -16,6 +16,14 @@ interface Props {
   onEliminar?: (p: PermisoListado) => void;
   refetchToken?: number | string;
 }
+
+type PermisosTableUiState = {
+  busqueda: string;
+  filtrosColumna: { resource?: string; action?: string };
+  orden: { campo: 'resource' | 'action'; dir: 'asc' | 'desc' };
+};
+
+const permisosTableUiStateCache = new Map<string, PermisosTableUiState>();
 
 export function PermisosTable({ onCrear, onEditar, onEliminar, refetchToken }: Props) {
   const { data, loading: cargando, error: errorQuery, refetch } = useQuery<{ permisos: PermisoListado[] }>(OBTENER_PERMISOS_QUERY, {
@@ -30,12 +38,18 @@ export function PermisosTable({ onCrear, onEditar, onEliminar, refetchToken }: P
     if (refetchToken) refetch();
   }, [refetchToken, refetch]);
 
-  const [busqueda, setBusqueda] = useState('');
+  const cacheKey = 'permisos-table';
+  const cachedState = permisosTableUiStateCache.get(cacheKey);
+  const [busqueda, setBusqueda] = useState(cachedState?.busqueda ?? '');
   const [menuAnchor, setMenuAnchor] = useState<null | HTMLElement>(null);
   const [columnaActiva, setColumnaActiva] = useState<null | 'resource' | 'action'>(null);
-  const [filtrosColumna, setFiltrosColumna] = useState<{ resource?: string; action?: string; }>({});
+  const [filtrosColumna, setFiltrosColumna] = useState<{ resource?: string; action?: string; }>(cachedState?.filtrosColumna ?? {});
   const [filtroColInput, setFiltroColInput] = useState('');
-  const [orden, setOrden] = useState<{ campo: 'resource' | 'action'; dir: 'asc' | 'desc' }>({ campo: 'resource', dir: 'asc' });
+  const [orden, setOrden] = useState<{ campo: 'resource' | 'action'; dir: 'asc' | 'desc' }>(cachedState?.orden ?? { campo: 'resource', dir: 'asc' });
+
+  useEffect(() => {
+    permisosTableUiStateCache.set(cacheKey, { busqueda, filtrosColumna, orden });
+  }, [cacheKey, busqueda, filtrosColumna, orden]);
 
 
 
@@ -74,7 +88,7 @@ export function PermisosTable({ onCrear, onEditar, onEliminar, refetchToken }: P
       >
         <SearchToolbar
           title="Permisos"
-          baseColor={grisNeutro.primary}
+          baseColor={verdeMilitar.primary}
           placeholder="Buscar (recurso:acción, descripción)"
           searchValue={busqueda}
           onSearchValueChange={setBusqueda}
@@ -107,17 +121,17 @@ export function PermisosTable({ onCrear, onEditar, onEliminar, refetchToken }: P
       <TableContainer sx={{ borderRadius: 0, border: '1px solid #e0e0e0', bgcolor: '#fff', boxShadow: 'none' }}>
         <Table stickyHeader size="small" sx={{
           '& .MuiTableCell-head': {
-            bgcolor: grisNeutro.tableHeader,
+            bgcolor: verdeMilitar.tableHeader,
             color: '#ffffff',
             fontWeight: 700,
             textTransform: 'uppercase',
             letterSpacing: '0.5px'
           },
           '& .MuiTableBody-root .MuiTableRow-root:nth-of-type(even)': {
-            bgcolor: grisNeutro.tableStriped,
+            bgcolor: verdeMilitar.tableStriped,
           },
           '& .MuiTableBody-root .MuiTableRow-root:hover': {
-            bgcolor: grisNeutro.rowHover,
+            bgcolor: verdeMilitar.rowHover,
           }
         }}>
           <TableHead>
@@ -155,7 +169,7 @@ export function PermisosTable({ onCrear, onEditar, onEliminar, refetchToken }: P
                 <TableCell align="center" sx={{ borderBottom: '1px solid #e0e0e0' }}>
                   <Box display="flex" justifyContent="center" gap={0.5}>
                     <Tooltip title="Editar">
-                      <IconButton onClick={() => onEditar?.(p)} sx={{ color: grisNeutro.primary }}>
+                      <IconButton onClick={() => onEditar?.(p)} sx={{ color: verdeMilitar.primary }}>
                         <IconEdit size={18} />
                       </IconButton>
                     </Tooltip>
@@ -205,7 +219,7 @@ export function PermisosTable({ onCrear, onEditar, onEliminar, refetchToken }: P
             />
             <Stack direction="row" justifyContent="flex-end" spacing={1} mt={1}>
               <Button size="small" onClick={() => { setFiltroColInput(''); setFiltrosColumna((prev) => ({ ...prev, [columnaActiva!]: '' })); }} sx={{ borderRadius: 0 }}>Limpiar</Button>
-              <Button size="small" variant="contained" sx={{ borderRadius: 0, bgcolor: grisNeutro.primary, '&:hover': { bgcolor: grisNeutro.primaryHover } }} onClick={() => {
+              <Button size="small" variant="contained" sx={{ borderRadius: 0, bgcolor: verdeMilitar.primary, '&:hover': { bgcolor: verdeMilitar.primaryHover } }} onClick={() => {
                 setFiltrosColumna((prev) => ({ ...prev, [columnaActiva!]: filtroColInput }));
                 setMenuAnchor(null);
                 setColumnaActiva(null);

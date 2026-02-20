@@ -2,6 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { Box, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Chip, Tooltip, Paper, IconButton } from '@mui/material';
 import PaginacionMudras from '@/components/ui/PaginacionMudras';
 import { Icon } from '@iconify/react';
+import { verdeMilitar } from '@/ui/colores';
 
 export interface OrdenCompraRow {
   id: number;
@@ -21,10 +22,23 @@ type Props = {
   onAgregarDetalle?: (id: number) => void;
 };
 
+type TablaOrdenesCompraUiState = {
+  page: number;
+  rowsPerPage: number;
+};
+
+const tablaOrdenesCompraUiStateCache = new Map<string, TablaOrdenesCompraUiState>();
+
 const TablaOrdenesCompra: React.FC<Props> = ({ ordenes, onEmitir, onRecepcionar, onAgregarDetalle }) => {
-  const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(50);
+  const cacheKey = 'tabla-ordenes-compra';
+  const cachedState = tablaOrdenesCompraUiStateCache.get(cacheKey);
+  const [page, setPage] = useState(cachedState?.page ?? 0);
+  const [rowsPerPage, setRowsPerPage] = useState(cachedState?.rowsPerPage ?? 50);
   const tableTopRef = React.useRef<HTMLDivElement>(null);
+
+  React.useEffect(() => {
+    tablaOrdenesCompraUiStateCache.set(cacheKey, { page, rowsPerPage });
+  }, [cacheKey, page, rowsPerPage]);
 
   const paginados = useMemo(() => {
     return ordenes.slice(page * rowsPerPage, (page + 1) * rowsPerPage);
@@ -51,7 +65,7 @@ const TablaOrdenesCompra: React.FC<Props> = ({ ordenes, onEmitir, onRecepcionar,
         onPageChange={handleChangePage}
         onRowsPerPageChange={handleChangeRowsPerPage}
         itemLabel="órdenes"
-        accentColor="#546e7a"
+        accentColor={verdeMilitar.primary}
         rowsPerPageOptions={[50, 100, 150, 300, 500]}
       />
       <TableContainer component={Paper} elevation={0} sx={{ borderRadius: 0, border: '1px solid #e0e0e0' }}>
@@ -131,7 +145,7 @@ const TablaOrdenesCompra: React.FC<Props> = ({ ordenes, onEmitir, onRecepcionar,
         onPageChange={handleChangePage}
         onRowsPerPageChange={handleChangeRowsPerPage}
         itemLabel="órdenes"
-        accentColor="#546e7a"
+        accentColor={verdeMilitar.primary}
         rowsPerPageOptions={[50, 100, 150, 300, 500]}
       />
     </Box>

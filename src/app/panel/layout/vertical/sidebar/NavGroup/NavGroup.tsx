@@ -3,6 +3,7 @@ import { Theme } from '@mui/material/styles';
 import { styled, useTheme } from '@mui/material/styles';
 import { IconDots } from '@tabler/icons-react';
 import React from 'react';
+import { verdeMilitar } from '@/ui/colores';
 
 type NavGroup = {
   navlabel?: boolean;
@@ -23,7 +24,7 @@ const NavGroup = ({ item, hideMenu }: ItemType) => {
     fontSize: '0.7rem',
     marginTop: theme.spacing(1.5),
     marginBottom: theme.spacing(0.5),
-    color: 'rgba(0,0,0,0.6)', // Darker text for headers on metallic bg
+    color: verdeMilitar.primary,
     lineHeight: '20px',
     padding: '2px 8px',
     marginLeft: hideMenu ? '' : '-8px',

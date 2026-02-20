@@ -124,16 +124,32 @@ const getTipoColor = (tipo: string) => {
 };
 
 const TablaMovimientosStock = () => {
+  const cacheKey = 'tabla-movimientos-stock';
+  const cachedState = React.useMemo(() => {
+    const raw = (globalThis as any).__tablaMovimientosStockUiState as any | undefined;
+    return raw || null;
+  }, []);
   // Estado de filtros y paginación
-  const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(50);
+  const [page, setPage] = useState(cachedState?.page ?? 0);
+  const [rowsPerPage, setRowsPerPage] = useState(cachedState?.rowsPerPage ?? 50);
   const tableTopRef = React.useRef<HTMLDivElement>(null);
-  const [filtroTipo, setFiltroTipo] = useState<string>('');
-  const [fechaDesde, setFechaDesde] = useState<string>('');
-  const [fechaHasta, setFechaHasta] = useState<string>('');
-  const [usuarioId, setUsuarioId] = useState<number | ''>('');
+  const [filtroTipo, setFiltroTipo] = useState<string>(cachedState?.filtroTipo ?? '');
+  const [fechaDesde, setFechaDesde] = useState<string>(cachedState?.fechaDesde ?? '');
+  const [fechaHasta, setFechaHasta] = useState<string>(cachedState?.fechaHasta ?? '');
+  const [usuarioId, setUsuarioId] = useState<number | ''>(cachedState?.usuarioId ?? '');
   const [exporting, setExporting] = useState(false);
   const client = useApolloClient();
+
+  useEffect(() => {
+    (globalThis as any).__tablaMovimientosStockUiState = {
+      page,
+      rowsPerPage,
+      filtroTipo,
+      fechaDesde,
+      fechaHasta,
+      usuarioId,
+    };
+  }, [cacheKey, page, rowsPerPage, filtroTipo, fechaDesde, fechaHasta, usuarioId]);
 
   // Query Usuarios
   const { data: dataUsuarios } = useQuery(USUARIOS_ADMIN_QUERY, {

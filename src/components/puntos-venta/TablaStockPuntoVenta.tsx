@@ -43,6 +43,17 @@ const currencyFormatter = new Intl.NumberFormat('es-AR', {
   maximumFractionDigits: 2,
 });
 
+type TablaStockPuntoVentaUiState = {
+  busquedaDraft: string;
+  busquedaAplicada: string;
+  page: number;
+  rowsPerPage: number;
+  filtrosRubros: any[];
+  filtrosProveedores: any[];
+};
+
+const tablaStockUiStateCache = new Map<string, TablaStockPuntoVentaUiState>();
+
 type Props = {
   articulos: ArticuloConStockPuntoMudras[];
   loading?: boolean;
@@ -64,14 +75,28 @@ const TablaStockPuntoVenta: React.FC<Props> = ({
   onNewAssignment,
   theme = grisVerdoso, // Default to grisVerdoso
 }) => {
-  const [busquedaDraft, setBusquedaDraft] = useState('');
-  const [busquedaAplicada, setBusquedaAplicada] = useState('');
+  const cacheKey = puntoNombre || '__punto_sin_nombre__';
+  const cachedState = tablaStockUiStateCache.get(cacheKey);
 
-  const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(50);
+  const [busquedaDraft, setBusquedaDraft] = useState(cachedState?.busquedaDraft ?? '');
+  const [busquedaAplicada, setBusquedaAplicada] = useState(cachedState?.busquedaAplicada ?? '');
+
+  const [page, setPage] = useState(cachedState?.page ?? 0);
+  const [rowsPerPage, setRowsPerPage] = useState(cachedState?.rowsPerPage ?? 50);
   const tableTopRef = React.useRef<HTMLDivElement>(null);
-  const [filtrosRubros, setFiltrosRubros] = useState<any[]>([]);
-  const [filtrosProveedores, setFiltrosProveedores] = useState<any[]>([]);
+  const [filtrosRubros, setFiltrosRubros] = useState<any[]>(cachedState?.filtrosRubros ?? []);
+  const [filtrosProveedores, setFiltrosProveedores] = useState<any[]>(cachedState?.filtrosProveedores ?? []);
+
+  React.useEffect(() => {
+    tablaStockUiStateCache.set(cacheKey, {
+      busquedaDraft,
+      busquedaAplicada,
+      page,
+      rowsPerPage,
+      filtrosRubros,
+      filtrosProveedores,
+    });
+  }, [cacheKey, busquedaDraft, busquedaAplicada, page, rowsPerPage, filtrosRubros, filtrosProveedores]);
 
   // Bidirectional Filtering Logic
   const { rubrosDisponibles, proveedoresDisponibles } = useMemo(() => {

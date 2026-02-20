@@ -13,6 +13,7 @@ import ListItemText from '@mui/material/ListItemText';
 import { Theme } from '@mui/material/styles';
 import useMediaQuery from '@mui/material/useMediaQuery';
 import { styled, useTheme } from '@mui/material/styles';
+import { alpha } from '@mui/material/styles';
 
 // custom imports
 import NavItem from "../NavItem";
@@ -22,6 +23,7 @@ import { isNull } from "lodash";
 import { IconChevronDown, IconChevronUp } from "@tabler/icons-react";
 import { useTranslation } from "react-i18next";
 import { NavCollapseProps, NavGroup } from "@/app/types/layout/sidebar";
+import { verdeMilitar } from "@/ui/colores";
 
 
 
@@ -69,16 +71,16 @@ export default function NavCollapse({
     marginBottom: "2px",
     padding: "8px 10px",
     paddingLeft: hideMenu ? "10px" : level > 2 ? `${level * 15}px` : "10px",
-    backgroundColor: open && level < 2 ? "white" : "",
+    backgroundColor: open && level < 2 ? alpha(verdeMilitar.primary, 0.1) : "",
     whiteSpace: "nowrap",
     "&:hover": {
-      backgroundColor: "rgba(255, 255, 255, 0.1)",
-      color: "white",
+      backgroundColor: alpha(verdeMilitar.primary, 0.1),
+      color: verdeMilitar.primaryHover,
     },
     color:
       open && level < 2
-        ? "#E65100" // Open parent: Orange text
-        : "rgba(255, 255, 255, 0.7)", // Default: Light text
+        ? verdeMilitar.primary
+        : "rgba(33, 47, 38, 0.85)",
     borderRadius: `${isBorderRadius}px`,
   }));
 

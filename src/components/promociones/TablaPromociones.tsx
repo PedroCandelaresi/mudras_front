@@ -39,18 +39,32 @@ type FormPromocion = z.infer<typeof esquemaPromocion>;
 
 interface Props { puedeCrear?: boolean }
 
+type TablaPromocionesUiState = {
+  page: number;
+  rowsPerPage: number;
+  busqueda: string;
+};
+
+const tablaPromocionesUiStateCache = new Map<string, TablaPromocionesUiState>();
+
 const TablaPromociones: React.FC<Props> = ({ puedeCrear = true }) => {
   const tableTopRef = React.useRef<HTMLDivElement>(null);
+  const cacheKey = 'tabla-promociones';
+  const cachedState = tablaPromocionesUiStateCache.get(cacheKey);
   const { data, loading, refetch } = useQuery<{ promociones: PromocionItem[] }>(GET_PROMOCIONES, { fetchPolicy: 'cache-and-network' });
   const [crearPromocion] = useMutation(CREAR_PROMOCION);
   const [actualizarPromocion] = useMutation(ACTUALIZAR_PROMOCION);
   const [eliminarPromocion] = useMutation(ELIMINAR_PROMOCION);
 
-  const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(50);
-  const [busqueda, setBusqueda] = useState("");
+  const [page, setPage] = useState(cachedState?.page ?? 0);
+  const [rowsPerPage, setRowsPerPage] = useState(cachedState?.rowsPerPage ?? 50);
+  const [busqueda, setBusqueda] = useState(cachedState?.busqueda ?? "");
   const [modalCrear, setModalCrear] = useState(false);
   const [editando, setEditando] = useState<PromocionItem | null>(null);
+
+  React.useEffect(() => {
+    tablaPromocionesUiStateCache.set(cacheKey, { page, rowsPerPage, busqueda });
+  }, [cacheKey, page, rowsPerPage, busqueda]);
 
   const filtrados = useMemo<PromocionItem[]>(() => {
     const promociones: PromocionItem[] = data?.promociones ?? [];

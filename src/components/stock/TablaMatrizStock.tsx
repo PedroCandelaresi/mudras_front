@@ -72,17 +72,29 @@ type TablaMatrizStockProps = {
 
 /* ======================== Estética ======================== */
 // Usamos Azul Marino como base para diferenciar de Artículos (Verde Militar)
-const headerBg = azulMarino.primary;
-const themeColor = azulMarino;
+const headerBg = verdeMilitar.primary;
+const themeColor = verdeMilitar;
+
+type TablaMatrizStockUiState = {
+    globalSearch: string;
+    globalSearchDraft: string;
+    filtros: FiltrosServidor;
+    page: number;
+    rowsPerPage: number;
+};
+
+const tablaMatrizStockUiStateCache = new Map<string, TablaMatrizStockUiState>();
 
 const TablaMatrizStock: React.FC<TablaMatrizStockProps> = ({ onTransferir }) => {
+    const cacheKey = 'tabla-matriz-stock';
+    const cachedState = tablaMatrizStockUiStateCache.get(cacheKey);
     // --- Estados de Filtros ---
-    const [globalSearch, setGlobalSearch] = useState('');
+    const [globalSearch, setGlobalSearch] = useState(cachedState?.globalSearch ?? '');
     const tableTopRef = React.useRef<HTMLDivElement>(null);
-    const [globalSearchDraft, setGlobalSearchDraft] = useState('');
-    const [filtros, setFiltros] = useState<FiltrosServidor>({});
-    const [page, setPage] = useState(0);
-    const [rowsPerPage, setRowsPerPage] = useState(150);
+    const [globalSearchDraft, setGlobalSearchDraft] = useState(cachedState?.globalSearchDraft ?? '');
+    const [filtros, setFiltros] = useState<FiltrosServidor>(cachedState?.filtros ?? {});
+    const [page, setPage] = useState(cachedState?.page ?? 0);
+    const [rowsPerPage, setRowsPerPage] = useState(cachedState?.rowsPerPage ?? 150);
 
     const handlePageChange = (newPage: number) => {
         setPage(newPage);
@@ -99,6 +111,16 @@ const TablaMatrizStock: React.FC<TablaMatrizStockProps> = ({ onTransferir }) => 
     const [modalTransferenciaOpen, setModalTransferenciaOpen] = useState(false);
     const [transferItem, setTransferItem] = useState<MatrizStockItem | null>(null);
     const [transferOrigen, setTransferOrigen] = useState<number | null>(null);
+
+    useEffect(() => {
+        tablaMatrizStockUiStateCache.set(cacheKey, {
+            globalSearch,
+            globalSearchDraft,
+            filtros,
+            page,
+            rowsPerPage,
+        });
+    }, [cacheKey, globalSearch, globalSearchDraft, filtros, page, rowsPerPage]);
 
     // --- Data Fetching ---
     const { data: puntosData } = useQuery(OBTENER_PUNTOS_MUDRAS, { fetchPolicy: 'cache-first' });

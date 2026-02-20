@@ -5,7 +5,7 @@ import { useQuery } from '@apollo/client/react';
 import { OBTENER_ROLES_QUERY } from '@/components/usuarios/graphql/queries';
 import { Box, Chip, CircularProgress, IconButton, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Tooltip, TextField, Button, Popover, Divider, Stack, Typography, Alert } from '@mui/material';
 import { IconAdjustments, IconPlus, IconAlertTriangle } from '@tabler/icons-react';
-import { grisNeutro, azul } from '@/ui/colores';
+import { verdeMilitar } from '@/ui/colores';
 
 import SearchToolbar from '@/components/ui/SearchToolbar';
 
@@ -26,6 +26,15 @@ interface Props {
   onCrear?: () => void;
   refetchToken?: number | string;
 }
+
+type RolesTableUiState = {
+  busqueda: string;
+  busquedaInput: string;
+  orden: { campo: 'name' | 'slug'; dir: 'asc' | 'desc' };
+  filtrosColumna: { name?: string; slug?: string };
+};
+
+const rolesTableUiStateCache = new Map<string, RolesTableUiState>();
 
 export function RolesTable({ onAsignarPermisos, onCrear, refetchToken }: Props) {
   const { data, loading: cargando, error: errorQuery, refetch } = useQuery<RolesQueryResponse>(OBTENER_ROLES_QUERY, {
@@ -49,13 +58,19 @@ export function RolesTable({ onAsignarPermisos, onCrear, refetchToken }: Props) 
     if (refetchToken) refetch();
   }, [refetchToken, refetch]);
 
-  const [busqueda, setBusqueda] = useState('');
-  const [busquedaInput, setBusquedaInput] = useState('');
-  const [orden, setOrden] = useState<{ campo: 'name' | 'slug'; dir: 'asc' | 'desc' }>({ campo: 'name', dir: 'asc' });
+  const cacheKey = 'roles-table';
+  const cachedState = rolesTableUiStateCache.get(cacheKey);
+  const [busqueda, setBusqueda] = useState(cachedState?.busqueda ?? '');
+  const [busquedaInput, setBusquedaInput] = useState(cachedState?.busquedaInput ?? '');
+  const [orden, setOrden] = useState<{ campo: 'name' | 'slug'; dir: 'asc' | 'desc' }>(cachedState?.orden ?? { campo: 'name', dir: 'asc' });
   const [menuAnchor, setMenuAnchor] = useState<null | HTMLElement>(null);
   const [columnaActiva, setColumnaActiva] = useState<null | 'name' | 'slug'>(null);
-  const [filtrosColumna, setFiltrosColumna] = useState<{ name?: string; slug?: string; }>({});
+  const [filtrosColumna, setFiltrosColumna] = useState<{ name?: string; slug?: string; }>(cachedState?.filtrosColumna ?? {});
   const [filtroColInput, setFiltroColInput] = useState('');
+
+  useEffect(() => {
+    rolesTableUiStateCache.set(cacheKey, { busqueda, busquedaInput, orden, filtrosColumna });
+  }, [cacheKey, busqueda, busquedaInput, orden, filtrosColumna]);
 
   // Eliminamos funcion cargar() y useEffect() manual ya que useQuery lo maneja
 
@@ -85,16 +100,16 @@ export function RolesTable({ onAsignarPermisos, onCrear, refetchToken }: Props) 
         sx={{
           px: 1,
           py: 1,
-          bgcolor: grisNeutro.toolbarBg,
+          bgcolor: verdeMilitar.toolbarBg,
           border: '1px solid',
-          borderColor: grisNeutro.toolbarBorder,
+          borderColor: verdeMilitar.toolbarBorder,
           borderRadius: 1,
           mb: 2,
         }}
       >
         <SearchToolbar
           title="Roles"
-          baseColor={grisNeutro.primary}
+          baseColor={verdeMilitar.primary}
           placeholder="Buscar rol (nombre o slug)"
           searchValue={busquedaInput}
           onSearchValueChange={setBusquedaInput}
@@ -127,17 +142,17 @@ export function RolesTable({ onAsignarPermisos, onCrear, refetchToken }: Props) 
       <TableContainer sx={{ borderRadius: 0, border: '1px solid #e0e0e0', bgcolor: '#fff', boxShadow: 'none' }}>
         <Table stickyHeader size="small" sx={{
           '& .MuiTableCell-head': {
-            bgcolor: grisNeutro.tableHeader,
+            bgcolor: verdeMilitar.tableHeader,
             color: '#ffffff',
             fontWeight: 700,
             textTransform: 'uppercase',
             letterSpacing: '0.5px'
           },
           '& .MuiTableBody-root .MuiTableRow-root:nth-of-type(even)': {
-            bgcolor: grisNeutro.tableStriped,
+            bgcolor: verdeMilitar.tableStriped,
           },
           '& .MuiTableBody-root .MuiTableRow-root:hover': {
-            bgcolor: grisNeutro.rowHover,
+            bgcolor: verdeMilitar.rowHover,
           }
         }}>
           <TableHead>
@@ -182,7 +197,7 @@ export function RolesTable({ onAsignarPermisos, onCrear, refetchToken }: Props) 
                 </TableCell>
                 <TableCell align="center" sx={{ borderBottom: '1px solid #e0e0e0' }}>
                   <Tooltip title="Asignar permisos">
-                    <IconButton onClick={() => onAsignarPermisos(r)} sx={{ color: grisNeutro.primary }}>
+                    <IconButton onClick={() => onAsignarPermisos(r)} sx={{ color: verdeMilitar.primary }}>
                       <IconAdjustments size={18} />
                     </IconButton>
                   </Tooltip>
@@ -223,7 +238,7 @@ export function RolesTable({ onAsignarPermisos, onCrear, refetchToken }: Props) 
               />
               <Stack direction="row" justifyContent="flex-end" spacing={1} mt={1}>
                 <Button size="small" onClick={() => { setFiltroColInput(''); setFiltrosColumna((prev) => ({ ...prev, [columnaActiva!]: '' })); }} sx={{ borderRadius: 0 }}>Limpiar</Button>
-                <Button size="small" variant="contained" sx={{ borderRadius: 0, bgcolor: azul.primary, '&:hover': { bgcolor: azul.primaryHover } }} onClick={() => {
+                <Button size="small" variant="contained" sx={{ borderRadius: 0, bgcolor: verdeMilitar.primary, '&:hover': { bgcolor: verdeMilitar.primaryHover } }} onClick={() => {
                   setFiltrosColumna((prev) => ({ ...prev, [columnaActiva!]: filtroColInput }));
                   setMenuAnchor(null);
                   setColumnaActiva(null);

@@ -1,5 +1,5 @@
 'use client';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Table,
   TableBody,
@@ -37,9 +37,8 @@ import {
 import { ELIMINAR_PUNTO_MUDRAS } from '@/components/puntos-mudras/graphql/mutations';
 import { PuntoMudras } from '@/interfaces/puntos-mudras';
 import ModalConfirmarEliminacion from '@/components/ui/ModalConfirmarEliminacion';
-import { grisRojizo } from '@/ui/colores';
-import SearchToolbar from '@/components/ui/SearchToolbar';
 import PaginacionMudras from '@/components/ui/PaginacionMudras';
+import { verdeMilitar } from '@/ui/colores';
 
 interface TablaPuntosMudrasProps {
   tipo: 'venta' | 'deposito';
@@ -47,20 +46,31 @@ interface TablaPuntosMudrasProps {
   onVerInventario?: (punto: PuntoMudras) => void;
   onNuevoPunto?: () => void;
   onEliminado?: (punto: PuntoMudras) => void;
+  refreshTrigger?: number;
 }
 
-export default function TablaPuntosMudras({ tipo, onEditarPunto, onVerInventario, onNuevoPunto, onEliminado }: TablaPuntosMudrasProps) {
-  const [busqueda, setBusqueda] = useState('');
+type TablaPuntosUiState = {
+  busqueda: string;
+  page: number;
+  rowsPerPage: number;
+};
+
+const tablaPuntosUiStateCache = new Map<string, TablaPuntosUiState>();
+
+export default function TablaPuntosMudras({ tipo, onEditarPunto, onVerInventario, onNuevoPunto, onEliminado, refreshTrigger }: TablaPuntosMudrasProps) {
+  const cacheKey = `tabla-puntos-mudras-${tipo}`;
+  const cachedState = tablaPuntosUiStateCache.get(cacheKey);
+  const [busqueda, setBusqueda] = useState(cachedState?.busqueda ?? '');
   const [puntoSeleccionado, setPuntoSeleccionado] = useState<PuntoMudras | null>(null);
   const [modalEliminarAbierto, setModalEliminarAbierto] = useState(false);
   const [eliminando, setEliminando] = useState(false);
-  const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(150);
+  const [page, setPage] = useState(cachedState?.page ?? 0);
+  const [rowsPerPage, setRowsPerPage] = useState(cachedState?.rowsPerPage ?? 150);
   const tableTopRef = React.useRef<HTMLDivElement>(null);
   const [snack, setSnack] = useState<{ open: boolean; msg: string; sev: 'success' | 'error' | 'info' }>({ open: false, msg: '', sev: 'success' });
 
-  // Tema de colores
-  const paleta = grisRojizo;
+  // Tema de colores normalizado al estilo Artículos
+  const paleta = verdeMilitar;
   const headerBg = paleta.primary; // Fallback since tableHeader is missing
   const tableStriped = paleta.alternateRow; // Fallback since tableStriped is missing
 
@@ -68,6 +78,15 @@ export default function TablaPuntosMudras({ tipo, onEditarPunto, onVerInventario
   const { data, loading, error, refetch } = useQuery<ObtenerPuntosMudrasResponse>(OBTENER_PUNTOS_MUDRAS, {
     fetchPolicy: 'cache-first', // Usamos cache primero para velocidad, invalidación externa manejará updates
   });
+
+  useEffect(() => {
+    tablaPuntosUiStateCache.set(cacheKey, { busqueda, page, rowsPerPage });
+  }, [cacheKey, busqueda, page, rowsPerPage]);
+
+  useEffect(() => {
+    if (refreshTrigger === undefined) return;
+    refetch();
+  }, [refreshTrigger, refetch]);
 
   // Mutation para eliminar punto
   const [eliminarPunto] = useMutation(ELIMINAR_PUNTO_MUDRAS, {

@@ -37,7 +37,7 @@ import {
 } from '@tabler/icons-react';
 
 import { USUARIOS_ADMIN_QUERY } from './graphql/queries';
-import { grisNeutro, azul, rojo } from '@/ui/colores';
+import { verdeMilitar, azul, rojo } from '@/ui/colores';
 
 import ModalNuevoUsuario from './ModalNuevoUsuario';
 import ModalEditarUsuario from './ModalEditarUsuario';
@@ -90,21 +90,38 @@ interface Props {
   onRefetch?: () => void;
 }
 
+type TablaUsuariosUiState = {
+  page: number;
+  rowsPerPage: number;
+  filtroInput: string;
+  filtro: string;
+  filtrosColumna: {
+    username: string;
+    email: string;
+    nombre: string;
+    estado: string;
+  };
+};
+
+const tablaUsuariosUiStateCache = new Map<string, TablaUsuariosUiState>();
+
 const TablaUsuarios: React.FC<Props> = () => {
   const tableTopRef = React.useRef<HTMLDivElement>(null);
+  const cacheKey = 'tabla-usuarios';
+  const cachedState = tablaUsuariosUiStateCache.get(cacheKey);
   /* ---------- Estado de tabla / filtros ---------- */
-  const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(100);
+  const [page, setPage] = useState(cachedState?.page ?? 0);
+  const [rowsPerPage, setRowsPerPage] = useState(cachedState?.rowsPerPage ?? 100);
 
   // Filtros
-  const [filtroInput, setFiltroInput] = useState('');
-  const [filtro, setFiltro] = useState('');
+  const [filtroInput, setFiltroInput] = useState(cachedState?.filtroInput ?? '');
+  const [filtro, setFiltro] = useState(cachedState?.filtro ?? '');
 
   // Filtros por columna
   const [menuAnchor, setMenuAnchor] = useState<null | HTMLElement>(null);
   const [columnaActiva, setColumnaActiva] = useState<null | 'username' | 'email' | 'nombre' | 'estado'>(null);
   const [filtroColInput, setFiltroColInput] = useState('');
-  const [filtrosColumna, setFiltrosColumna] = useState({
+  const [filtrosColumna, setFiltrosColumna] = useState(cachedState?.filtrosColumna ?? {
     username: '',
     email: '',
     nombre: '',
@@ -117,6 +134,16 @@ const TablaUsuarios: React.FC<Props> = () => {
   const [modalEliminarOpen, setModalEliminarOpen] = useState(false);
   const [modalRolesOpen, setModalRolesOpen] = useState(false);
   const [usuarioSeleccionado, setUsuarioSeleccionado] = useState<UsuarioListado | null>(null);
+
+  useEffect(() => {
+    tablaUsuariosUiStateCache.set(cacheKey, {
+      page,
+      rowsPerPage,
+      filtroInput,
+      filtro,
+      filtrosColumna,
+    });
+  }, [cacheKey, page, rowsPerPage, filtroInput, filtro, filtrosColumna]);
 
   /* ---------- Query ---------- */
   const filtrosVariables = useMemo(() => ({
@@ -251,11 +278,11 @@ const TablaUsuarios: React.FC<Props> = () => {
           sx={{
             borderRadius: 0,
             textTransform: 'none',
-            bgcolor: grisNeutro.primary, // Neutral Gray
+            bgcolor: verdeMilitar.primary,
             fontWeight: 600,
             px: 3,
             py: 1,
-            '&:hover': { bgcolor: grisNeutro.primaryHover }
+            '&:hover': { bgcolor: verdeMilitar.primaryHover }
           }}
         >
           Nuevo Usuario
@@ -288,7 +315,7 @@ const TablaUsuarios: React.FC<Props> = () => {
               bgcolor: '#f5f5f5',
               '& fieldset': { borderColor: '#e0e0e0' },
               '&:hover fieldset': { borderColor: '#bdbdbd' },
-              '&.Mui-focused fieldset': { borderColor: grisNeutro.primary },
+              '&.Mui-focused fieldset': { borderColor: verdeMilitar.primary },
             }
           }}
         />
@@ -343,15 +370,15 @@ const TablaUsuarios: React.FC<Props> = () => {
             color: '#37474f',
           },
           '& .MuiTableBody-root .MuiTableRow-root:nth-of-type(even)': {
-            bgcolor: grisNeutro.tableStriped,
+            bgcolor: verdeMilitar.tableStriped,
           },
           '& .MuiTableBody-root .MuiTableRow-root:hover': {
-            bgcolor: alpha(grisNeutro.primary, 0.12),
+            bgcolor: alpha(verdeMilitar.primary, 0.12),
           },
           '& .MuiTableCell-head': {
             fontSize: '0.8rem',
             fontWeight: 700,
-            bgcolor: grisNeutro.tableHeader, // Neutral Header
+            bgcolor: verdeMilitar.tableHeader,
             color: '#ffffff',
             textTransform: 'uppercase',
             letterSpacing: '0.5px',
@@ -455,12 +482,12 @@ const TablaUsuarios: React.FC<Props> = () => {
                 <TableCell align="center">
                   <Box display="flex" justifyContent="center" gap={0.5}>
                     <Tooltip title="Editar">
-                      <IconButton size="small" onClick={() => handleEditarUsuario(u)} sx={{ color: grisNeutro.primary }}>
+                      <IconButton size="small" onClick={() => handleEditarUsuario(u)} sx={{ color: verdeMilitar.primary }}>
                         <IconEdit size={20} />
                       </IconButton>
                     </Tooltip>
                     <Tooltip title="Asignar Roles">
-                      <IconButton size="small" onClick={() => handleRolesUsuario(u)} sx={{ color: grisNeutro.textStrong }}>
+                      <IconButton size="small" onClick={() => handleRolesUsuario(u)} sx={{ color: verdeMilitar.textStrong }}>
                         <IconUserShield size={20} />
                       </IconButton>
                     </Tooltip>

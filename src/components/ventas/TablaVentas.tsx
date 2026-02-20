@@ -58,6 +58,18 @@ export interface VentaListado {
   estado: "PAGADA" | "PENDIENTE" | "CANCELADA";
 }
 
+type TablaVentasUiState = {
+  page: number;
+  rowsPerPage: number;
+  busqueda: string;
+  fechaDesde: Date | null;
+  fechaHasta: Date | null;
+  usuarioId: string;
+  medioPago: string;
+};
+
+const tablaVentasUiStateCache = new Map<string, TablaVentasUiState>();
+
 const ARG_TIMEZONE = "America/Argentina/Buenos_Aires";
 const formatInArgentina = (
   valor?: string | Date | null,
@@ -75,9 +87,11 @@ const formatInArgentina = (
 
 export function TablaVentas() {
   const tableTopRef = React.useRef<HTMLDivElement>(null);
-  const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(50);
-  const [busqueda, setBusqueda] = useState("");
+  const cacheKey = "tabla-ventas";
+  const cachedState = tablaVentasUiStateCache.get(cacheKey);
+  const [page, setPage] = useState(cachedState?.page ?? 0);
+  const [rowsPerPage, setRowsPerPage] = useState(cachedState?.rowsPerPage ?? 50);
+  const [busqueda, setBusqueda] = useState(cachedState?.busqueda ?? "");
   const [ventaSeleccionada, setVentaSeleccionada] = useState<VentaListado | null>(null);
   const [exporting, setExporting] = useState(false);
   const client = useApolloClient();
@@ -94,10 +108,10 @@ export function TablaVentas() {
   });
 
   // Filters State
-  const [fechaDesde, setFechaDesde] = useState<Date | null>(startOfMonth(new Date()));
-  const [fechaHasta, setFechaHasta] = useState<Date | null>(endOfMonth(new Date()));
-  const [usuarioId, setUsuarioId] = useState("");
-  const [medioPago, setMedioPago] = useState("");
+  const [fechaDesde, setFechaDesde] = useState<Date | null>(cachedState?.fechaDesde ?? startOfMonth(new Date()));
+  const [fechaHasta, setFechaHasta] = useState<Date | null>(cachedState?.fechaHasta ?? endOfMonth(new Date()));
+  const [usuarioId, setUsuarioId] = useState(cachedState?.usuarioId ?? "");
+  const [medioPago, setMedioPago] = useState(cachedState?.medioPago ?? "");
 
   // Query variables
   const queryVariables = useMemo(() => ({
@@ -119,6 +133,18 @@ export function TablaVentas() {
       fetchPolicy: "cache-and-network",
     }
   );
+
+  useEffect(() => {
+    tablaVentasUiStateCache.set(cacheKey, {
+      page,
+      rowsPerPage,
+      busqueda,
+      fechaDesde,
+      fechaHasta,
+      usuarioId,
+      medioPago,
+    });
+  }, [cacheKey, page, rowsPerPage, busqueda, fechaDesde, fechaHasta, usuarioId, medioPago]);
 
   const handleQuickDate = (range: 'hoy' | 'semana' | 'mes' | null) => {
     const now = new Date();

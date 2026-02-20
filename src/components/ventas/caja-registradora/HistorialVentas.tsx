@@ -69,14 +69,26 @@ const ESTADOS_VENTA = [
   { value: 'DEVUELTA_PARCIAL', label: 'Devolución Parcial', color: 'secondary' as const },
 ];
 
+type HistorialVentasUiState = {
+  filtros: FiltrosHistorialInput;
+};
+
+const historialVentasUiStateCache = new Map<string, HistorialVentasUiState>();
+
 export const HistorialVentas: React.FC = () => {
-  const [filtros, setFiltros] = useState<FiltrosHistorialInput>({
+  const cacheKey = 'historial-ventas-caja';
+  const cachedState = historialVentasUiStateCache.get(cacheKey);
+  const [filtros, setFiltros] = useState<FiltrosHistorialInput>(cachedState?.filtros ?? {
     pagina: 1,
     limite: 150,
   });
   const tableTopRef = React.useRef<HTMLDivElement>(null);
   const [ventaSeleccionada, setVentaSeleccionada] = useState<VentaCaja | null>(null);
   const [modalDetalleAbierto, setModalDetalleAbierto] = useState(false);
+
+  useEffect(() => {
+    historialVentasUiStateCache.set(cacheKey, { filtros });
+  }, [cacheKey, filtros]);
 
   // Queries
   const { data, loading, error, refetch } = useQuery<HistorialVentasResponse>(OBTENER_HISTORIAL_VENTAS, {

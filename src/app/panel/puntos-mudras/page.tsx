@@ -109,7 +109,7 @@ export default function PuntosMudrasPage() {
                 onNuevoPunto={() => abrirModalCrear('venta')}
                 onVerInventario={(p) => { setPuntoInventario(p as any); setInventarioOpen(true); }}
                 onEliminado={(p) => setSnack({ open: true, msg: `Punto eliminado: ${p.nombre}`, sev: 'success' })}
-                key={`venta-${refetchTrigger}`}
+                refreshTrigger={refetchTrigger}
               />
             </Box>
           )}
@@ -126,7 +126,7 @@ export default function PuntosMudrasPage() {
                 onNuevoPunto={() => abrirModalCrear('deposito')}
                 onVerInventario={(p) => { setPuntoInventario(p as any); setInventarioOpen(true); }}
                 onEliminado={(p) => setSnack({ open: true, msg: `Depósito eliminado: ${p.nombre}`, sev: 'success' })}
-                key={`deposito-${refetchTrigger}`}
+                refreshTrigger={refetchTrigger}
               />
             </Box>
           )}

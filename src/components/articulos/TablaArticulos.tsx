@@ -128,6 +128,7 @@ type ArticulosTableProps = {
   useInternalModals?: boolean;
   tableContainerSx?: React.CSSProperties | import('@mui/system').SxProps<import('@mui/material').Theme>;
   rootSx?: React.CSSProperties | import('@mui/system').SxProps<import('@mui/material').Theme>;
+  refreshTrigger?: number;
 };
 
 /* ======================== Estética ======================== */
@@ -197,6 +198,7 @@ const TablaArticulos: React.FC<ArticulosTableProps> = ({
   useInternalModals = true,
   tableContainerSx,
   rootSx,
+  refreshTrigger,
 }) => {
   const tableTopRef = React.useRef<HTMLDivElement>(null);
   const [page, setPage] = useState(initialServerFilters?.pagina ?? 0);
@@ -477,6 +479,7 @@ const TablaArticulos: React.FC<ArticulosTableProps> = ({
     setModalEliminarOpen(false);
     setArticuloSeleccionado(null);
     setTextoConfirmEliminar('');
+    refetch();
   };
 
   useEffect(() => {
@@ -538,6 +541,11 @@ const TablaArticulos: React.FC<ArticulosTableProps> = ({
       window.removeEventListener('stockGlobalActualizado', handleStockUpdate);
     };
   }, [refetch]);
+
+  useEffect(() => {
+    if (refreshTrigger === undefined) return;
+    refetch();
+  }, [refreshTrigger, refetch]);
 
   const ejecutarBusqueda = useCallback(() => {
     const next = (globalSearchDraft ?? '').trim();

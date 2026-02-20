@@ -10,6 +10,7 @@ import {
   IconReceipt, IconCalendar, IconUser, IconEye, IconSearch, IconX, IconPlus
 } from "@tabler/icons-react";
 import { ModalBase } from "@/ui/ModalBase";
+import { verdeMilitar } from "@/ui/colores";
 
 export interface PedidoItem {
   id: number | string;
@@ -25,12 +26,26 @@ interface Props {
   onNuevoPedido?: () => void;
 }
 
+type TablaPedidosUiState = {
+  page: number;
+  rowsPerPage: number;
+  busqueda: string;
+};
+
+const tablaPedidosUiStateCache = new Map<string, TablaPedidosUiState>();
+
 export function TablaPedidos({ items = [], puedeCrear = false, onNuevoPedido }: Props) {
-  const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(50);
+  const cacheKey = "tabla-pedidos";
+  const cachedState = tablaPedidosUiStateCache.get(cacheKey);
+  const [page, setPage] = useState(cachedState?.page ?? 0);
+  const [rowsPerPage, setRowsPerPage] = useState(cachedState?.rowsPerPage ?? 50);
   const tableTopRef = React.useRef<HTMLDivElement>(null);
-  const [busqueda, setBusqueda] = useState("");
+  const [busqueda, setBusqueda] = useState(cachedState?.busqueda ?? "");
   const [pedidoSel, setPedidoSel] = useState<PedidoItem | null>(null);
+
+  React.useEffect(() => {
+    tablaPedidosUiStateCache.set(cacheKey, { page, rowsPerPage, busqueda });
+  }, [cacheKey, page, rowsPerPage, busqueda]);
 
   const filtrados = useMemo(() => {
     const q = busqueda.trim().toLowerCase();
@@ -114,12 +129,12 @@ export function TablaPedidos({ items = [], puedeCrear = false, onNuevoPedido }: 
               startIcon={<IconPlus />}
               disableElevation
               sx={{
-                bgcolor: '#5d4037',
+                bgcolor: verdeMilitar.primary,
                 color: '#fff',
                 borderRadius: 0,
                 textTransform: 'none',
                 fontWeight: 600,
-                '&:hover': { bgcolor: '#4e342e' }
+                '&:hover': { bgcolor: verdeMilitar.primaryHover }
               }}
             >
               Nuevo Pedido
@@ -216,7 +231,7 @@ export function TablaPedidos({ items = [], puedeCrear = false, onNuevoPedido }: 
         onPageChange={handleChangePage}
         onRowsPerPageChange={handleChangeRowsPerPage}
         itemLabel="pedidos"
-        accentColor="#546e7a"
+        accentColor={verdeMilitar.primary}
         rowsPerPageOptions={[50, 100, 150, 300, 500]}
       />
 

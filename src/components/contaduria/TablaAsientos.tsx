@@ -5,6 +5,7 @@ import PaginacionMudras from "@/components/ui/PaginacionMudras";
 import { IconSearch, IconCalendar, IconFileText, IconEye } from "@tabler/icons-react";
 import { ModalBase } from "@/ui/ModalBase";
 import SearchToolbar from "@/components/ui/SearchToolbar";
+import { verdeMilitar } from "@/ui/colores";
 
 export interface AsientoItem {
   id: number | string;
@@ -19,12 +20,26 @@ interface Props {
   items?: AsientoItem[];
 }
 
+type TablaAsientosUiState = {
+  page: number;
+  rowsPerPage: number;
+  busqueda: string;
+};
+
+const tablaAsientosUiStateCache = new Map<string, TablaAsientosUiState>();
+
 const TablaAsientos: React.FC<Props> = ({ items = [] }) => {
   const tableTopRef = React.useRef<HTMLDivElement>(null);
-  const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(50);
-  const [busqueda, setBusqueda] = useState("");
+  const cacheKey = "tabla-asientos";
+  const cachedState = tablaAsientosUiStateCache.get(cacheKey);
+  const [page, setPage] = useState(cachedState?.page ?? 0);
+  const [rowsPerPage, setRowsPerPage] = useState(cachedState?.rowsPerPage ?? 50);
+  const [busqueda, setBusqueda] = useState(cachedState?.busqueda ?? "");
   const [sel, setSel] = useState<AsientoItem | null>(null);
+
+  React.useEffect(() => {
+    tablaAsientosUiStateCache.set(cacheKey, { page, rowsPerPage, busqueda });
+  }, [cacheKey, page, rowsPerPage, busqueda]);
 
   const filtrados = useMemo(() => {
     const q = busqueda.trim().toLowerCase();
@@ -53,7 +68,7 @@ const TablaAsientos: React.FC<Props> = ({ items = [] }) => {
       <SearchToolbar
         title="Asientos Contables"
         icon={<IconFileText style={{ marginRight: 8, verticalAlign: 'middle' }} />}
-        baseColor="#2e7d32"
+        baseColor={verdeMilitar.primary}
         placeholder="Buscar asientos (ID, descripción, comprobante)"
         searchValue={busqueda}
         onSearchValueChange={(v) => { setBusqueda(v); setPage(0); }}
@@ -69,12 +84,12 @@ const TablaAsientos: React.FC<Props> = ({ items = [] }) => {
         onPageChange={handlePageChange}
         onRowsPerPageChange={handleRowsPerPageChange}
         itemLabel="asientos"
-        accentColor="#2e7d32"
+        accentColor={verdeMilitar.primary}
         rowsPerPageOptions={[20, 50, 100, 150]}
       />
 
       <TableContainer sx={{ borderRadius: 2, border: '1px solid', borderColor: 'grey.200', bgcolor: 'background.paper' }}>
-        <Table stickyHeader size="small" sx={{ '& .MuiTableCell-head': { bgcolor: '#2f3e2e', color: '#eef5ee' } }}>
+        <Table stickyHeader size="small" sx={{ '& .MuiTableCell-head': { bgcolor: verdeMilitar.primary, color: '#eef5ee' } }}>
           <TableHead>
             <TableRow>
               <TableCell sx={{ fontWeight: 700, color: '#eef5ee' }}>ID</TableCell>
@@ -135,7 +150,7 @@ const TablaAsientos: React.FC<Props> = ({ items = [] }) => {
         onPageChange={handlePageChange}
         onRowsPerPageChange={handleRowsPerPageChange}
         itemLabel="asientos"
-        accentColor="#2e7d32"
+        accentColor={verdeMilitar.primary}
         rowsPerPageOptions={[20, 50, 100, 150]}
       />
 

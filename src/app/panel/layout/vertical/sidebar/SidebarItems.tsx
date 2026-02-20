@@ -30,20 +30,10 @@ const SidebarItems = () => {
     if (perfilCargando) return Menuitems;
 
     return Menuitems.filter((item) => {
-      // 1. Filtrado legacy específico y temporal para ocultar funciones no terminadas (incluso para admins)
-      if (
-        item.title === 'Roles' ||
-        item.title === 'Permisos' ||
-        item.title === 'Usuarios' ||
-        item.title === 'Pedidos' ||
-        item.title === 'Promociones' ||
-        item.title === 'Tienda Online'
-      ) return false;
-
-      // 2. Filtrado para Admin: Ve todo lo demas
+      // Admin ve todos los módulos
       if (esAdmin) return true;
 
-      // 3. Filtrado por permiso explícito
+      // Filtrado por permiso explícito
       if (item.requiredPermission) {
         if (!tienePermiso(item.requiredPermission)) return false;
       }
