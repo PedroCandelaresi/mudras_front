@@ -133,6 +133,8 @@ const TablaMovimientosStock = () => {
   const [page, setPage] = useState(cachedState?.page ?? 0);
   const [rowsPerPage, setRowsPerPage] = useState(cachedState?.rowsPerPage ?? 50);
   const tableTopRef = React.useRef<HTMLDivElement>(null);
+  const tableContainerRef = React.useRef<HTMLDivElement>(null);
+  const pendingRestoreScrollTopRef = React.useRef<number | null>(null);
   const [filtroTipo, setFiltroTipo] = useState<string>(cachedState?.filtroTipo ?? '');
   const [fechaDesde, setFechaDesde] = useState<string>(cachedState?.fechaDesde ?? '');
   const [fechaHasta, setFechaHasta] = useState<string>(cachedState?.fechaHasta ?? '');
@@ -172,6 +174,11 @@ const TablaMovimientosStock = () => {
     },
     fetchPolicy: 'cache-and-network',
   });
+  const refetchKeepingScroll = React.useCallback(() => {
+    const current = tableContainerRef.current;
+    if (current) pendingRestoreScrollTopRef.current = current.scrollTop;
+    return refetch();
+  }, [refetch]);
 
   const movimientos = data?.movimientosStockFull?.movimientos || [];
   const totalRegistros = data?.movimientosStockFull?.total || 0;
@@ -190,8 +197,18 @@ const TablaMovimientosStock = () => {
   };
 
   const handleRefresh = () => {
-    void refetch();
+    void refetchKeepingScroll();
   };
+
+  useEffect(() => {
+    if (loading) return;
+    const prevTop = pendingRestoreScrollTopRef.current;
+    if (prevTop == null) return;
+    pendingRestoreScrollTopRef.current = null;
+    requestAnimationFrame(() => {
+      if (tableContainerRef.current) tableContainerRef.current.scrollTop = prevTop;
+    });
+  }, [loading, movimientos.length]);
 
   const limpiarFiltros = () => {
     setFiltroTipo('');
@@ -428,6 +445,7 @@ const TablaMovimientosStock = () => {
   /* ======================== Tabla ======================== */
   const tabla = (
     <TableContainer
+      ref={tableContainerRef}
       component={Paper}
       elevation={0}
       sx={{

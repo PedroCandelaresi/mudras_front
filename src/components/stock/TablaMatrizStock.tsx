@@ -91,6 +91,8 @@ const TablaMatrizStock: React.FC<TablaMatrizStockProps> = ({ onTransferir }) => 
     // --- Estados de Filtros ---
     const [globalSearch, setGlobalSearch] = useState(cachedState?.globalSearch ?? '');
     const tableTopRef = React.useRef<HTMLDivElement>(null);
+    const tableContainerRef = React.useRef<HTMLDivElement>(null);
+    const pendingRestoreScrollTopRef = React.useRef<number | null>(null);
     const [globalSearchDraft, setGlobalSearchDraft] = useState(cachedState?.globalSearchDraft ?? '');
     const [filtros, setFiltros] = useState<FiltrosServidor>(cachedState?.filtros ?? {});
     const [page, setPage] = useState(cachedState?.page ?? 0);
@@ -136,7 +138,23 @@ const TablaMatrizStock: React.FC<TablaMatrizStockProps> = ({ onTransferir }) => 
         }
     );
 
+    const refetchKeepingScroll = useCallback(() => {
+        const current = tableContainerRef.current;
+        if (current) pendingRestoreScrollTopRef.current = current.scrollTop;
+        return refetch();
+    }, [refetch]);
+
     const matrizData = useMemo(() => data?.obtenerMatrizStock || [], [data]);
+
+    useEffect(() => {
+        if (loading) return;
+        const prevTop = pendingRestoreScrollTopRef.current;
+        if (prevTop == null) return;
+        pendingRestoreScrollTopRef.current = null;
+        requestAnimationFrame(() => {
+            if (tableContainerRef.current) tableContainerRef.current.scrollTop = prevTop;
+        });
+    }, [loading, matrizData.length]);
 
 
 
@@ -594,7 +612,7 @@ const TablaMatrizStock: React.FC<TablaMatrizStockProps> = ({ onTransferir }) => 
             />
 
             {/* --- Table --- */}
-            <TableContainer component={Paper} elevation={0} sx={{ borderRadius: 0, border: '1px solid #e0e0e0' }}>
+            <TableContainer ref={tableContainerRef} component={Paper} elevation={0} sx={{ borderRadius: 0, border: '1px solid #e0e0e0' }}>
                 <Table size="small">
                     <TableHead>
                         <TableRow>
@@ -655,7 +673,7 @@ const TablaMatrizStock: React.FC<TablaMatrizStockProps> = ({ onTransferir }) => 
                     articuloPreseleccionado={transferItem}
                     origenPreseleccionado={transferOrigen}
                     onTransferenciaRealizada={() => {
-                        refetch();
+                        refetchKeepingScroll();
                         window.dispatchEvent(new CustomEvent('stockGlobalActualizado'));
                     }}
                 />

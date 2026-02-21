@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, useRef, useCallback } from 'react';
 import { useQuery } from '@apollo/client/react';
 import { OBTENER_PERMISOS_QUERY } from '@/components/usuarios/graphql/queries';
 import { Box, Button, Chip, CircularProgress, IconButton, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Tooltip, TextField, Typography, Menu, Divider, Stack, Alert } from '@mui/material';
@@ -33,10 +33,17 @@ export function PermisosTable({ onCrear, onEditar, onEliminar, refetchToken }: P
 
   const permisos = useMemo(() => data?.permisos || [], [data]);
   const error = errorQuery?.message || null;
+  const tableContainerRef = useRef<HTMLDivElement | null>(null);
+  const pendingRestoreScrollTopRef = useRef<number | null>(null);
+  const refetchKeepingScroll = useCallback(() => {
+    const current = tableContainerRef.current;
+    if (current) pendingRestoreScrollTopRef.current = current.scrollTop;
+    return refetch();
+  }, [refetch]);
 
   useEffect(() => {
-    if (refetchToken) refetch();
-  }, [refetchToken, refetch]);
+    if (refetchToken) refetchKeepingScroll();
+  }, [refetchToken, refetchKeepingScroll]);
 
   const cacheKey = 'permisos-table';
   const cachedState = permisosTableUiStateCache.get(cacheKey);
@@ -50,6 +57,16 @@ export function PermisosTable({ onCrear, onEditar, onEliminar, refetchToken }: P
   useEffect(() => {
     permisosTableUiStateCache.set(cacheKey, { busqueda, filtrosColumna, orden });
   }, [cacheKey, busqueda, filtrosColumna, orden]);
+
+  useEffect(() => {
+    if (cargando) return;
+    const prevTop = pendingRestoreScrollTopRef.current;
+    if (prevTop == null) return;
+    pendingRestoreScrollTopRef.current = null;
+    requestAnimationFrame(() => {
+      if (tableContainerRef.current) tableContainerRef.current.scrollTop = prevTop;
+    });
+  }, [cargando, permisos.length]);
 
 
 
@@ -92,7 +109,7 @@ export function PermisosTable({ onCrear, onEditar, onEliminar, refetchToken }: P
           placeholder="Buscar (recurso:acción, descripción)"
           searchValue={busqueda}
           onSearchValueChange={setBusqueda}
-          onSubmitSearch={() => { void refetch(); }}
+          onSubmitSearch={() => { void refetchKeepingScroll(); }}
           onClear={() => setBusqueda('')}
           canCreate={Boolean(onCrear)}
           createLabel="Nuevo Permiso"
@@ -118,7 +135,7 @@ export function PermisosTable({ onCrear, onEditar, onEliminar, refetchToken }: P
         </Alert>
       )}
 
-      <TableContainer sx={{ borderRadius: 0, border: '1px solid #e0e0e0', bgcolor: '#fff', boxShadow: 'none' }}>
+      <TableContainer ref={tableContainerRef} sx={{ borderRadius: 0, border: '1px solid #e0e0e0', bgcolor: '#fff', boxShadow: 'none' }}>
         <Table stickyHeader size="small" sx={{
           '& .MuiTableCell-head': {
             bgcolor: verdeMilitar.tableHeader,

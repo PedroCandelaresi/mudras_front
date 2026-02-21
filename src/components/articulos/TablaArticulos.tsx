@@ -201,6 +201,8 @@ const TablaArticulos: React.FC<ArticulosTableProps> = ({
   refreshTrigger,
 }) => {
   const tableTopRef = React.useRef<HTMLDivElement>(null);
+  const tableContainerRef = React.useRef<HTMLDivElement>(null);
+  const pendingRestoreScrollTopRef = React.useRef<number | null>(null);
   const [page, setPage] = useState(initialServerFilters?.pagina ?? 0);
   const [rowsPerPage, setRowsPerPage] = useState(initialServerFilters?.limite ?? defaultPageSize);
   const [globalInput, setGlobalInput] = useState(initialServerFilters?.busqueda ?? '');
@@ -479,8 +481,20 @@ const TablaArticulos: React.FC<ArticulosTableProps> = ({
     setModalEliminarOpen(false);
     setArticuloSeleccionado(null);
     setTextoConfirmEliminar('');
+    const current = tableContainerRef.current;
+    if (current) {
+      pendingRestoreScrollTopRef.current = current.scrollTop;
+    }
     refetch();
   };
+
+  const refetchKeepingScroll = useCallback(() => {
+    const current = tableContainerRef.current;
+    if (current) {
+      pendingRestoreScrollTopRef.current = current.scrollTop;
+    }
+    return refetch();
+  }, [refetch]);
 
   useEffect(() => {
     if (!onDataLoaded) return;
@@ -533,19 +547,31 @@ const TablaArticulos: React.FC<ArticulosTableProps> = ({
 
   useEffect(() => {
     const handleStockUpdate = () => {
-      refetch();
+      refetchKeepingScroll();
     };
 
     window.addEventListener('stockGlobalActualizado', handleStockUpdate);
     return () => {
       window.removeEventListener('stockGlobalActualizado', handleStockUpdate);
     };
-  }, [refetch]);
+  }, [refetchKeepingScroll]);
 
   useEffect(() => {
     if (refreshTrigger === undefined) return;
-    refetch();
-  }, [refreshTrigger, refetch]);
+    refetchKeepingScroll();
+  }, [refreshTrigger, refetchKeepingScroll]);
+
+  useEffect(() => {
+    if (loading) return;
+    const previousScrollTop = pendingRestoreScrollTopRef.current;
+    if (previousScrollTop == null) return;
+    pendingRestoreScrollTopRef.current = null;
+    requestAnimationFrame(() => {
+      if (tableContainerRef.current) {
+        tableContainerRef.current.scrollTop = previousScrollTop;
+      }
+    });
+  }, [loading, articulos.length]);
 
   const ejecutarBusqueda = useCallback(() => {
     const next = (globalSearchDraft ?? '').trim();
@@ -1140,6 +1166,7 @@ const TablaArticulos: React.FC<ArticulosTableProps> = ({
 
   const tabla = (
     <TableContainer
+      ref={tableContainerRef}
       component={Paper}
       elevation={0}
       sx={{
@@ -1150,6 +1177,7 @@ const TablaArticulos: React.FC<ArticulosTableProps> = ({
         ...tableContainerSx // Allow override
       }}
     >
+      {loading && articulos.length > 0 && <LinearProgress color="success" />}
       <Table
         stickyHeader
         size={dense ? 'small' : 'medium'}
@@ -1442,7 +1470,7 @@ const TablaArticulos: React.FC<ArticulosTableProps> = ({
               articulo={articuloSeleccionado as any}
               textoConfirmacion={textoConfirmEliminar}
               setTextoConfirmacion={setTextoConfirmEliminar}
-              onSuccess={() => refetch()}
+              onSuccess={() => refetchKeepingScroll()}
             />
           </>
         )

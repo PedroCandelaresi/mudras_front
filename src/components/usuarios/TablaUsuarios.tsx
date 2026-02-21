@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useMemo, useState, useEffect } from 'react';
+import React, { useMemo, useState, useEffect, useCallback } from 'react';
 import {
   Box,
   Button,
@@ -107,6 +107,8 @@ const tablaUsuariosUiStateCache = new Map<string, TablaUsuariosUiState>();
 
 const TablaUsuarios: React.FC<Props> = () => {
   const tableTopRef = React.useRef<HTMLDivElement>(null);
+  const tableContainerRef = React.useRef<HTMLDivElement>(null);
+  const pendingRestoreScrollTopRef = React.useRef<number | null>(null);
   const cacheKey = 'tabla-usuarios';
   const cachedState = tablaUsuariosUiStateCache.get(cacheKey);
   /* ---------- Estado de tabla / filtros ---------- */
@@ -220,10 +222,26 @@ const TablaUsuarios: React.FC<Props> = () => {
     setUsuarioSeleccionado(null);
   };
 
+  const refetchKeepingScroll = useCallback(() => {
+    const current = tableContainerRef.current;
+    if (current) pendingRestoreScrollTopRef.current = current.scrollTop;
+    return refetch();
+  }, [refetch]);
+
   const onSuccessAction = () => {
-    refetch();
+    refetchKeepingScroll();
     // cerrarModales se llama dentro de los modales usualmente o aquí si los modales lo requieren
   };
+
+  useEffect(() => {
+    if (loading) return;
+    const prevTop = pendingRestoreScrollTopRef.current;
+    if (prevTop == null) return;
+    pendingRestoreScrollTopRef.current = null;
+    requestAnimationFrame(() => {
+      if (tableContainerRef.current) tableContainerRef.current.scrollTop = prevTop;
+    });
+  }, [loading, usuarios.length]);
 
   /* ---------- Filtros Headers ---------- */
   const abrirMenuColumna = (col: typeof columnaActiva) => (e: React.MouseEvent<HTMLElement>) => {
@@ -344,6 +362,7 @@ const TablaUsuarios: React.FC<Props> = () => {
   /* ---------- Tabla ---------- */
   const tabla = (
     <TableContainer
+      ref={tableContainerRef}
       component={Paper}
       elevation={0}
       sx={{

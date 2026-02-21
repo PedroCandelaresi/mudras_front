@@ -67,6 +67,8 @@ export default function TablaPuntosMudras({ tipo, onEditarPunto, onVerInventario
   const [page, setPage] = useState(cachedState?.page ?? 0);
   const [rowsPerPage, setRowsPerPage] = useState(cachedState?.rowsPerPage ?? 150);
   const tableTopRef = React.useRef<HTMLDivElement>(null);
+  const tableContainerRef = React.useRef<HTMLDivElement>(null);
+  const pendingRestoreScrollTopRef = React.useRef<number | null>(null);
   const [snack, setSnack] = useState<{ open: boolean; msg: string; sev: 'success' | 'error' | 'info' }>({ open: false, msg: '', sev: 'success' });
 
   // Tema de colores normalizado al estilo Artículos
@@ -79,14 +81,20 @@ export default function TablaPuntosMudras({ tipo, onEditarPunto, onVerInventario
     fetchPolicy: 'cache-first', // Usamos cache primero para velocidad, invalidación externa manejará updates
   });
 
+  const refetchKeepingScroll = React.useCallback(() => {
+    const current = tableContainerRef.current;
+    if (current) pendingRestoreScrollTopRef.current = current.scrollTop;
+    return refetch();
+  }, [refetch]);
+
   useEffect(() => {
     tablaPuntosUiStateCache.set(cacheKey, { busqueda, page, rowsPerPage });
   }, [cacheKey, busqueda, page, rowsPerPage]);
 
   useEffect(() => {
     if (refreshTrigger === undefined) return;
-    refetch();
-  }, [refreshTrigger, refetch]);
+    refetchKeepingScroll();
+  }, [refreshTrigger, refetchKeepingScroll]);
 
   // Mutation para eliminar punto
   const [eliminarPunto] = useMutation(ELIMINAR_PUNTO_MUDRAS, {
@@ -98,7 +106,7 @@ export default function TablaPuntosMudras({ tipo, onEditarPunto, onVerInventario
         setSnack({ open: true, msg: `${puntoSeleccionado.tipo === 'venta' ? 'Punto' : 'Depósito'} eliminado`, sev: 'success' });
       }
       setPuntoSeleccionado(null);
-      refetch();
+      refetchKeepingScroll();
       window.dispatchEvent(new CustomEvent('puntosVentaActualizados'));
     },
     onError: (error) => {
@@ -136,6 +144,16 @@ export default function TablaPuntosMudras({ tipo, onEditarPunto, onVerInventario
     setPage(0);
     tableTopRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
+
+  useEffect(() => {
+    if (loading) return;
+    const prevTop = pendingRestoreScrollTopRef.current;
+    if (prevTop == null) return;
+    pendingRestoreScrollTopRef.current = null;
+    requestAnimationFrame(() => {
+      if (tableContainerRef.current) tableContainerRef.current.scrollTop = prevTop;
+    });
+  }, [loading, puntosPaginados.length]);
 
   const handleExportar = async (formato: 'excel' | 'pdf') => {
     const timestamp = new Date().toISOString().split('T')[0];
@@ -279,7 +297,7 @@ export default function TablaPuntosMudras({ tipo, onEditarPunto, onVerInventario
     return (
       <Paper elevation={0} sx={{ p: 3, textAlign: 'center' }}>
         <Typography color="error">Error: {error.message}</Typography>
-        <Button onClick={() => refetch()} sx={{ mt: 2 }}>Reintentar</Button>
+        <Button onClick={() => refetchKeepingScroll()} sx={{ mt: 2 }}>Reintentar</Button>
       </Paper>
     );
   }
@@ -300,6 +318,7 @@ export default function TablaPuntosMudras({ tipo, onEditarPunto, onVerInventario
       />
 
       <TableContainer
+        ref={tableContainerRef}
         component={Paper}
         elevation={0}
         sx={{

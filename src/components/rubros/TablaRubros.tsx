@@ -92,6 +92,8 @@ const TablaRubros: React.FC<Props> = ({ onNuevoRubro, puedeCrear = true }) => {
   const [page, setPage] = useState(cachedState?.page ?? 0);
   const [rowsPerPage, setRowsPerPage] = useState(cachedState?.rowsPerPage ?? 150);
   const tableTopRef = React.useRef<HTMLDivElement>(null);
+  const tableContainerRef = React.useRef<HTMLDivElement>(null);
+  const pendingRestoreScrollTopRef = React.useRef<number | null>(null);
 
   // Buscador general (input) y aplicado (filtro)
   const [filtroInput, setFiltroInput] = useState(cachedState?.filtroInput ?? '');
@@ -135,6 +137,12 @@ const TablaRubros: React.FC<Props> = ({ onNuevoRubro, puedeCrear = true }) => {
     fetchPolicy: 'cache-and-network',
   });
 
+  const refetchKeepingScroll = React.useCallback(() => {
+    const current = tableContainerRef.current;
+    if (current) pendingRestoreScrollTopRef.current = current.scrollTop;
+    return refetch();
+  }, [refetch]);
+
   const [eliminarRubro] = useMutation(ELIMINAR_RUBRO);
 
   /* ---------- Handlers de header filters (como Proveedores) ---------- */
@@ -154,7 +162,7 @@ const TablaRubros: React.FC<Props> = ({ onNuevoRubro, puedeCrear = true }) => {
     cerrarMenuColumna();
     // update el "filtro" aplicado para forzar refetch con la combinación
     setFiltro((prev) => prev); // noop: dependemos de busquedaServidor (useMemo) y state cambiados
-    refetch();
+    refetchKeepingScroll();
   };
   const limpiarFiltroColumna = () => {
     if (!columnaActiva) return;
@@ -224,7 +232,7 @@ const TablaRubros: React.FC<Props> = ({ onNuevoRubro, puedeCrear = true }) => {
       try {
         await eliminarRubro({ variables: { id: rubroSeleccionado.id } });
         cerrarModales();
-        refetch();
+        refetchKeepingScroll();
       } catch (err: any) {
         console.error('Error al eliminar rubro:', err);
         alert('Ocurrió un error al eliminar el rubro: ' + (err.message || 'Desconocido'));
@@ -256,8 +264,18 @@ const TablaRubros: React.FC<Props> = ({ onNuevoRubro, puedeCrear = true }) => {
     setFiltroInput('');
     setFiltrosColumna({ nombre: '', codigo: '' });
     setPage(0);
-    refetch();
+    refetchKeepingScroll();
   };
+
+  React.useEffect(() => {
+    if (loading) return;
+    const prevTop = pendingRestoreScrollTopRef.current;
+    if (prevTop == null) return;
+    pendingRestoreScrollTopRef.current = null;
+    requestAnimationFrame(() => {
+      if (tableContainerRef.current) tableContainerRef.current.scrollTop = prevTop;
+    });
+  }, [loading, rubros.length]);
 
   /* ---------- Toolbar ---------- */
   const toolbar = (
@@ -339,6 +357,7 @@ const TablaRubros: React.FC<Props> = ({ onNuevoRubro, puedeCrear = true }) => {
   /* ---------- Tabla ---------- */
   const tabla = (
     <TableContainer
+      ref={tableContainerRef}
       component={Paper}
       elevation={0}
       sx={{
@@ -542,7 +561,7 @@ const TablaRubros: React.FC<Props> = ({ onNuevoRubro, puedeCrear = true }) => {
   /* ---------- Paginador ---------- */
 
   /* ======================== Loading / Error ======================== */
-  if (loading) {
+  if (loading && !data) {
     return (
       <Paper elevation={0} sx={{ p: 0, borderRadius: 0, bgcolor: 'transparent' }}>
         <Box sx={{ px: 1, py: 1, mb: 2 }}>
@@ -567,7 +586,7 @@ const TablaRubros: React.FC<Props> = ({ onNuevoRubro, puedeCrear = true }) => {
           <Button
             variant="contained"
             startIcon={<IconRefresh />}
-            onClick={() => refetch()}
+            onClick={() => refetchKeepingScroll()}
             sx={{ borderRadius: 0, textTransform: 'none', bgcolor: azul.primary }}
           >
             Reintentar
@@ -612,7 +631,7 @@ const TablaRubros: React.FC<Props> = ({ onNuevoRubro, puedeCrear = true }) => {
         open={modalEditarOpen}
         onClose={cerrarModales}
         rubro={rubroSeleccionado}
-        onSuccess={refetch}
+        onSuccess={refetchKeepingScroll}
         accentColor={verdeMilitar.primary}
       />
 

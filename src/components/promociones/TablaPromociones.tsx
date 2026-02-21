@@ -49,9 +49,16 @@ const tablaPromocionesUiStateCache = new Map<string, TablaPromocionesUiState>();
 
 const TablaPromociones: React.FC<Props> = ({ puedeCrear = true }) => {
   const tableTopRef = React.useRef<HTMLDivElement>(null);
+  const tableContainerRef = React.useRef<HTMLDivElement>(null);
+  const pendingRestoreScrollTopRef = React.useRef<number | null>(null);
   const cacheKey = 'tabla-promociones';
   const cachedState = tablaPromocionesUiStateCache.get(cacheKey);
   const { data, loading, refetch } = useQuery<{ promociones: PromocionItem[] }>(GET_PROMOCIONES, { fetchPolicy: 'cache-and-network' });
+  const refetchKeepingScroll = React.useCallback(() => {
+    const current = tableContainerRef.current;
+    if (current) pendingRestoreScrollTopRef.current = current.scrollTop;
+    return refetch();
+  }, [refetch]);
   const [crearPromocion] = useMutation(CREAR_PROMOCION);
   const [actualizarPromocion] = useMutation(ACTUALIZAR_PROMOCION);
   const [eliminarPromocion] = useMutation(ELIMINAR_PROMOCION);
@@ -65,6 +72,16 @@ const TablaPromociones: React.FC<Props> = ({ puedeCrear = true }) => {
   React.useEffect(() => {
     tablaPromocionesUiStateCache.set(cacheKey, { page, rowsPerPage, busqueda });
   }, [cacheKey, page, rowsPerPage, busqueda]);
+
+  React.useEffect(() => {
+    if (loading) return;
+    const prevTop = pendingRestoreScrollTopRef.current;
+    if (prevTop == null) return;
+    pendingRestoreScrollTopRef.current = null;
+    requestAnimationFrame(() => {
+      if (tableContainerRef.current) tableContainerRef.current.scrollTop = prevTop;
+    });
+  }, [loading, data?.promociones?.length]);
 
   const filtrados = useMemo<PromocionItem[]>(() => {
     const promociones: PromocionItem[] = data?.promociones ?? [];
@@ -108,12 +125,12 @@ const TablaPromociones: React.FC<Props> = ({ puedeCrear = true }) => {
       await crearPromocion({ variables: { input: { ...val } } });
       setModalCrear(false);
     }
-    await refetch();
+    await refetchKeepingScroll();
   };
 
   const onEliminar = async (p: PromocionItem) => {
     await eliminarPromocion({ variables: { id: p.id } });
-    await refetch();
+    await refetchKeepingScroll();
   };
 
   return (
@@ -144,7 +161,7 @@ const TablaPromociones: React.FC<Props> = ({ puedeCrear = true }) => {
         rowsPerPageOptions={[20, 50, 100, 150]}
       />
 
-      <TableContainer sx={{ borderRadius: 2, border: '1px solid', borderColor: 'grey.200', bgcolor: 'background.paper' }}>
+      <TableContainer ref={tableContainerRef} sx={{ borderRadius: 2, border: '1px solid', borderColor: 'grey.200', bgcolor: 'background.paper' }}>
         <Table
           stickyHeader
           size="small"

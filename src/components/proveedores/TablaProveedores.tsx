@@ -93,6 +93,8 @@ const TablaProveedores = forwardRef<TablaProveedoresHandle, Props>(({
   const [page, setPage] = useState(cachedState?.page ?? 0);
   const [rowsPerPage, setRowsPerPage] = useState(cachedState?.rowsPerPage ?? 150);
   const tableTopRef = React.useRef<HTMLDivElement>(null);
+  const tableContainerRef = React.useRef<HTMLDivElement>(null);
+  const pendingRestoreScrollTopRef = React.useRef<number | null>(null);
   const [filtro, setFiltro] = useState(cachedState?.filtro ?? '');
 
   // filtros por columna
@@ -182,12 +184,16 @@ const TablaProveedores = forwardRef<TablaProveedoresHandle, Props>(({
   }, [onNuevoProveedor, showEditModal, abrirModalCrear]);
 
   const handleProveedorGuardado = () => {
+    const current = tableContainerRef.current;
+    if (current) pendingRestoreScrollTopRef.current = current.scrollTop;
     refetch();
     setModalEditar(false);
     setProveedorSeleccionado(null);
   };
 
   const handleProveedorEliminado = () => {
+    const current = tableContainerRef.current;
+    if (current) pendingRestoreScrollTopRef.current = current.scrollTop;
     refetch();
     setModalEliminar(false);
     setProveedorSeleccionado(null);
@@ -198,8 +204,16 @@ const TablaProveedores = forwardRef<TablaProveedoresHandle, Props>(({
     setModalEditar(false);
     setModalEliminar(false);
     setProveedorSeleccionado(null);
+    const current = tableContainerRef.current;
+    if (current) pendingRestoreScrollTopRef.current = current.scrollTop;
     refetch();
   };
+
+  const refetchKeepingScroll = useCallback(() => {
+    const current = tableContainerRef.current;
+    if (current) pendingRestoreScrollTopRef.current = current.scrollTop;
+    return refetch();
+  }, [refetch]);
 
   React.useEffect(() => {
     tablaProveedoresUiStateCache.set(cacheKey, {
@@ -212,8 +226,18 @@ const TablaProveedores = forwardRef<TablaProveedoresHandle, Props>(({
 
   React.useEffect(() => {
     if (refreshTrigger === undefined) return;
-    refetch();
-  }, [refreshTrigger, refetch]);
+    refetchKeepingScroll();
+  }, [refreshTrigger, refetchKeepingScroll]);
+
+  React.useEffect(() => {
+    if (loading) return;
+    const prevTop = pendingRestoreScrollTopRef.current;
+    if (prevTop == null) return;
+    pendingRestoreScrollTopRef.current = null;
+    requestAnimationFrame(() => {
+      if (tableContainerRef.current) tableContainerRef.current.scrollTop = prevTop;
+    });
+  }, [loading, proveedoresPaginados.length]);
 
   useImperativeHandle(ref, () => ({
     abrirCrearProveedor: () => {
@@ -366,7 +390,7 @@ const TablaProveedores = forwardRef<TablaProveedoresHandle, Props>(({
     </Box>
   );
 
-  if (loading) {
+  if (loading && !data) {
     return (
       <Paper elevation={0} sx={{ p: 0, borderRadius: 0, bgcolor: 'transparent' }}>
         <Box sx={{ px: 1, py: 1, mb: 2 }}>
@@ -389,7 +413,7 @@ const TablaProveedores = forwardRef<TablaProveedoresHandle, Props>(({
         <Button
           variant="contained"
           startIcon={<IconRefresh />}
-          onClick={() => refetch()}
+          onClick={() => refetchKeepingScroll()}
           sx={{ borderRadius: 0, textTransform: 'none', bgcolor: azul.primary }}
         >
           Reintentar
@@ -403,6 +427,7 @@ const TablaProveedores = forwardRef<TablaProveedoresHandle, Props>(({
   /* ======================== Tabla ======================== */
   const tabla = (
     <TableContainer
+      ref={tableContainerRef}
       component={Paper}
       elevation={0}
       sx={{

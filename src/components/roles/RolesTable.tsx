@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, useRef, useCallback } from 'react';
 import { useQuery } from '@apollo/client/react';
 import { OBTENER_ROLES_QUERY } from '@/components/usuarios/graphql/queries';
 import { Box, Chip, CircularProgress, IconButton, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Tooltip, TextField, Button, Popover, Divider, Stack, Typography, Alert } from '@mui/material';
@@ -53,10 +53,28 @@ export function RolesTable({ onAsignarPermisos, onCrear, refetchToken }: Props) 
   }, [data]);
 
   const error = errorQuery ? errorQuery.message : null;
+  const tableContainerRef = useRef<HTMLDivElement | null>(null);
+  const pendingRestoreScrollTopRef = useRef<number | null>(null);
+
+  const refetchKeepingScroll = useCallback(() => {
+    const current = tableContainerRef.current;
+    if (current) pendingRestoreScrollTopRef.current = current.scrollTop;
+    return refetch();
+  }, [refetch]);
 
   useEffect(() => {
-    if (refetchToken) refetch();
-  }, [refetchToken, refetch]);
+    if (refetchToken) refetchKeepingScroll();
+  }, [refetchToken, refetchKeepingScroll]);
+
+  useEffect(() => {
+    if (cargando) return;
+    const prevTop = pendingRestoreScrollTopRef.current;
+    if (prevTop == null) return;
+    pendingRestoreScrollTopRef.current = null;
+    requestAnimationFrame(() => {
+      if (tableContainerRef.current) tableContainerRef.current.scrollTop = prevTop;
+    });
+  }, [cargando, roles.length]);
 
   const cacheKey = 'roles-table';
   const cachedState = rolesTableUiStateCache.get(cacheKey);
@@ -139,7 +157,7 @@ export function RolesTable({ onAsignarPermisos, onCrear, refetchToken }: Props) 
         </Alert>
       )}
 
-      <TableContainer sx={{ borderRadius: 0, border: '1px solid #e0e0e0', bgcolor: '#fff', boxShadow: 'none' }}>
+      <TableContainer ref={(node) => { tableContainerRef.current = node; }} sx={{ borderRadius: 0, border: '1px solid #e0e0e0', bgcolor: '#fff', boxShadow: 'none' }}>
         <Table stickyHeader size="small" sx={{
           '& .MuiTableCell-head': {
             bgcolor: verdeMilitar.tableHeader,
