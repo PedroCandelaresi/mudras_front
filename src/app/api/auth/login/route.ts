@@ -17,6 +17,7 @@ function pickAgent(url: string) {
 
 const INTERNAL_BASE = process.env.INTERNAL_BACKEND_URL;          // p.ej. http://host.docker.internal:4000/api
 const PUBLIC_BASE = process.env.NEXT_PUBLIC_BACKEND_URL;       // p.ej. https://mudras.nqn.net.ar/api
+const ACCESS_TOKEN_MAX_AGE_SECONDS = 60 * 60 * 12;
 
 export async function POST(req: NextRequest) {
   const base = INTERNAL_BASE || PUBLIC_BASE;
@@ -73,8 +74,8 @@ export async function POST(req: NextRequest) {
         sameSite: 'lax',
         secure: process.env.NODE_ENV === 'production',
         path: '/',
-        // Mantener la sesión activa al menos 24hs
-        maxAge: 60 * 60 * 24,
+        // Sesión de acceso: 12 horas
+        maxAge: ACCESS_TOKEN_MAX_AGE_SECONDS,
       });
     }
 

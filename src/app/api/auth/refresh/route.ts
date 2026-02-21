@@ -17,6 +17,7 @@ function pickAgent(url: string) {
 
 const INTERNAL_BASE = process.env.INTERNAL_BACKEND_URL;
 const PUBLIC_BASE = process.env.NEXT_PUBLIC_BACKEND_URL;
+const ACCESS_TOKEN_MAX_AGE_SECONDS = 60 * 60 * 12;
 
 export async function POST(req: NextRequest) {
   const base = INTERNAL_BASE || PUBLIC_BASE;
@@ -83,7 +84,7 @@ export async function POST(req: NextRequest) {
         sameSite: 'lax',
         secure: process.env.NODE_ENV === 'production',
         path: '/',
-        maxAge: 60 * 60 * 24,
+        maxAge: ACCESS_TOKEN_MAX_AGE_SECONDS,
       });
     }
 
@@ -103,4 +104,3 @@ export async function POST(req: NextRequest) {
     return new NextResponse('Error conectando al backend', { status: 502 });
   }
 }
-
