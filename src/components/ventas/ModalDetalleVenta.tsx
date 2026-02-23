@@ -134,7 +134,7 @@ const ModalDetalleVenta: React.FC<ModalDetalleVentaProps> = ({ open, onClose, ve
                                     </Typography>
                                     {(venta.cuitCliente || venta.cliente?.cuit) && (
                                         <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
-                                            {venta.razonSocialCliente ? `CUIT: ${venta.cuitCliente}` : (venta.cuitCliente ? `DNI/CUIT: ${venta.cuitCliente}` : '')}
+                                            {venta.razonSocialCliente ? `CUIT: ${venta.cuitCliente}` : (venta.cuitCliente ? `CUIT: ${venta.cuitCliente}` : '')}
                                         </Typography>
                                     )}
                                 </Grid>
