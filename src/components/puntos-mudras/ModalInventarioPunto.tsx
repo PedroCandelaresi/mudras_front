@@ -38,8 +38,8 @@ const ModalInventarioPunto: React.FC<Props> = ({ open, onClose, punto }) => {
   const [transferencias, setTransferencias] = useState<Record<number, string>>({});
   const [snack, setSnack] = useState<{ open: boolean; msg: string; sev: 'success' | 'error' | 'info' }>(() => ({ open: false, msg: '', sev: 'success' }));
 
-  const tableContainerRef = React.useRef<HTMLDivElement>(null);
-  const pendingRestoreScrollTopRef = React.useRef<number | null>(null);
+  const tableContainerRef = useRef<HTMLDivElement>(null);
+  const pendingRestoreScrollTopRef = useRef<number | null>(null);
 
   useEffect(() => {
     if (!open) { setAjustes({}); setTransferencias({}); setDestinoId(''); }
