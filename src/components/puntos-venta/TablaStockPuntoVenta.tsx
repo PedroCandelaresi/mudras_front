@@ -6,6 +6,7 @@ import {
   Alert,
   Box,
   Chip,
+  Dialog,
   Table,
   TableBody,
   TableCell,
@@ -86,6 +87,8 @@ const TablaStockPuntoVenta: React.FC<Props> = ({
   const tableTopRef = React.useRef<HTMLDivElement>(null);
   const [filtrosRubros, setFiltrosRubros] = useState<any[]>(cachedState?.filtrosRubros ?? []);
   const [filtrosProveedores, setFiltrosProveedores] = useState<any[]>(cachedState?.filtrosProveedores ?? []);
+  const [imagenAmpliada, setImagenAmpliada] = useState(false);
+  const [urlImagenAmpliada, setUrlImagenAmpliada] = useState<string | null>(null);
 
   React.useEffect(() => {
     tablaStockUiStateCache.set(cacheKey, {
@@ -544,6 +547,19 @@ const TablaStockPuntoVenta: React.FC<Props> = ({
                                     borderRadius: 0,
                                     overflow: 'hidden',
                                     border: '1px solid #e0e0e0',
+                                    cursor: 'pointer',
+                                    transition: 'transform 0.2s',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    '&:hover': { transform: 'scale(1.08)' },
+                                  }}
+                                  onClick={() => {
+                                    const imagenUrl = item.articulo.ImagenUrl.startsWith('http') || item.articulo.ImagenUrl.startsWith('data:')
+                                      ? item.articulo.ImagenUrl
+                                      : `${process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:4000'}${item.articulo.ImagenUrl.startsWith('/') ? '' : '/'}${item.articulo.ImagenUrl}`;
+                                    setUrlImagenAmpliada(imagenUrl);
+                                    setImagenAmpliada(true);
                                   }}
                                 >
                                   <img
@@ -671,6 +687,52 @@ const TablaStockPuntoVenta: React.FC<Props> = ({
             </Paper>
           </>
         )}
+        
+        {/* Lightbox para imagen */}
+        <Dialog
+          open={imagenAmpliada}
+          onClose={() => setImagenAmpliada(false)}
+          maxWidth="md"
+          fullWidth
+          PaperProps={{
+            sx: {
+              bgcolor: '#000',
+              boxShadow: '0 0 0 9999px rgba(0,0,0,0.75)',
+            },
+          }}
+        >
+          <Box
+            sx={{
+              position: 'relative',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              minHeight: 500,
+              bgcolor: '#000',
+            }}
+          >
+            {urlImagenAmpliada && (
+              <img
+                src={urlImagenAmpliada}
+                alt="Imagen ampliada"
+                style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }}
+              />
+            )}
+            <IconButton
+              onClick={() => setImagenAmpliada(false)}
+              sx={{
+                position: 'absolute',
+                top: 8,
+                right: 8,
+                color: '#fff',
+                bgcolor: 'rgba(0,0,0,0.5)',
+                '&:hover': { bgcolor: 'rgba(0,0,0,0.8)' },
+              }}
+            >
+              <Icon icon="mdi:close" width={24} />
+            </IconButton>
+          </Box>
+        </Dialog>
       </Box>
     </Box>
   );
