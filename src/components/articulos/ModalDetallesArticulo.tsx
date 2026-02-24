@@ -177,7 +177,7 @@ const ModalDetallesArticulo = ({
     >
       <Box sx={{ display: 'flex', flexDirection: 'column', maxHeight: `${VH_MAX}vh` }}>
         {/* HEADER FLAT */}
-        <DialogTitle sx={{ p: 2, m: 0, minHeight: HEADER_H, display: 'flex', alignItems: 'center', bgcolor: COLORS.primary, color: '#fff' }}>
+        <DialogTitle sx={{ p: 2, m: 0, minHeight: HEADER_H, display: 'flex', alignItems: 'center', bgcolor: azul.primary, color: '#fff' }}>
           <Box sx={{ width: '100%', display: 'flex', alignItems: 'center', gap: 2 }}>
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
               <Typography variant="h6" fontWeight={700}>
@@ -267,7 +267,6 @@ const ModalDetallesArticulo = ({
                     gridTemplateColumns: {
                       xs: 'repeat(2,1fr)',
                       sm: 'repeat(3,1fr)',
-                      md: 'repeat(5,1fr)',
                     },
                     mb: 3,
                   }}
@@ -291,16 +290,16 @@ const ModalDetallesArticulo = ({
                             borderRadius: '50%',
                             display: 'grid',
                             placeItems: 'center',
-                            bgcolor: alpha(COLORS.primary, 0.18),
+                            bgcolor: alpha(azul.primary, 0.18),
                           }}
                         >
-                          <Icon icon="mdi:barcode" width={14} height={14} color={COLORS.primary} />
+                          <Icon icon="mdi:barcode" width={14} height={14} color={azul.primary} />
                         </Box>
-                        <Typography variant="subtitle2" fontWeight={700} color={COLORS.textStrong}>
+                        <Typography variant="subtitle2" fontWeight={700} color={darken(azul.primary, 0.5)}>
                           Código
                         </Typography>
                       </Box>
-                      <Typography variant="subtitle1" fontWeight={700} color={COLORS.primary}>
+                      <Typography variant="subtitle1" fontWeight={700} color={azul.primary}>
                         {articuloCompleto?.Codigo || '—'}
                       </Typography>
                     </CardContent>
@@ -324,18 +323,18 @@ const ModalDetallesArticulo = ({
                             borderRadius: '50%',
                             display: 'grid',
                             placeItems: 'center',
-                            bgcolor: alpha(COLORS.primary, 0.16),
+                            bgcolor: alpha(azul.primary, 0.16),
                           }}
                         >
-                          <Icon icon="mdi:package-variant-closed" width={14} height={14} color={COLORS.primary} />
+                          <Icon icon="mdi:package-variant-closed" width={14} height={14} color={azul.primary} />
                         </Box>
-                        <Typography variant="subtitle2" fontWeight={700} color={COLORS.textStrong}>
+                        <Typography variant="subtitle2" fontWeight={700} color={darken(azul.primary, 0.5)}>
                           {stockLabelText}
                         </Typography>
                       </Box>
 
                       <Box display="flex" alignItems="center" gap={1}>
-                        <Typography variant="h6" fontWeight={800} color={COLORS.primary}>
+                        <Typography variant="h6" fontWeight={800} color={azul.primary}>
                           {stockActual}
                         </Typography>
                         <Chip size="small" label={stockChip.label} color={stockChip.color} />
@@ -357,82 +356,18 @@ const ModalDetallesArticulo = ({
                         <Box sx={{
                           width: 22, height: 22, borderRadius: '50%',
                           display: 'grid', placeItems: 'center',
-                          bgcolor: alpha(COLORS.primary, 0.16)
+                          bgcolor: alpha(azul.primary, 0.16)
                         }}>
-                          <Icon icon="mdi:cash" width={14} height={14} color={COLORS.primary} />
+                          <Icon icon="mdi:cash" width={14} height={14} color={azul.primary} />
                         </Box>
 
-                        <Typography variant="subtitle2" fontWeight={700} color={COLORS.textStrong}>
+                        <Typography variant="subtitle2" fontWeight={700} color={darken(azul.primary, 0.5)}>
                           Precio venta
                         </Typography>
                       </Box>
 
-                      <Typography variant="subtitle1" fontWeight={800} color={COLORS.primary}>
+                      <Typography variant="subtitle1" fontWeight={800} color={azul.primary}>
                         {currency(precioCalculado)}
-                      </Typography>
-                    </CardContent>
-                  </Card>
-
-                  {/* Precio compra */}
-                  <Card
-                    sx={{
-                      borderRadius: 0,
-                      border: '1px solid #e0e0e0',
-                      boxShadow: 'none',
-                      background: '#f9f9f9',
-                    }}
-                  >
-                    <CardContent sx={{ p: 1.5, display: 'flex', flexDirection: 'column', gap: 0.5 }}>
-                      <Box display="flex" alignItems="center" gap={1}>
-                        <Box sx={{
-                          width: 22,
-                          height: 22,
-                          borderRadius: '50%',
-                          display: 'grid',
-                          placeItems: 'center',
-                          bgcolor: alpha(COLORS.primary, 0.16)
-                        }}>
-                          <Icon icon="mdi:cart-arrow-down" width={14} height={14} color={COLORS.primary} />
-                        </Box>
-
-                        <Typography variant="subtitle2" fontWeight={700} color={COLORS.textStrong}>
-                          Precio compra
-                        </Typography>
-                      </Box>
-
-                      <Typography variant="subtitle1" fontWeight={800} color={COLORS.primary}>
-                        {currency(articuloCompleto?.PrecioCompra)}
-                      </Typography>
-                    </CardContent>
-                  </Card>
-
-                  {/* % Ganancia */}
-                  <Card
-                    sx={{
-                      borderRadius: 0,
-                      border: '1px solid #e0e0e0',
-                      boxShadow: 'none',
-                      background: '#f9f9f9',
-                    }}
-                  >
-                    <CardContent sx={{ p: 1.5, display: 'flex', flexDirection: 'column', gap: 0.5 }}>
-                      <Box display="flex" alignItems="center" gap={1}>
-                        <Box sx={{
-                          width: 22, height: 22, borderRadius: '50%',
-                          display: 'grid', placeItems: 'center',
-                          bgcolor: alpha(COLORS.primary, 0.12)
-                        }}>
-                          <Icon icon="mdi:percent" width={14} height={14} color={COLORS.primary} />
-                        </Box>
-                        <Typography variant="subtitle2" fontWeight={700} color={COLORS.textStrong}>
-                          % Ganancia
-                        </Typography>
-                      </Box>
-
-                      <Typography variant="h6" fontWeight={800} color={COLORS.primary}>
-                        {articuloCompleto?.PorcentajeGanancia != null
-                          ? `${articuloCompleto.PorcentajeGanancia}%`
-                          : '—'}
                       </Typography>
                     </CardContent>
                   </Card>
@@ -447,42 +382,45 @@ const ModalDetallesArticulo = ({
                   sx={{
                     display: 'grid',
                     gap: 3,
-                    gridTemplateColumns: { xs: '1fr', md: '7fr 5fr' },
+                    gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' },
                     alignItems: 'start',
                   }}
                 >
-                  {/* Columna izquierda */}
+                  {/* Imagen del producto */}
+                  <Box
+                    sx={{
+                      borderRadius: 0,
+                      overflow: 'hidden',
+                      border: '1px solid #e0e0e0',
+                      display: 'flex',
+                      justifyContent: 'center',
+                      alignItems: 'center',
+                      bgcolor: '#fff',
+                      p: 2,
+                      minHeight: 380,
+                      position: 'relative'
+                    }}
+                  >
+                    {articuloCompleto?.ImagenUrl ? (
+                      <img
+                        src={
+                          articuloCompleto.ImagenUrl.startsWith('http') || articuloCompleto.ImagenUrl.startsWith('data:')
+                            ? articuloCompleto.ImagenUrl
+                            : `${process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:4000'}${articuloCompleto.ImagenUrl.startsWith('/') ? '' : '/'}${articuloCompleto.ImagenUrl}`
+                        }
+                        alt={articuloCompleto.Descripcion}
+                        style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }}
+                      />
+                    ) : (
+                      <Icon icon="mdi:image-off-outline" width={120} height={120} color="#ccc" />
+                    )}
+                  </Box>
+
+                  {/* Información general */}
                   <Box>
-                    <Typography variant="h6" fontWeight={700} color={COLORS.textStrong} mb={1}>
+                    <Typography variant="h6" fontWeight={700} color={darken(azul.primary, 0.5)} mb={2}>
                       Información general
                     </Typography>
-
-
-                    {/* IMAGEN GRANDE */}
-                    {articuloCompleto?.ImagenUrl && (
-                      <Box
-                        sx={{
-                          mb: 2,
-                          borderRadius: 0,
-                          overflow: 'hidden',
-                          border: '1px solid #e0e0e0',
-                          display: 'flex',
-                          justifyContent: 'center',
-                          bgcolor: '#fff',
-                          p: 1
-                        }}
-                      >
-                        <img
-                          src={
-                            articuloCompleto.ImagenUrl.startsWith('http') || articuloCompleto.ImagenUrl.startsWith('data:')
-                              ? articuloCompleto.ImagenUrl
-                              : `${process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:4000'}${articuloCompleto.ImagenUrl.startsWith('/') ? '' : '/'}${articuloCompleto.ImagenUrl}`
-                          }
-                          alt={articuloCompleto.Descripcion}
-                          style={{ maxWidth: '100%', maxHeight: 300, objectFit: 'contain' }}
-                        />
-                      </Box>
-                    )}
 
                     <Box
                       sx={{
@@ -494,7 +432,7 @@ const ModalDetallesArticulo = ({
 
                       <Box>
                         <Typography variant="caption" color="text.secondary">Descripción</Typography>
-                        <Typography variant="body1" fontWeight={600} color={COLORS.textStrong}>
+                        <Typography variant="body1" fontWeight={600} color={darken(azul.primary, 0.5)}>
                           {articuloCompleto?.Descripcion || 'Sin descripción'}
                         </Typography>
                       </Box>
@@ -520,35 +458,6 @@ const ModalDetallesArticulo = ({
                         </Typography>
                       </Box>
 
-                    </Box>
-                  </Box>
-
-                  {/* Columna derecha */}
-                  <Box
-                    sx={{
-                      borderRadius: 0,
-                      border: '1px solid #e0e0e0',
-                      background: '#fff',
-                      p: 2.2,
-                      display: 'flex',
-                      flexDirection: 'column',
-                      gap: 1.2,
-                    }}
-                  >
-
-                    <Box display="flex" alignItems="center" gap={1}>
-                      <Icon icon="mdi:information-variant" width={20} height={20} color={COLORS.primary} />
-                      <Typography variant="subtitle1" fontWeight={700} color={COLORS.textStrong}>
-                        Datos adicionales
-                      </Typography>
-                    </Box>
-
-                    <Box sx={{
-                      display: 'grid',
-                      gap: 2,
-                      gridTemplateColumns: { xs: '1fr', sm: 'repeat(2,1fr)' }
-                    }}>
-
                       <Box>
                         <Typography variant="caption" color="text.secondary">Stock mínimo</Typography>
                         <Typography variant="body1" fontWeight={600}>{stockMinimo}</Typography>
@@ -573,27 +482,8 @@ const ModalDetallesArticulo = ({
                       </Box>
 
                     </Box>
-
                   </Box>
 
-                </Box>
-
-                {/* Observaciones */}
-                <Box
-                  sx={{
-                    mt: 3,
-                    borderRadius: 0,
-                    border: '1px solid #e0e0e0',
-                    background: '#fff',
-                    p: 2,
-                  }}
-                >
-                  <Typography variant="subtitle2" fontWeight={700} color={COLORS.textStrong} mb={0.5}>
-                    Observaciones del proveedor
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    {articuloCompleto?.proveedor?.Observaciones || 'Sin observaciones'}
-                  </Typography>
                 </Box>
 
               </>
