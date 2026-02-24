@@ -5,9 +5,10 @@ import {
   Dialog, DialogTitle, DialogContent, DialogActions,
   Box, Typography, TextField, MenuItem,
   Table, TableHead, TableBody, TableRow, TableCell,
-  Snackbar, Alert, Button
+  Snackbar, Alert, Button, IconButton
 } from '@mui/material';
 import { useQuery, useMutation } from '@apollo/client/react';
+import { Icon } from '@iconify/react';
 import {
   OBTENER_STOCK_PUNTO_MUDRAS,
   OBTENER_PUNTOS_MUDRAS,
@@ -37,6 +38,8 @@ const ModalInventarioPunto: React.FC<Props> = ({ open, onClose, punto }) => {
   const [ajustes, setAjustes] = useState<Record<number, string>>({});
   const [transferencias, setTransferencias] = useState<Record<number, string>>({});
   const [snack, setSnack] = useState<{ open: boolean; msg: string; sev: 'success' | 'error' | 'info' }>(() => ({ open: false, msg: '', sev: 'success' }));
+  const [imagenAmpliada, setImagenAmpliada] = useState(false);
+  const [urlImagenAmpliada, setUrlImagenAmpliada] = useState<string | null>(null);
 
   const tableContainerRef = useRef<HTMLDivElement>(null);
   const pendingRestoreScrollTopRef = useRef<number | null>(null);
@@ -119,7 +122,31 @@ const ModalInventarioPunto: React.FC<Props> = ({ open, onClose, punto }) => {
                 <TableRow key={a.id} hover>
                   <TableCell>{idx + 1}</TableCell>
                   <TableCell>
-                    <Box sx={{ width: 36, height: 36, borderRadius: 0, overflow: 'hidden', border: '1px solid #e0e0e0', bgcolor: '#fff' }}>
+                    <Box
+                      sx={{
+                        width: 36,
+                        height: 36,
+                        borderRadius: 0,
+                        overflow: 'hidden',
+                        border: '1px solid #e0e0e0',
+                        bgcolor: '#fff',
+                        cursor: a.articulo?.ImagenUrl ? 'pointer' : 'default',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        transition: 'transform 0.2s',
+                        '&:hover': a.articulo?.ImagenUrl ? { transform: 'scale(1.08)' } : {},
+                      }}
+                      onClick={() => {
+                        if (a.articulo?.ImagenUrl) {
+                          const imagenUrl = a.articulo.ImagenUrl.startsWith('http') || a.articulo.ImagenUrl.startsWith('data:')
+                            ? a.articulo.ImagenUrl
+                            : `${process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:4000'}${a.articulo.ImagenUrl.startsWith('/') ? '' : '/'}${a.articulo.ImagenUrl}`;
+                          setUrlImagenAmpliada(imagenUrl);
+                          setImagenAmpliada(true);
+                        }
+                      }}
+                    >
                       {a.articulo?.ImagenUrl ? (
                         <img
                           src={
@@ -231,6 +258,52 @@ const ModalInventarioPunto: React.FC<Props> = ({ open, onClose, punto }) => {
           {snack.msg}
         </Alert>
       </Snackbar>
+
+      {/* Lightbox para imagen */}
+      <Dialog
+        open={imagenAmpliada}
+        onClose={() => setImagenAmpliada(false)}
+        maxWidth="md"
+        fullWidth
+        PaperProps={{
+          sx: {
+            bgcolor: '#000',
+            boxShadow: '0 0 0 9999px rgba(0,0,0,0.75)',
+          },
+        }}
+      >
+        <Box
+          sx={{
+            position: 'relative',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            minHeight: 500,
+            bgcolor: '#000',
+          }}
+        >
+          {urlImagenAmpliada && (
+            <img
+              src={urlImagenAmpliada}
+              alt="Imagen ampliada"
+              style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }}
+            />
+          )}
+          <IconButton
+            onClick={() => setImagenAmpliada(false)}
+            sx={{
+              position: 'absolute',
+              top: 8,
+              right: 8,
+              color: '#fff',
+              bgcolor: 'rgba(0,0,0,0.5)',
+              '&:hover': { bgcolor: 'rgba(0,0,0,0.8)' },
+            }}
+          >
+            <Icon icon="mdi:close" width={24} />
+          </IconButton>
+        </Box>
+      </Dialog>
     </Dialog>
   );
 };

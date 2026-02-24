@@ -5,6 +5,7 @@ import {
   Box,
   Button,
   Chip,
+  Dialog,
   Divider,
   IconButton,
   InputAdornment,
@@ -464,6 +465,8 @@ const TablaArticulos: React.FC<ArticulosTableProps> = ({
   const [modalEliminarOpen, setModalEliminarOpen] = useState(false);
   const [articuloSeleccionado, setArticuloSeleccionado] = useState<Pick<Articulo, 'id' | 'Descripcion' | 'Codigo'> | null>(null);
   const [textoConfirmEliminar, setTextoConfirmEliminar] = useState('');
+  const [imagenAmpliada, setImagenAmpliada] = useState(false);
+  const [urlImagenAmpliada, setUrlImagenAmpliada] = useState<string | null>(null);
 
   const openDetalles = useCallback((a: Articulo) => {
     setArticuloSeleccionado({ id: a.id, Descripcion: a.Descripcion, Codigo: a.Codigo });
@@ -479,6 +482,8 @@ const TablaArticulos: React.FC<ArticulosTableProps> = ({
   const closeModals = () => {
     setModalDetallesOpen(false);
     setModalEliminarOpen(false);
+    setImagenAmpliada(false);
+    setUrlImagenAmpliada(null);
     setArticuloSeleccionado(null);
     setTextoConfirmEliminar('');
     const current = tableContainerRef.current;
@@ -705,18 +710,46 @@ const TablaArticulos: React.FC<ArticulosTableProps> = ({
         </Stack>
       </Box>
     ),
-    imagen: (a) => (
-      <Box sx={{ width: 40, height: 40, borderRadius: 0, overflow: 'hidden', border: '1px solid #ddd', bgcolor: '#fff' }}>
-        {a.ImagenUrl ? (
-          <>
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={a.ImagenUrl.startsWith('http') ? a.ImagenUrl : `http://localhost:4000${a.ImagenUrl}`} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-          </>
-        ) : (
-          <Icon icon="mdi:image-off-outline" color="#ccc" width={20} style={{ margin: 10 }} />
-        )}
-      </Box>
-    ),
+    imagen: (a) => {
+      const imagenUrl = a.ImagenUrl
+        ? a.ImagenUrl.startsWith('http') || a.ImagenUrl.startsWith('data:')
+          ? a.ImagenUrl
+          : `http://localhost:4000${a.ImagenUrl}`
+        : null;
+      return (
+        <Box
+          sx={{
+            width: 40,
+            height: 40,
+            borderRadius: 0,
+            overflow: 'hidden',
+            border: '1px solid #ddd',
+            bgcolor: '#fff',
+            cursor: imagenUrl ? 'pointer' : 'default',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            transition: 'transform 0.2s',
+            '&:hover': imagenUrl ? { transform: 'scale(1.08)' } : {},
+          }}
+          onClick={() => {
+            if (imagenUrl) {
+              setUrlImagenAmpliada(imagenUrl);
+              setImagenAmpliada(true);
+            }
+          }}
+        >
+          {imagenUrl ? (
+            <>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={imagenUrl} alt={a.Descripcion} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+            </>
+          ) : (
+            <Icon icon="mdi:image-off-outline" color="#ccc" width={20} />
+          )}
+        </Box>
+      );
+    },
     codigo: (a) => (
       <Chip
         label={a.Codigo ?? 'Sin código'}
@@ -1463,6 +1496,55 @@ const TablaArticulos: React.FC<ArticulosTableProps> = ({
           </Box>
         )}
       </Menu>
+
+      {/* Lightbox para imagen */}
+      <Dialog
+        open={imagenAmpliada}
+        onClose={() => setImagenAmpliada(false)}
+        maxWidth="md"
+        fullWidth
+        PaperProps={{
+          sx: {
+            bgcolor: '#000',
+            boxShadow: '0 0 0 9999px rgba(0,0,0,0.75)',
+          },
+        }}
+      >
+        <Box
+          sx={{
+            position: 'relative',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            minHeight: 500,
+            bgcolor: '#000',
+          }}
+        >
+          {urlImagenAmpliada && (
+            <>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={urlImagenAmpliada}
+                alt="Imagen ampliada"
+                style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }}
+              />
+            </>
+          )}
+          <IconButton
+            onClick={() => setImagenAmpliada(false)}
+            sx={{
+              position: 'absolute',
+              top: 8,
+              right: 8,
+              color: '#fff',
+              bgcolor: 'rgba(0,0,0,0.5)',
+              '&:hover': { bgcolor: 'rgba(0,0,0,0.8)' },
+            }}
+          >
+            <Icon icon="mdi:close" width={24} />
+          </IconButton>
+        </Box>
+      </Dialog>
 
       {/* Modales internos como en Rubros (opcional) */}
       {

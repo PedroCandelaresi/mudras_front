@@ -13,6 +13,7 @@ import {
   TableRow,
   Avatar,
   Chip,
+  Dialog,
   Tooltip,
   IconButton,
   Paper,
@@ -38,6 +39,7 @@ import {
   IconFileSpreadsheet,
   IconFilterOff
 } from '@tabler/icons-react';
+import { Icon } from '@iconify/react';
 import { exportToExcel, exportToPdf, ExportColumn } from '@/utils/exportUtils';
 
 import { GET_MOVIMIENTOS_STOCK_FULL } from '@/components/articulos/graphql/queries';
@@ -140,6 +142,8 @@ const TablaMovimientosStock = () => {
   const [fechaHasta, setFechaHasta] = useState<string>(cachedState?.fechaHasta ?? '');
   const [usuarioId, setUsuarioId] = useState<number | ''>(cachedState?.usuarioId ?? '');
   const [exporting, setExporting] = useState(false);
+  const [imagenAmpliada, setImagenAmpliada] = useState(false);
+  const [urlImagenAmpliada, setUrlImagenAmpliada] = useState<string | null>(null);
   const client = useApolloClient();
 
   useEffect(() => {
@@ -557,7 +561,17 @@ const TablaMovimientosStock = () => {
                             borderRadius: 0.5,
                             overflow: 'hidden',
                             border: '1px solid #eee',
-                            flexShrink: 0
+                            flexShrink: 0,
+                            cursor: mov.articulo?.ImagenUrl ? 'pointer' : 'default',
+                            transition: 'transform 0.2s',
+                            '&:hover': mov.articulo?.ImagenUrl ? { transform: 'scale(1.08)' } : {},
+                          }}
+                          onClick={() => {
+                            if (mov.articulo?.ImagenUrl) {
+                              const imagenUrl = mov.articulo.ImagenUrl.startsWith('http') ? mov.articulo.ImagenUrl : `http://localhost:4000${mov.articulo.ImagenUrl}`;
+                              setUrlImagenAmpliada(imagenUrl);
+                              setImagenAmpliada(true);
+                            }
                           }}
                         >
                           {mov.articulo.ImagenUrl ? (
@@ -696,6 +710,52 @@ const TablaMovimientosStock = () => {
         accentColor={borgoña.primary}
         rowsPerPageOptions={[50, 100, 150, 300, 500]}
       />
+
+      {/* Lightbox para imagen */}
+      <Dialog
+        open={imagenAmpliada}
+        onClose={() => setImagenAmpliada(false)}
+        maxWidth="md"
+        fullWidth
+        PaperProps={{
+          sx: {
+            bgcolor: '#000',
+            boxShadow: '0 0 0 9999px rgba(0,0,0,0.75)',
+          },
+        }}
+      >
+        <Box
+          sx={{
+            position: 'relative',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            minHeight: 500,
+            bgcolor: '#000',
+          }}
+        >
+          {urlImagenAmpliada && (
+            <img
+              src={urlImagenAmpliada}
+              alt="Imagen ampliada"
+              style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }}
+            />
+          )}
+          <IconButton
+            onClick={() => setImagenAmpliada(false)}
+            sx={{
+              position: 'absolute',
+              top: 8,
+              right: 8,
+              color: '#fff',
+              bgcolor: 'rgba(0,0,0,0.5)',
+              '&:hover': { bgcolor: 'rgba(0,0,0,0.8)' },
+            }}
+          >
+            <Icon icon="mdi:close" width={24} />
+          </IconButton>
+        </Box>
+      </Dialog>
     </Box>
   );
 };
