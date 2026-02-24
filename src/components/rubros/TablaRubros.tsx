@@ -399,6 +399,7 @@ const TablaRubros: React.FC<Props> = ({ onNuevoRubro, puedeCrear = true }) => {
       >
         <TableHead>
           <TableRow sx={{ '& th': { bgcolor: verdeMilitar.tableHeader || '#68823b', color: '#ffffff', fontWeight: 600, letterSpacing: 0.5, borderRadius: 0 } }}>
+            <TableCell align="left">N°</TableCell>
             {/* Nombre + menú de filtro como Proveedores */}
             <TableCell align="left">
               <Box display="flex" alignItems="center" gap={1}>
@@ -442,8 +443,9 @@ const TablaRubros: React.FC<Props> = ({ onNuevoRubro, puedeCrear = true }) => {
         </TableHead>
 
         <TableBody>
-          {rubros.map((rubro) => (
+          {rubros.map((rubro, idx) => (
             <TableRow key={rubro.id} hover>
+              <TableCell>{idx + 1}</TableCell>
               <TableCell>
                 <Box display="flex" alignItems="center" gap={1}>
                   <Chip

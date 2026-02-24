@@ -175,6 +175,7 @@ export function RolesTable({ onAsignarPermisos, onCrear, refetchToken }: Props) 
         }}>
           <TableHead>
             <TableRow>
+              <TableCell sx={{ fontWeight: 700, color: 'text.secondary' }}>N°</TableCell>
               <TableCell onClick={() => toggleOrden('name')} sx={{ cursor: 'pointer', borderBottom: '1px solid #e0e0e0' }}>
                 <Box display="flex" alignItems="center" justifyContent="space-between">
                   <span>Nombre {orden.campo === 'name' ? (orden.dir === 'asc' ? '▲' : '▼') : ''}</span>
@@ -202,6 +203,7 @@ export function RolesTable({ onAsignarPermisos, onCrear, refetchToken }: Props) 
           <TableBody>
             {rolesFiltrados.map((r, idx) => (
               <TableRow key={r.id} hover>
+                <TableCell sx={{ borderBottom: '1px solid #e0e0e0' }}>{idx + 1}</TableCell>
                 <TableCell sx={{ borderBottom: '1px solid #e0e0e0' }}>
                   <Typography variant="body2" fontWeight={600}>{r.name}</Typography>
                 </TableCell>

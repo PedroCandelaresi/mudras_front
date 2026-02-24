@@ -92,6 +92,8 @@ const TablaProveedores = forwardRef<TablaProveedoresHandle, Props>(({
   // estado tabla
   const [page, setPage] = useState(cachedState?.page ?? 0);
   const [rowsPerPage, setRowsPerPage] = useState(cachedState?.rowsPerPage ?? 150);
+  const paginaActualIndex = page;
+  const filasPorPaginaActual = rowsPerPage;
   const tableTopRef = React.useRef<HTMLDivElement>(null);
   const tableContainerRef = React.useRef<HTMLDivElement>(null);
   const pendingRestoreScrollTopRef = React.useRef<number | null>(null);
@@ -186,7 +188,7 @@ const TablaProveedores = forwardRef<TablaProveedoresHandle, Props>(({
   const handleProveedorGuardado = () => {
     const current = tableContainerRef.current;
     if (current) pendingRestoreScrollTopRef.current = current.scrollTop;
-    refetch();
+    refetchKeepingScroll();
     setModalEditar(false);
     setProveedorSeleccionado(null);
   };
@@ -194,7 +196,7 @@ const TablaProveedores = forwardRef<TablaProveedoresHandle, Props>(({
   const handleProveedorEliminado = () => {
     const current = tableContainerRef.current;
     if (current) pendingRestoreScrollTopRef.current = current.scrollTop;
-    refetch();
+    refetchKeepingScroll();
     setModalEliminar(false);
     setProveedorSeleccionado(null);
   };
@@ -206,7 +208,7 @@ const TablaProveedores = forwardRef<TablaProveedoresHandle, Props>(({
     setProveedorSeleccionado(null);
     const current = tableContainerRef.current;
     if (current) pendingRestoreScrollTopRef.current = current.scrollTop;
-    refetch();
+    refetchKeepingScroll();
   };
 
   const refetchKeepingScroll = useCallback(() => {
@@ -471,6 +473,7 @@ const TablaProveedores = forwardRef<TablaProveedoresHandle, Props>(({
       >
         <TableHead>
           <TableRow sx={{ '& th': { borderBottom: 'none' } }}>
+            <TableCell align="center">N°</TableCell>
             {/* Proveedor */}
             <TableCell align="center">
               <Box display="flex" alignItems="center" justifyContent="space-between">
@@ -529,9 +532,10 @@ const TablaProveedores = forwardRef<TablaProveedoresHandle, Props>(({
           </TableRow>
         </TableHead>
 
-        <TableBody>
+          <TableBody>
           {proveedoresPaginados.map((proveedor, idx) => (
             <TableRow key={proveedor.IdProveedor} hover>
+              <TableCell>{paginaActualIndex * filasPorPaginaActual + idx + 1}</TableCell>
               <TableCell>
                 <Box display="flex" alignItems="center" gap={1}>
                   <Avatar

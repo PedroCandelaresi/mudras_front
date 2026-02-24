@@ -616,6 +616,7 @@ const TablaMatrizStock: React.FC<TablaMatrizStockProps> = ({ onTransferir }) => 
                 <Table size="small">
                     <TableHead>
                         <TableRow>
+                            <TableCell>N°</TableCell>
                             {columns.map(col => (
                                 <TableCell
                                     key={col.key}
@@ -634,12 +635,13 @@ const TablaMatrizStock: React.FC<TablaMatrizStockProps> = ({ onTransferir }) => 
                     </TableHead>
                     <TableBody>
                         {loading ? (
-                            <TableRow><TableCell colSpan={columns.length} align="center" sx={{ py: 5 }}><MudrasLoader /></TableCell></TableRow>
+                            <TableRow><TableCell colSpan={columns.length + 1} align="center" sx={{ py: 5 }}><MudrasLoader /></TableCell></TableRow>
                         ) : matrizData.length === 0 ? (
-                            <TableRow><TableCell colSpan={columns.length} align="center" sx={{ py: 5 }}><Typography>No hay datos</Typography></TableCell></TableRow>
+                            <TableRow><TableCell colSpan={columns.length + 1} align="center" sx={{ py: 5 }}><Typography>No hay datos</Typography></TableCell></TableRow>
                         ) : (
-                            paginatedData.map(item => (
+                            paginatedData.map((item, idx) => (
                                 <TableRow key={item.id} hover sx={{ '&:nth-of-type(even)': { bgcolor: themeColor.alternateRow } }}>
+                                    <TableCell>{page * rowsPerPage + idx + 1}</TableCell>
                                     {columns.map(col => (
                                         <TableCell key={col.key} align={col.align}>
                                             {renderCell(col, item)}

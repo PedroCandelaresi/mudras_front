@@ -489,6 +489,7 @@ const TablaMovimientosStock = () => {
       >
         <TableHead>
           <TableRow sx={{ '& th': { borderBottom: 'none' } }}>
+            <TableCell>N°</TableCell>
             <TableCell>Fecha</TableCell>
             <TableCell>Tipo</TableCell>
             <TableCell>Artículo</TableCell>
@@ -505,21 +506,22 @@ const TablaMovimientosStock = () => {
             // Loading State inside table
             [1, 2, 3, 4, 5].map((i) => (
               <TableRow key={i}>
-                <TableCell colSpan={9}><Skeleton animation="wave" /></TableCell>
+                <TableCell colSpan={10}><Skeleton animation="wave" /></TableCell>
               </TableRow>
             ))
           ) : movimientos.length === 0 ? (
             <TableRow>
-              <TableCell colSpan={9} align="center" sx={{ py: 6 }}>
+              <TableCell colSpan={10} align="center" sx={{ py: 6 }}>
                 <Typography variant="body2" color="text.secondary">No hay movimientos registrados.</Typography>
               </TableCell>
             </TableRow>
           ) : (
-            movimientos.map((mov) => {
+            movimientos.map((mov, idx) => {
               const tipoStyle = getTipoColor(mov.tipoMovimiento);
 
               return (
                 <TableRow key={mov.id}>
+                  <TableCell>{page * rowsPerPage + idx + 1}</TableCell>
                   {/* Fecha */}
                   <TableCell sx={{ whiteSpace: 'nowrap', fontSize: '0.8rem', color: borgoña.textStrong }}>
                     <Stack direction="row" spacing={1} alignItems="center">

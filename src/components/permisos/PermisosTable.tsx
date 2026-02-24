@@ -153,7 +153,8 @@ export function PermisosTable({ onCrear, onEditar, onEliminar, refetchToken }: P
         }}>
           <TableHead>
             <TableRow>
-              <TableCell onClick={() => toggleOrden('resource')} sx={{ cursor: 'pointer', borderBottom: '1px solid #e0e0e0' }}>
+                  <TableCell sx={{ fontWeight: 700, color: 'text.secondary' }}>N°</TableCell>
+                  <TableCell onClick={() => toggleOrden('resource')} sx={{ cursor: 'pointer', borderBottom: '1px solid #e0e0e0' }}>
                 <Box display="flex" alignItems="center" justifyContent="space-between">
                   Recurso {orden.campo === 'resource' ? (orden.dir === 'asc' ? '▲' : '▼') : ''}
                   <Tooltip title="Filtrar columna">
@@ -180,6 +181,7 @@ export function PermisosTable({ onCrear, onEditar, onEliminar, refetchToken }: P
           <TableBody>
             {permisosFiltrados.map((p, idx) => (
               <TableRow key={p.id} hover>
+                <TableCell sx={{ borderBottom: '1px solid #e0e0e0' }}>{idx + 1}</TableCell>
                 <TableCell sx={{ borderBottom: '1px solid #e0e0e0' }}><Chip size="small" label={p.resource} sx={{ borderRadius: 0, fontWeight: 600, bgcolor: '#eee' }} /></TableCell>
                 <TableCell sx={{ borderBottom: '1px solid #e0e0e0' }}><Chip size="small" label={p.action} sx={{ borderRadius: 0, fontWeight: 600, bgcolor: '#eee' }} /></TableCell>
                 <TableCell sx={{ borderBottom: '1px solid #e0e0e0' }}>{p.description || '-'}</TableCell>

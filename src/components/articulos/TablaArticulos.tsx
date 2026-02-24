@@ -485,7 +485,8 @@ const TablaArticulos: React.FC<ArticulosTableProps> = ({
     if (current) {
       pendingRestoreScrollTopRef.current = current.scrollTop;
     }
-    refetch();
+    // Use the refetch helper that preserves scroll position
+    refetchKeepingScroll();
   };
 
   const refetchKeepingScroll = useCallback(() => {
@@ -658,6 +659,10 @@ const TablaArticulos: React.FC<ArticulosTableProps> = ({
     }
     return paginas;
   };
+
+  // Página y tamaño actuales (se usan para calcular el número de orden absoluto)
+  const paginaActualIndex = controlledFilters?.pagina ?? page;
+  const filasPorPaginaActual = controlledFilters?.limite ?? rowsPerPage;
 
   const handleView = onView ?? (useInternalModals ? openDetalles : undefined);
   const handleDelete = onDelete ?? (useInternalModals ? openEliminar : undefined);
@@ -1210,6 +1215,8 @@ const TablaArticulos: React.FC<ArticulosTableProps> = ({
       >
         <TableHead>
           <TableRow sx={{ '& th': { bgcolor: verdeMilitar.tableHeader, color: '#ffffff', fontWeight: 600, letterSpacing: 0.5, borderRadius: 0 } }}>
+            {/* Numeración */}
+            <TableCell sx={{ width: 60 }}>N°</TableCell>
             {columns.map((column) => {
               const displayedHeader = (column.header === 'STOCK TOTAL' || column.key === 'stock') ? 'Global' : (column.header ?? column.key.toUpperCase());
               return (
@@ -1245,13 +1252,13 @@ const TablaArticulos: React.FC<ArticulosTableProps> = ({
         <TableBody>
           {loading ? (
             <TableRow>
-              <TableCell colSpan={columns.length} align="center" sx={{ py: 10 }}>
+              <TableCell colSpan={columns.length + 1} align="center" sx={{ py: 10 }}>
                 <MudrasLoader size={80} text="Cargando artículos..." />
               </TableCell>
             </TableRow>
           ) : articulos.length === 0 ? (
             <TableRow>
-              <TableCell colSpan={columns.length} align="center" sx={{ py: 6 }}>
+              <TableCell colSpan={columns.length + 1} align="center" sx={{ py: 6 }}>
                 <Typography variant="body2" color="text.secondary">
                   No encontramos artículos que coincidan con tu búsqueda.
                 </Typography>
@@ -1261,8 +1268,12 @@ const TablaArticulos: React.FC<ArticulosTableProps> = ({
               </TableCell>
             </TableRow>
           ) : (
-            articulos.map((articulo) => (
+            articulos.map((articulo, index) => (
               <TableRow key={articulo.id} hover>
+                {/* Número de orden absoluto según página */}
+                <TableCell>
+                  {paginaActualIndex * filasPorPaginaActual + index + 1}
+                </TableCell>
                 {columns.map((column) => (
                   <TableCell
                     key={`${articulo.id}-${column.key}`}

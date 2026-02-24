@@ -83,6 +83,8 @@ export const HistorialVentas: React.FC = () => {
     limite: 150,
   });
   const tableTopRef = React.useRef<HTMLDivElement>(null);
+  const tableContainerRef = React.useRef<HTMLDivElement>(null);
+  const pendingRestoreScrollTopRef = React.useRef<number | null>(null);
   const [ventaSeleccionada, setVentaSeleccionada] = useState<VentaCaja | null>(null);
   const [modalDetalleAbierto, setModalDetalleAbierto] = useState(false);
 
@@ -104,10 +106,16 @@ export const HistorialVentas: React.FC = () => {
   // Mutations
   const [cancelarVenta] = useMutation(CANCELAR_VENTA_CAJA, {
     onCompleted: () => {
-      refetch();
+      refetchKeepingScroll();
       setModalDetalleAbierto(false);
     },
   });
+
+  const refetchKeepingScroll = React.useCallback(() => {
+    const current = tableContainerRef.current;
+    if (current) pendingRestoreScrollTopRef.current = current.scrollTop;
+    return refetch();
+  }, [refetch]);
 
   const handleFiltroChange = (campo: keyof FiltrosHistorialInput, valor: any) => {
     setFiltros(prev => ({
@@ -344,10 +352,11 @@ export const HistorialVentas: React.FC = () => {
                 accentColor={grisRojizo.primary}
                 rowsPerPageOptions={[50, 100, 150, 300, 500]}
               />
-              <TableContainer>
+              <TableContainer ref={tableContainerRef}>
                 <Table>
                   <TableHead>
                     <TableRow>
+                      <TableCell>N°</TableCell>
                       <TableCell>Número</TableCell>
                       <TableCell>Fecha</TableCell>
                       <TableCell>Cliente</TableCell>
@@ -358,11 +367,16 @@ export const HistorialVentas: React.FC = () => {
                     </TableRow>
                   </TableHead>
                   <TableBody>
-                    {ventas.map((venta: VentaCaja) => {
+                    {ventas.map((venta: VentaCaja, idx: number) => {
                       const estadoConfig = obtenerEstadoChip(venta.estado);
 
                       return (
                         <TableRow key={venta.id} hover>
+                          <TableCell>
+                            <Typography variant="body2" fontWeight="bold">
+                              {((filtros.pagina ?? 1) - 1) * (filtros.limite ?? 150) + idx + 1}
+                            </Typography>
+                          </TableCell>
                           <TableCell>
                             <Typography variant="body2" fontWeight="bold">
                               {venta.numeroVenta}

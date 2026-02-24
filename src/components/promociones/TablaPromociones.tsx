@@ -169,6 +169,7 @@ const TablaPromociones: React.FC<Props> = ({ puedeCrear = true }) => {
         >
           <TableHead>
             <TableRow>
+              <TableCell sx={{ fontWeight: 700, color: '#eef5ee' }}>N°</TableCell>
               <TableCell sx={{ fontWeight: 700, color: '#eef5ee' }}>Nombre</TableCell>
               <TableCell sx={{ fontWeight: 700, color: '#eef5ee' }}>Vigencia</TableCell>
               <TableCell sx={{ fontWeight: 700, color: '#eef5ee' }}>Estado</TableCell>
@@ -177,8 +178,9 @@ const TablaPromociones: React.FC<Props> = ({ puedeCrear = true }) => {
             </TableRow>
           </TableHead>
           <TableBody>
-            {paginados.map((p) => (
+            {paginados.map((p, idx) => (
               <TableRow key={p.id} hover>
+                <TableCell>{page * rowsPerPage + idx + 1}</TableCell>
                 <TableCell>
                   <Typography variant="body2" fontWeight={600}>{p.nombre}</Typography>
                 </TableCell>
@@ -210,7 +212,7 @@ const TablaPromociones: React.FC<Props> = ({ puedeCrear = true }) => {
             ))}
             {paginados.length === 0 && (
               <TableRow>
-                <TableCell colSpan={5}>
+                <TableCell colSpan={6}>
                   <Typography align="center" color="text.secondary">{loading ? 'Cargando…' : 'Sin promociones'}</Typography>
                 </TableCell>
               </TableRow>

@@ -1,6 +1,6 @@
 "use client";
 /* eslint-disable @next/next/no-img-element */
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, useRef } from 'react';
 import {
   Dialog, DialogTitle, DialogContent, DialogActions,
   Box, Typography, TextField, MenuItem,
@@ -38,9 +38,18 @@ const ModalInventarioPunto: React.FC<Props> = ({ open, onClose, punto }) => {
   const [transferencias, setTransferencias] = useState<Record<number, string>>({});
   const [snack, setSnack] = useState<{ open: boolean; msg: string; sev: 'success' | 'error' | 'info' }>(() => ({ open: false, msg: '', sev: 'success' }));
 
+  const tableContainerRef = React.useRef<HTMLDivElement>(null);
+  const pendingRestoreScrollTopRef = React.useRef<number | null>(null);
+
   useEffect(() => {
     if (!open) { setAjustes({}); setTransferencias({}); setDestinoId(''); }
   }, [open]);
+
+  const refetchKeepingScroll = useRef(() => {
+    const current = tableContainerRef.current;
+    if (current) pendingRestoreScrollTopRef.current = current.scrollTop;
+    return refetch();
+  }).current;
 
   const handleAjustar = async (articuloId: number, actual: number) => {
     const nuevaCantidad = Number(ajustes[articuloId] ?? '');
@@ -59,7 +68,7 @@ const ModalInventarioPunto: React.FC<Props> = ({ open, onClose, punto }) => {
       });
       setAjustes((prev) => ({ ...prev, [articuloId]: '' }));
       setSnack({ open: true, msg: 'Stock actualizado', sev: 'success' });
-      refetch();
+      refetchKeepingScroll();
     } catch (e: any) {
       setSnack({ open: true, msg: e?.message || 'Error al actualizar stock', sev: 'error' });
     }
@@ -74,7 +83,7 @@ const ModalInventarioPunto: React.FC<Props> = ({ open, onClose, punto }) => {
       await transferir({ variables: { input: { puntoOrigenId: puntoId, puntoDestinoId: destino, articuloId, cantidad, motivo: 'Transferencia manual' } } });
       setTransferencias((prev) => ({ ...prev, [articuloId]: '' }));
       setSnack({ open: true, msg: 'Transferencia realizada', sev: 'success' });
-      refetch();
+      refetchKeepingScroll();
     } catch (e: any) {
       setSnack({ open: true, msg: e?.message || 'Error al transferir stock', sev: 'error' });
     }
@@ -96,6 +105,7 @@ const ModalInventarioPunto: React.FC<Props> = ({ open, onClose, punto }) => {
           <Table size="small" stickyHeader>
             <TableHead>
               <TableRow>
+                <TableCell sx={{ bgcolor: '#f5f5f5', fontWeight: 700, borderRadius: 0 }}>N°</TableCell>
                 <TableCell sx={{ bgcolor: '#f5f5f5', fontWeight: 700, borderRadius: 0 }}>Img</TableCell>
                 <TableCell sx={{ bgcolor: '#f5f5f5', fontWeight: 700, borderRadius: 0 }}>Código</TableCell>
                 <TableCell sx={{ bgcolor: '#f5f5f5', fontWeight: 700, borderRadius: 0 }}>Descripción</TableCell>
@@ -105,8 +115,9 @@ const ModalInventarioPunto: React.FC<Props> = ({ open, onClose, punto }) => {
               </TableRow>
             </TableHead>
             <TableBody>
-              {items.map((a) => (
+              {items.map((a, idx) => (
                 <TableRow key={a.id} hover>
+                  <TableCell>{idx + 1}</TableCell>
                   <TableCell>
                     <Box sx={{ width: 36, height: 36, borderRadius: 0, overflow: 'hidden', border: '1px solid #e0e0e0', bgcolor: '#fff' }}>
                       {a.articulo?.ImagenUrl ? (

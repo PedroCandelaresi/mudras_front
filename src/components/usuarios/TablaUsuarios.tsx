@@ -406,6 +406,7 @@ const TablaUsuarios: React.FC<Props> = () => {
       >
         <TableHead>
           <TableRow sx={{ '& th': { borderBottom: 'none' } }}>
+            <TableCell>N°</TableCell>
             <TableCell>
               <Box display="flex" alignItems="center" gap={1}>
                 Username
@@ -454,14 +455,15 @@ const TablaUsuarios: React.FC<Props> = () => {
         <TableBody>
           {loading ? (
             // Simple loading state
-            <TableRow><TableCell colSpan={6} align="center">Cargando...</TableCell></TableRow>
+            <TableRow><TableCell colSpan={7} align="center">Cargando...</TableCell></TableRow>
           ) : error ? (
-            <TableRow><TableCell colSpan={6} align="center" sx={{ color: 'error.main' }}>Error: {error.message}</TableCell></TableRow>
+            <TableRow><TableCell colSpan={7} align="center" sx={{ color: 'error.main' }}>Error: {error.message}</TableCell></TableRow>
           ) : usuarios.length === 0 ? (
-            <TableRow><TableCell colSpan={6} align="center">No hay usuarios.</TableCell></TableRow>
+            <TableRow><TableCell colSpan={7} align="center">No hay usuarios.</TableCell></TableRow>
           ) : (
-            usuarios.map((u) => (
+            usuarios.map((u, idx) => (
               <TableRow key={u.id}>
+                <TableCell>{page * rowsPerPage + idx + 1}</TableCell>
                 <TableCell>
                   <Typography variant="body2" fontWeight={600}>{u.username || '-'}</Typography>
                 </TableCell>

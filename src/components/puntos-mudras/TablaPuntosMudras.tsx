@@ -356,6 +356,7 @@ export default function TablaPuntosMudras({ tipo, onEditarPunto, onVerInventario
         }}>
           <TableHead>
             <TableRow>
+              <TableCell>N°</TableCell>
               <TableCell>NOMBRE</TableCell>
               <TableCell>DESCRIPCIÓN</TableCell>
               <TableCell>UBICACIÓN</TableCell>
@@ -366,13 +367,13 @@ export default function TablaPuntosMudras({ tipo, onEditarPunto, onVerInventario
           <TableBody>
             {loading ? (
               <TableRow>
-                <TableCell colSpan={5} align="center" sx={{ py: 10 }}>
+                <TableCell colSpan={6} align="center" sx={{ py: 10 }}>
                   <MudrasLoader size={80} text={`Cargando ${tipo === 'venta' ? 'puntos' : 'depósitos'}...`} />
                 </TableCell>
               </TableRow>
             ) : puntosPaginados.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={5} align="center" sx={{ py: 4 }}>
+                <TableCell colSpan={6} align="center" sx={{ py: 4 }}>
                   <Stack alignItems="center" spacing={1}>
                     <IconInfoCircle size={48} color="#9e9e9e" />
                     <Typography color="text.secondary">No se encontraron resultados</Typography>
@@ -380,8 +381,9 @@ export default function TablaPuntosMudras({ tipo, onEditarPunto, onVerInventario
                 </TableCell>
               </TableRow>
             ) : (
-              puntosPaginados.map((punto) => (
+              puntosPaginados.map((punto, idx) => (
                 <TableRow key={punto.id}>
+                  <TableCell>{page * rowsPerPage + idx + 1}</TableCell>
                   <TableCell>
                     <Typography variant="body2" fontWeight={700} color="text.primary">
                       {punto.nombre}
