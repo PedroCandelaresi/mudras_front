@@ -445,6 +445,13 @@ const ModalDetallesArticulo = ({
                           </Typography>
                         </Box>
 
+                        <Box>
+                          <Typography variant="caption" color="text.secondary">Marca</Typography>
+                          <Typography variant="body1" fontWeight={600}>
+                            {articuloCompleto?.Marca || '—'}
+                          </Typography>
+                        </Box>
+
                         {String(articuloCompleto?.Rubro || '').trim().toLowerCase() === 'libros' && (
                           <Box>
                             <Typography variant="caption" color="text.secondary">Autor</Typography>

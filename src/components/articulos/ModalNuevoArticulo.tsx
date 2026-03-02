@@ -44,6 +44,7 @@ import { usePermisos } from '@/lib/permisos';
 type FormState = {
   descripcion: string;
   codigo: string;
+  marca: string;
   autor: string;
   imagenUrl: string; // Nuevo
   costo: string;
@@ -63,7 +64,7 @@ interface ModalNuevoArticuloProps {
   articulo?: (
     Pick<
       Articulo,
-      'id' | 'Descripcion' | 'Codigo' | 'Autor' | 'PrecioVenta' | 'PrecioCompra' | 'PorcentajeGanancia' | 'AlicuotaIva' | 'StockMinimo' | 'Stock' | 'totalStock' | 'ImagenUrl'
+      'id' | 'Descripcion' | 'Codigo' | 'Marca' | 'Autor' | 'PrecioVenta' | 'PrecioCompra' | 'PorcentajeGanancia' | 'AlicuotaIva' | 'StockMinimo' | 'Stock' | 'totalStock' | 'ImagenUrl'
     > & {
       rubro?: any;
       idProveedor?: number;
@@ -87,6 +88,7 @@ const makeColors = (base?: string) => {
 const INITIAL_STATE: FormState = {
   descripcion: '',
   codigo: '',
+  marca: '',
   autor: '',
   imagenUrl: '',
   costo: '',
@@ -264,6 +266,7 @@ const ModalNuevoArticulo = ({ open, onClose, articulo, onSuccess, accentColor }:
     setForm({
       descripcion: (articulo.Descripcion ?? '').toString(),
       codigo: (articulo.Codigo ?? '').toString(),
+      marca: ((articulo as any).Marca ?? '').toString(),
       autor: ((articulo as any).Autor ?? '').toString(),
       imagenUrl: (articulo.ImagenUrl ?? '').toString(),
       costo: costoReferencia ? String(costoReferencia) : '',
@@ -476,6 +479,7 @@ const ModalNuevoArticulo = ({ open, onClose, articulo, onSuccess, accentColor }:
       const common = {
         Codigo: form.codigo.trim(),
         Descripcion: form.descripcion.trim(),
+        Marca: form.marca.trim() || null,
         ImagenUrl: form.imagenUrl,
         Autor: autorPayload,
         precioVenta: precioVentaCalculado,
@@ -646,6 +650,23 @@ const ModalNuevoArticulo = ({ open, onClose, articulo, onSuccess, accentColor }:
               onChange={handleChange}
               fullWidth
               placeholder="Opcional"
+              sx={{
+                '& .MuiOutlinedInput-root': {
+                  borderRadius: 0,
+                  background: '#ffffff',
+                  '& fieldset': { borderColor: COLORS.inputBorder },
+                  '&:hover fieldset': { borderColor: COLORS.inputBorderHover },
+                  '&.Mui-focused fieldset': { borderColor: COLORS.primary },
+                },
+              }}
+            />
+            <TextField
+              label="Marca"
+              name="marca"
+              value={form.marca}
+              onChange={handleChange}
+              fullWidth
+              placeholder="Ej: Planeta, Sudamericana, Roca, etc."
               sx={{
                 '& .MuiOutlinedInput-root': {
                   borderRadius: 0,
