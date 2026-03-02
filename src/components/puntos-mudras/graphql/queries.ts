@@ -70,6 +70,8 @@ export const OBTENER_STOCK_PUNTO_MUDRAS = gql`
       precio
       stockAsignado
       stockTotal
+      estanteria
+      estante
       rubro {
         id
         nombre
@@ -169,6 +171,8 @@ export interface ArticuloConStockPuntoMudras {
   precio: number;
   stockAsignado: number;
   stockTotal: number;
+  estanteria?: string | null;
+  estante?: string | null;
   rubro?: {
     id: number;
     nombre: string;

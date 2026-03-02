@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   Dialog,
   DialogTitle,
@@ -39,10 +39,18 @@ export default function ModalModificarStockPunto({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string>('');
 
-  const handleSubmit = async () => {
-    if (!articulo || !nuevaCantidad) return;
+  useEffect(() => {
+    if (!open || !articulo) return;
+    setNuevaCantidad(String(articulo.stockAsignado ?? 0));
+    setEstanteria((articulo.estanteria ?? '').toString());
+    setEstante((articulo.estante ?? '').toString());
+    setError('');
+  }, [open, articulo]);
 
-    const cantidad = parseFloat(nuevaCantidad);
+  const handleSubmit = async () => {
+    if (!articulo) return;
+
+    const cantidad = parseFloat(nuevaCantidad === '' ? String(articulo.stockAsignado ?? 0) : nuevaCantidad);
     if (isNaN(cantidad) || cantidad < 0) {
       setError('La cantidad debe ser un número válido mayor o igual a 0');
       return;
@@ -68,8 +76,8 @@ export default function ModalModificarStockPunto({
               puntoMudrasId: articulo.puntoVentaId,
               articuloId: articulo.id,
               nuevaCantidad: cantidad,
-              ...(estanteria?.trim() ? { estanteria: estanteria.trim() } : {}),
-              ...(estante?.trim() ? { estante: estante.trim() } : {}),
+              estanteria: estanteria.trim() || null,
+              estante: estante.trim() || null,
             }
           }
         })
@@ -92,9 +100,9 @@ export default function ModalModificarStockPunto({
   };
 
   const handleClose = () => {
-    setNuevaCantidad('');
-    setEstanteria('');
-    setEstante('');
+    setNuevaCantidad(String(articulo?.stockAsignado ?? ''));
+    setEstanteria((articulo?.estanteria ?? '').toString());
+    setEstante((articulo?.estante ?? '').toString());
     setError('');
     onClose();
   };
@@ -189,6 +197,7 @@ export default function ModalModificarStockPunto({
               '& .MuiOutlinedInput-root': { borderRadius: 0 }
             }}
             inputMode="decimal"
+            helperText="Podés dejar el mismo valor si solo querés actualizar ubicación"
           />
 
           <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)' }, gap: 2, mb: 2 }}>
@@ -276,7 +285,7 @@ export default function ModalModificarStockPunto({
           variant="contained"
           disableElevation
           onClick={handleSubmit}
-          disabled={loading || !nuevaCantidad}
+          disabled={loading}
           sx={{
             borderRadius: 0,
             bgcolor: theme.primary,
