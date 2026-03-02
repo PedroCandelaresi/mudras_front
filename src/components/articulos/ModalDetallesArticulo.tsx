@@ -35,6 +35,8 @@ import { calcularPrecioDesdeArticulo } from '@/utils/precioVenta';
 interface StockContextProps {
   value?: number;
   label?: string;
+  estanteria?: string | null;
+  estante?: string | null;
 }
 
 interface ModalDetallesArticuloProps {
@@ -152,6 +154,8 @@ const ModalDetallesArticulo = ({
       : stockActual <= stockMinimo
         ? { label: 'Stock bajo', color: 'warning' as const }
         : { label: 'Disponible', color: 'success' as const };
+  const estanteriaMostrada = stockContext?.estanteria ?? articuloCompleto?.Estanteria;
+  const estanteMostrado = stockContext?.estante ?? articuloCompleto?.Estante;
 
   const tituloHeader =
     (articuloCompleto?.Codigo ? `${articuloCompleto.Codigo} - ` : '') +
@@ -475,14 +479,14 @@ const ModalDetallesArticulo = ({
                       <Box>
                         <Typography variant="caption" color="text.secondary">Estantería</Typography>
                         <Typography variant="body1" fontWeight={600}>
-                          {articuloCompleto?.Estanteria || '—'}
+                          {estanteriaMostrada || '—'}
                         </Typography>
                       </Box>
 
                       <Box>
                         <Typography variant="caption" color="text.secondary">Estante</Typography>
                         <Typography variant="body1" fontWeight={600}>
-                          {articuloCompleto?.Estante || '—'}
+                          {estanteMostrado || '—'}
                         </Typography>
                       </Box>
 

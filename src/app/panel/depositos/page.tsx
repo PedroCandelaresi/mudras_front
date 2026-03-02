@@ -28,7 +28,7 @@ export default function DepositosPage() {
   const [modalDetallesOpen, setModalDetallesOpen] = useState(false);
   const [articuloSeleccionado, setArticuloSeleccionado] = useState<ArticuloConStockPuntoMudras | null>(null);
   const [articuloDetalles, setArticuloDetalles] = useState<Pick<Articulo, 'id' | 'Descripcion' | 'Codigo'> | null>(null);
-  const [stockContext, setStockContext] = useState<{ value?: number; label?: string } | null>(null);
+  const [stockContext, setStockContext] = useState<{ value?: number; label?: string; estanteria?: string | null; estante?: string | null } | null>(null);
 
   const {
     data: depositosData,
@@ -139,6 +139,8 @@ export default function DepositosPage() {
       setStockContext({
         value: Number(articulo.stockAsignado ?? 0),
         label: depositoSeleccionado ? `Stock en ${depositoSeleccionado.nombre}` : 'Stock asignado',
+        estanteria: articulo.estanteria ?? null,
+        estante: articulo.estante ?? null,
       });
       setModalDetallesOpen(true);
     },
