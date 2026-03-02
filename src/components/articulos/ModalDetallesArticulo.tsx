@@ -471,15 +471,6 @@ const ModalDetallesArticulo = ({
                       </Box>
 
                       <Box>
-                        <Typography variant="caption" color="text.secondary">Alicuota IVA</Typography>
-                        <Typography variant="body1" fontWeight={600}>
-                          {articuloCompleto?.AlicuotaIva != null
-                            ? `${articuloCompleto.AlicuotaIva}%`
-                            : 'No especificado'}
-                        </Typography>
-                      </Box>
-
-                      <Box>
                         <Typography variant="caption" color="text.secondary">Estantería</Typography>
                         <Typography variant="body1" fontWeight={600}>
                           {articuloCompleto?.Estanteria || '—'}
