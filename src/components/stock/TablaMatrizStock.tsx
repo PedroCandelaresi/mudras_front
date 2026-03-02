@@ -486,7 +486,7 @@ const TablaMatrizStock: React.FC<TablaMatrizStockProps> = ({ onTransferir }) => 
                             })()}
                             {(() => {
                                 const autor = articleAuthorMap.get(String(item.id));
-                                return autor ? (
+                                return autor && String(item.rubro || '').trim().toLowerCase() === 'libros' ? (
                                     <Chip
                                         label={`Autor: ${autor}`}
                                         size="small"
@@ -524,7 +524,7 @@ const TablaMatrizStock: React.FC<TablaMatrizStockProps> = ({ onTransferir }) => 
             const exportCols: ExportColumn<MatrizStockItem>[] = [
                 { header: 'Código', key: 'codigo', width: 15 },
                 { header: 'Descripción', key: 'nombre', width: 40 },
-                { header: 'Autor', key: (item) => articleAuthorMap.get(String(item.id)) || '', width: 28 },
+                { header: 'Autor', key: (item) => String(item.rubro || '').trim().toLowerCase() === 'libros' ? (articleAuthorMap.get(String(item.id)) || '') : '', width: 28 },
                 { header: 'Rubro', key: 'rubro', width: 20 },
                 // { header: 'Proveedor', key: 'proveedor', width: 20 },
                 { header: 'Total', key: 'stockTotal', width: 10 },

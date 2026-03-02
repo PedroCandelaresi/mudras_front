@@ -727,7 +727,7 @@ const TablaArticulos: React.FC<ArticulosTableProps> = ({
               }}
             />
           )}
-          {a.Autor && (
+          {a.Autor && String(a.Rubro || '').trim().toLowerCase() === 'libros' && (
             <Chip
               label={`Autor: ${a.Autor}`}
               size="small"

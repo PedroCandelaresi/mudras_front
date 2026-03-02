@@ -626,7 +626,7 @@ const TablaStockPuntoVenta: React.FC<Props> = ({
                             <TableCell>
                               <Box display="flex" flexDirection="column">
                                 <Typography variant="body2" fontWeight={500}>{item.nombre}</Typography>
-                                {(item.rubro?.nombre || item.articulo?.proveedor?.Nombre || item.articulo?.Autor) && (
+                                {(item.rubro?.nombre || item.articulo?.proveedor?.Nombre || (item.articulo?.Autor && String(item.rubro?.nombre || item.articulo?.Rubro || '').trim().toLowerCase() === 'libros')) && (
                                   <Stack direction="row" spacing={0.5} mt={0.5}>
                                     {item.rubro?.nombre && (
                                       <Chip
@@ -656,7 +656,7 @@ const TablaStockPuntoVenta: React.FC<Props> = ({
                                         }}
                                       />
                                     )}
-                                    {item.articulo?.Autor && (
+                                    {item.articulo?.Autor && String(item.rubro?.nombre || item.articulo?.Rubro || '').trim().toLowerCase() === 'libros' && (
                                       <Chip
                                         label={`Autor: ${item.articulo.Autor}`}
                                         size="small"

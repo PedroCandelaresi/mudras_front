@@ -159,6 +159,8 @@ const ModalNuevoArticulo = ({ open, onClose, articulo, onSuccess, accentColor }:
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const [loadingStock, setLoadingStock] = useState(false);
+  const [stockInicialEdicion, setStockInicialEdicion] = useState('0');
+  const [stockPorPuntoInicial, setStockPorPuntoInicial] = useState<Record<string, string>>({});
   const client = useApolloClient();
   const [iva, setIva] = useState<IvaOption>('21');
   const [rubroInput, setRubroInput] = useState('');
@@ -250,6 +252,8 @@ const ModalNuevoArticulo = ({ open, onClose, articulo, onSuccess, accentColor }:
     setProveedorInput((articulo as any)?.proveedor?.Nombre || '');
     if (!articulo) {
       setForm(INITIAL_STATE);
+      setStockInicialEdicion('0');
+      setStockPorPuntoInicial({});
       setIva('21');
       return;
     }
@@ -292,6 +296,8 @@ const ModalNuevoArticulo = ({ open, onClose, articulo, onSuccess, accentColor }:
       estante: (articulo as any)?.Estante ?? '',
       stockPorPunto: {}, // TODO: Cargar stock real por punto si es edición
     });
+    setStockInicialEdicion(stockActual != null ? String(stockActual) : '0');
+    setStockPorPuntoInicial({});
     const alic = articulo.AlicuotaIva;
     if (alic === 10.5 || alic === 21 || alic === 0) {
       setIva(String(alic) as IvaOption);
@@ -348,6 +354,8 @@ const ModalNuevoArticulo = ({ open, onClose, articulo, onSuccess, accentColor }:
             stock: String(sumaTotal), // Actualizamos el stock global con la suma real
             stockPorPunto: { ...prev.stockPorPunto, ...nuevoStockPorPunto }
           }));
+          setStockInicialEdicion(String(sumaTotal));
+          setStockPorPuntoInicial(nuevoStockPorPunto);
 
         } catch (err) {
           console.error("Error cargando stock por punto:", err);
@@ -451,12 +459,25 @@ const ModalNuevoArticulo = ({ open, onClose, articulo, onSuccess, accentColor }:
       const rubroNombre =
         (selectedRubro?.nombre ? selectedRubro.nombre.trim() : undefined) ||
         (articulo?.rubro?.Rubro ? articulo.rubro.Rubro.trim() : undefined);
+      const autorPayload = esRubroLibros ? (form.autor.trim() || null) : null;
+
+      const normalizarStockMap = (mapa: Record<string, string>) =>
+        Object.entries(mapa)
+          .map(([k, v]) => [k, Number.parseFloat(v || '0')] as const)
+          .filter(([, v]) => Number.isFinite(v) && Math.abs(v) > 0.0001)
+          .sort(([a], [b]) => a.localeCompare(b));
+      const stockTotalActual = parseNumericInput(form.stock);
+      const stockTotalInicial = parseNumericInput(stockInicialEdicion);
+      const stockTotalModificado = Math.abs(stockTotalActual - stockTotalInicial) > 0.01;
+      const stockDistribucionModificada =
+        JSON.stringify(normalizarStockMap(form.stockPorPunto)) !== JSON.stringify(normalizarStockMap(stockPorPuntoInicial));
+      const debeActualizarStock = !editando || (canEditStock && (stockTotalModificado || stockDistribucionModificada));
 
       const common = {
         Codigo: form.codigo.trim(),
         Descripcion: form.descripcion.trim(),
         ImagenUrl: form.imagenUrl,
-        Autor: form.autor.trim() || null,
+        Autor: autorPayload,
         precioVenta: precioVentaCalculado,
         ...(shouldSendPrecioCompra ? { PrecioCompra: costo } : {}),
         PorcentajeGanancia: porcentajeGananciaValor,
@@ -481,7 +502,7 @@ const ModalNuevoArticulo = ({ open, onClose, articulo, onSuccess, accentColor }:
       }
 
       // ASIGNACIÓN DE STOCK POR PUNTO
-      if (articuloGuardadoId) {
+      if (articuloGuardadoId && debeActualizarStock) {
         const promesasTicket = Object.entries(form.stockPorPunto).map(async ([puntoId, cantidadStr]) => {
           const cant = parseFloat(cantidadStr);
           if (!isNaN(cant) && cant > 0) { // Solo enviamos si hay cantidad positiva explícita
@@ -513,21 +534,36 @@ const ModalNuevoArticulo = ({ open, onClose, articulo, onSuccess, accentColor }:
   const botonHabilitado = useMemo(() => {
     // Validaciones básicas
     if (!form.descripcion.trim()) return false;
-    if (!form.costo.trim()) return false;
+    if (!editando && !form.costo.trim()) return false;
     if (saving) return false;
 
-    // Validación de STOCK
-    const stockTotal = parseNumericInput(form.stock);
-    if (stockTotal > 0) {
-      const asignadoTotal = Object.values(form.stockPorPunto).reduce((acc, curr) => acc + (parseFloat(curr) || 0), 0);
-      // Debe estar completamente asignado (con margen de error por float)
-      if (Math.abs(stockTotal - asignadoTotal) > 0.01) {
-        return false;
+    // En edición, permitir guardar aunque no se modifique stock (ej: solo estantería/estante).
+    if (!editando || canEditStock) {
+      const normalizarStockMap = (mapa: Record<string, string>) =>
+        Object.entries(mapa)
+          .map(([k, v]) => [k, Number.parseFloat(v || '0')] as const)
+          .filter(([, v]) => Number.isFinite(v) && Math.abs(v) > 0.0001)
+          .sort(([a], [b]) => a.localeCompare(b));
+
+      const stockTotal = parseNumericInput(form.stock);
+      const stockTotalInicial = parseNumericInput(stockInicialEdicion);
+      const stockTotalModificado = Math.abs(stockTotal - stockTotalInicial) > 0.01;
+      const stockDistribucionModificada =
+        JSON.stringify(normalizarStockMap(form.stockPorPunto)) !== JSON.stringify(normalizarStockMap(stockPorPuntoInicial));
+
+      // Solo exigimos cuadrar distribución cuando efectivamente se está modificando stock.
+      if (!editando || stockTotalModificado || stockDistribucionModificada) {
+        if (stockTotal > 0) {
+          const asignadoTotal = Object.values(form.stockPorPunto).reduce((acc, curr) => acc + (parseFloat(curr) || 0), 0);
+          if (Math.abs(stockTotal - asignadoTotal) > 0.01) {
+            return false;
+          }
+        }
       }
     }
 
     return true;
-  }, [form, saving]);
+  }, [form, saving, editando, canEditStock, stockInicialEdicion, stockPorPuntoInicial]);
 
   return (
     <Dialog
