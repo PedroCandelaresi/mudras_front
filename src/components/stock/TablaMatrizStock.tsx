@@ -189,6 +189,16 @@ const TablaMatrizStock: React.FC<TablaMatrizStockProps> = ({ onTransferir }) => 
         });
         return map;
     }, [articulosData]);
+    const articleBrandMap = useMemo(() => {
+        const map = new Map<string, string>();
+        const arts = (articulosData as any)?.articulos || [];
+        arts.forEach((a: Articulo) => {
+            if (a.id && a.Marca) {
+                map.set(String(a.id), String(a.Marca));
+            }
+        });
+        return map;
+    }, [articulosData]);
 
     // Mapa de ProveedorID -> Info para mostrar el Chip
     const proveedorInfoMap = useMemo(() => {
@@ -490,6 +500,22 @@ const TablaMatrizStock: React.FC<TablaMatrizStockProps> = ({ onTransferir }) => 
                                         sx={{
                                             color: darken(verdeMilitar.primary, 0.4),
                                             borderColor: alpha(darken(verdeMilitar.primary, 0.4), 0.3),
+                                            height: 20,
+                                            fontSize: '0.7rem'
+                                        }}
+                                    />
+                                ) : null;
+                            })()}
+                            {(() => {
+                                const marca = articleBrandMap.get(String(item.id));
+                                return marca ? (
+                                    <Chip
+                                        label={`Marca: ${marca}`}
+                                        size="small"
+                                        variant="outlined"
+                                        sx={{
+                                            color: '#455a64',
+                                            borderColor: alpha('#455a64', 0.3),
                                             height: 20,
                                             fontSize: '0.7rem'
                                         }}

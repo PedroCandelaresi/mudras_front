@@ -668,7 +668,7 @@ const TablaStockPuntoVenta: React.FC<Props> = ({
                             <TableCell>
                               <Box display="flex" flexDirection="column">
                                 <Typography variant="body2" fontWeight={500}>{item.nombre}</Typography>
-                                {(item.rubro?.nombre || item.articulo?.proveedor?.Nombre || (item.articulo?.Autor && String(item.rubro?.nombre || item.articulo?.Rubro || '').trim().toLowerCase() === 'libros')) && (
+                                {(item.rubro?.nombre || item.articulo?.Marca || item.articulo?.proveedor?.Nombre || (item.articulo?.Autor && String(item.rubro?.nombre || item.articulo?.Rubro || '').trim().toLowerCase() === 'libros')) && (
                                   <Stack direction="row" spacing={0.5} mt={0.5}>
                                     {item.rubro?.nombre && (
                                       <Chip
@@ -680,6 +680,20 @@ const TablaStockPuntoVenta: React.FC<Props> = ({
                                           fontSize: '0.65rem',
                                           color: grisVerdoso.primary,
                                           borderColor: alpha(grisVerdoso.primary, 0.3),
+                                          '& .MuiChip-label': { px: 1 }
+                                        }}
+                                      />
+                                    )}
+                                    {item.articulo?.Marca && (
+                                      <Chip
+                                        label={`Marca: ${item.articulo.Marca}`}
+                                        size="small"
+                                        variant="outlined"
+                                        sx={{
+                                          height: 20,
+                                          fontSize: '0.65rem',
+                                          color: '#455a64',
+                                          borderColor: alpha('#455a64', 0.3),
                                           '& .MuiChip-label': { px: 1 }
                                         }}
                                       />
