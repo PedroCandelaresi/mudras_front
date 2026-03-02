@@ -47,6 +47,7 @@ const currencyFormatter = new Intl.NumberFormat('es-AR', {
 type TablaStockPuntoVentaUiState = {
   busquedaDraft: string;
   busquedaAplicada: string;
+  autorFiltro: string;
   page: number;
   rowsPerPage: number;
   filtrosRubros: any[];
@@ -81,6 +82,7 @@ const TablaStockPuntoVenta: React.FC<Props> = ({
 
   const [busquedaDraft, setBusquedaDraft] = useState(cachedState?.busquedaDraft ?? '');
   const [busquedaAplicada, setBusquedaAplicada] = useState(cachedState?.busquedaAplicada ?? '');
+  const [autorFiltro, setAutorFiltro] = useState(cachedState?.autorFiltro ?? '');
 
   const [page, setPage] = useState(cachedState?.page ?? 0);
   const [rowsPerPage, setRowsPerPage] = useState(cachedState?.rowsPerPage ?? 50);
@@ -94,12 +96,24 @@ const TablaStockPuntoVenta: React.FC<Props> = ({
     tablaStockUiStateCache.set(cacheKey, {
       busquedaDraft,
       busquedaAplicada,
+      autorFiltro,
       page,
       rowsPerPage,
       filtrosRubros,
       filtrosProveedores,
     });
-  }, [cacheKey, busquedaDraft, busquedaAplicada, page, rowsPerPage, filtrosRubros, filtrosProveedores]);
+  }, [cacheKey, busquedaDraft, busquedaAplicada, autorFiltro, page, rowsPerPage, filtrosRubros, filtrosProveedores]);
+
+  const mostrarFiltroAutor = useMemo(() => {
+    if (!filtrosRubros.length) return false;
+    return filtrosRubros.some((r) => String(r?.nombre || '').trim().toLowerCase() === 'libros');
+  }, [filtrosRubros]);
+
+  React.useEffect(() => {
+    if (mostrarFiltroAutor) return;
+    if (!autorFiltro) return;
+    setAutorFiltro('');
+  }, [mostrarFiltroAutor, autorFiltro]);
 
   // Bidirectional Filtering Logic
   const { rubrosDisponibles, proveedoresDisponibles } = useMemo(() => {
@@ -197,8 +211,13 @@ const TablaStockPuntoVenta: React.FC<Props> = ({
       res = res.filter(item => item.articulo?.proveedor?.IdProveedor && ids.includes(item.articulo.proveedor.IdProveedor));
     }
 
+    if (autorFiltro.trim()) {
+      const autorNorm = autorFiltro.trim().toLowerCase();
+      res = res.filter((item) => (item.articulo?.Autor || '').toLowerCase().includes(autorNorm));
+    }
+
     return res;
-  }, [articulos, busquedaAplicada, filtrosRubros, filtrosProveedores]);
+  }, [articulos, busquedaAplicada, filtrosRubros, filtrosProveedores, autorFiltro]);
 
   const ejecutarBusqueda = useCallback(() => {
     setBusquedaAplicada((busquedaDraft || '').trim());
@@ -208,6 +227,7 @@ const TablaStockPuntoVenta: React.FC<Props> = ({
   const limpiarFiltros = useCallback(() => {
     setBusquedaDraft('');
     setBusquedaAplicada('');
+    setAutorFiltro('');
     setFiltrosRubros([]);
     setFiltrosProveedores([]);
     setPage(0);
@@ -221,6 +241,7 @@ const TablaStockPuntoVenta: React.FC<Props> = ({
     const columns: ExportColumn<any>[] = [
       { header: 'Código', key: 'codigo', width: 25 },
       { header: 'Descripción', key: 'nombre', width: 90 }, // Increased width since Rubro is gone
+      { header: 'Autor', key: (item: any) => item.articulo?.Autor || '', width: 45 },
       { header: 'Stock', key: 'stockAsignado', width: 20 },
       {
         header: 'Precio', key: (item: any) => {
@@ -231,9 +252,13 @@ const TablaStockPuntoVenta: React.FC<Props> = ({
     ];
 
     if (formato === 'excel') {
-      exportToExcel(articulosFiltrados, columns, filename, busquedaAplicada ? `Filtro: ${busquedaAplicada}` : '');
+      const filtroAutorTexto = autorFiltro ? `Autor: ${autorFiltro}` : '';
+      const summary = [busquedaAplicada ? `Filtro: ${busquedaAplicada}` : '', filtroAutorTexto].filter(Boolean).join(' | ');
+      exportToExcel(articulosFiltrados, columns, filename, summary);
     } else {
-      await exportToPdf(articulosFiltrados, columns, filename, titulo, busquedaAplicada ? `Filtro: ${busquedaAplicada}` : '');
+      const filtroAutorTexto = autorFiltro ? `Autor: ${autorFiltro}` : '';
+      const summary = [busquedaAplicada ? `Filtro: ${busquedaAplicada}` : '', filtroAutorTexto].filter(Boolean).join(' | ');
+      await exportToPdf(articulosFiltrados, columns, filename, titulo, summary);
     }
   };
 
@@ -456,6 +481,19 @@ const TablaStockPuntoVenta: React.FC<Props> = ({
               }
               renderInput={(params) => <TextField {...params} label="Rubros" size="small" />}
             />
+            {mostrarFiltroAutor && (
+              <TextField
+                label="Autor (Libros)"
+                size="small"
+                value={autorFiltro}
+                onChange={(e) => {
+                  setAutorFiltro(e.target.value);
+                  setPage(0);
+                }}
+                placeholder="Filtrar por autor"
+                sx={{ minWidth: 220, '& .MuiOutlinedInput-root': { borderRadius: 1 } }}
+              />
+            )}
           </Box>
         </Box>
 
@@ -588,7 +626,7 @@ const TablaStockPuntoVenta: React.FC<Props> = ({
                             <TableCell>
                               <Box display="flex" flexDirection="column">
                                 <Typography variant="body2" fontWeight={500}>{item.nombre}</Typography>
-                                {(item.rubro?.nombre || item.articulo?.proveedor?.Nombre) && (
+                                {(item.rubro?.nombre || item.articulo?.proveedor?.Nombre || item.articulo?.Autor) && (
                                   <Stack direction="row" spacing={0.5} mt={0.5}>
                                     {item.rubro?.nombre && (
                                       <Chip
@@ -614,6 +652,20 @@ const TablaStockPuntoVenta: React.FC<Props> = ({
                                           fontSize: '0.65rem',
                                           color: '#1565c0', // Blue distinct from Rubro
                                           borderColor: alpha('#1565c0', 0.3),
+                                          '& .MuiChip-label': { px: 1 }
+                                        }}
+                                      />
+                                    )}
+                                    {item.articulo?.Autor && (
+                                      <Chip
+                                        label={`Autor: ${item.articulo.Autor}`}
+                                        size="small"
+                                        variant="outlined"
+                                        sx={{
+                                          height: 20,
+                                          fontSize: '0.65rem',
+                                          color: '#6a1b9a',
+                                          borderColor: alpha('#6a1b9a', 0.3),
                                           '& .MuiChip-label': { px: 1 }
                                         }}
                                       />

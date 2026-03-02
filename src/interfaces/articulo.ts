@@ -4,6 +4,7 @@ export interface Articulo {
   Rubro?: string;
   Descripcion?: string;
   Marca?: string;
+  Autor?: string;
   PrecioVenta?: number;
   PrecioCompra?: number;
   StockMinimo?: number;
@@ -24,6 +25,8 @@ export interface Articulo {
   PrecioListaProveedor?: number;
   StockInicial?: number;
   Ubicacion?: string;
+  Estanteria?: string;
+  Estante?: string;
   Lista1EnDolares?: boolean;
   Dto1?: number;
   Dto2?: number;
@@ -77,6 +80,7 @@ export interface CrearArticuloDto {
   Rubro?: string;
   Descripcion?: string;
   Marca?: string;
+  Autor?: string;
   PrecioVenta?: number;
   PrecioCompra?: number;
   StockMinimo?: number;
@@ -97,6 +101,8 @@ export interface CrearArticuloDto {
   PrecioListaProveedor?: number;
   StockInicial?: number;
   Ubicacion?: string;
+  Estanteria?: string;
+  Estante?: string;
   Lista1EnDolares?: boolean;
   Dto1?: number;
   Dto2?: number;
@@ -136,6 +142,7 @@ export interface FiltrosArticulo {
   codigo?: string;
   descripcion?: string;
   marca?: string;
+  autor?: string;
   rubroId?: number;
   proveedorId?: number;
   estado?: EstadoArticulo;

@@ -445,6 +445,13 @@ const ModalDetallesArticulo = ({
                       </Box>
 
                       <Box>
+                        <Typography variant="caption" color="text.secondary">Autor</Typography>
+                        <Typography variant="body1" fontWeight={600}>
+                          {articuloCompleto?.Autor || '—'}
+                        </Typography>
+                      </Box>
+
+                      <Box>
                         <Typography variant="caption" color="text.secondary">Unidad</Typography>
                         <Typography variant="body1" fontWeight={600}>
                           {articuloCompleto?.Unidad || 'Unidad'}
@@ -469,6 +476,20 @@ const ModalDetallesArticulo = ({
                           {articuloCompleto?.AlicuotaIva != null
                             ? `${articuloCompleto.AlicuotaIva}%`
                             : 'No especificado'}
+                        </Typography>
+                      </Box>
+
+                      <Box>
+                        <Typography variant="caption" color="text.secondary">Estantería</Typography>
+                        <Typography variant="body1" fontWeight={600}>
+                          {articuloCompleto?.Estanteria || '—'}
+                        </Typography>
+                      </Box>
+
+                      <Box>
+                        <Typography variant="caption" color="text.secondary">Estante</Typography>
+                        <Typography variant="body1" fontWeight={600}>
+                          {articuloCompleto?.Estante || '—'}
                         </Typography>
                       </Box>
 

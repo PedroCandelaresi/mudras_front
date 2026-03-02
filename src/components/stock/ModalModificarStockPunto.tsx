@@ -34,6 +34,8 @@ export default function ModalModificarStockPunto({
   theme = grisVerdoso
 }: Props) {
   const [nuevaCantidad, setNuevaCantidad] = useState<string>('');
+  const [estanteria, setEstanteria] = useState<string>('');
+  const [estante, setEstante] = useState<string>('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string>('');
 
@@ -57,18 +59,18 @@ export default function ModalModificarStockPunto({
         },
         body: JSON.stringify({
           query: `
-            mutation ModificarStockPunto($puntoMudrasId: Int!, $articuloId: Int!, $nuevaCantidad: Float!) {
-              modificarStockPunto(
-                puntoMudrasId: $puntoMudrasId
-                articuloId: $articuloId
-                nuevaCantidad: $nuevaCantidad
-              )
+            mutation ModificarStockPunto($input: ActualizarStockPuntoInput!) {
+              modificarStockPunto(input: $input)
             }
           `,
           variables: {
-            puntoMudrasId: articulo.puntoVentaId,
-            articuloId: articulo.id,
-            nuevaCantidad: cantidad
+            input: {
+              puntoMudrasId: articulo.puntoVentaId,
+              articuloId: articulo.id,
+              nuevaCantidad: cantidad,
+              ...(estanteria?.trim() ? { estanteria: estanteria.trim() } : {}),
+              ...(estante?.trim() ? { estante: estante.trim() } : {}),
+            }
           }
         })
       });
@@ -91,6 +93,8 @@ export default function ModalModificarStockPunto({
 
   const handleClose = () => {
     setNuevaCantidad('');
+    setEstanteria('');
+    setEstante('');
     setError('');
     onClose();
   };
@@ -186,6 +190,33 @@ export default function ModalModificarStockPunto({
             }}
             inputMode="decimal"
           />
+
+          <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)' }, gap: 2, mb: 2 }}>
+            <TextField
+              label="Estantería"
+              placeholder="Ej: A, B, C..."
+              value={estanteria}
+              onChange={(e) => setEstanteria(e.target.value)}
+              size="small"
+              fullWidth
+              helperText="Identificador de puesto de venta"
+              sx={{
+                '& .MuiOutlinedInput-root': { borderRadius: 0 }
+              }}
+            />
+            <TextField
+              label="Estante"
+              placeholder="Ej: 1, 2, 3..."
+              value={estante}
+              onChange={(e) => setEstante(e.target.value)}
+              size="small"
+              fullWidth
+              helperText="Número o ubicación en el puesto"
+              sx={{
+                '& .MuiOutlinedInput-root': { borderRadius: 0 }
+              }}
+            />
+          </Box>
 
           <Box display="flex" gap={1} flexWrap="wrap">
             <Typography variant="caption" color="text.secondary" sx={{ width: '100%', mb: 1 }}>

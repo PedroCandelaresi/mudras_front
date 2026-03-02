@@ -8,6 +8,7 @@ export const ARTICULO_FRAGMENT = gql`
     Rubro
     Descripcion
     Marca
+    Autor
     PrecioVenta
     PrecioCompra
     StockMinimo
@@ -29,6 +30,8 @@ export const ARTICULO_FRAGMENT = gql`
     PrecioListaProveedor
     StockInicial
     Ubicacion
+    Estanteria
+    Estante
     Lista1EnDolares
     Dto1
     Dto2

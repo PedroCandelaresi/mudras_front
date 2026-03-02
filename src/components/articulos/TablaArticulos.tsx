@@ -80,6 +80,7 @@ type FiltrosServidor = {
   busqueda?: string;
   codigo?: string;
   descripcion?: string;
+  autor?: string;
   pagina?: number;
   limite?: number;
   ordenarPor?: 'Descripcion' | 'Codigo' | 'PrecioVenta' | 'Rubro';
@@ -211,6 +212,7 @@ const TablaArticulos: React.FC<ArticulosTableProps> = ({
   const [localFilters, setLocalFilters] = useState({
     codigo: initialServerFilters?.codigo ?? '',
     descripcion: initialServerFilters?.descripcion ?? '',
+    autor: initialServerFilters?.autor ?? '',
     rubro: initialServerFilters?.rubro ?? '',
     proveedor: initialServerFilters?.proveedor ?? '',
     estado: initialServerFilters?.estado ?? '',
@@ -254,6 +256,7 @@ const TablaArticulos: React.FC<ArticulosTableProps> = ({
     busqueda: undefined,
     codigo: (controlledFilters?.codigo ?? localFilters.codigo) || undefined,
     descripcion: (controlledFilters?.descripcion ?? localFilters.descripcion) || undefined,
+    autor: (controlledFilters?.autor ?? localFilters.autor) || undefined,
     rubro: (controlledFilters?.rubro ?? localFilters.rubro) || undefined,
     pagina: controlledFilters?.pagina ?? page,
     limite: controlledFilters?.limite ?? rowsPerPage,
@@ -435,6 +438,22 @@ const TablaArticulos: React.FC<ArticulosTableProps> = ({
   // Alias para mantener compatibilidad si se usaba otro nombre, o para claridad
   const rubrosFiltrados = rubrosDisponibles;
   const proveedoresFiltradosLista = proveedoresDisponibles;
+  const mostrarFiltroAutor = useMemo(() => {
+    const rubroIdsActivos = controlledFilters?.rubroIds ?? localFilters.rubroIds ?? [];
+    if (!rubroIdsActivos.length) return false;
+    const rubros = (rubrosData as any)?.obtenerRubros ?? [];
+    return rubros.some(
+      (r: any) =>
+        rubroIdsActivos.includes(Number(r.id)) &&
+        String(r.nombre || r.Rubro || '').trim().toLowerCase() === 'libros',
+    );
+  }, [controlledFilters?.rubroIds, localFilters.rubroIds, rubrosData]);
+
+  useEffect(() => {
+    if (mostrarFiltroAutor || controlledFilters) return;
+    if (!localFilters.autor) return;
+    setLocalFilters((prev) => ({ ...prev, autor: '' }));
+  }, [mostrarFiltroAutor, controlledFilters, localFilters.autor]);
 
   // const { data: statsData } = useQuery<{ estadisticasArticulos?: { totalUnidades?: number } }>(GET_ESTADISTICAS_ARTICULOS, { fetchPolicy: 'cache-first' });
 
@@ -608,6 +627,7 @@ const TablaArticulos: React.FC<ArticulosTableProps> = ({
       setLocalFilters({
         codigo: '',
         descripcion: '',
+        autor: '',
         rubro: '',
         proveedor: '',
         estado: '',
@@ -703,6 +723,20 @@ const TablaArticulos: React.FC<ArticulosTableProps> = ({
                 fontSize: '0.65rem',
                 color: '#1565c0', // Blue distinct from Rubro
                 borderColor: alpha('#1565c0', 0.3),
+                '& .MuiChip-label': { px: 1 }
+              }}
+            />
+          )}
+          {a.Autor && (
+            <Chip
+              label={`Autor: ${a.Autor}`}
+              size="small"
+              variant="outlined"
+              sx={{
+                height: 20,
+                fontSize: '0.65rem',
+                color: '#6a1b9a',
+                borderColor: alpha('#6a1b9a', 0.3),
                 '& .MuiChip-label': { px: 1 }
               }}
             />
@@ -926,6 +960,7 @@ const TablaArticulos: React.FC<ArticulosTableProps> = ({
       const columns: ExportColumn<any>[] = [
         { header: 'Descripción', key: 'Descripcion', width: 40 },
         { header: 'Código', key: 'Codigo', width: 15 },
+        { header: 'Autor', key: 'Autor', width: 25 },
         { header: 'Marca', key: 'Marca', width: 20 },
         { header: 'Rubro', key: (item) => item.Rubro || item.rubro?.Rubro || '', width: 15 },
         { header: 'Proveedor', key: (item) => item.proveedor?.Nombre || '', width: 25 },
@@ -939,6 +974,7 @@ const TablaArticulos: React.FC<ArticulosTableProps> = ({
       const filterParts: string[] = [];
       const f = variablesQuery.filtros;
       if (f.busqueda) filterParts.push(`Búsqueda: "${f.busqueda}"`);
+      if (f.autor) filterParts.push(`Autor: ${f.autor}`);
       if (f.rubro) filterParts.push(`Rubro: ${f.rubro}`);
       if (f.rubroId) {
         // Try to find rubro name if only ID is present, though usually 'rubro' string is also set or we can infer it
@@ -1091,7 +1127,7 @@ const TablaArticulos: React.FC<ArticulosTableProps> = ({
         </Box>
 
         {/* Right: Combos (Proveedor -> Rubro) */}
-        <Box display="flex" alignItems="flex-start" gap={2} flexWrap="nowrap" sx={{ flexGrow: 1 }}>
+        <Box display="flex" alignItems="flex-start" gap={2} flexWrap="wrap" sx={{ flexGrow: 1 }}>
           {/* --- Proveedores --- */}
           <Autocomplete
             multiple
@@ -1197,6 +1233,28 @@ const TablaArticulos: React.FC<ArticulosTableProps> = ({
             }
             renderInput={(params) => <TextField {...params} label="Rubros" size="small" placeholder="Seleccionar..." sx={{ bgcolor: 'white' }} />}
           />
+          {mostrarFiltroAutor && (
+            <TextField
+              label="Autor (Libros)"
+              size="small"
+              value={controlledFilters?.autor ?? localFilters.autor}
+              onChange={(e) => {
+                const value = e.target.value;
+                if (controlledFilters) {
+                  onFiltersChange?.({ ...filtrosServidor, autor: value || undefined, pagina: 0 });
+                } else {
+                  setLocalFilters((prev) => ({ ...prev, autor: value }));
+                  setPage(0);
+                }
+              }}
+              placeholder="Filtrar por autor"
+              sx={{
+                minWidth: { xs: '100%', md: 240 },
+                flex: { xs: '1 1 100%', md: '0 0 240px' },
+                bgcolor: 'white',
+              }}
+            />
+          )}
         </Box>
       </Box>
     </Box>

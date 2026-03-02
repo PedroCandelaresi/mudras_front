@@ -62,6 +62,7 @@ export type ColumnDef = {
 /* ======================== Filtros ======================== */
 type FiltrosServidor = {
     busqueda?: string;
+    autor?: string;
     rubroIds?: number[];
     proveedorIds?: number[];
 };
@@ -78,6 +79,7 @@ const themeColor = verdeMilitar;
 type TablaMatrizStockUiState = {
     globalSearch: string;
     globalSearchDraft: string;
+    autorFiltro: string;
     filtros: FiltrosServidor;
     page: number;
     rowsPerPage: number;
@@ -94,6 +96,7 @@ const TablaMatrizStock: React.FC<TablaMatrizStockProps> = ({ onTransferir }) => 
     const tableContainerRef = React.useRef<HTMLDivElement>(null);
     const pendingRestoreScrollTopRef = React.useRef<number | null>(null);
     const [globalSearchDraft, setGlobalSearchDraft] = useState(cachedState?.globalSearchDraft ?? '');
+    const [autorFiltro, setAutorFiltro] = useState(cachedState?.autorFiltro ?? '');
     const [filtros, setFiltros] = useState<FiltrosServidor>(cachedState?.filtros ?? {});
     const [page, setPage] = useState(cachedState?.page ?? 0);
     const [rowsPerPage, setRowsPerPage] = useState(cachedState?.rowsPerPage ?? 150);
@@ -118,11 +121,12 @@ const TablaMatrizStock: React.FC<TablaMatrizStockProps> = ({ onTransferir }) => 
         tablaMatrizStockUiStateCache.set(cacheKey, {
             globalSearch,
             globalSearchDraft,
+            autorFiltro,
             filtros,
             page,
             rowsPerPage,
         });
-    }, [cacheKey, globalSearch, globalSearchDraft, filtros, page, rowsPerPage]);
+    }, [cacheKey, globalSearch, globalSearchDraft, autorFiltro, filtros, page, rowsPerPage]);
 
     // --- Data Fetching ---
     const { data: puntosData } = useQuery(OBTENER_PUNTOS_MUDRAS, { fetchPolicy: 'cache-first' });
@@ -170,6 +174,17 @@ const TablaMatrizStock: React.FC<TablaMatrizStockProps> = ({ onTransferir }) => 
         arts.forEach((a: Articulo) => {
             if (a.id && a.idProveedor) {
                 map.set(String(a.id), a.idProveedor);
+            }
+        });
+        return map;
+    }, [articulosData]);
+
+    const articleAuthorMap = useMemo(() => {
+        const map = new Map<string, string>();
+        const arts = (articulosData as any)?.articulos || [];
+        arts.forEach((a: Articulo) => {
+            if (a.id && a.Autor) {
+                map.set(String(a.id), String(a.Autor));
             }
         });
         return map;
@@ -235,6 +250,22 @@ const TablaMatrizStock: React.FC<TablaMatrizStockProps> = ({ onTransferir }) => 
         return { rubrosDisponibles: filteredRubros, proveedoresDisponibles: filteredProvs };
     }, [proveedoresData, rubrosData, filtros.proveedorIds, filtros.rubroIds]);
 
+    const mostrarFiltroAutor = useMemo(() => {
+        const rubroIdsActivos = filtros.rubroIds || [];
+        if (!rubroIdsActivos.length) return false;
+        const rubros = (rubrosData as any)?.obtenerRubros || [];
+        return rubros.some((r: any) =>
+            rubroIdsActivos.includes(Number(r.id)) &&
+            String(r.nombre || r.Rubro || '').trim().toLowerCase() === 'libros'
+        );
+    }, [filtros.rubroIds, rubrosData]);
+
+    useEffect(() => {
+        if (mostrarFiltroAutor) return;
+        if (!autorFiltro) return;
+        setAutorFiltro('');
+    }, [mostrarFiltroAutor, autorFiltro]);
+
     // --- Filtering & Pagination Logic (Moved here to access maps) ---
     const filteredData = useMemo(() => {
         let result = [...matrizData];
@@ -274,8 +305,16 @@ const TablaMatrizStock: React.FC<TablaMatrizStockProps> = ({ onTransferir }) => 
             }
         }
 
+        if (autorFiltro.trim()) {
+            const autorNorm = autorFiltro.trim().toLowerCase();
+            result = result.filter((item) => {
+                const autor = articleAuthorMap.get(String(item.id)) || '';
+                return autor.toLowerCase().includes(autorNorm);
+            });
+        }
+
         return result;
-    }, [matrizData, globalSearch, filtros.proveedorIds, filtros.rubroIds, articleProviderMap, rubrosData]);
+    }, [matrizData, globalSearch, filtros.proveedorIds, filtros.rubroIds, autorFiltro, articleProviderMap, articleAuthorMap, rubrosData]);
 
     const paginatedData = useMemo(() => {
         return filteredData.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
@@ -396,6 +435,7 @@ const TablaMatrizStock: React.FC<TablaMatrizStockProps> = ({ onTransferir }) => 
     const limpiarFiltros = () => {
         setGlobalSearch('');
         setGlobalSearchDraft('');
+        setAutorFiltro('');
         setFiltros({});
         setPage(0);
     };
@@ -444,6 +484,22 @@ const TablaMatrizStock: React.FC<TablaMatrizStockProps> = ({ onTransferir }) => 
                                     />
                                 ) : null;
                             })()}
+                            {(() => {
+                                const autor = articleAuthorMap.get(String(item.id));
+                                return autor ? (
+                                    <Chip
+                                        label={`Autor: ${autor}`}
+                                        size="small"
+                                        variant="outlined"
+                                        sx={{
+                                            color: '#6a1b9a',
+                                            borderColor: alpha('#6a1b9a', 0.3),
+                                            height: 20,
+                                            fontSize: '0.7rem'
+                                        }}
+                                    />
+                                ) : null;
+                            })()}
                         </Box>
                     </Box>
                 );
@@ -468,6 +524,7 @@ const TablaMatrizStock: React.FC<TablaMatrizStockProps> = ({ onTransferir }) => 
             const exportCols: ExportColumn<MatrizStockItem>[] = [
                 { header: 'Código', key: 'codigo', width: 15 },
                 { header: 'Descripción', key: 'nombre', width: 40 },
+                { header: 'Autor', key: (item) => articleAuthorMap.get(String(item.id)) || '', width: 28 },
                 { header: 'Rubro', key: 'rubro', width: 20 },
                 // { header: 'Proveedor', key: 'proveedor', width: 20 },
                 { header: 'Total', key: 'stockTotal', width: 10 },
@@ -595,6 +652,19 @@ const TablaMatrizStock: React.FC<TablaMatrizStockProps> = ({ onTransferir }) => 
                             renderInput={(params) => <TextField {...params} label="Rubros" size="small" />}
                             fullWidth
                         />
+                        {mostrarFiltroAutor && (
+                            <TextField
+                                label="Autor (Libros)"
+                                size="small"
+                                value={autorFiltro}
+                                onChange={(e) => {
+                                    setAutorFiltro(e.target.value);
+                                    setPage(0);
+                                }}
+                                placeholder="Filtrar por autor"
+                                sx={{ minWidth: 220 }}
+                            />
+                        )}
                     </Box>
                 </Box>
             </Box>

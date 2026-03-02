@@ -44,6 +44,7 @@ import { usePermisos } from '@/lib/permisos';
 type FormState = {
   descripcion: string;
   codigo: string;
+  autor: string;
   imagenUrl: string; // Nuevo
   costo: string;
   porcentajeGanancia: string;
@@ -51,6 +52,8 @@ type FormState = {
   idProveedor: string; // soportado por ID
   stock: string;
   stockMinimo: string;
+  estanteria?: string;
+  estante?: string;
   stockPorPunto: Record<string, string>; // { [puntoId]: stock }
 };
 
@@ -60,7 +63,7 @@ interface ModalNuevoArticuloProps {
   articulo?: (
     Pick<
       Articulo,
-      'id' | 'Descripcion' | 'Codigo' | 'PrecioVenta' | 'PrecioCompra' | 'PorcentajeGanancia' | 'AlicuotaIva' | 'StockMinimo' | 'Stock' | 'totalStock' | 'ImagenUrl'
+      'id' | 'Descripcion' | 'Codigo' | 'Autor' | 'PrecioVenta' | 'PrecioCompra' | 'PorcentajeGanancia' | 'AlicuotaIva' | 'StockMinimo' | 'Stock' | 'totalStock' | 'ImagenUrl'
     > & {
       rubro?: any;
       idProveedor?: number;
@@ -84,6 +87,7 @@ const makeColors = (base?: string) => {
 const INITIAL_STATE: FormState = {
   descripcion: '',
   codigo: '',
+  autor: '',
   imagenUrl: '',
   costo: '',
   porcentajeGanancia: '0',
@@ -91,6 +95,8 @@ const INITIAL_STATE: FormState = {
   idProveedor: '',
   stock: '0',
   stockMinimo: '0',
+  estanteria: '',
+  estante: '',
   stockPorPunto: {},
 };
 
@@ -213,6 +219,9 @@ const ModalNuevoArticulo = ({ open, onClose, articulo, onSuccess, accentColor }:
     }
     return undefined;
   }, [form.idProveedor, proveedores]);
+  const esRubroLibros = useMemo(() => {
+    return (selectedRubro?.nombre || '').trim().toLowerCase() === 'libros';
+  }, [selectedRubro?.nombre]);
 
   const precioCalculado = useMemo(
     () =>
@@ -251,6 +260,7 @@ const ModalNuevoArticulo = ({ open, onClose, articulo, onSuccess, accentColor }:
     setForm({
       descripcion: (articulo.Descripcion ?? '').toString(),
       codigo: (articulo.Codigo ?? '').toString(),
+      autor: ((articulo as any).Autor ?? '').toString(),
       imagenUrl: (articulo.ImagenUrl ?? '').toString(),
       costo: costoReferencia ? String(costoReferencia) : '',
       porcentajeGanancia: articulo.PorcentajeGanancia != null ? String(articulo.PorcentajeGanancia) : '0',
@@ -278,6 +288,8 @@ const ModalNuevoArticulo = ({ open, onClose, articulo, onSuccess, accentColor }:
       })(),
       stock: stockActual != null ? String(stockActual) : '0',
       stockMinimo: stockMinimoActual != null ? String(stockMinimoActual) : '0',
+      estanteria: (articulo as any)?.Estanteria ?? '',
+      estante: (articulo as any)?.Estante ?? '',
       stockPorPunto: {}, // TODO: Cargar stock real por punto si es edición
     });
     const alic = articulo.AlicuotaIva;
@@ -444,6 +456,7 @@ const ModalNuevoArticulo = ({ open, onClose, articulo, onSuccess, accentColor }:
         Codigo: form.codigo.trim(),
         Descripcion: form.descripcion.trim(),
         ImagenUrl: form.imagenUrl,
+        Autor: form.autor.trim() || null,
         precioVenta: precioVentaCalculado,
         ...(shouldSendPrecioCompra ? { PrecioCompra: costo } : {}),
         PorcentajeGanancia: porcentajeGananciaValor,
@@ -451,6 +464,8 @@ const ModalNuevoArticulo = ({ open, onClose, articulo, onSuccess, accentColor }:
         stockMinimo,
         AlicuotaIva: Number(iva),
         ImpuestoPorcentual: true,
+        ...(form.estanteria?.trim() ? { Estanteria: form.estanteria.trim() } : {}),
+        ...(form.estante?.trim() ? { Estante: form.estante.trim() } : {}),
         ...(rubroNombre ? { Rubro: rubroNombre } : {}),
         ...(typeof rubroIdNumber === 'number' ? { rubroId: rubroIdNumber } : {}),
         ...(typeof idProveedor === 'number' || idProveedor === null ? { idProveedor } : {}),
@@ -651,7 +666,11 @@ const ModalNuevoArticulo = ({ open, onClose, articulo, onSuccess, accentColor }:
                   setRubroInput(val);
                 }}
                 onChange={(_, val) => {
-                  setForm((prev) => ({ ...prev, rubroId: val ? String(val.id) : '' }));
+                  setForm((prev) => ({
+                    ...prev,
+                    rubroId: val ? String(val.id) : '',
+                    autor: val && val.nombre?.trim().toLowerCase() === 'libros' ? prev.autor : '',
+                  }));
                   setRubroInput(val ? `${val.nombre}${val.codigo ? ` (${val.codigo})` : ''}` : '');
                 }}
                 getOptionLabel={(option) => `${option.nombre}${option.codigo ? ` (${option.codigo})` : ''}`}
@@ -720,6 +739,25 @@ const ModalNuevoArticulo = ({ open, onClose, articulo, onSuccess, accentColor }:
                 )}
               />
             </Box>
+            {esRubroLibros && (
+              <TextField
+                label="Autor del libro"
+                name="autor"
+                value={form.autor}
+                onChange={handleChange}
+                fullWidth
+                placeholder="Ej: Gabriel García Márquez"
+                sx={{
+                  '& .MuiOutlinedInput-root': {
+                    borderRadius: 0,
+                    background: '#ffffff',
+                    '& fieldset': { borderColor: COLORS.inputBorder },
+                    '&:hover fieldset': { borderColor: COLORS.inputBorderHover },
+                    '&.Mui-focused fieldset': { borderColor: COLORS.primary },
+                  },
+                }}
+              />
+            )}
             <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)' }, gap: 1.5 }}>
               <TextField
                 label="Costo / Precio compra"
@@ -827,6 +865,43 @@ const ModalNuevoArticulo = ({ open, onClose, articulo, onSuccess, accentColor }:
                 },
               }}
             />
+
+            <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)' }, gap: 1.5 }}>
+              <TextField
+                label="Estantería (Depósito)"
+                placeholder="Ej: A, B, C..."
+                value={form.estanteria || ''}
+                onChange={(e) => setForm({ ...form, estanteria: e.target.value })}
+                fullWidth
+                helperText="Identificador de la estantería en depósito"
+                sx={{
+                  '& .MuiOutlinedInput-root': {
+                    borderRadius: 0,
+                    background: '#ffffff',
+                    '& fieldset': { borderColor: COLORS.inputBorder },
+                    '&:hover fieldset': { borderColor: COLORS.inputBorderHover },
+                    '&.Mui-focused fieldset': { borderColor: COLORS.primary },
+                  },
+                }}
+              />
+              <TextField
+                label="Estante (Depósito)"
+                placeholder="Ej: 1, 2, 3..."
+                value={form.estante || ''}
+                onChange={(e) => setForm({ ...form, estante: e.target.value })}
+                fullWidth
+                helperText="Número del estante dentro de la estantería"
+                sx={{
+                  '& .MuiOutlinedInput-root': {
+                    borderRadius: 0,
+                    background: '#ffffff',
+                    '& fieldset': { borderColor: COLORS.inputBorder },
+                    '&:hover fieldset': { borderColor: COLORS.inputBorderHover },
+                    '&.Mui-focused fieldset': { borderColor: COLORS.primary },
+                  },
+                }}
+              />
+            </Box>
 
             {/* STOCK DISTRIBUTION UI */}
             <Box sx={{ gridColumn: { xs: '1 / -1', sm: '1 / -1' }, mt: 2, p: 3, bgcolor: '#f9fafb', border: `1px solid ${alpha(COLORS.primary, 0.1)}`, borderRadius: 2 }}>
