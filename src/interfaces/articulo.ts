@@ -143,6 +143,7 @@ export interface FiltrosArticulo {
   descripcion?: string;
   marca?: string;
   autor?: string;
+  autores?: string[];
   rubroId?: number;
   proveedorId?: number;
   estado?: EstadoArticulo;

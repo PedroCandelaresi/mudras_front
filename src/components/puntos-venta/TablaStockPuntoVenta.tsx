@@ -47,7 +47,7 @@ const currencyFormatter = new Intl.NumberFormat('es-AR', {
 type TablaStockPuntoVentaUiState = {
   busquedaDraft: string;
   busquedaAplicada: string;
-  autorFiltro: string;
+  filtrosAutores: string[];
   page: number;
   rowsPerPage: number;
   filtrosRubros: any[];
@@ -82,7 +82,7 @@ const TablaStockPuntoVenta: React.FC<Props> = ({
 
   const [busquedaDraft, setBusquedaDraft] = useState(cachedState?.busquedaDraft ?? '');
   const [busquedaAplicada, setBusquedaAplicada] = useState(cachedState?.busquedaAplicada ?? '');
-  const [autorFiltro, setAutorFiltro] = useState(cachedState?.autorFiltro ?? '');
+  const [filtrosAutores, setFiltrosAutores] = useState<string[]>(cachedState?.filtrosAutores ?? []);
 
   const [page, setPage] = useState(cachedState?.page ?? 0);
   const [rowsPerPage, setRowsPerPage] = useState(cachedState?.rowsPerPage ?? 50);
@@ -96,24 +96,37 @@ const TablaStockPuntoVenta: React.FC<Props> = ({
     tablaStockUiStateCache.set(cacheKey, {
       busquedaDraft,
       busquedaAplicada,
-      autorFiltro,
+      filtrosAutores,
       page,
       rowsPerPage,
       filtrosRubros,
       filtrosProveedores,
     });
-  }, [cacheKey, busquedaDraft, busquedaAplicada, autorFiltro, page, rowsPerPage, filtrosRubros, filtrosProveedores]);
+  }, [cacheKey, busquedaDraft, busquedaAplicada, filtrosAutores, page, rowsPerPage, filtrosRubros, filtrosProveedores]);
 
   const mostrarFiltroAutor = useMemo(() => {
     if (!filtrosRubros.length) return false;
     return filtrosRubros.some((r) => String(r?.nombre || '').trim().toLowerCase() === 'libros');
   }, [filtrosRubros]);
+  const autoresDisponibles = useMemo(() => {
+    const autoresSet = new Set<string>();
+    articulos.forEach((item) => {
+      const rubroNombre = String(item.rubro?.nombre || item.articulo?.Rubro || '').trim().toLowerCase();
+      if (rubroNombre !== 'libros') return;
+      const autor = String(item.articulo?.Autor || '').trim();
+      if (autor) autoresSet.add(autor);
+    });
+    filtrosAutores.forEach((autor) => {
+      if (autor?.trim()) autoresSet.add(autor.trim());
+    });
+    return Array.from(autoresSet).sort((a, b) => a.localeCompare(b, 'es'));
+  }, [articulos, filtrosAutores]);
 
   React.useEffect(() => {
     if (mostrarFiltroAutor) return;
-    if (!autorFiltro) return;
-    setAutorFiltro('');
-  }, [mostrarFiltroAutor, autorFiltro]);
+    if (filtrosAutores.length === 0) return;
+    setFiltrosAutores([]);
+  }, [mostrarFiltroAutor, filtrosAutores]);
 
   // Bidirectional Filtering Logic
   const { rubrosDisponibles, proveedoresDisponibles } = useMemo(() => {
@@ -211,13 +224,13 @@ const TablaStockPuntoVenta: React.FC<Props> = ({
       res = res.filter(item => item.articulo?.proveedor?.IdProveedor && ids.includes(item.articulo.proveedor.IdProveedor));
     }
 
-    if (autorFiltro.trim()) {
-      const autorNorm = autorFiltro.trim().toLowerCase();
-      res = res.filter((item) => (item.articulo?.Autor || '').toLowerCase().includes(autorNorm));
+    if (filtrosAutores.length > 0) {
+      const autoresSet = new Set(filtrosAutores.map((a) => a.trim().toLowerCase()));
+      res = res.filter((item) => autoresSet.has(String(item.articulo?.Autor || '').trim().toLowerCase()));
     }
 
     return res;
-  }, [articulos, busquedaAplicada, filtrosRubros, filtrosProveedores, autorFiltro]);
+  }, [articulos, busquedaAplicada, filtrosRubros, filtrosProveedores, filtrosAutores]);
 
   const ejecutarBusqueda = useCallback(() => {
     setBusquedaAplicada((busquedaDraft || '').trim());
@@ -227,7 +240,7 @@ const TablaStockPuntoVenta: React.FC<Props> = ({
   const limpiarFiltros = useCallback(() => {
     setBusquedaDraft('');
     setBusquedaAplicada('');
-    setAutorFiltro('');
+    setFiltrosAutores([]);
     setFiltrosRubros([]);
     setFiltrosProveedores([]);
     setPage(0);
@@ -252,11 +265,11 @@ const TablaStockPuntoVenta: React.FC<Props> = ({
     ];
 
     if (formato === 'excel') {
-      const filtroAutorTexto = autorFiltro ? `Autor: ${autorFiltro}` : '';
+      const filtroAutorTexto = filtrosAutores.length > 0 ? `Autores: ${filtrosAutores.join(', ')}` : '';
       const summary = [busquedaAplicada ? `Filtro: ${busquedaAplicada}` : '', filtroAutorTexto].filter(Boolean).join(' | ');
       exportToExcel(articulosFiltrados, columns, filename, summary);
     } else {
-      const filtroAutorTexto = autorFiltro ? `Autor: ${autorFiltro}` : '';
+      const filtroAutorTexto = filtrosAutores.length > 0 ? `Autores: ${filtrosAutores.join(', ')}` : '';
       const summary = [busquedaAplicada ? `Filtro: ${busquedaAplicada}` : '', filtroAutorTexto].filter(Boolean).join(' | ');
       await exportToPdf(articulosFiltrados, columns, filename, titulo, summary);
     }
@@ -482,16 +495,45 @@ const TablaStockPuntoVenta: React.FC<Props> = ({
               renderInput={(params) => <TextField {...params} label="Rubros" size="small" />}
             />
             {mostrarFiltroAutor && (
-              <TextField
-                label="Autor (Libros)"
-                size="small"
-                value={autorFiltro}
-                onChange={(e) => {
-                  setAutorFiltro(e.target.value);
+              <Autocomplete
+                multiple
+                disableCloseOnSelect
+                options={autoresDisponibles}
+                value={filtrosAutores}
+                onChange={(_, newValue) => {
+                  setFiltrosAutores(newValue);
                   setPage(0);
                 }}
-                placeholder="Filtrar por autor"
-                sx={{ minWidth: 220, '& .MuiOutlinedInput-root': { borderRadius: 1 } }}
+                renderOption={(props, option, { selected }) => (
+                  <li {...props}>
+                    <Checkbox
+                      icon={<CheckBoxOutlineBlankIcon fontSize="small" />}
+                      checkedIcon={<CheckBoxIcon fontSize="small" />}
+                      style={{ marginRight: 8 }}
+                      checked={selected}
+                    />
+                    {option}
+                  </li>
+                )}
+                sx={{ minWidth: 260, '& .MuiOutlinedInput-root': { borderRadius: 1 } }}
+                renderTags={(value, getTagProps) =>
+                  value.map((option, index) => (
+                    <Chip
+                      key={option}
+                      variant="outlined"
+                      label={option}
+                      size="small"
+                      {...getTagProps({ index })}
+                      sx={{
+                        borderColor: alpha('#6a1b9a', 0.3),
+                        color: '#6a1b9a',
+                        bgcolor: alpha('#6a1b9a', 0.05),
+                        borderRadius: 1,
+                      }}
+                    />
+                  ))
+                }
+                renderInput={(params) => <TextField {...params} label="Autores (Libros)" size="small" />}
               />
             )}
           </Box>

@@ -81,6 +81,7 @@ type FiltrosServidor = {
   codigo?: string;
   descripcion?: string;
   autor?: string;
+  autores?: string[];
   pagina?: number;
   limite?: number;
   ordenarPor?: 'Descripcion' | 'Codigo' | 'PrecioVenta' | 'Rubro';
@@ -212,7 +213,7 @@ const TablaArticulos: React.FC<ArticulosTableProps> = ({
   const [localFilters, setLocalFilters] = useState({
     codigo: initialServerFilters?.codigo ?? '',
     descripcion: initialServerFilters?.descripcion ?? '',
-    autor: initialServerFilters?.autor ?? '',
+    autores: initialServerFilters?.autores ?? [],
     rubro: initialServerFilters?.rubro ?? '',
     proveedor: initialServerFilters?.proveedor ?? '',
     estado: initialServerFilters?.estado ?? '',
@@ -256,7 +257,10 @@ const TablaArticulos: React.FC<ArticulosTableProps> = ({
     busqueda: undefined,
     codigo: (controlledFilters?.codigo ?? localFilters.codigo) || undefined,
     descripcion: (controlledFilters?.descripcion ?? localFilters.descripcion) || undefined,
-    autor: (controlledFilters?.autor ?? localFilters.autor) || undefined,
+    autor: undefined,
+    autores: (controlledFilters?.autores ?? localFilters.autores)?.length
+      ? (controlledFilters?.autores ?? localFilters.autores)
+      : undefined,
     rubro: (controlledFilters?.rubro ?? localFilters.rubro) || undefined,
     pagina: controlledFilters?.pagina ?? page,
     limite: controlledFilters?.limite ?? rowsPerPage,
@@ -451,13 +455,26 @@ const TablaArticulos: React.FC<ArticulosTableProps> = ({
 
   useEffect(() => {
     if (mostrarFiltroAutor || controlledFilters) return;
-    if (!localFilters.autor) return;
-    setLocalFilters((prev) => ({ ...prev, autor: '' }));
-  }, [mostrarFiltroAutor, controlledFilters, localFilters.autor]);
+    if (!(localFilters.autores?.length > 0)) return;
+    setLocalFilters((prev) => ({ ...prev, autores: [] }));
+  }, [mostrarFiltroAutor, controlledFilters, localFilters.autores]);
 
   // const { data: statsData } = useQuery<{ estadisticasArticulos?: { totalUnidades?: number } }>(GET_ESTADISTICAS_ARTICULOS, { fetchPolicy: 'cache-first' });
 
   const articulosRaw: Articulo[] = (data?.buscarArticulos?.articulos ?? []).filter((a): a is Articulo => !!a);
+  const autoresDisponibles = useMemo(() => {
+    const autoresSet = new Set<string>();
+    for (const art of articulosRaw) {
+      if (String(art.Rubro || '').trim().toLowerCase() !== 'libros') continue;
+      const autor = String(art.Autor || '').trim();
+      if (autor) autoresSet.add(autor);
+    }
+    const seleccionados = controlledFilters?.autores ?? localFilters.autores ?? [];
+    for (const autor of seleccionados) {
+      if (autor?.trim()) autoresSet.add(autor.trim());
+    }
+    return Array.from(autoresSet).sort((a, b) => a.localeCompare(b, 'es'));
+  }, [articulosRaw, controlledFilters?.autores, localFilters.autores]);
   const searchTerm = (variablesQuery.filtros.busqueda || '').toString().trim().toLowerCase();
   const articulos: Articulo[] = useMemo(() => {
     if (!searchTerm) return [...articulosRaw].sort((a, b) => (a.Codigo || '').localeCompare(b.Codigo || ''));
@@ -627,7 +644,7 @@ const TablaArticulos: React.FC<ArticulosTableProps> = ({
       setLocalFilters({
         codigo: '',
         descripcion: '',
-        autor: '',
+        autores: [],
         rubro: '',
         proveedor: '',
         estado: '',
@@ -975,6 +992,7 @@ const TablaArticulos: React.FC<ArticulosTableProps> = ({
       const f = variablesQuery.filtros;
       if (f.busqueda) filterParts.push(`Búsqueda: "${f.busqueda}"`);
       if (f.autor) filterParts.push(`Autor: ${f.autor}`);
+      if (f.autores && f.autores.length > 0) filterParts.push(`Autores: ${f.autores.join(', ')}`);
       if (f.rubro) filterParts.push(`Rubro: ${f.rubro}`);
       if (f.rubroId) {
         // Try to find rubro name if only ID is present, though usually 'rubro' string is also set or we can infer it
@@ -1234,25 +1252,62 @@ const TablaArticulos: React.FC<ArticulosTableProps> = ({
             renderInput={(params) => <TextField {...params} label="Rubros" size="small" placeholder="Seleccionar..." sx={{ bgcolor: 'white' }} />}
           />
           {mostrarFiltroAutor && (
-            <TextField
-              label="Autor (Libros)"
-              size="small"
-              value={controlledFilters?.autor ?? localFilters.autor}
-              onChange={(e) => {
-                const value = e.target.value;
+            <Autocomplete
+              multiple
+              disableCloseOnSelect
+              id="checkboxes-autores"
+              options={autoresDisponibles}
+              value={controlledFilters?.autores ?? localFilters.autores ?? []}
+              onChange={(_, newValue) => {
                 if (controlledFilters) {
-                  onFiltersChange?.({ ...filtrosServidor, autor: value || undefined, pagina: 0 });
+                  onFiltersChange?.({ ...filtrosServidor, autores: newValue, pagina: 0 });
                 } else {
-                  setLocalFilters((prev) => ({ ...prev, autor: value }));
+                  setLocalFilters((prev) => ({ ...prev, autores: newValue }));
                   setPage(0);
                 }
               }}
-              placeholder="Filtrar por autor"
+              renderOption={(props, option, { selected }) => (
+                <li {...props}>
+                  <Checkbox
+                    icon={<CheckBoxOutlineBlankIcon fontSize="small" />}
+                    checkedIcon={<CheckBoxIcon fontSize="small" />}
+                    style={{ marginRight: 8 }}
+                    checked={selected}
+                  />
+                  {option}
+                </li>
+              )}
               sx={{
-                minWidth: { xs: '100%', md: 240 },
-                flex: { xs: '1 1 100%', md: '0 0 240px' },
+                minWidth: { xs: '100%', md: 260 },
+                flex: { xs: '1 1 100%', md: '0 0 260px' },
                 bgcolor: 'white',
               }}
+              renderTags={(value, getTagProps) =>
+                value.map((option, index) => (
+                  <Chip
+                    key={option}
+                    variant="outlined"
+                    label={option}
+                    size="small"
+                    {...getTagProps({ index })}
+                    sx={{
+                      borderColor: alpha('#6a1b9a', 0.3),
+                      color: '#6a1b9a',
+                      bgcolor: alpha('#6a1b9a', 0.05),
+                      borderRadius: 1,
+                    }}
+                  />
+                ))
+              }
+              renderInput={(params) => (
+                <TextField
+                  {...params}
+                  label="Autores (Libros)"
+                  size="small"
+                  placeholder="Seleccionar..."
+                  sx={{ bgcolor: 'white' }}
+                />
+              )}
             />
           )}
         </Box>
