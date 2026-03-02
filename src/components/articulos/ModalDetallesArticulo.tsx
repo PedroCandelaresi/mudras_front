@@ -19,11 +19,8 @@ import {
 import { alpha, darken } from '@mui/material/styles';
 import { useCallback, useEffect, useMemo } from 'react';
 import { Icon } from '@iconify/react';
-import { IconRefresh } from '@tabler/icons-react';
 
 import { useQuery } from '@apollo/client/react';
-import { format } from 'date-fns';
-import { es } from 'date-fns/locale';
 
 import { GET_ARTICULO } from '@/components/articulos/graphql/queries';
 import type { Articulo } from '@/app/interfaces/mudras.types';
@@ -420,85 +417,96 @@ const ModalDetallesArticulo = ({
                     )}
                   </Box>
 
-                  {/* Información general */}
-                  <Box>
-                    <Typography variant="h6" fontWeight={700} color={darken(azul.primary, 0.5)} mb={2}>
-                      Información general
-                    </Typography>
+                  {/* Información general + Ubicación */}
+                  <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                    <Box>
+                      <Typography variant="h6" fontWeight={700} color={darken(azul.primary, 0.5)} mb={2}>
+                        Información general
+                      </Typography>
+
+                      <Box
+                        sx={{
+                          display: 'grid',
+                          gap: 2,
+                          gridTemplateColumns: { xs: '1fr', sm: 'repeat(2,1fr)' },
+                        }}
+                      >
+                        <Box>
+                          <Typography variant="caption" color="text.secondary">Descripción</Typography>
+                          <Typography variant="body1" fontWeight={600} color={darken(azul.primary, 0.5)}>
+                            {articuloCompleto?.Descripcion || 'Sin descripción'}
+                          </Typography>
+                        </Box>
+
+                        <Box>
+                          <Typography variant="caption" color="text.secondary">Categoría / Rubro</Typography>
+                          <Typography variant="body1" fontWeight={600}>
+                            {articuloCompleto?.Rubro || 'No asignado'}
+                          </Typography>
+                        </Box>
+
+                        {String(articuloCompleto?.Rubro || '').trim().toLowerCase() === 'libros' && (
+                          <Box>
+                            <Typography variant="caption" color="text.secondary">Autor</Typography>
+                            <Typography variant="body1" fontWeight={600}>
+                              {articuloCompleto?.Autor || '—'}
+                            </Typography>
+                          </Box>
+                        )}
+
+                        <Box>
+                          <Typography variant="caption" color="text.secondary">Unidad</Typography>
+                          <Typography variant="body1" fontWeight={600}>
+                            {articuloCompleto?.Unidad || 'Unidad'}
+                          </Typography>
+                        </Box>
+
+                        <Box>
+                          <Typography variant="caption" color="text.secondary">Proveedor</Typography>
+                          <Typography variant="body1" fontWeight={600}>
+                            {articuloCompleto?.proveedor?.Nombre || 'Sin proveedor'}
+                          </Typography>
+                        </Box>
+
+                        <Box>
+                          <Typography variant="caption" color="text.secondary">Stock mínimo</Typography>
+                          <Typography variant="body1" fontWeight={600}>{stockMinimo}</Typography>
+                        </Box>
+                      </Box>
+                    </Box>
 
                     <Box
                       sx={{
-                        display: 'grid',
-                        gap: 2,
-                        gridTemplateColumns: { xs: '1fr', sm: 'repeat(2,1fr)' },
+                        border: '1px solid #e0e0e0',
+                        borderRadius: 0,
+                        bgcolor: '#ffffff',
+                        p: 2,
                       }}
                     >
-
-                      <Box>
-                        <Typography variant="caption" color="text.secondary">Descripción</Typography>
-                        <Typography variant="body1" fontWeight={600} color={darken(azul.primary, 0.5)}>
-                          {articuloCompleto?.Descripcion || 'Sin descripción'}
-                        </Typography>
-                      </Box>
-
-                      <Box>
-                        <Typography variant="caption" color="text.secondary">Categoría / Rubro</Typography>
-                        <Typography variant="body1" fontWeight={600}>
-                          {articuloCompleto?.Rubro || 'No asignado'}
-                        </Typography>
-                      </Box>
-
-                      {String(articuloCompleto?.Rubro || '').trim().toLowerCase() === 'libros' && (
+                      <Typography variant="h6" fontWeight={700} color={darken(azul.primary, 0.5)} mb={2}>
+                        Ubicación
+                      </Typography>
+                      <Box
+                        sx={{
+                          display: 'grid',
+                          gap: 2,
+                          gridTemplateColumns: { xs: '1fr', sm: 'repeat(2,1fr)' },
+                        }}
+                      >
                         <Box>
-                          <Typography variant="caption" color="text.secondary">Autor</Typography>
+                          <Typography variant="caption" color="text.secondary">Estantería</Typography>
                           <Typography variant="body1" fontWeight={600}>
-                            {articuloCompleto?.Autor || '—'}
+                            {estanteriaMostrada || '—'}
                           </Typography>
                         </Box>
-                      )}
 
-                      <Box>
-                        <Typography variant="caption" color="text.secondary">Unidad</Typography>
-                        <Typography variant="body1" fontWeight={600}>
-                          {articuloCompleto?.Unidad || 'Unidad'}
-                        </Typography>
+                        <Box>
+                          <Typography variant="caption" color="text.secondary">Estante</Typography>
+                          <Typography variant="body1" fontWeight={600}>
+                            {estanteMostrado || '—'}
+                          </Typography>
+                        </Box>
                       </Box>
-
-                      <Box>
-                        <Typography variant="caption" color="text.secondary">Proveedor</Typography>
-                        <Typography variant="body1" fontWeight={600}>
-                          {articuloCompleto?.proveedor?.Nombre || 'Sin proveedor'}
-                        </Typography>
-                      </Box>
-
-                      <Box>
-                        <Typography variant="caption" color="text.secondary">Stock mínimo</Typography>
-                        <Typography variant="body1" fontWeight={600}>{stockMinimo}</Typography>
-                      </Box>
-
-                      <Box>
-                        <Typography variant="caption" color="text.secondary">Estantería</Typography>
-                        <Typography variant="body1" fontWeight={600}>
-                          {estanteriaMostrada || '—'}
-                        </Typography>
-                      </Box>
-
-                      <Box>
-                        <Typography variant="caption" color="text.secondary">Estante</Typography>
-                        <Typography variant="body1" fontWeight={600}>
-                          {estanteMostrado || '—'}
-                        </Typography>
-                      </Box>
-
-                      <Box>
-                        <Typography variant="caption" color="text.secondary">Actualizado</Typography>
-                        <Typography variant="body1" fontWeight={600}>
-                          {articuloCompleto?.FechaModif
-                            ? format(new Date(articuloCompleto.FechaModif), 'dd/MM/yyyy', { locale: es })
-                            : '—'}
-                        </Typography>
-                      </Box>
-
                     </Box>
                   </Box>
 
