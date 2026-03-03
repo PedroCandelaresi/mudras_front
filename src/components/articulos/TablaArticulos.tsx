@@ -227,6 +227,7 @@ const TablaArticulos: React.FC<ArticulosTableProps> = ({
   const [menuAnchor, setMenuAnchor] = useState<null | HTMLElement>(null);
   const [activeCol, setActiveCol] = useState<ColumnDef['key'] | null>(null);
   const [colInput, setColInput] = useState('');
+  const [openRubrosFiltro, setOpenRubrosFiltro] = useState(false);
   // const [filtrosColumna, setFiltrosColumna] = useState<ColFilters>({}); // Unused
   // const [filtroColInput, setFiltroColInput] = useState(''); // Unused
 
@@ -1238,6 +1239,9 @@ const TablaArticulos: React.FC<ArticulosTableProps> = ({
               multiple
               disableCloseOnSelect
               id="checkboxes-rubros"
+              open={openRubrosFiltro}
+              onOpen={() => setOpenRubrosFiltro(true)}
+              onClose={() => setOpenRubrosFiltro(false)}
               options={rubrosFiltrados}
               getOptionLabel={(option: any) => option.nombre || option.Rubro || ''}
               value={rubrosFiltrados.filter((r: any) => {
