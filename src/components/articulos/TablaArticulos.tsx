@@ -82,6 +82,7 @@ type FiltrosServidor = {
   descripcion?: string;
   autor?: string;
   autores?: string[];
+  marcas?: string[];
   pagina?: number;
   limite?: number;
   ordenarPor?: 'Descripcion' | 'Codigo' | 'PrecioVenta' | 'Rubro';
@@ -261,6 +262,9 @@ const TablaArticulos: React.FC<ArticulosTableProps> = ({
     autor: undefined,
     autores: (controlledFilters?.autores ?? localFilters.autores)?.length
       ? (controlledFilters?.autores ?? localFilters.autores)
+      : undefined,
+    marcas: (controlledFilters?.marcas ?? localFilters.marcas)?.length
+      ? (controlledFilters?.marcas ?? localFilters.marcas)
       : undefined,
     rubro: (controlledFilters?.rubro ?? localFilters.rubro) || undefined,
     pagina: controlledFilters?.pagina ?? page,
@@ -469,12 +473,12 @@ const TablaArticulos: React.FC<ArticulosTableProps> = ({
       const marca = String(art.Marca || '').trim();
       if (marca) marcasSet.add(marca);
     }
-    const seleccionadas = localFilters.marcas ?? [];
+    const seleccionadas = controlledFilters?.marcas ?? localFilters.marcas ?? [];
     for (const marca of seleccionadas) {
       if (marca?.trim()) marcasSet.add(marca.trim());
     }
     return Array.from(marcasSet).sort((a, b) => a.localeCompare(b, 'es'));
-  }, [articulosRaw, localFilters.marcas]);
+  }, [articulosRaw, controlledFilters?.marcas, localFilters.marcas]);
   const autoresDisponibles = useMemo(() => {
     const autoresSet = new Set<string>();
     for (const art of articulosRaw) {
@@ -489,14 +493,8 @@ const TablaArticulos: React.FC<ArticulosTableProps> = ({
     return Array.from(autoresSet).sort((a, b) => a.localeCompare(b, 'es'));
   }, [articulosRaw, controlledFilters?.autores, localFilters.autores]);
   const searchTerm = (variablesQuery.filtros.busqueda || '').toString().trim().toLowerCase();
-  const articulosFiltradosPorMarca = useMemo(() => {
-    const marcasActivas = localFilters.marcas ?? [];
-    if (!marcasActivas.length) return articulosRaw;
-    const marcasSet = new Set(marcasActivas.map((m) => m.trim().toLowerCase()).filter(Boolean));
-    return articulosRaw.filter((a) => marcasSet.has(String(a.Marca || '').trim().toLowerCase()));
-  }, [articulosRaw, localFilters.marcas]);
   const articulos: Articulo[] = useMemo(() => {
-    if (!searchTerm) return [...articulosFiltradosPorMarca].sort((a, b) => (a.Codigo || '').localeCompare(b.Codigo || ''));
+    if (!searchTerm) return [...articulosRaw].sort((a, b) => (a.Codigo || '').localeCompare(b.Codigo || ''));
 
     const score = (cod?: string) => {
       const c = (cod || '').toString().toLowerCase();
@@ -507,11 +505,11 @@ const TablaArticulos: React.FC<ArticulosTableProps> = ({
       return 3;
     };
 
-    return [...articulosFiltradosPorMarca]
+    return [...articulosRaw]
       .map((a) => ({ a, s: score(a.Codigo) }))
       .sort((x, y) => x.s - y.s || (x.a.Codigo || '').localeCompare(y.a.Codigo || ''))
       .map((x) => x.a);
-  }, [articulosFiltradosPorMarca, searchTerm]);
+  }, [articulosRaw, searchTerm]);
   const total: number = data?.buscarArticulos?.total ?? 0;
   const estadoActual = controlledFilters?.estado ?? localFilters.estado;
 
@@ -1295,10 +1293,14 @@ const TablaArticulos: React.FC<ArticulosTableProps> = ({
               disableCloseOnSelect
               id="checkboxes-marcas"
               options={marcasDisponibles}
-              value={localFilters.marcas ?? []}
+              value={controlledFilters?.marcas ?? localFilters.marcas ?? []}
               onChange={(_, newValue) => {
-                setLocalFilters((prev) => ({ ...prev, marcas: newValue }));
-                setPage(0);
+                if (controlledFilters) {
+                  onFiltersChange?.({ ...filtrosServidor, marcas: newValue, pagina: 0 });
+                } else {
+                  setLocalFilters((prev) => ({ ...prev, marcas: newValue }));
+                  setPage(0);
+                }
               }}
               renderOption={(props, option, { selected }) => (
                 <li {...props}>
