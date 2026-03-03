@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState, useCallback } from 'react';
+import { useEffect, useMemo, useState, useCallback, useRef } from 'react';
 import {
   Box,
   Autocomplete,
@@ -163,6 +163,7 @@ const ModalNuevoArticulo = ({ open, onClose, articulo, onSuccess, accentColor }:
   const [loadingStock, setLoadingStock] = useState(false);
   const [stockInicialEdicion, setStockInicialEdicion] = useState('0');
   const [stockPorPuntoInicial, setStockPorPuntoInicial] = useState<Record<string, string>>({});
+  const initializedKeyRef = useRef<string | null>(null);
   const client = useApolloClient();
   const [iva, setIva] = useState<IvaOption>('21');
   const [rubroInput, setRubroInput] = useState('');
@@ -247,7 +248,15 @@ const ModalNuevoArticulo = ({ open, onClose, articulo, onSuccess, accentColor }:
   const costoReferenciaOriginal = useMemo(() => (articulo ? obtenerCostoReferencia(articulo) : 0), [articulo]);
 
   useEffect(() => {
-    if (!open) return;
+    if (!open) {
+      initializedKeyRef.current = null;
+      return;
+    }
+
+    const currentKey = articulo?.id ? `edit-${articulo.id}` : 'new';
+    if (initializedKeyRef.current === currentKey) return;
+    initializedKeyRef.current = currentKey;
+
     setError('');
     setSaving(false);
     setRubroInput((articulo as any)?.rubro?.Rubro || (articulo as any)?.Rubro || '');
@@ -370,7 +379,7 @@ const ModalNuevoArticulo = ({ open, onClose, articulo, onSuccess, accentColor }:
     }
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open, articulo?.id, puntosMudras, rubros, proveedores]); // Agregamos puntosMudras, rubros, proveedores a la dependencia
+  }, [open, articulo?.id, puntosMudras, rubros, proveedores]); // Dependencias usadas para hidratar IDs/stock en primera carga del modal
 
   useEffect(() => {
     if (!open) return;
@@ -436,6 +445,7 @@ const ModalNuevoArticulo = ({ open, onClose, articulo, onSuccess, accentColor }:
 
   const handleClose = useCallback(() => {
     if (saving) return;
+    initializedKeyRef.current = null;
     onClose();
   }, [saving, onClose]);
 
