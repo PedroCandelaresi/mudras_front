@@ -80,6 +80,7 @@ type TablaMatrizStockUiState = {
     globalSearch: string;
     globalSearchDraft: string;
     filtrosAutores: string[];
+    filtrosMarcas: string[];
     filtros: FiltrosServidor;
     page: number;
     rowsPerPage: number;
@@ -97,6 +98,7 @@ const TablaMatrizStock: React.FC<TablaMatrizStockProps> = ({ onTransferir }) => 
     const pendingRestoreScrollTopRef = React.useRef<number | null>(null);
     const [globalSearchDraft, setGlobalSearchDraft] = useState(cachedState?.globalSearchDraft ?? '');
     const [filtrosAutores, setFiltrosAutores] = useState<string[]>(cachedState?.filtrosAutores ?? []);
+    const [filtrosMarcas, setFiltrosMarcas] = useState<string[]>(cachedState?.filtrosMarcas ?? []);
     const [filtros, setFiltros] = useState<FiltrosServidor>(cachedState?.filtros ?? {});
     const [page, setPage] = useState(cachedState?.page ?? 0);
     const [rowsPerPage, setRowsPerPage] = useState(cachedState?.rowsPerPage ?? 150);
@@ -122,11 +124,12 @@ const TablaMatrizStock: React.FC<TablaMatrizStockProps> = ({ onTransferir }) => 
             globalSearch,
             globalSearchDraft,
             filtrosAutores,
+            filtrosMarcas,
             filtros,
             page,
             rowsPerPage,
         });
-    }, [cacheKey, globalSearch, globalSearchDraft, filtrosAutores, filtros, page, rowsPerPage]);
+    }, [cacheKey, globalSearch, globalSearchDraft, filtrosAutores, filtrosMarcas, filtros, page, rowsPerPage]);
 
     // --- Data Fetching ---
     const { data: puntosData } = useQuery(OBTENER_PUNTOS_MUDRAS, { fetchPolicy: 'cache-first' });
@@ -281,6 +284,17 @@ const TablaMatrizStock: React.FC<TablaMatrizStockProps> = ({ onTransferir }) => 
         });
         return Array.from(autoresSet).sort((a, b) => a.localeCompare(b, 'es'));
     }, [matrizData, articleAuthorMap, filtrosAutores]);
+    const marcasDisponibles = useMemo(() => {
+        const marcasSet = new Set<string>();
+        matrizData.forEach((item) => {
+            const marca = String(articleBrandMap.get(String(item.id)) || '').trim();
+            if (marca) marcasSet.add(marca);
+        });
+        filtrosMarcas.forEach((marca) => {
+            if (marca?.trim()) marcasSet.add(marca.trim());
+        });
+        return Array.from(marcasSet).sort((a, b) => a.localeCompare(b, 'es'));
+    }, [matrizData, articleBrandMap, filtrosMarcas]);
 
     useEffect(() => {
         if (mostrarFiltroAutor) return;
@@ -334,9 +348,16 @@ const TablaMatrizStock: React.FC<TablaMatrizStockProps> = ({ onTransferir }) => 
                 return autoresSet.has(String(autor).trim().toLowerCase());
             });
         }
+        if (filtrosMarcas.length > 0) {
+            const marcasSet = new Set(filtrosMarcas.map((m) => m.trim().toLowerCase()));
+            result = result.filter((item) => {
+                const marca = articleBrandMap.get(String(item.id)) || '';
+                return marcasSet.has(String(marca).trim().toLowerCase());
+            });
+        }
 
         return result;
-    }, [matrizData, globalSearch, filtros.proveedorIds, filtros.rubroIds, filtrosAutores, articleProviderMap, articleAuthorMap, rubrosData]);
+    }, [matrizData, globalSearch, filtros.proveedorIds, filtros.rubroIds, filtrosAutores, filtrosMarcas, articleProviderMap, articleAuthorMap, articleBrandMap, rubrosData]);
 
     const paginatedData = useMemo(() => {
         return filteredData.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
@@ -458,6 +479,7 @@ const TablaMatrizStock: React.FC<TablaMatrizStockProps> = ({ onTransferir }) => 
         setGlobalSearch('');
         setGlobalSearchDraft('');
         setFiltrosAutores([]);
+        setFiltrosMarcas([]);
         setFiltros({});
         setPage(0);
     };
@@ -649,55 +671,59 @@ const TablaMatrizStock: React.FC<TablaMatrizStockProps> = ({ onTransferir }) => 
                     </Box>
 
                     {/* Combos */}
-                    <Box display="flex" gap={2} sx={{ flexGrow: 1 }}>
-                        <Autocomplete
-                            multiple
-                            disableCloseOnSelect
-                            options={proveedoresDisponibles}
-                            getOptionLabel={(option: any) => option.Nombre || ''}
-                            value={proveedoresDisponibles.filter((p: any) => (filtros.proveedorIds || []).includes(Number(p.IdProveedor)))}
-                            onChange={(_, newValue) => {
-                                const ids = newValue.map((v: any) => Number(v.IdProveedor));
-                                setFiltros(prev => ({ ...prev, proveedorIds: ids, proveedorId: ids[0] })); // Set single ID too for compat
-                                setPage(0);
-                            }}
-                            renderOption={(props, option: any, { selected }) => (
-                                <li {...props}>
-                                    <Checkbox icon={<CheckBoxOutlineBlankIcon fontSize="small" />} checkedIcon={<CheckBoxIcon fontSize="small" />} checked={selected} style={{ marginRight: 8 }} />
-                                    {option.Nombre}
-                                </li>
-                            )}
-                            renderInput={(params) => <TextField {...params} label="Proveedores" size="small" />}
-                            fullWidth
-                        />
-                        <Autocomplete
-                            multiple
-                            disableCloseOnSelect
-                            options={rubrosDisponibles}
-                            getOptionLabel={(option: any) => option.nombre || option.Rubro || ''}
-                            value={rubrosDisponibles.filter((r: any) => (filtros.rubroIds || []).includes(Number(r.id)))}
-                            onChange={(_, newValue) => {
-                                const ids = newValue.map((v: any) => Number(v.id));
-                                setFiltros(prev => ({ ...prev, rubroIds: ids }));
-                                setPage(0);
-                            }}
-                            renderOption={(props, option: any, { selected }) => (
-                                <li {...props}>
-                                    <Checkbox icon={<CheckBoxOutlineBlankIcon fontSize="small" />} checkedIcon={<CheckBoxIcon fontSize="small" />} checked={selected} style={{ marginRight: 8 }} />
-                                    {option.nombre || option.Rubro}
-                                </li>
-                            )}
-                            renderInput={(params) => <TextField {...params} label="Rubros" size="small" />}
-                            fullWidth
-                        />
-                        {mostrarFiltroAutor && (
+                    <Box display="flex" flexDirection="column" gap={2} sx={{ flexGrow: 1, minWidth: 0 }}>
+                        <Box display="flex" gap={2} flexWrap="nowrap" sx={{ minWidth: 0 }}>
                             <Autocomplete
                                 multiple
                                 disableCloseOnSelect
-                                options={autoresDisponibles}
-                                value={filtrosAutores}
+                                options={proveedoresDisponibles}
+                                getOptionLabel={(option: any) => option.Nombre || ''}
+                                value={proveedoresDisponibles.filter((p: any) => (filtros.proveedorIds || []).includes(Number(p.IdProveedor)))}
                                 onChange={(_, newValue) => {
-                                    setFiltrosAutores(newValue);
+                                    const ids = newValue.map((v: any) => Number(v.IdProveedor));
+                                    setFiltros(prev => ({ ...prev, proveedorIds: ids, proveedorId: ids[0] })); // Set single ID too for compat
+                                    setPage(0);
+                                }}
+                                renderOption={(props, option: any, { selected }) => (
+                                    <li {...props}>
+                                        <Checkbox icon={<CheckBoxOutlineBlankIcon fontSize="small" />} checkedIcon={<CheckBoxIcon fontSize="small" />} checked={selected} style={{ marginRight: 8 }} />
+                                        {option.Nombre}
+                                    </li>
+                                )}
+                                renderInput={(params) => <TextField {...params} label="Proveedores" size="small" />}
+                                fullWidth
+                                sx={{ flex: '1 1 0', minWidth: 0 }}
+                            />
+                            <Autocomplete
+                                multiple
+                                disableCloseOnSelect
+                                options={rubrosDisponibles}
+                                getOptionLabel={(option: any) => option.nombre || option.Rubro || ''}
+                                value={rubrosDisponibles.filter((r: any) => (filtros.rubroIds || []).includes(Number(r.id)))}
+                                onChange={(_, newValue) => {
+                                    const ids = newValue.map((v: any) => Number(v.id));
+                                    setFiltros(prev => ({ ...prev, rubroIds: ids }));
+                                    setPage(0);
+                                }}
+                                renderOption={(props, option: any, { selected }) => (
+                                    <li {...props}>
+                                        <Checkbox icon={<CheckBoxOutlineBlankIcon fontSize="small" />} checkedIcon={<CheckBoxIcon fontSize="small" />} checked={selected} style={{ marginRight: 8 }} />
+                                        {option.nombre || option.Rubro}
+                                    </li>
+                                )}
+                                renderInput={(params) => <TextField {...params} label="Rubros" size="small" />}
+                                fullWidth
+                                sx={{ flex: '1 1 0', minWidth: 0 }}
+                            />
+                        </Box>
+                        <Box display="flex" gap={2} flexWrap="nowrap" sx={{ minWidth: 0 }}>
+                            <Autocomplete
+                                multiple
+                                disableCloseOnSelect
+                                options={marcasDisponibles}
+                                value={filtrosMarcas}
+                                onChange={(_, newValue) => {
+                                    setFiltrosMarcas(newValue);
                                     setPage(0);
                                 }}
                                 renderOption={(props, option, { selected }) => (
@@ -715,18 +741,59 @@ const TablaMatrizStock: React.FC<TablaMatrizStockProps> = ({ onTransferir }) => 
                                             size="small"
                                             {...getTagProps({ index })}
                                             sx={{
-                                                borderColor: alpha('#6a1b9a', 0.3),
-                                                color: '#6a1b9a',
-                                                bgcolor: alpha('#6a1b9a', 0.05),
+                                                borderColor: alpha('#455a64', 0.3),
+                                                color: '#455a64',
+                                                bgcolor: alpha('#455a64', 0.05),
                                                 borderRadius: 1,
                                             }}
                                         />
                                     ))
                                 }
-                                renderInput={(params) => <TextField {...params} label="Autores (Libros)" size="small" />}
-                                sx={{ minWidth: 260 }}
+                                renderInput={(params) => <TextField {...params} label="Marcas" size="small" />}
+                                fullWidth
+                                sx={{ flex: '1 1 0', minWidth: 0 }}
                             />
-                        )}
+                            {mostrarFiltroAutor ? (
+                                <Autocomplete
+                                    multiple
+                                    disableCloseOnSelect
+                                    options={autoresDisponibles}
+                                    value={filtrosAutores}
+                                    onChange={(_, newValue) => {
+                                        setFiltrosAutores(newValue);
+                                        setPage(0);
+                                    }}
+                                    renderOption={(props, option, { selected }) => (
+                                        <li {...props}>
+                                            <Checkbox icon={<CheckBoxOutlineBlankIcon fontSize="small" />} checkedIcon={<CheckBoxIcon fontSize="small" />} checked={selected} style={{ marginRight: 8 }} />
+                                            {option}
+                                        </li>
+                                    )}
+                                    renderTags={(value, getTagProps) =>
+                                        value.map((option, index) => (
+                                            <Chip
+                                                key={option}
+                                                variant="outlined"
+                                                label={option}
+                                                size="small"
+                                                {...getTagProps({ index })}
+                                                sx={{
+                                                    borderColor: alpha('#6a1b9a', 0.3),
+                                                    color: '#6a1b9a',
+                                                    bgcolor: alpha('#6a1b9a', 0.05),
+                                                    borderRadius: 1,
+                                                }}
+                                            />
+                                        ))
+                                    }
+                                    renderInput={(params) => <TextField {...params} label="Autores (Libros)" size="small" />}
+                                    fullWidth
+                                    sx={{ flex: '1 1 0', minWidth: 0 }}
+                                />
+                            ) : (
+                                <Box sx={{ flex: '1 1 0', minWidth: 0 }} />
+                            )}
+                        </Box>
                     </Box>
                 </Box>
             </Box>

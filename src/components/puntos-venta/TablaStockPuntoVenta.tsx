@@ -48,6 +48,7 @@ type TablaStockPuntoVentaUiState = {
   busquedaDraft: string;
   busquedaAplicada: string;
   filtrosAutores: string[];
+  filtrosMarcas: string[];
   page: number;
   rowsPerPage: number;
   filtrosRubros: any[];
@@ -83,6 +84,7 @@ const TablaStockPuntoVenta: React.FC<Props> = ({
   const [busquedaDraft, setBusquedaDraft] = useState(cachedState?.busquedaDraft ?? '');
   const [busquedaAplicada, setBusquedaAplicada] = useState(cachedState?.busquedaAplicada ?? '');
   const [filtrosAutores, setFiltrosAutores] = useState<string[]>(cachedState?.filtrosAutores ?? []);
+  const [filtrosMarcas, setFiltrosMarcas] = useState<string[]>(cachedState?.filtrosMarcas ?? []);
 
   const [page, setPage] = useState(cachedState?.page ?? 0);
   const [rowsPerPage, setRowsPerPage] = useState(cachedState?.rowsPerPage ?? 50);
@@ -97,12 +99,13 @@ const TablaStockPuntoVenta: React.FC<Props> = ({
       busquedaDraft,
       busquedaAplicada,
       filtrosAutores,
+      filtrosMarcas,
       page,
       rowsPerPage,
       filtrosRubros,
       filtrosProveedores,
     });
-  }, [cacheKey, busquedaDraft, busquedaAplicada, filtrosAutores, page, rowsPerPage, filtrosRubros, filtrosProveedores]);
+  }, [cacheKey, busquedaDraft, busquedaAplicada, filtrosAutores, filtrosMarcas, page, rowsPerPage, filtrosRubros, filtrosProveedores]);
 
   const mostrarFiltroAutor = useMemo(() => {
     if (!filtrosRubros.length) return false;
@@ -121,6 +124,17 @@ const TablaStockPuntoVenta: React.FC<Props> = ({
     });
     return Array.from(autoresSet).sort((a, b) => a.localeCompare(b, 'es'));
   }, [articulos, filtrosAutores]);
+  const marcasDisponibles = useMemo(() => {
+    const marcasSet = new Set<string>();
+    articulos.forEach((item) => {
+      const marca = String(item.articulo?.Marca || '').trim();
+      if (marca) marcasSet.add(marca);
+    });
+    filtrosMarcas.forEach((marca) => {
+      if (marca?.trim()) marcasSet.add(marca.trim());
+    });
+    return Array.from(marcasSet).sort((a, b) => a.localeCompare(b, 'es'));
+  }, [articulos, filtrosMarcas]);
 
   React.useEffect(() => {
     if (mostrarFiltroAutor) return;
@@ -228,9 +242,13 @@ const TablaStockPuntoVenta: React.FC<Props> = ({
       const autoresSet = new Set(filtrosAutores.map((a) => a.trim().toLowerCase()));
       res = res.filter((item) => autoresSet.has(String(item.articulo?.Autor || '').trim().toLowerCase()));
     }
+    if (filtrosMarcas.length > 0) {
+      const marcasSet = new Set(filtrosMarcas.map((m) => m.trim().toLowerCase()));
+      res = res.filter((item) => marcasSet.has(String(item.articulo?.Marca || '').trim().toLowerCase()));
+    }
 
     return res;
-  }, [articulos, busquedaAplicada, filtrosRubros, filtrosProveedores, filtrosAutores]);
+  }, [articulos, busquedaAplicada, filtrosRubros, filtrosProveedores, filtrosAutores, filtrosMarcas]);
 
   const ejecutarBusqueda = useCallback(() => {
     setBusquedaAplicada((busquedaDraft || '').trim());
@@ -241,6 +259,7 @@ const TablaStockPuntoVenta: React.FC<Props> = ({
     setBusquedaDraft('');
     setBusquedaAplicada('');
     setFiltrosAutores([]);
+    setFiltrosMarcas([]);
     setFiltrosRubros([]);
     setFiltrosProveedores([]);
     setPage(0);
@@ -266,11 +285,13 @@ const TablaStockPuntoVenta: React.FC<Props> = ({
 
     if (formato === 'excel') {
       const filtroAutorTexto = filtrosAutores.length > 0 ? `Autores: ${filtrosAutores.join(', ')}` : '';
-      const summary = [busquedaAplicada ? `Filtro: ${busquedaAplicada}` : '', filtroAutorTexto].filter(Boolean).join(' | ');
+      const filtroMarcaTexto = filtrosMarcas.length > 0 ? `Marcas: ${filtrosMarcas.join(', ')}` : '';
+      const summary = [busquedaAplicada ? `Filtro: ${busquedaAplicada}` : '', filtroAutorTexto, filtroMarcaTexto].filter(Boolean).join(' | ');
       exportToExcel(articulosFiltrados, columns, filename, summary);
     } else {
       const filtroAutorTexto = filtrosAutores.length > 0 ? `Autores: ${filtrosAutores.join(', ')}` : '';
-      const summary = [busquedaAplicada ? `Filtro: ${busquedaAplicada}` : '', filtroAutorTexto].filter(Boolean).join(' | ');
+      const filtroMarcaTexto = filtrosMarcas.length > 0 ? `Marcas: ${filtrosMarcas.join(', ')}` : '';
+      const summary = [busquedaAplicada ? `Filtro: ${busquedaAplicada}` : '', filtroAutorTexto, filtroMarcaTexto].filter(Boolean).join(' | ');
       await exportToPdf(articulosFiltrados, columns, filename, titulo, summary);
     }
   };
@@ -405,105 +426,98 @@ const TablaStockPuntoVenta: React.FC<Props> = ({
           </Box>
 
           {/* Right: Filters */}
-          <Box display="flex" alignItems="flex-start" gap={2} flexWrap="nowrap" sx={{ flexGrow: 1 }}>
-            <Autocomplete
-              multiple
-              disableCloseOnSelect
-              options={opcionesProveedores}
-              getOptionLabel={(option) => option.Nombre || ''}
-              value={filtrosProveedores}
-              isOptionEqualToValue={(option, value) => option.IdProveedor === value.IdProveedor}
-              onChange={(_, newValue) => { setFiltrosProveedores(newValue); setPage(0); }}
-              fullWidth
-              renderOption={(props, option, { selected }) => (
-                <li {...props}>
-                  <Checkbox
-                    icon={<CheckBoxOutlineBlankIcon fontSize="small" />}
-                    checkedIcon={<CheckBoxIcon fontSize="small" />}
-                    style={{ marginRight: 8 }}
-                    checked={selected}
-                  />
-                  {option.Nombre}
-                </li>
-              )}
-              sx={{
-                flexBasis: '50%',
-                flexGrow: 1,
-                '& .MuiOutlinedInput-root': { borderRadius: 1 }
-              }}
-              renderTags={(value, getTagProps) =>
-                value.map((option: any, index: number) => (
-                  <Chip
-                    key={option.IdProveedor}
-                    variant="outlined"
-                    label={option.Nombre}
-                    size="small"
-                    {...getTagProps({ index })}
-                    sx={{
-                      borderColor: alpha('#1565c0', 0.3),
-                      color: '#1565c0',
-                      bgcolor: alpha('#1565c0', 0.05),
-                      borderRadius: 1,
-                    }}
-                  />
-                ))
-              }
-              renderInput={(params) => <TextField {...params} label="Proveedores" size="small" />}
-            />
-            <Autocomplete
-              multiple
-              disableCloseOnSelect
-              options={opcionesRubros}
-              getOptionLabel={(option) => option.nombre || ''}
-              value={filtrosRubros}
-              isOptionEqualToValue={(option, value) => option.id === value.id}
-              onChange={(_, newValue) => { setFiltrosRubros(newValue); setPage(0); }}
-              fullWidth
-              renderOption={(props, option, { selected }) => (
-                <li {...props}>
-                  <Checkbox
-                    icon={<CheckBoxOutlineBlankIcon fontSize="small" />}
-                    checkedIcon={<CheckBoxIcon fontSize="small" />}
-                    style={{ marginRight: 8 }}
-                    checked={selected}
-                  />
-                  {option.nombre}
-                </li>
-              )}
-              sx={{
-                flexBasis: '50%',
-                flexGrow: 1,
-                '& .MuiOutlinedInput-root': { borderRadius: 1 }
-              }}
-              renderTags={(value, getTagProps) =>
-                value.map((option: any, index: number) => (
-                  <Chip
-                    key={option.id}
-                    variant="outlined"
-                    label={option.nombre}
-                    size="small"
-                    {...getTagProps({ index })}
-                    sx={{
-                      borderColor: alpha(theme.primary, 0.3),
-                      color: theme.primary,
-                      bgcolor: alpha(theme.primary, 0.05),
-                      borderRadius: 1,
-                    }}
-                  />
-                ))
-              }
-              renderInput={(params) => <TextField {...params} label="Rubros" size="small" />}
-            />
-            {mostrarFiltroAutor && (
+          <Box display="flex" flexDirection="column" gap={2} sx={{ flexGrow: 1, minWidth: 0 }}>
+            <Box display="flex" alignItems="flex-start" gap={2} flexWrap="nowrap" sx={{ minWidth: 0 }}>
               <Autocomplete
                 multiple
                 disableCloseOnSelect
-                options={autoresDisponibles}
-                value={filtrosAutores}
-                onChange={(_, newValue) => {
-                  setFiltrosAutores(newValue);
-                  setPage(0);
-                }}
+                options={opcionesProveedores}
+                getOptionLabel={(option) => option.Nombre || ''}
+                value={filtrosProveedores}
+                isOptionEqualToValue={(option, value) => option.IdProveedor === value.IdProveedor}
+                onChange={(_, newValue) => { setFiltrosProveedores(newValue); setPage(0); }}
+                fullWidth
+                renderOption={(props, option, { selected }) => (
+                  <li {...props}>
+                    <Checkbox
+                      icon={<CheckBoxOutlineBlankIcon fontSize="small" />}
+                      checkedIcon={<CheckBoxIcon fontSize="small" />}
+                      style={{ marginRight: 8 }}
+                      checked={selected}
+                    />
+                    {option.Nombre}
+                  </li>
+                )}
+                sx={{ flex: '1 1 0', minWidth: 0, '& .MuiOutlinedInput-root': { borderRadius: 1 } }}
+                renderTags={(value, getTagProps) =>
+                  value.map((option: any, index: number) => (
+                    <Chip
+                      key={option.IdProveedor}
+                      variant="outlined"
+                      label={option.Nombre}
+                      size="small"
+                      {...getTagProps({ index })}
+                      sx={{
+                        borderColor: alpha('#1565c0', 0.3),
+                        color: '#1565c0',
+                        bgcolor: alpha('#1565c0', 0.05),
+                        borderRadius: 1,
+                      }}
+                    />
+                  ))
+                }
+                renderInput={(params) => <TextField {...params} label="Proveedores" size="small" />}
+              />
+              <Autocomplete
+                multiple
+                disableCloseOnSelect
+                options={opcionesRubros}
+                getOptionLabel={(option) => option.nombre || ''}
+                value={filtrosRubros}
+                isOptionEqualToValue={(option, value) => option.id === value.id}
+                onChange={(_, newValue) => { setFiltrosRubros(newValue); setPage(0); }}
+                fullWidth
+                renderOption={(props, option, { selected }) => (
+                  <li {...props}>
+                    <Checkbox
+                      icon={<CheckBoxOutlineBlankIcon fontSize="small" />}
+                      checkedIcon={<CheckBoxIcon fontSize="small" />}
+                      style={{ marginRight: 8 }}
+                      checked={selected}
+                    />
+                    {option.nombre}
+                  </li>
+                )}
+                sx={{ flex: '1 1 0', minWidth: 0, '& .MuiOutlinedInput-root': { borderRadius: 1 } }}
+                renderTags={(value, getTagProps) =>
+                  value.map((option: any, index: number) => (
+                    <Chip
+                      key={option.id}
+                      variant="outlined"
+                      label={option.nombre}
+                      size="small"
+                      {...getTagProps({ index })}
+                      sx={{
+                        borderColor: alpha(theme.primary, 0.3),
+                        color: theme.primary,
+                        bgcolor: alpha(theme.primary, 0.05),
+                        borderRadius: 1,
+                      }}
+                    />
+                  ))
+                }
+                renderInput={(params) => <TextField {...params} label="Rubros" size="small" />}
+              />
+            </Box>
+
+            <Box display="flex" alignItems="flex-start" gap={2} flexWrap="nowrap" sx={{ minWidth: 0 }}>
+              <Autocomplete
+                multiple
+                disableCloseOnSelect
+                options={marcasDisponibles}
+                value={filtrosMarcas}
+                onChange={(_, newValue) => { setFiltrosMarcas(newValue); setPage(0); }}
+                fullWidth
                 renderOption={(props, option, { selected }) => (
                   <li {...props}>
                     <Checkbox
@@ -515,7 +529,7 @@ const TablaStockPuntoVenta: React.FC<Props> = ({
                     {option}
                   </li>
                 )}
-                sx={{ minWidth: 260, '& .MuiOutlinedInput-root': { borderRadius: 1 } }}
+                sx={{ flex: '1 1 0', minWidth: 0, '& .MuiOutlinedInput-root': { borderRadius: 1 } }}
                 renderTags={(value, getTagProps) =>
                   value.map((option, index) => (
                     <Chip
@@ -525,17 +539,61 @@ const TablaStockPuntoVenta: React.FC<Props> = ({
                       size="small"
                       {...getTagProps({ index })}
                       sx={{
-                        borderColor: alpha('#6a1b9a', 0.3),
-                        color: '#6a1b9a',
-                        bgcolor: alpha('#6a1b9a', 0.05),
+                        borderColor: alpha('#455a64', 0.3),
+                        color: '#455a64',
+                        bgcolor: alpha('#455a64', 0.05),
                         borderRadius: 1,
                       }}
                     />
                   ))
                 }
-                renderInput={(params) => <TextField {...params} label="Autores (Libros)" size="small" />}
+                renderInput={(params) => <TextField {...params} label="Marcas" size="small" />}
               />
-            )}
+              {mostrarFiltroAutor ? (
+                <Autocomplete
+                  multiple
+                  disableCloseOnSelect
+                  options={autoresDisponibles}
+                  value={filtrosAutores}
+                  onChange={(_, newValue) => {
+                    setFiltrosAutores(newValue);
+                    setPage(0);
+                  }}
+                  renderOption={(props, option, { selected }) => (
+                    <li {...props}>
+                      <Checkbox
+                        icon={<CheckBoxOutlineBlankIcon fontSize="small" />}
+                        checkedIcon={<CheckBoxIcon fontSize="small" />}
+                        style={{ marginRight: 8 }}
+                        checked={selected}
+                      />
+                      {option}
+                    </li>
+                  )}
+                  sx={{ flex: '1 1 0', minWidth: 0, '& .MuiOutlinedInput-root': { borderRadius: 1 } }}
+                  renderTags={(value, getTagProps) =>
+                    value.map((option, index) => (
+                      <Chip
+                        key={option}
+                        variant="outlined"
+                        label={option}
+                        size="small"
+                        {...getTagProps({ index })}
+                        sx={{
+                          borderColor: alpha('#6a1b9a', 0.3),
+                          color: '#6a1b9a',
+                          bgcolor: alpha('#6a1b9a', 0.05),
+                          borderRadius: 1,
+                        }}
+                      />
+                    ))
+                  }
+                  renderInput={(params) => <TextField {...params} label="Autores (Libros)" size="small" />}
+                />
+              ) : (
+                <Box sx={{ flex: '1 1 0', minWidth: 0 }} />
+              )}
+            </Box>
           </Box>
         </Box>
 

@@ -82,6 +82,7 @@ type FiltrosServidor = {
   descripcion?: string;
   autor?: string;
   autores?: string[];
+  marcas?: string[];
   pagina?: number;
   limite?: number;
   ordenarPor?: 'Descripcion' | 'Codigo' | 'PrecioVenta' | 'Rubro';
@@ -214,6 +215,7 @@ const TablaArticulos: React.FC<ArticulosTableProps> = ({
     codigo: initialServerFilters?.codigo ?? '',
     descripcion: initialServerFilters?.descripcion ?? '',
     autores: initialServerFilters?.autores ?? [],
+    marcas: initialServerFilters?.marcas ?? [],
     rubro: initialServerFilters?.rubro ?? '',
     proveedor: initialServerFilters?.proveedor ?? '',
     estado: initialServerFilters?.estado ?? '',
@@ -260,6 +262,9 @@ const TablaArticulos: React.FC<ArticulosTableProps> = ({
     autor: undefined,
     autores: (controlledFilters?.autores ?? localFilters.autores)?.length
       ? (controlledFilters?.autores ?? localFilters.autores)
+      : undefined,
+    marcas: (controlledFilters?.marcas ?? localFilters.marcas)?.length
+      ? (controlledFilters?.marcas ?? localFilters.marcas)
       : undefined,
     rubro: (controlledFilters?.rubro ?? localFilters.rubro) || undefined,
     pagina: controlledFilters?.pagina ?? page,
@@ -462,6 +467,18 @@ const TablaArticulos: React.FC<ArticulosTableProps> = ({
   // const { data: statsData } = useQuery<{ estadisticasArticulos?: { totalUnidades?: number } }>(GET_ESTADISTICAS_ARTICULOS, { fetchPolicy: 'cache-first' });
 
   const articulosRaw: Articulo[] = (data?.buscarArticulos?.articulos ?? []).filter((a): a is Articulo => !!a);
+  const marcasDisponibles = useMemo(() => {
+    const marcasSet = new Set<string>();
+    for (const art of articulosRaw) {
+      const marca = String(art.Marca || '').trim();
+      if (marca) marcasSet.add(marca);
+    }
+    const seleccionadas = controlledFilters?.marcas ?? localFilters.marcas ?? [];
+    for (const marca of seleccionadas) {
+      if (marca?.trim()) marcasSet.add(marca.trim());
+    }
+    return Array.from(marcasSet).sort((a, b) => a.localeCompare(b, 'es'));
+  }, [articulosRaw, controlledFilters?.marcas, localFilters.marcas]);
   const autoresDisponibles = useMemo(() => {
     const autoresSet = new Set<string>();
     for (const art of articulosRaw) {
@@ -476,8 +493,14 @@ const TablaArticulos: React.FC<ArticulosTableProps> = ({
     return Array.from(autoresSet).sort((a, b) => a.localeCompare(b, 'es'));
   }, [articulosRaw, controlledFilters?.autores, localFilters.autores]);
   const searchTerm = (variablesQuery.filtros.busqueda || '').toString().trim().toLowerCase();
+  const articulosFiltradosPorMarca = useMemo(() => {
+    const marcasActivas = controlledFilters?.marcas ?? localFilters.marcas ?? [];
+    if (!marcasActivas.length) return articulosRaw;
+    const marcasSet = new Set(marcasActivas.map((m) => m.trim().toLowerCase()).filter(Boolean));
+    return articulosRaw.filter((a) => marcasSet.has(String(a.Marca || '').trim().toLowerCase()));
+  }, [articulosRaw, controlledFilters?.marcas, localFilters.marcas]);
   const articulos: Articulo[] = useMemo(() => {
-    if (!searchTerm) return [...articulosRaw].sort((a, b) => (a.Codigo || '').localeCompare(b.Codigo || ''));
+    if (!searchTerm) return [...articulosFiltradosPorMarca].sort((a, b) => (a.Codigo || '').localeCompare(b.Codigo || ''));
 
     const score = (cod?: string) => {
       const c = (cod || '').toString().toLowerCase();
@@ -488,11 +511,11 @@ const TablaArticulos: React.FC<ArticulosTableProps> = ({
       return 3;
     };
 
-    return [...articulosRaw]
+    return [...articulosFiltradosPorMarca]
       .map((a) => ({ a, s: score(a.Codigo) }))
       .sort((x, y) => x.s - y.s || (x.a.Codigo || '').localeCompare(y.a.Codigo || ''))
       .map((x) => x.a);
-  }, [articulosRaw, searchTerm]);
+  }, [articulosFiltradosPorMarca, searchTerm]);
   const total: number = data?.buscarArticulos?.total ?? 0;
   const estadoActual = controlledFilters?.estado ?? localFilters.estado;
 
@@ -645,6 +668,7 @@ const TablaArticulos: React.FC<ArticulosTableProps> = ({
         codigo: '',
         descripcion: '',
         autores: [],
+        marcas: [],
         rubro: '',
         proveedor: '',
         estado: '',
@@ -1158,126 +1182,128 @@ const TablaArticulos: React.FC<ArticulosTableProps> = ({
           </Button>
         </Box>
 
-        {/* Right: Combos (Proveedor -> Rubro -> Autor) */}
-        <Box display="flex" alignItems="flex-start" gap={2} flexWrap="nowrap" sx={{ flexGrow: 1, minWidth: 0 }}>
-          {/* --- Proveedores --- */}
-          <Autocomplete
-            multiple
-            disableCloseOnSelect
-            id="checkboxes-proveedores"
-            options={proveedoresFiltradosLista}
-            getOptionLabel={(option: any) => option.Nombre || ''}
-            value={proveedoresFiltradosLista.filter((p: any) => {
-              const currentIds = controlledFilters?.proveedorIds ?? localFilters.proveedorIds ?? [];
-              return currentIds.includes(Number(p.IdProveedor));
-            })}
-            onChange={(_, newValue) => {
-              const newIds = newValue.map((v: any) => Number(v.IdProveedor));
-              if (controlledFilters) {
-                onFiltersChange?.({ ...filtrosServidor, proveedorIds: newIds, pagina: 0 });
-              } else {
-                setLocalFilters(prev => ({ ...prev, proveedorIds: newIds }));
-                setPage(0);
-              }
-            }}
-            renderOption={(props, option: any, { selected }) => (
-              <li {...props}>
-                <Checkbox
-                  icon={<CheckBoxOutlineBlankIcon fontSize="small" />}
-                  checkedIcon={<CheckBoxIcon fontSize="small" />}
-                  style={{ marginRight: 8 }}
-                  checked={selected}
-                />
-                {option.Nombre}
-              </li>
-            )}
-            fullWidth
-            sx={{ flex: '1 1 0', minWidth: 0 }}
-            renderTags={(value, getTagProps) =>
-              value.map((option: any, index: number) => (
-                <Chip
-                  key={option.IdProveedor}
-                  variant="outlined"
-                  label={option.Nombre}
-                  size="small"
-                  {...getTagProps({ index })}
-                  sx={{
-                    borderColor: alpha('#1565c0', 0.3),
-                    color: '#1565c0',
-                    bgcolor: alpha('#1565c0', 0.05),
-                    borderRadius: 1,
-                  }}
-                />
-              ))
-            }
-            renderInput={(params) => <TextField {...params} label="Proveedores" size="small" placeholder="Seleccionar..." sx={{ bgcolor: 'white' }} />}
-          />
-
-          {/* --- Rubros --- */}
-          <Autocomplete
-            multiple
-            disableCloseOnSelect
-            id="checkboxes-rubros"
-            options={rubrosFiltrados}
-            getOptionLabel={(option: any) => option.nombre || option.Rubro || ''}
-            value={rubrosFiltrados.filter((r: any) => {
-              const currentIds = controlledFilters?.rubroIds ?? localFilters.rubroIds ?? [];
-              return currentIds.includes(Number(r.id));
-            })}
-            onChange={(_, newValue) => {
-              const newIds = newValue.map((v: any) => Number(v.id));
-              if (controlledFilters) {
-                onFiltersChange?.({ ...filtrosServidor, rubroIds: newIds, pagina: 0 });
-              } else {
-                setLocalFilters(prev => ({ ...prev, rubroIds: newIds }));
-                setPage(0);
-              }
-            }}
-            renderOption={(props, option: any, { selected }) => (
-              <li {...props}>
-                <Checkbox
-                  icon={<CheckBoxOutlineBlankIcon fontSize="small" />}
-                  checkedIcon={<CheckBoxIcon fontSize="small" />}
-                  style={{ marginRight: 8 }}
-                  checked={selected}
-                />
-                {option.nombre || option.Rubro}
-              </li>
-            )}
-            fullWidth
-            sx={{ flex: '1 1 0', minWidth: 0 }}
-            renderTags={(value, getTagProps) =>
-              value.map((option: any, index: number) => (
-                <Chip
-                  key={option.id}
-                  variant="outlined"
-                  label={option.nombre || option.Rubro}
-                  size="small"
-                  {...getTagProps({ index })}
-                  sx={{
-                    borderColor: alpha(verdeMilitar.primary, 0.3),
-                    color: verdeMilitar.primary,
-                    bgcolor: alpha(verdeMilitar.primary, 0.05),
-                    borderRadius: 1,
-                  }}
-                />
-              ))
-            }
-            renderInput={(params) => <TextField {...params} label="Rubros" size="small" placeholder="Seleccionar..." sx={{ bgcolor: 'white' }} />}
-          />
-
-          {mostrarFiltroAutor && (
+        {/* Right: Combos en 2 filas (Marca debajo de Proveedores / Autor debajo de Rubros) */}
+        <Box display="flex" flexDirection="column" gap={2} sx={{ flexGrow: 1, minWidth: 0 }}>
+          <Box display="flex" alignItems="flex-start" gap={2} flexWrap="nowrap" sx={{ minWidth: 0 }}>
+            {/* --- Proveedores --- */}
             <Autocomplete
               multiple
               disableCloseOnSelect
-              id="checkboxes-autores"
-              options={autoresDisponibles}
-              value={controlledFilters?.autores ?? localFilters.autores ?? []}
+              id="checkboxes-proveedores"
+              options={proveedoresFiltradosLista}
+              getOptionLabel={(option: any) => option.Nombre || ''}
+              value={proveedoresFiltradosLista.filter((p: any) => {
+                const currentIds = controlledFilters?.proveedorIds ?? localFilters.proveedorIds ?? [];
+                return currentIds.includes(Number(p.IdProveedor));
+              })}
+              onChange={(_, newValue) => {
+                const newIds = newValue.map((v: any) => Number(v.IdProveedor));
+                if (controlledFilters) {
+                  onFiltersChange?.({ ...filtrosServidor, proveedorIds: newIds, pagina: 0 });
+                } else {
+                  setLocalFilters(prev => ({ ...prev, proveedorIds: newIds }));
+                  setPage(0);
+                }
+              }}
+              renderOption={(props, option: any, { selected }) => (
+                <li {...props}>
+                  <Checkbox
+                    icon={<CheckBoxOutlineBlankIcon fontSize="small" />}
+                    checkedIcon={<CheckBoxIcon fontSize="small" />}
+                    style={{ marginRight: 8 }}
+                    checked={selected}
+                  />
+                  {option.Nombre}
+                </li>
+              )}
+              fullWidth
+              sx={{ flex: '1 1 0', minWidth: 0 }}
+              renderTags={(value, getTagProps) =>
+                value.map((option: any, index: number) => (
+                  <Chip
+                    key={option.IdProveedor}
+                    variant="outlined"
+                    label={option.Nombre}
+                    size="small"
+                    {...getTagProps({ index })}
+                    sx={{
+                      borderColor: alpha('#1565c0', 0.3),
+                      color: '#1565c0',
+                      bgcolor: alpha('#1565c0', 0.05),
+                      borderRadius: 1,
+                    }}
+                  />
+                ))
+              }
+              renderInput={(params) => <TextField {...params} label="Proveedores" size="small" placeholder="Seleccionar..." sx={{ bgcolor: 'white' }} />}
+            />
+
+            {/* --- Rubros --- */}
+            <Autocomplete
+              multiple
+              disableCloseOnSelect
+              id="checkboxes-rubros"
+              options={rubrosFiltrados}
+              getOptionLabel={(option: any) => option.nombre || option.Rubro || ''}
+              value={rubrosFiltrados.filter((r: any) => {
+                const currentIds = controlledFilters?.rubroIds ?? localFilters.rubroIds ?? [];
+                return currentIds.includes(Number(r.id));
+              })}
+              onChange={(_, newValue) => {
+                const newIds = newValue.map((v: any) => Number(v.id));
+                if (controlledFilters) {
+                  onFiltersChange?.({ ...filtrosServidor, rubroIds: newIds, pagina: 0 });
+                } else {
+                  setLocalFilters(prev => ({ ...prev, rubroIds: newIds }));
+                  setPage(0);
+                }
+              }}
+              renderOption={(props, option: any, { selected }) => (
+                <li {...props}>
+                  <Checkbox
+                    icon={<CheckBoxOutlineBlankIcon fontSize="small" />}
+                    checkedIcon={<CheckBoxIcon fontSize="small" />}
+                    style={{ marginRight: 8 }}
+                    checked={selected}
+                  />
+                  {option.nombre || option.Rubro}
+                </li>
+              )}
+              fullWidth
+              sx={{ flex: '1 1 0', minWidth: 0 }}
+              renderTags={(value, getTagProps) =>
+                value.map((option: any, index: number) => (
+                  <Chip
+                    key={option.id}
+                    variant="outlined"
+                    label={option.nombre || option.Rubro}
+                    size="small"
+                    {...getTagProps({ index })}
+                    sx={{
+                      borderColor: alpha(verdeMilitar.primary, 0.3),
+                      color: verdeMilitar.primary,
+                      bgcolor: alpha(verdeMilitar.primary, 0.05),
+                      borderRadius: 1,
+                    }}
+                  />
+                ))
+              }
+              renderInput={(params) => <TextField {...params} label="Rubros" size="small" placeholder="Seleccionar..." sx={{ bgcolor: 'white' }} />}
+            />
+          </Box>
+
+          <Box display="flex" alignItems="flex-start" gap={2} flexWrap="nowrap" sx={{ minWidth: 0 }}>
+            <Autocomplete
+              multiple
+              disableCloseOnSelect
+              id="checkboxes-marcas"
+              options={marcasDisponibles}
+              value={controlledFilters?.marcas ?? localFilters.marcas ?? []}
               onChange={(_, newValue) => {
                 if (controlledFilters) {
-                  onFiltersChange?.({ ...filtrosServidor, autores: newValue, pagina: 0 });
+                  onFiltersChange?.({ ...filtrosServidor, marcas: newValue, pagina: 0 });
                 } else {
-                  setLocalFilters((prev) => ({ ...prev, autores: newValue }));
+                  setLocalFilters((prev) => ({ ...prev, marcas: newValue }));
                   setPage(0);
                 }
               }}
@@ -1292,11 +1318,8 @@ const TablaArticulos: React.FC<ArticulosTableProps> = ({
                   {option}
                 </li>
               )}
-              sx={{
-                flex: '1 1 0',
-                minWidth: 0,
-                bgcolor: 'white',
-              }}
+              fullWidth
+              sx={{ flex: '1 1 0', minWidth: 0, bgcolor: 'white' }}
               renderTags={(value, getTagProps) =>
                 value.map((option, index) => (
                   <Chip
@@ -1306,9 +1329,9 @@ const TablaArticulos: React.FC<ArticulosTableProps> = ({
                     size="small"
                     {...getTagProps({ index })}
                     sx={{
-                      borderColor: alpha('#6a1b9a', 0.3),
-                      color: '#6a1b9a',
-                      bgcolor: alpha('#6a1b9a', 0.05),
+                      borderColor: alpha('#455a64', 0.3),
+                      color: '#455a64',
+                      bgcolor: alpha('#455a64', 0.05),
                       borderRadius: 1,
                     }}
                   />
@@ -1317,14 +1340,72 @@ const TablaArticulos: React.FC<ArticulosTableProps> = ({
               renderInput={(params) => (
                 <TextField
                   {...params}
-                  label="Autores (Libros)"
+                  label="Marcas"
                   size="small"
                   placeholder="Seleccionar..."
                   sx={{ bgcolor: 'white' }}
                 />
               )}
             />
-          )}
+
+            {mostrarFiltroAutor ? (
+              <Autocomplete
+                multiple
+                disableCloseOnSelect
+                id="checkboxes-autores"
+                options={autoresDisponibles}
+                value={controlledFilters?.autores ?? localFilters.autores ?? []}
+                onChange={(_, newValue) => {
+                  if (controlledFilters) {
+                    onFiltersChange?.({ ...filtrosServidor, autores: newValue, pagina: 0 });
+                  } else {
+                    setLocalFilters((prev) => ({ ...prev, autores: newValue }));
+                    setPage(0);
+                  }
+                }}
+                renderOption={(props, option, { selected }) => (
+                  <li {...props}>
+                    <Checkbox
+                      icon={<CheckBoxOutlineBlankIcon fontSize="small" />}
+                      checkedIcon={<CheckBoxIcon fontSize="small" />}
+                      style={{ marginRight: 8 }}
+                      checked={selected}
+                    />
+                    {option}
+                  </li>
+                )}
+                sx={{ flex: '1 1 0', minWidth: 0, bgcolor: 'white' }}
+                renderTags={(value, getTagProps) =>
+                  value.map((option, index) => (
+                    <Chip
+                      key={option}
+                      variant="outlined"
+                      label={option}
+                      size="small"
+                      {...getTagProps({ index })}
+                      sx={{
+                        borderColor: alpha('#6a1b9a', 0.3),
+                        color: '#6a1b9a',
+                        bgcolor: alpha('#6a1b9a', 0.05),
+                        borderRadius: 1,
+                      }}
+                    />
+                  ))
+                }
+                renderInput={(params) => (
+                  <TextField
+                    {...params}
+                    label="Autores (Libros)"
+                    size="small"
+                    placeholder="Seleccionar..."
+                    sx={{ bgcolor: 'white' }}
+                  />
+                )}
+              />
+            ) : (
+              <Box sx={{ flex: '1 1 0', minWidth: 0 }} />
+            )}
+          </Box>
         </Box>
       </Box>
     </Box>
