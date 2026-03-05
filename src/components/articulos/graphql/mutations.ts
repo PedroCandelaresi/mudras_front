@@ -25,4 +25,9 @@ export const ELIMINAR_ARTICULO = gql`
   }
 `;
 
+export const REACTIVAR_ARTICULO = gql`
+  mutation ReactivarArticulo($id: Int!) {
+    reactivarArticulo(id: $id)
+  }
+`;
 

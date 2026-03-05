@@ -30,7 +30,7 @@ import CheckBoxOutlineBlankIcon from '@mui/icons-material/CheckBoxOutlineBlank';
 import CheckBoxIcon from '@mui/icons-material/CheckBox';
 
 import { alpha, darken } from '@mui/material/styles';
-import { useQuery, useApolloClient } from '@apollo/client/react';
+import { useQuery, useApolloClient, useMutation } from '@apollo/client/react';
 import {
   IconSearch, IconClipboardList, IconRefresh, IconPhone, IconMail,
   IconEdit, IconTrash, IconEye, IconPlus, IconDotsVertical,
@@ -41,6 +41,7 @@ import MudrasLoader from '@/components/ui/MudrasLoader';
 import PaginacionMudras from '@/components/ui/PaginacionMudras';
 import { Icon } from '@iconify/react';
 import { BUSCAR_ARTICULOS, GET_ESTADISTICAS_ARTICULOS } from '@/components/articulos/graphql/queries';
+import { REACTIVAR_ARTICULO } from '@/components/articulos/graphql/mutations';
 import { GET_RUBROS } from '@/components/rubros/graphql/queries';
 import { GET_PROVEEDORES } from '@/components/proveedores/graphql/queries';
 import type { Articulo } from '@/app/interfaces/mudras.types';
@@ -90,6 +91,7 @@ type FiltrosServidor = {
   soloConStock?: boolean;
   soloStockBajo?: boolean;
   soloSinStock?: boolean;
+  soloBaja?: boolean;
   soloEnPromocion?: boolean;
   rubro?: string;
   proveedor?: string;
@@ -105,8 +107,8 @@ type ArticulosTableProps = {
   title?: string;
   rowsPerPageOptions?: number[];
   defaultPageSize?: number;
-  initialServerFilters?: Partial<FiltrosServidor> & { estado?: 'Sin stock' | 'Bajo stock' | 'Con stock'; marcas?: string[] };
-  controlledFilters?: Partial<FiltrosServidor> & { estado?: 'Sin stock' | 'Bajo stock' | 'Con stock'; marcas?: string[] };
+  initialServerFilters?: Partial<FiltrosServidor> & { estado?: 'Sin stock' | 'Bajo stock' | 'Con stock' | 'Baja'; marcas?: string[] };
+  controlledFilters?: Partial<FiltrosServidor> & { estado?: 'Sin stock' | 'Bajo stock' | 'Con stock' | 'Baja'; marcas?: string[] };
   onFiltersChange?: (filtros: FiltrosServidor & { estado?: string }) => void;
   showToolbar?: boolean;
   showGlobalSearch?: boolean;
@@ -255,6 +257,7 @@ const TablaArticulos: React.FC<ArticulosTableProps> = ({
 
   const client = useApolloClient();
   const [exporting, setExporting] = useState(false);
+  const [reactivarArticulo] = useMutation(REACTIVAR_ARTICULO);
 
   const filtrosServidor = useMemo<FiltrosServidor>(() => ({
     busqueda: undefined,
@@ -276,6 +279,7 @@ const TablaArticulos: React.FC<ArticulosTableProps> = ({
     soloConStock: (estadoSeleccionado.includes('con') || estadoSeleccionado.includes('disponible')) ? true : undefined,
     soloStockBajo: (estadoSeleccionado.includes('bajo') || estadoSeleccionado.includes('stock bajo')) ? true : undefined,
     soloSinStock: estadoSeleccionado.includes('sin') ? true : undefined,
+    soloBaja: estadoSeleccionado.includes('baja') ? true : undefined,
     soloEnPromocion: controlledFilters?.soloEnPromocion,
     rubroId: controlledFilters?.rubroId ?? localFilters.rubroId ?? undefined,
     proveedorId: controlledFilters?.proveedorId ?? localFilters.proveedorId ?? undefined,
@@ -725,6 +729,20 @@ const TablaArticulos: React.FC<ArticulosTableProps> = ({
 
   const handleView = onView ?? (useInternalModals ? openDetalles : undefined);
   const handleDelete = onDelete ?? (useInternalModals ? openEliminar : undefined);
+  const mostrandoBajas = estadoSeleccionado.includes('baja');
+
+  const handleReactivate = useCallback(async (a: Articulo) => {
+    const articuloId = Number(a.id);
+    if (!Number.isFinite(articuloId)) return;
+    const confirmar = window.confirm(`¿Reactivar el artículo "${a.Descripcion || a.Codigo || articuloId}"?`);
+    if (!confirmar) return;
+    try {
+      await reactivarArticulo({ variables: { id: articuloId } });
+      await refetchKeepingScroll();
+    } catch (err) {
+      console.error('Error al reactivar artículo:', err);
+    }
+  }, [reactivarArticulo, refetchKeepingScroll]);
 
   const defaultRenderers: Record<ArticuloColumnKey, (a: Articulo) => React.ReactNode> = {
     descripcion: (a) => (
@@ -900,6 +918,16 @@ const TablaArticulos: React.FC<ArticulosTableProps> = ({
       </Typography>
     ),
     estado: (a) => {
+      if (mostrandoBajas) {
+        return (
+          <Chip
+            label="Baja"
+            color="default"
+            size="small"
+            sx={{ fontWeight: 600, borderRadius: 0 }}
+          />
+        );
+      }
       const dep = obtenerStockTotal(a);
       const min = a.StockMinimo || 0;
       return (
@@ -913,26 +941,40 @@ const TablaArticulos: React.FC<ArticulosTableProps> = ({
     },
     acciones: (a) => (
       <Box display="flex" justifyContent="center" gap={0.5}>
-        {handleView && (
-          <Tooltip title="Ver detalles">
-            <IconButton size="small" onClick={() => handleView(a)} sx={{ color: azul.primary, '&:hover': { bgcolor: alpha(azul.primary, 0.1) } }}>
-              <IconEye size={20} />
+        {mostrandoBajas ? (
+          <Tooltip title="Reactivar artículo">
+            <IconButton
+              size="small"
+              onClick={() => handleReactivate(a)}
+              sx={{ color: '#2e7d32', '&:hover': { bgcolor: alpha('#2e7d32', 0.1) } }}
+            >
+              <IconRefresh size={20} />
             </IconButton>
           </Tooltip>
-        )}
-        {onEdit && (
-          <Tooltip title="Editar">
-            <IconButton size="small" onClick={() => onEdit(a)} sx={{ color: verdeMilitar.primary, '&:hover': { bgcolor: alpha(verdeMilitar.primary, 0.1) } }}>
-              <IconEdit size={20} />
-            </IconButton>
-          </Tooltip>
-        )}
-        {handleDelete && (
-          <Tooltip title="Eliminar">
-            <IconButton size="small" onClick={() => handleDelete(a)} sx={{ color: colorAccionEliminar, '&:hover': { bgcolor: alpha(colorAccionEliminar, 0.1) } }}>
-              <IconTrash size={20} />
-            </IconButton>
-          </Tooltip>
+        ) : (
+          <>
+            {handleView && (
+              <Tooltip title="Ver detalles">
+                <IconButton size="small" onClick={() => handleView(a)} sx={{ color: azul.primary, '&:hover': { bgcolor: alpha(azul.primary, 0.1) } }}>
+                  <IconEye size={20} />
+                </IconButton>
+              </Tooltip>
+            )}
+            {onEdit && (
+              <Tooltip title="Editar">
+                <IconButton size="small" onClick={() => onEdit(a)} sx={{ color: verdeMilitar.primary, '&:hover': { bgcolor: alpha(verdeMilitar.primary, 0.1) } }}>
+                  <IconEdit size={20} />
+                </IconButton>
+              </Tooltip>
+            )}
+            {handleDelete && (
+              <Tooltip title="Eliminar">
+                <IconButton size="small" onClick={() => handleDelete(a)} sx={{ color: colorAccionEliminar, '&:hover': { bgcolor: alpha(colorAccionEliminar, 0.1) } }}>
+                  <IconTrash size={20} />
+                </IconButton>
+              </Tooltip>
+            )}
+          </>
         )}
       </Box>
     ),
@@ -1045,6 +1087,7 @@ const TablaArticulos: React.FC<ArticulosTableProps> = ({
       if (f.soloConStock) filterParts.push('Estado: Con Stock');
       if (f.soloStockBajo) filterParts.push('Estado: Poco Stock');
       if (f.soloSinStock) filterParts.push('Estado: Sin Stock');
+      if (f.soloBaja) filterParts.push('Estado: Baja');
 
       const filterSummary = filterParts.join(' | ');
 
@@ -1602,10 +1645,17 @@ const TablaArticulos: React.FC<ArticulosTableProps> = ({
           <Box px={1} pb={1}>
             <Stack spacing={1}>
               <Stack direction="row" spacing={1} flexWrap="wrap">
-                {['Sin stock', 'STOCK BAJO', 'Con stock'].map((op) => {
+                {['Sin stock', 'STOCK BAJO', 'Con stock', 'Baja'].map((op) => {
                   const key = op;
                   const isActive = (controlledFilters?.estado ?? localFilters.estado) === op;
-                  const color = op.toLowerCase().includes('sin') ? 'error' : op.toLowerCase().includes('bajo') ? 'warning' : 'success';
+                  const opLower = op.toLowerCase();
+                  const color = opLower.includes('sin')
+                    ? 'error'
+                    : opLower.includes('bajo')
+                      ? 'warning'
+                      : opLower.includes('baja')
+                        ? 'info'
+                        : 'success';
                   return (
                     <Button
                       key={key}
