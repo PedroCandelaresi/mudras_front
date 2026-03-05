@@ -155,6 +155,7 @@ export const GET_MOVIMIENTOS_STOCK_FULL = gql`
         cantidadAnterior
         cantidadNueva
         motivo
+        referenciaExterna
         puntoOrigen {
           id
           nombre

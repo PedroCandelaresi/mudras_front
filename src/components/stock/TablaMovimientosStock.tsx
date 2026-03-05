@@ -61,6 +61,7 @@ interface MovimientoFull {
   cantidadAnterior?: number;
   cantidadNueva?: number;
   motivo?: string;
+  referenciaExterna?: string;
   puntoOrigen?: PuntoResumen;
   puntoDestino?: PuntoResumen;
   articulo?: {
@@ -101,21 +102,36 @@ const formatearFecha = (fechaISO: string) => {
   }
 };
 
+const isBajaMovimiento = (movimiento: Pick<MovimientoFull, 'tipoMovimiento' | 'motivo' | 'referenciaExterna'>) => {
+  if (movimiento.tipoMovimiento !== 'ajuste') return false;
+
+  const referencia = (movimiento.referenciaExterna || '').toUpperCase();
+  if (referencia.startsWith('BAJA_ARTICULO_')) return true;
+
+  const motivo = (movimiento.motivo || '').toLowerCase();
+  return motivo.includes('baja lógica del artículo') || motivo.includes('baja logica del articulo');
+};
+
+const getTipoDisplay = (movimiento: Pick<MovimientoFull, 'tipoMovimiento' | 'motivo' | 'referenciaExterna'>) =>
+  isBajaMovimiento(movimiento) ? 'baja' : movimiento.tipoMovimiento;
+
 const getTipoLabel = (tipo: string) => {
   switch (tipo) {
     case 'venta': return 'VENTA';
+    case 'baja': return 'BAJA';
     case 'entrada': return 'ENTRADA';
     case 'salida': return 'SALIDA';
     case 'transferencia': return 'TRANSFERENCIA';
     case 'ajuste': return 'AJUSTE';
     case 'devolucion': return 'DEVOLUCIÓN';
-    default: return tipo.toUpperCase();
+    default: return (tipo || '').toUpperCase();
   }
 };
 
 const getTipoColor = (tipo: string) => {
   switch (tipo) {
-    case 'venta': return { bg: '#e8f5e9', text: '#2e7d32' }; // Verde éxito
+    case 'venta': return { bg: '#e8f5e9', text: '#2e7d32' }; // Verde venta
+    case 'baja': return { bg: '#ffebee', text: '#c62828' }; // Rojo baja
     case 'entrada': return { bg: '#e3f2fd', text: '#1565c0' }; // Azul entrada
     case 'salida': return { bg: '#ffebee', text: '#c62828' }; // Rojo salida
     case 'transferencia': return { bg: '#e0f7fa', text: '#006064' }; // Cyan transf
@@ -245,7 +261,7 @@ const TablaMovimientosStock = () => {
 
       const columns: ExportColumn<any>[] = [
         { header: 'Fecha', key: (item) => formatearFecha(item.fechaMovimiento), width: 22 },
-        { header: 'Tipo', key: (item) => getTipoLabel(item.tipoMovimiento), width: 15 },
+        { header: 'Tipo', key: (item) => getTipoLabel(getTipoDisplay(item)), width: 15 },
         { header: 'Artículo', key: (item) => item.articulo ? `${item.articulo.Descripcion} (${item.articulo.Codigo})` : 'Eliminado', width: 40 },
         { header: 'Origen', key: (item) => item.puntoOrigen?.nombre || '-', width: 20 },
         { header: 'Destino', key: (item) => item.puntoDestino?.nombre || '-', width: 20 },
@@ -521,7 +537,8 @@ const TablaMovimientosStock = () => {
             </TableRow>
           ) : (
             movimientos.map((mov, idx) => {
-              const tipoStyle = getTipoColor(mov.tipoMovimiento);
+              const tipoDisplay = getTipoDisplay(mov);
+              const tipoStyle = getTipoColor(tipoDisplay);
 
               return (
                 <TableRow key={mov.id}>
@@ -537,7 +554,7 @@ const TablaMovimientosStock = () => {
                   {/* Tipo */}
                   <TableCell>
                     <Chip
-                      label={getTipoLabel(mov.tipoMovimiento)}
+                      label={getTipoLabel(tipoDisplay)}
                       size="small"
                       sx={{
                         bgcolor: tipoStyle.bg,
