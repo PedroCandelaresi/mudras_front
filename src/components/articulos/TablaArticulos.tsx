@@ -533,21 +533,6 @@ const TablaArticulos: React.FC<ArticulosTableProps> = ({
     setModalEliminarOpen(true);
   }, []);
 
-  const closeModals = () => {
-    setModalDetallesOpen(false);
-    setModalEliminarOpen(false);
-    setImagenAmpliada(false);
-    setUrlImagenAmpliada(null);
-    setArticuloSeleccionado(null);
-    setTextoConfirmEliminar('');
-    const current = tableContainerRef.current;
-    if (current) {
-      pendingRestoreScrollTopRef.current = current.scrollTop;
-    }
-    // Use the refetch helper that preserves scroll position
-    refetchKeepingScroll();
-  };
-
   const refetchKeepingScroll = useCallback(() => {
     const current = tableContainerRef.current;
     if (current) {
@@ -555,6 +540,18 @@ const TablaArticulos: React.FC<ArticulosTableProps> = ({
     }
     return refetch();
   }, [refetch]);
+
+  const closeModals = useCallback((options?: { refetch?: boolean }) => {
+    setModalDetallesOpen(false);
+    setModalEliminarOpen(false);
+    setImagenAmpliada(false);
+    setUrlImagenAmpliada(null);
+    setArticuloSeleccionado(null);
+    setTextoConfirmEliminar('');
+    if (options?.refetch ?? true) {
+      void refetchKeepingScroll();
+    }
+  }, [refetchKeepingScroll]);
 
   useEffect(() => {
     if (!onDataLoaded) return;
@@ -1767,11 +1764,13 @@ const TablaArticulos: React.FC<ArticulosTableProps> = ({
             />
             <ModalEliminarArticulo
               open={modalEliminarOpen}
-              onClose={closeModals}
+              onClose={() => closeModals({ refetch: false })}
               articulo={articuloSeleccionado as any}
               textoConfirmacion={textoConfirmEliminar}
               setTextoConfirmacion={setTextoConfirmEliminar}
-              onSuccess={() => refetchKeepingScroll()}
+              onSuccess={async () => {
+                await refetchKeepingScroll();
+              }}
             />
           </>
         )

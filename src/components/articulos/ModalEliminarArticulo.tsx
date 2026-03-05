@@ -26,7 +26,7 @@ interface Props {
   articulo: ArticuloMin | null;
   textoConfirmacion: string;
   setTextoConfirmacion: (v: string) => void;
-  onSuccess?: () => void;
+  onSuccess?: () => void | Promise<void>;
 }
 
 const PELIGRO_BASE = '#d32f2f';
@@ -42,7 +42,7 @@ export default function ModalEliminarArticulo({ open, onClose, articulo, textoCo
     if (!textoValido || articuloId == null) return;
     try {
       await eliminarArticulo({ variables: { id: articuloId } });
-      onSuccess?.();
+      await onSuccess?.();
       onClose();
     } catch (err: any) {
       console.error('Error al eliminar artículo:', err);
@@ -60,6 +60,7 @@ export default function ModalEliminarArticulo({ open, onClose, articulo, textoCo
     <Dialog
       open={open}
       onClose={cerrarModalEliminar}
+      disableRestoreFocus
       maxWidth="sm"
       fullWidth
       PaperProps={{
@@ -117,7 +118,7 @@ export default function ModalEliminarArticulo({ open, onClose, articulo, textoCo
             ⚠️ ZONA DE PELIGRO ⚠️
           </Typography>
           <Typography variant="body2" sx={{ opacity: 0.95, fontWeight: 500 }}>
-            Eliminación Permanente de Artículo
+            Baja Lógica de Artículo
           </Typography>
         </Box>
         <IconButton
@@ -156,7 +157,7 @@ export default function ModalEliminarArticulo({ open, onClose, articulo, textoCo
               ¡ATENCIÓN! Esta acción es IRREVERSIBLE
             </Typography>
             <Typography variant="body1" sx={{ mb: 2, fontWeight: 500 }}>
-              Está a punto de eliminar permanentemente el artículo:
+              Está a punto de dar de baja el artículo:
             </Typography>
             <Box
               sx={{
@@ -191,9 +192,9 @@ export default function ModalEliminarArticulo({ open, onClose, articulo, textoCo
               ⚠️ CONSECUENCIAS DE ESTA ACCIÓN:
             </Typography>
             <Typography variant="body2" component="ul" sx={{ mt: 1, pl: 2 }}>
-              <li>¿Estás seguro de que deseas eliminar el artículo &quot;{articulo?.Descripcion}&quot;?</li>
-              <li>Todas las referencias en ventas y stock se perderán o quedarán huérfanas</li>
-              <li>Esta acción NO se puede deshacer</li>
+              <li>¿Estás seguro de que deseas dar de baja el artículo &quot;{articulo?.Descripcion}&quot;?</li>
+              <li>El artículo no aparecerá más en listados y búsquedas del catálogo</li>
+              <li>Se registrará un movimiento de ajuste por baja en historial de stock</li>
             </Typography>
           </Alert>
 
@@ -278,7 +279,7 @@ export default function ModalEliminarArticulo({ open, onClose, articulo, textoCo
             boxShadow: 'none',
           }}
         >
-          {loading ? 'Eliminando...' : 'Eliminar Permanentemente'}
+          {loading ? 'Dando de baja...' : 'Dar de baja artículo'}
         </Button>
       </DialogActions>
     </Dialog>

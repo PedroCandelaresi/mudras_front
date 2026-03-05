@@ -23,6 +23,7 @@ import {
   Autocomplete,
   Checkbox,
   Stack,
+  LinearProgress,
 } from '@mui/material';
 import { alpha } from '@mui/material/styles';
 import type { ArticuloConStockPuntoMudras } from '@/components/puntos-mudras/graphql/queries';
@@ -89,6 +90,8 @@ const TablaStockPuntoVenta: React.FC<Props> = ({
   const [page, setPage] = useState(cachedState?.page ?? 0);
   const [rowsPerPage, setRowsPerPage] = useState(cachedState?.rowsPerPage ?? 50);
   const tableTopRef = React.useRef<HTMLDivElement>(null);
+  const tableContainerRef = React.useRef<HTMLDivElement>(null);
+  const pendingRestoreScrollTopRef = React.useRef<number | null>(null);
   const [filtrosRubros, setFiltrosRubros] = useState<any[]>(cachedState?.filtrosRubros ?? []);
   const [filtrosProveedores, setFiltrosProveedores] = useState<any[]>(cachedState?.filtrosProveedores ?? []);
   const [imagenAmpliada, setImagenAmpliada] = useState(false);
@@ -249,6 +252,26 @@ const TablaStockPuntoVenta: React.FC<Props> = ({
 
     return res;
   }, [articulos, busquedaAplicada, filtrosRubros, filtrosProveedores, filtrosAutores, filtrosMarcas]);
+
+  React.useEffect(() => {
+    if (!loading) return;
+    const current = tableContainerRef.current;
+    if (current) {
+      pendingRestoreScrollTopRef.current = current.scrollTop;
+    }
+  }, [loading]);
+
+  React.useEffect(() => {
+    if (loading) return;
+    const previousScrollTop = pendingRestoreScrollTopRef.current;
+    if (previousScrollTop == null) return;
+    pendingRestoreScrollTopRef.current = null;
+    requestAnimationFrame(() => {
+      if (tableContainerRef.current) {
+        tableContainerRef.current.scrollTop = previousScrollTop;
+      }
+    });
+  }, [loading, articulosFiltrados.length]);
 
   const ejecutarBusqueda = useCallback(() => {
     setBusquedaAplicada((busquedaDraft || '').trim());
@@ -627,7 +650,8 @@ const TablaStockPuntoVenta: React.FC<Props> = ({
               />
 
               <Paper elevation={0} sx={{ border: '1px solid #e0e0e0', borderRadius: 0, overflow: 'hidden' }}>
-                <TableContainer>
+                <TableContainer ref={tableContainerRef} sx={{ overflow: 'auto' }}>
+                  {loading && <LinearProgress color="success" />}
                   <Table size="small" stickyHeader>
                     <TableHead>
                       <TableRow>
@@ -652,7 +676,7 @@ const TablaStockPuntoVenta: React.FC<Props> = ({
                       </TableRow>
                     </TableHead>
                     <TableBody>
-                      {loading ? (
+                      {loading && articulosFiltrados.length === 0 ? (
                         <TableRow>
                           <TableCell colSpan={7} align="center" sx={{ py: 10 }}>
                             <MudrasLoader size={80} text="Cargando stock..." />

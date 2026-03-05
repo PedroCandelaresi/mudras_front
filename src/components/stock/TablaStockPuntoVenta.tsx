@@ -5,7 +5,7 @@ import {
   Box,
   Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
   Paper, Typography, Chip, Tooltip,
-  TextField, Skeleton, MenuItem, IconButton, Button, InputAdornment
+  TextField, Skeleton, MenuItem, IconButton, Button, InputAdornment, LinearProgress
 } from '@mui/material';
 import { Icon } from '@iconify/react';
 
@@ -52,6 +52,8 @@ export default function TablaStockPuntoVenta({
   const [page, setPage] = useState(cachedState?.page ?? 0);
   const [rowsPerPage, setRowsPerPage] = useState(cachedState?.rowsPerPage ?? 50);
   const tableTopRef = React.useRef<HTMLDivElement>(null);
+  const tableContainerRef = React.useRef<HTMLDivElement>(null);
+  const pendingRestoreScrollTopRef = React.useRef<number | null>(null);
 
   useEffect(() => {
     tablaStockPuntoUiStateCache.set(cacheKey, { filtroInput, page, rowsPerPage });
@@ -59,6 +61,10 @@ export default function TablaStockPuntoVenta({
 
   useEffect(() => {
     const cargarStock = async () => {
+      const current = tableContainerRef.current;
+      if (current) {
+        pendingRestoreScrollTopRef.current = current.scrollTop;
+      }
       setLoading(true);
       try {
         const response = await fetch('/api/graphql', {
@@ -94,6 +100,18 @@ export default function TablaStockPuntoVenta({
     cargarStock();
   }, [puntoVenta.id, refetchTrigger]);
 
+  useEffect(() => {
+    if (loading) return;
+    const previousScrollTop = pendingRestoreScrollTopRef.current;
+    if (previousScrollTop == null) return;
+    pendingRestoreScrollTopRef.current = null;
+    requestAnimationFrame(() => {
+      if (tableContainerRef.current) {
+        tableContainerRef.current.scrollTop = previousScrollTop;
+      }
+    });
+  }, [loading, articulos.length]);
+
   const handleModificar = (art: ArticuloStock) => {
     onModificarStock({ ...art, puntoVentaId: puntoVenta.id, puntoVentaNombre: puntoVenta.nombre });
   };
@@ -125,7 +143,7 @@ export default function TablaStockPuntoVenta({
     tableTopRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
-  if (loading) {
+  if (loading && articulos.length === 0) {
     return (
       <Box sx={{ p: 2 }}>
         <Skeleton variant="rectangular" height={50} sx={{ mb: 2 }} />
@@ -216,7 +234,8 @@ export default function TablaStockPuntoVenta({
       />
 
       {/* Tabla */}
-      <TableContainer component={Paper} elevation={0} sx={{ borderRadius: 0, border: '1px solid #e0e0e0' }}>
+      <TableContainer ref={tableContainerRef} component={Paper} elevation={0} sx={{ borderRadius: 0, border: '1px solid #e0e0e0', overflow: 'auto' }}>
+        {loading && <LinearProgress color="success" />}
         <Table size="small">
           <TableHead>
             <TableRow sx={{ bgcolor: '#f5f5f5' }}>

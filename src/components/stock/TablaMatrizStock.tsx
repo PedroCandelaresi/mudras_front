@@ -812,6 +812,7 @@ const TablaMatrizStock: React.FC<TablaMatrizStockProps> = ({ onTransferir }) => 
 
             {/* --- Table --- */}
             <TableContainer ref={tableContainerRef} component={Paper} elevation={0} sx={{ borderRadius: 0, border: '1px solid #e0e0e0' }}>
+                {loading && <LinearProgress color="success" />}
                 <Table size="small">
                     <TableHead>
                         <TableRow>
@@ -833,7 +834,7 @@ const TablaMatrizStock: React.FC<TablaMatrizStockProps> = ({ onTransferir }) => 
                         </TableRow>
                     </TableHead>
                     <TableBody>
-                        {loading ? (
+                        {loading && paginatedData.length === 0 ? (
                             <TableRow><TableCell colSpan={columns.length + 1} align="center" sx={{ py: 5 }}><MudrasLoader /></TableCell></TableRow>
                         ) : matrizData.length === 0 ? (
                             <TableRow><TableCell colSpan={columns.length + 1} align="center" sx={{ py: 5 }}><Typography>No hay datos</Typography></TableCell></TableRow>
