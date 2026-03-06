@@ -39,9 +39,8 @@ import { exportToExcel, exportToPdf, ExportColumn } from '@/utils/exportUtils';
 import {
   OBTENER_HISTORIAL_VENTAS,
   type ObtenerHistorialVentasResponse,
-  OBTENER_USUARIOS_AUTH,
-  type UsuariosAuthResponse,
 } from "@/components/ventas/caja-registradora/graphql/queries";
+import { USUARIOS_CAJA_AUTH_QUERY } from "@/components/usuarios/graphql/queries";
 import SearchToolbar from "@/components/ui/SearchToolbar";
 import PaginacionMudras from "@/components/ui/PaginacionMudras";
 import ModalDetalleVenta from "./ModalDetalleVenta";
@@ -68,6 +67,17 @@ type TablaVentasUiState = {
   medioPago: string;
 };
 
+interface UsuarioCajaAuth {
+  id: string;
+  username?: string | null;
+  email?: string | null;
+  displayName?: string | null;
+}
+
+interface UsuariosCajaAuthResponse {
+  usuariosCajaAuth?: UsuarioCajaAuth[];
+}
+
 const tablaVentasUiStateCache = new Map<string, TablaVentasUiState>();
 
 const ARG_TIMEZONE = "America/Argentina/Buenos_Aires";
@@ -85,6 +95,35 @@ const formatInArgentina = (
   return formatter.format(fecha);
 };
 
+const mapMetodoPagoFiltroToQuery = (metodoPago: string): string => {
+  switch (metodoPago) {
+    case 'TARJETA_DEBITO':
+      return 'DEBITO';
+    case 'TARJETA_CREDITO':
+      return 'CREDITO';
+    case 'QR_MODO':
+    case 'QR_MERCADOPAGO':
+      return 'QR';
+    default:
+      return metodoPago;
+  }
+};
+
+const getMetodoPagoLabel = (metodoPago: string): string => {
+  return {
+    EFECTIVO: 'Efectivo',
+    TARJETA_DEBITO: 'Tarjeta de Débito',
+    TARJETA_CREDITO: 'Tarjeta de Crédito',
+    TRANSFERENCIA: 'Transferencia',
+    QR_MODO: 'QR MODO',
+    QR_MERCADOPAGO: 'QR MercadoPago',
+    CUENTA_CORRIENTE: 'Cuenta Corriente',
+    DEBITO: 'Tarjeta de Débito',
+    CREDITO: 'Tarjeta de Crédito',
+    QR: 'QR',
+  }[metodoPago] || metodoPago;
+};
+
 export function TablaVentas() {
   const tableTopRef = React.useRef<HTMLDivElement>(null);
   const cacheKey = "tabla-ventas";
@@ -96,16 +135,17 @@ export function TablaVentas() {
   const [exporting, setExporting] = useState(false);
   const client = useApolloClient();
 
-  // Query para usuarios
-  const { data: userData } = useQuery<UsuariosAuthResponse>(OBTENER_USUARIOS_AUTH, {
-    variables: { 
-      filtros: { 
-        limite: 100,
-        offset: 0
-      } 
-    },
+  // Query para usuarios (misma fuente que caja)
+  const { data: userData } = useQuery<UsuariosCajaAuthResponse>(USUARIOS_CAJA_AUTH_QUERY, {
     fetchPolicy: 'cache-and-network'
   });
+
+  const usuarios = useMemo(() => {
+    return (userData?.usuariosCajaAuth || []).map((u) => ({
+      id: u.id,
+      label: u.displayName?.trim() || u.username?.trim() || u.email?.trim() || `Usuario ${u.id.substring(0, 6)}`,
+    }));
+  }, [userData]);
 
   // Filters State
   const [fechaDesde, setFechaDesde] = useState<Date | null>(cachedState?.fechaDesde ?? startOfMonth(new Date()));
@@ -121,8 +161,8 @@ export function TablaVentas() {
       fechaDesde: fechaDesde?.toISOString(),
       fechaHasta: fechaHasta?.toISOString(),
       usuarioAuthId: usuarioId || undefined,
-      medioPago: medioPago || undefined,
-      numeroVenta: busqueda || undefined, // Simple integration for search
+      medioPago: (medioPago ? mapMetodoPagoFiltroToQuery(medioPago) : undefined),
+      numeroVenta: busqueda || undefined, // búsqueda por comprobante/código/descripción
     }
   }), [rowsPerPage, page, fechaDesde, fechaHasta, usuarioId, medioPago, busqueda]);
 
@@ -228,23 +268,15 @@ export function TablaVentas() {
       if (f.fechaDesde && f.fechaHasta) {
         filterParts.push(`Período: ${new Date(f.fechaDesde).toLocaleDateString()} - ${new Date(f.fechaHasta).toLocaleDateString()}`);
       }
-      if (f.numeroVenta) filterParts.push(`Comprobante: "${f.numeroVenta}"`);
+      if (f.numeroVenta) filterParts.push(`Búsqueda: "${f.numeroVenta}"`);
       if (f.usuarioAuthId) {
-        const usuarioSeleccionado = (userData?.usuariosAuth?.items || []).find(u => u.id === f.usuarioAuthId);
+        const usuarioSeleccionado = usuarios.find(u => u.id === f.usuarioAuthId);
         if (usuarioSeleccionado) {
-          filterParts.push(`Vendedor: "${usuarioSeleccionado.displayName || usuarioSeleccionado.email}"`);
+          filterParts.push(`Vendedor: "${usuarioSeleccionado.label}"`);
         }
       }
-      if (f.medioPago) {
-        const medioLabel = {
-          'EFECTIVO': 'Efectivo',
-          'TARJETA_CREDITO': 'Tarjeta Crédito',
-          'TARJETA_DEBITO': 'Tarjeta Débito',
-          'TRANSFERENCIA': 'Transferencia',
-          'MERCADO_PAGO': 'Mercado Pago',
-          'CUENTA_CORRIENTE': 'Cuenta Corriente',
-        }[f.medioPago] || f.medioPago;
-        filterParts.push(`Medio Pago: "${medioLabel}"`);
+      if (medioPago) {
+        filterParts.push(`Medio Pago: "${getMetodoPagoLabel(medioPago)}"`);
       }
 
       const filterSummary = filterParts.join(' | ');
@@ -329,7 +361,7 @@ export function TablaVentas() {
           title="Listado de Detalle"
           icon={<IconReceipt style={{ marginRight: 8, verticalAlign: 'middle' }} />}
           baseColor={grisRojizo.primary}
-          placeholder="Buscar por Nº comprobante..."
+          placeholder="Buscar por Nº comprobante, código o descripción..."
           searchValue={busqueda}
           onSearchValueChange={(v) => { setBusqueda(v); setPage(0); }}
           onSubmitSearch={() => setPage(0)}

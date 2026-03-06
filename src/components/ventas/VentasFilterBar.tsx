@@ -1,11 +1,11 @@
 import React from 'react';
-import { Box, Button, TextField, MenuItem, ToggleButton, ToggleButtonGroup, Typography } from '@mui/material';
+import { Box, Button, TextField, MenuItem, ToggleButton, ToggleButtonGroup } from '@mui/material';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { es } from 'date-fns/locale';
 import { useQuery } from '@apollo/client/react';
-import { OBTENER_USUARIOS_AUTH, UsuariosAuthResponse } from './caja-registradora/graphql/queries';
+import { USUARIOS_CAJA_AUTH_QUERY } from '@/components/usuarios/graphql/queries';
 import { grisRojizo } from '@/ui/colores';
 
 export interface VentasFilterBarProps {
@@ -22,6 +22,27 @@ export interface VentasFilterBarProps {
     onFilter: () => void;
 }
 
+interface UsuarioCajaAuth {
+    id: string;
+    username?: string | null;
+    email?: string | null;
+    displayName?: string | null;
+}
+
+interface UsuariosCajaAuthResponse {
+    usuariosCajaAuth?: UsuarioCajaAuth[];
+}
+
+const METODOS_PAGO_CAJA = [
+    { value: 'EFECTIVO', label: 'Efectivo' },
+    { value: 'TARJETA_DEBITO', label: 'Tarjeta de Débito' },
+    { value: 'TARJETA_CREDITO', label: 'Tarjeta de Crédito' },
+    { value: 'TRANSFERENCIA', label: 'Transferencia' },
+    { value: 'QR_MODO', label: 'QR MODO' },
+    { value: 'QR_MERCADOPAGO', label: 'QR MercadoPago' },
+    { value: 'CUENTA_CORRIENTE', label: 'Cuenta Corriente' },
+] as const;
+
 export function VentasFilterBar({
     fechaDesde,
     fechaHasta,
@@ -37,29 +58,21 @@ export function VentasFilterBar({
 }: VentasFilterBarProps) {
     const [quickDate, setQuickDate] = React.useState<'hoy' | 'semana' | 'mes' | null>(null);
 
-    const { data: userData } = useQuery<UsuariosAuthResponse>(OBTENER_USUARIOS_AUTH, {
-        variables: { 
-            filtros: { 
-                limite: 100,
-                offset: 0
-            } 
-        },
+    const { data: userData } = useQuery<UsuariosCajaAuthResponse>(USUARIOS_CAJA_AUTH_QUERY, {
         fetchPolicy: 'cache-and-network'
     });
+
+    const usuarios = React.useMemo(() => {
+        return (userData?.usuariosCajaAuth || []).map((u) => ({
+            id: u.id,
+            label: u.displayName?.trim() || u.username?.trim() || u.email?.trim() || `Usuario ${u.id.substring(0, 6)}`,
+        }));
+    }, [userData]);
 
     const handleQuickDate = (event: React.MouseEvent<HTMLElement>, newAlignment: 'hoy' | 'semana' | 'mes' | null) => {
         setQuickDate(newAlignment);
         onQuickDateChange(newAlignment);
     };
-
-    const mediosPago = [
-        { value: 'EFECTIVO', label: 'Efectivo' },
-        { value: 'TARJETA_CREDITO', label: 'Tarjeta Crédito' },
-        { value: 'TARJETA_DEBITO', label: 'Tarjeta Débito' },
-        { value: 'TRANSFERENCIA', label: 'Transferencia' },
-        { value: 'MERCADO_PAGO', label: 'Mercado Pago' },
-        { value: 'CUENTA_CORRIENTE', label: 'Cuenta Corriente' },
-    ];
 
     return (
         <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={es}>
@@ -109,9 +122,9 @@ export function VentasFilterBar({
                     sx={{ minWidth: 150 }}
                 >
                     <MenuItem value="">Todos los usuarios</MenuItem>
-                    {userData?.usuariosAuth?.items.map((u) => (
+                    {usuarios.map((u) => (
                         <MenuItem key={u.id} value={u.id}>
-                            {u.displayName || u.email}
+                            {u.label}
                         </MenuItem>
                     ))}
                 </TextField>
@@ -125,7 +138,7 @@ export function VentasFilterBar({
                     sx={{ minWidth: 150 }}
                 >
                     <MenuItem value="">Todos</MenuItem>
-                    {mediosPago.map((m) => (
+                    {METODOS_PAGO_CAJA.map((m) => (
                         <MenuItem key={m.value} value={m.value}>
                             {m.label}
                         </MenuItem>
