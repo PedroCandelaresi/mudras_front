@@ -138,7 +138,10 @@ const getMetodoPagoLabel = (metodoPago: string): string => {
 
 const formatMediosPago = (mediosPago?: string[] | null): string => {
   if (!mediosPago || mediosPago.length === 0) return '—';
-  const labels = [...new Set(mediosPago.map((m) => getMetodoPagoLabel(m)).filter(Boolean))];
+  const labels = mediosPago
+    .map((m) => getMetodoPagoLabel(m))
+    .filter(Boolean)
+    .filter((label, index, array) => array.indexOf(label) === index);
   return labels.length > 0 ? labels.join(', ') : '—';
 };
 
