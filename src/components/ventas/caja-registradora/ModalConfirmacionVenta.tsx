@@ -38,6 +38,7 @@ import {
   CREAR_VENTA_CAJA,
   type MetodoPago,
   type MedioPagoCaja,
+  type SubmedioPagoCaja,
   type PagoVenta,
   type CrearVentaCajaResponse,
   type CrearVentaCajaInput,
@@ -241,15 +242,15 @@ export const ModalConfirmacionVenta: React.FC<ModalConfirmacionVentaProps> = ({
     if (!puestoVentaIdSeleccionado || pagos.length === 0 || !usuarioSeleccionado) return;
     if (!puntoValido) return;
 
-    const mapMetodoPago = (m: MetodoPago): MedioPagoCaja | null => {
+    const mapMetodoPago = (m: MetodoPago): { medioPago: MedioPagoCaja; submedioPago?: SubmedioPagoCaja } | null => {
       switch (m) {
-        case 'EFECTIVO': return 'EFECTIVO';
-        case 'TARJETA_DEBITO': return 'DEBITO';
-        case 'TARJETA_CREDITO': return 'CREDITO';
-        case 'TRANSFERENCIA': return 'TRANSFERENCIA';
-        case 'QR_MODO':
-        case 'QR_MERCADOPAGO': return 'QR';
-        case 'CUENTA_CORRIENTE': return 'CUENTA_CORRIENTE';
+        case 'EFECTIVO': return { medioPago: 'EFECTIVO' };
+        case 'TARJETA_DEBITO': return { medioPago: 'DEBITO' };
+        case 'TARJETA_CREDITO': return { medioPago: 'CREDITO' };
+        case 'TRANSFERENCIA': return { medioPago: 'TRANSFERENCIA' };
+        case 'QR_MODO': return { medioPago: 'QR', submedioPago: 'QR_MODO' };
+        case 'QR_MERCADOPAGO': return { medioPago: 'QR', submedioPago: 'QR_MERCADOPAGO' };
+        case 'CUENTA_CORRIENTE': return { medioPago: 'CUENTA_CORRIENTE' };
         case 'CHEQUE':
         case 'OTRO':
         default:
@@ -257,17 +258,22 @@ export const ModalConfirmacionVenta: React.FC<ModalConfirmacionVentaProps> = ({
       }
     };
 
-    const pagosTransformados = pagos.map((p) => ({
-      medioPago: mapMetodoPago(p.metodoPago),
-      monto: p.monto,
-      marcaTarjeta: p.marcaTarjeta,
-      ultimos4Digitos: p.ultimos4Digitos,
-      cuotas: p.cuotas,
-      numeroAutorizacion: p.numeroAutorizacion,
-      numeroComprobante: p.numeroComprobante,
-      observaciones: p.observaciones,
-    })).filter((p) => p.medioPago !== null) as Array<{
+    const pagosTransformados = pagos.map((p) => {
+      const metodoMapeado = mapMetodoPago(p.metodoPago);
+      return {
+        medioPago: metodoMapeado?.medioPago,
+        submedioPago: metodoMapeado?.submedioPago,
+        monto: p.monto,
+        marcaTarjeta: p.marcaTarjeta,
+        ultimos4Digitos: p.ultimos4Digitos,
+        cuotas: p.cuotas,
+        numeroAutorizacion: p.numeroAutorizacion,
+        numeroComprobante: p.numeroComprobante,
+        observaciones: p.observaciones,
+      };
+    }).filter((p) => p.medioPago !== null) as Array<{
       medioPago: MedioPagoCaja;
+      submedioPago?: SubmedioPagoCaja;
       monto: number;
       marcaTarjeta?: string;
       ultimos4Digitos?: string;

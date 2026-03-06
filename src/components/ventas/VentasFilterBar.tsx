@@ -5,6 +5,7 @@ import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { es } from 'date-fns/locale';
 import { useQuery } from '@apollo/client/react';
+import { alpha } from '@mui/material/styles';
 import { USUARIOS_CAJA_AUTH_QUERY } from '@/components/usuarios/graphql/queries';
 import { grisRojizo } from '@/ui/colores';
 
@@ -13,10 +14,12 @@ export interface VentasFilterBarProps {
     fechaHasta: Date | null;
     usuarioId: string;
     medioPago: string;
+    busquedaArticulo: string;
     onFechaDesdeChange: (date: Date | null) => void;
     onFechaHastaChange: (date: Date | null) => void;
     onUsuarioChange: (userId: string) => void;
     onMedioPagoChange: (medio: string) => void;
+    onBusquedaArticuloChange: (value: string) => void;
     onQuickDateChange: (range: 'hoy' | 'semana' | 'mes' | null) => void;
     onClear: () => void;
     onFilter: () => void;
@@ -48,10 +51,12 @@ export function VentasFilterBar({
     fechaHasta,
     usuarioId,
     medioPago,
+    busquedaArticulo,
     onFechaDesdeChange,
     onFechaHastaChange,
     onUsuarioChange,
     onMedioPagoChange,
+    onBusquedaArticuloChange,
     onQuickDateChange,
     onClear,
     onFilter,
@@ -82,8 +87,8 @@ export function VentasFilterBar({
                 gap: 2,
                 flexWrap: 'wrap',
                 p: 2,
-                bgcolor: 'background.paper',
-                borderRadius: 1,
+                bgcolor: '#f9f9f9',
+                borderRadius: 0,
                 border: `1px solid ${grisRojizo.borderInner}`
             }}>
                 <Box display="flex" gap={1} alignItems="center">
@@ -91,13 +96,13 @@ export function VentasFilterBar({
                         label="Desde"
                         value={fechaDesde}
                         onChange={onFechaDesdeChange}
-                        slotProps={{ textField: { size: 'small', sx: { width: 150 } } }}
+                        slotProps={{ textField: { size: 'small', sx: { width: 150, bgcolor: '#fff' } } }}
                     />
                     <DatePicker
                         label="Hasta"
                         value={fechaHasta}
                         onChange={onFechaHastaChange}
-                        slotProps={{ textField: { size: 'small', sx: { width: 150 } } }}
+                        slotProps={{ textField: { size: 'small', sx: { width: 150, bgcolor: '#fff' } } }}
                     />
                 </Box>
 
@@ -106,7 +111,18 @@ export function VentasFilterBar({
                     exclusive
                     onChange={handleQuickDate}
                     size="small"
-                    sx={{ '& .MuiToggleButton-root': { color: grisRojizo.primary, '&.Mui-selected': { bgcolor: grisRojizo.chipBg, color: grisRojizo.textStrong } } }}
+                    sx={{
+                        '& .MuiToggleButton-root': {
+                            color: grisRojizo.primary,
+                            borderRadius: 0,
+                            borderColor: alpha(grisRojizo.primary, 0.2),
+                            bgcolor: '#fff',
+                            '&.Mui-selected': {
+                                bgcolor: alpha(grisRojizo.primary, 0.12),
+                                color: grisRojizo.textStrong
+                            }
+                        }
+                    }}
                 >
                     <ToggleButton value="hoy">Hoy</ToggleButton>
                     <ToggleButton value="semana">Semana</ToggleButton>
@@ -119,7 +135,7 @@ export function VentasFilterBar({
                     size="small"
                     value={usuarioId}
                     onChange={(e) => onUsuarioChange(e.target.value)}
-                    sx={{ minWidth: 150 }}
+                    sx={{ minWidth: 170, bgcolor: '#fff' }}
                 >
                     <MenuItem value="">Todos los usuarios</MenuItem>
                     {usuarios.map((u) => (
@@ -135,7 +151,7 @@ export function VentasFilterBar({
                     size="small"
                     value={medioPago}
                     onChange={(e) => onMedioPagoChange(e.target.value)}
-                    sx={{ minWidth: 150 }}
+                    sx={{ minWidth: 170, bgcolor: '#fff' }}
                 >
                     <MenuItem value="">Todos</MenuItem>
                     {METODOS_PAGO_CAJA.map((m) => (
@@ -145,18 +161,26 @@ export function VentasFilterBar({
                     ))}
                 </TextField>
 
+                <TextField
+                    label="Artículo: código o descripción"
+                    size="small"
+                    value={busquedaArticulo}
+                    onChange={(e) => onBusquedaArticuloChange(e.target.value)}
+                    sx={{ minWidth: 260, bgcolor: '#fff' }}
+                />
+
                 <Box display="flex" gap={1} ml="auto">
                     <Button
                         variant="outlined"
                         onClick={() => { setQuickDate(null); onClear(); }}
-                        sx={{ color: grisRojizo.primary, borderColor: grisRojizo.borderOuter }}
+                        sx={{ color: grisRojizo.primary, borderColor: grisRojizo.borderOuter, borderRadius: 0, textTransform: 'none' }}
                     >
                         Limpiar
                     </Button>
                     <Button
                         variant="contained"
                         onClick={onFilter}
-                        sx={{ bgcolor: grisRojizo.primary, '&:hover': { bgcolor: grisRojizo.primaryHover } }}
+                        sx={{ bgcolor: grisRojizo.primary, borderRadius: 0, textTransform: 'none', '&:hover': { bgcolor: grisRojizo.primaryHover } }}
                     >
                         Filtrar
                     </Button>

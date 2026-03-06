@@ -63,6 +63,10 @@ export type MedioPagoCaja =
   | 'QR'
   | 'CUENTA_CORRIENTE';
 
+export type SubmedioPagoCaja =
+  | 'QR_MODO'
+  | 'QR_MERCADOPAGO';
+
 export type MetodoPago =
   | 'EFECTIVO'
   | 'TARJETA_DEBITO'
@@ -96,6 +100,7 @@ export interface CrearVentaCajaInput {
   }[];
   pagos: {
     medioPago: MedioPagoCaja;
+    submedioPago?: SubmedioPagoCaja;
     monto: number;
     marcaTarjeta?: string;
     ultimos4Digitos?: string;

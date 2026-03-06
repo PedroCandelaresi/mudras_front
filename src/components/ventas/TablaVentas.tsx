@@ -4,8 +4,6 @@ import {
   Button,
   Chip,
   IconButton,
-  Menu,
-  Divider,
   Paper,
   Skeleton,
   Table,
@@ -14,20 +12,13 @@ import {
   TableContainer,
   TableHead,
   TableRow,
-  TextField,
   Tooltip,
   Typography,
-  InputAdornment,
-  MenuItem,
   Card,
   CardContent
 } from "@mui/material";
 import {
-  IconDotsVertical,
   IconEye,
-  IconRefresh,
-  IconSearch,
-  IconEdit,
   IconReceipt,
   IconFileTypePdf,
   IconFileSpreadsheet
@@ -53,6 +44,7 @@ export interface VentaListado {
   nro: string;
   cliente: string;
   usuario: string; // Vendedor
+  mediosPago: string[];
   total: number;
   estado: "PAGADA" | "PENDIENTE" | "CANCELADA";
 }
@@ -61,6 +53,7 @@ type TablaVentasUiState = {
   page: number;
   rowsPerPage: number;
   busqueda: string;
+  busquedaArticulo: string;
   fechaDesde: Date | null;
   fechaHasta: Date | null;
   usuarioId: string;
@@ -109,19 +102,59 @@ const mapMetodoPagoFiltroToQuery = (metodoPago: string): string => {
   }
 };
 
+const mapSubmedioPagoFiltroToQuery = (metodoPago: string): string | undefined => {
+  switch (metodoPago) {
+    case 'QR_MODO':
+      return 'QR_MODO';
+    case 'QR_MERCADOPAGO':
+      return 'QR_MERCADOPAGO';
+    default:
+      return undefined;
+  }
+};
+
 const getMetodoPagoLabel = (metodoPago: string): string => {
+  const normalizado = String(metodoPago || '').toUpperCase();
   return {
     EFECTIVO: 'Efectivo',
     TARJETA_DEBITO: 'Tarjeta de Débito',
     TARJETA_CREDITO: 'Tarjeta de Crédito',
     TRANSFERENCIA: 'Transferencia',
-    QR_MODO: 'QR MODO',
-    QR_MERCADOPAGO: 'QR MercadoPago',
-    CUENTA_CORRIENTE: 'Cuenta Corriente',
     DEBITO: 'Tarjeta de Débito',
     CREDITO: 'Tarjeta de Crédito',
+    QR_MODO: 'QR MODO',
+    QR_MERCADOPAGO: 'QR MercadoPago',
     QR: 'QR',
-  }[metodoPago] || metodoPago;
+    CUENTA_CORRIENTE: 'Cuenta Corriente',
+  }[normalizado] || metodoPago;
+};
+
+const formatMediosPago = (mediosPago?: string[] | null): string => {
+  if (!mediosPago || mediosPago.length === 0) return '—';
+  const labels = [...new Set(mediosPago.map((m) => getMetodoPagoLabel(m)).filter(Boolean))];
+  return labels.length > 0 ? labels.join(', ') : '—';
+};
+
+const getEstadoChipSx = (estado: VentaListado["estado"]) => {
+  if (estado === 'PAGADA') {
+    return {
+      bgcolor: '#e8f5e9',
+      color: '#2e7d32',
+      borderColor: alpha('#2e7d32', 0.25),
+    };
+  }
+  if (estado === 'CANCELADA') {
+    return {
+      bgcolor: '#ffebee',
+      color: '#c62828',
+      borderColor: alpha('#c62828', 0.25),
+    };
+  }
+  return {
+    bgcolor: '#fff3e0',
+    color: '#ef6c00',
+    borderColor: alpha('#ef6c00', 0.25),
+  };
 };
 
 export function TablaVentas() {
@@ -129,8 +162,9 @@ export function TablaVentas() {
   const cacheKey = "tabla-ventas";
   const cachedState = tablaVentasUiStateCache.get(cacheKey);
   const [page, setPage] = useState(cachedState?.page ?? 0);
-  const [rowsPerPage, setRowsPerPage] = useState(cachedState?.rowsPerPage ?? 50);
+  const [rowsPerPage, setRowsPerPage] = useState(50);
   const [busqueda, setBusqueda] = useState(cachedState?.busqueda ?? "");
+  const [busquedaArticulo, setBusquedaArticulo] = useState(cachedState?.busquedaArticulo ?? "");
   const [ventaSeleccionada, setVentaSeleccionada] = useState<VentaListado | null>(null);
   const [exporting, setExporting] = useState(false);
   const client = useApolloClient();
@@ -162,9 +196,11 @@ export function TablaVentas() {
       fechaHasta: fechaHasta?.toISOString(),
       usuarioAuthId: usuarioId || undefined,
       medioPago: (medioPago ? mapMetodoPagoFiltroToQuery(medioPago) : undefined),
-      numeroVenta: busqueda || undefined, // búsqueda por comprobante/código/descripción
+      submedioPago: (medioPago ? mapSubmedioPagoFiltroToQuery(medioPago) : undefined),
+      numeroVenta: busqueda || undefined,
+      busquedaArticulo: busquedaArticulo || undefined,
     }
-  }), [rowsPerPage, page, fechaDesde, fechaHasta, usuarioId, medioPago, busqueda]);
+  }), [rowsPerPage, page, fechaDesde, fechaHasta, usuarioId, medioPago, busqueda, busquedaArticulo]);
 
   const { data, loading, refetch } = useQuery<ObtenerHistorialVentasResponse>(
     OBTENER_HISTORIAL_VENTAS,
@@ -179,12 +215,13 @@ export function TablaVentas() {
       page,
       rowsPerPage,
       busqueda,
+      busquedaArticulo,
       fechaDesde,
       fechaHasta,
       usuarioId,
       medioPago,
     });
-  }, [cacheKey, page, rowsPerPage, busqueda, fechaDesde, fechaHasta, usuarioId, medioPago]);
+  }, [cacheKey, page, rowsPerPage, busqueda, busquedaArticulo, fechaDesde, fechaHasta, usuarioId, medioPago]);
 
   const handleQuickDate = (range: 'hoy' | 'semana' | 'mes' | null) => {
     const now = new Date();
@@ -220,6 +257,7 @@ export function TablaVentas() {
       nro: v.numeroVenta,
       cliente: v.razonSocialCliente || v.nombreCliente || (v.cuitCliente ? `CUIT: ${v.cuitCliente}` : "Consumidor Final"),
       usuario: v.nombreUsuario || "-",
+      mediosPago: Array.isArray(v.mediosPago) ? v.mediosPago : [],
       total: Number(v.total || 0),
       estado: mapEstado(v.estado),
     }));
@@ -248,6 +286,8 @@ export function TablaVentas() {
         nro: v.numeroVenta,
         cliente: v.razonSocialCliente || v.nombreCliente || (v.cuitCliente ? `CUIT: ${v.cuitCliente}` : "Consumidor Final"),
         usuario: v.nombreUsuario || "-",
+        mediosPago: Array.isArray(v.mediosPago) ? v.mediosPago : [],
+        formaPago: formatMediosPago(v.mediosPago),
         total: Number(v.total || 0),
         estado: mapEstado(v.estado),
       }));
@@ -257,6 +297,7 @@ export function TablaVentas() {
         { header: 'Nº Comprobante', key: 'nro', width: 20 },
         { header: 'Cliente', key: 'cliente', width: 30 },
         { header: 'Vendedor', key: 'usuario', width: 20 },
+        { header: 'Forma de Pago', key: 'formaPago', width: 24 },
         { header: 'Total', key: (item) => `$${item.total.toLocaleString("es-AR")}`, width: 15 },
         { header: 'Estado', key: 'estado', width: 15 },
       ];
@@ -268,7 +309,8 @@ export function TablaVentas() {
       if (f.fechaDesde && f.fechaHasta) {
         filterParts.push(`Período: ${new Date(f.fechaDesde).toLocaleDateString()} - ${new Date(f.fechaHasta).toLocaleDateString()}`);
       }
-      if (f.numeroVenta) filterParts.push(`Búsqueda: "${f.numeroVenta}"`);
+      if (f.numeroVenta) filterParts.push(`Comprobante: "${f.numeroVenta}"`);
+      if (f.busquedaArticulo) filterParts.push(`Artículo: "${f.busquedaArticulo}"`);
       if (f.usuarioAuthId) {
         const usuarioSeleccionado = usuarios.find(u => u.id === f.usuarioAuthId);
         if (usuarioSeleccionado) {
@@ -303,8 +345,8 @@ export function TablaVentas() {
     tableTopRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
-  const handleRowsPerPageChange = (newRowsPerPage: number) => {
-    setRowsPerPage(newRowsPerPage);
+  const handleRowsPerPageChange = (_newRowsPerPage: number) => {
+    setRowsPerPage(50);
     setPage(0);
     tableTopRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
@@ -314,7 +356,7 @@ export function TablaVentas() {
       {/* Summary Cards */}
       <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
         <Box sx={{ flex: 1, minWidth: 200 }}>
-          <Card variant="outlined" sx={{ bgcolor: grisRojizo.alternateRow, borderColor: grisRojizo.borderInner }}>
+          <Card variant="outlined" sx={{ bgcolor: grisRojizo.alternateRow, borderColor: grisRojizo.borderInner, borderRadius: 0 }}>
             <CardContent sx={{ py: 2, '&:last-child': { pb: 2 } }}>
               <Typography variant="subtitle2" color="text.secondary">Total Periodo</Typography>
               <Typography variant="h4" color={grisRojizo.primary} fontWeight="bold">
@@ -324,7 +366,7 @@ export function TablaVentas() {
           </Card>
         </Box>
         <Box sx={{ flex: 1, minWidth: 200 }}>
-          <Card variant="outlined" sx={{ borderColor: grisRojizo.borderInner }}>
+          <Card variant="outlined" sx={{ borderColor: grisRojizo.borderInner, borderRadius: 0 }}>
             <CardContent sx={{ py: 2, '&:last-child': { pb: 2 } }}>
               <Typography variant="subtitle2" color="text.secondary">Cantidad Ventas</Typography>
               <Typography variant="h4" fontWeight="bold">
@@ -340,10 +382,12 @@ export function TablaVentas() {
         fechaHasta={fechaHasta}
         usuarioId={usuarioId}
         medioPago={medioPago}
+        busquedaArticulo={busquedaArticulo}
         onFechaDesdeChange={(d) => { setFechaDesde(d); setPage(0); }}
         onFechaHastaChange={(d) => { setFechaHasta(d); setPage(0); }}
         onUsuarioChange={(u) => { setUsuarioId(u); setPage(0); }}
         onMedioPagoChange={(m) => { setMedioPago(m); setPage(0); }}
+        onBusquedaArticuloChange={(value) => { setBusquedaArticulo(value); setPage(0); }}
         onQuickDateChange={handleQuickDate}
         onClear={() => {
           setFechaDesde(null);
@@ -351,17 +395,18 @@ export function TablaVentas() {
           setUsuarioId("");
           setMedioPago("");
           setBusqueda("");
+          setBusquedaArticulo("");
           setPage(0);
         }}
         onFilter={() => refetch()}
       />
 
-      <Paper elevation={0} variant="outlined" sx={{ p: 0, overflow: 'hidden', borderRadius: 2 }}>
+      <Paper elevation={0} variant="outlined" sx={{ p: 0, overflow: 'hidden', borderRadius: 0 }}>
         <SearchToolbar
           title="Listado de Detalle"
           icon={<IconReceipt style={{ marginRight: 8, verticalAlign: 'middle' }} />}
           baseColor={grisRojizo.primary}
-          placeholder="Buscar por Nº comprobante, código o descripción..."
+          placeholder="Buscar por Nº comprobante..."
           searchValue={busqueda}
           onSearchValueChange={(v) => { setBusqueda(v); setPage(0); }}
           onSubmitSearch={() => setPage(0)}
@@ -401,18 +446,50 @@ export function TablaVentas() {
           onRowsPerPageChange={handleRowsPerPageChange}
           itemLabel="ventas"
           accentColor={grisRojizo.primary}
-          rowsPerPageOptions={[50, 100, 150, 300, 500]}
+          rowsPerPageOptions={[50]}
         />
 
-        <TableContainer sx={{ maxHeight: 650 }}>
-          <Table stickyHeader size="small" sx={{ "& .MuiTableCell-head": { bgcolor: grisRojizo.headerBg, color: grisRojizo.headerText } }}>
+        <TableContainer component={Paper} elevation={0} sx={{ borderRadius: 0, border: '1px solid #e0e0e0', borderLeft: 'none', borderRight: 'none' }}>
+          <Table
+            stickyHeader
+            size="small"
+            sx={{
+              minWidth: 900,
+              '& .MuiTableRow-root': {
+                minHeight: 56,
+                transition: 'background-color 0.2s',
+              },
+              '& .MuiTableCell-root': {
+                fontSize: '0.85rem',
+                px: 2,
+                py: 1.5,
+                borderBottom: '1px solid #f0f0f0',
+                color: '#37474f',
+              },
+              '& .MuiTableBody-root .MuiTableRow-root:nth-of-type(even)': {
+                bgcolor: grisRojizo.alternateRow,
+              },
+              '& .MuiTableBody-root .MuiTableRow-root:hover': {
+                bgcolor: alpha(grisRojizo.primary, 0.12),
+              },
+              '& .MuiTableCell-head': {
+                fontSize: '0.8rem',
+                fontWeight: 700,
+                bgcolor: grisRojizo.headerBg,
+                color: '#ffffff',
+                letterSpacing: 0.5,
+              },
+            }}
+          >
             <TableHead>
-              <TableRow>
+              <TableRow sx={{ '& th': { bgcolor: grisRojizo.headerBg, color: '#ffffff', fontWeight: 600, letterSpacing: 0.5 } }}>
+                <TableCell sx={{ width: 60 }}>N°</TableCell>
                 <TableCell sx={{ fontWeight: 700, color: grisRojizo.headerText }}>Fecha</TableCell>
                 <TableCell sx={{ fontWeight: 700, color: grisRojizo.headerText }}>Nº Comprobante</TableCell>
                 <TableCell sx={{ fontWeight: 700, color: grisRojizo.headerText }}>Cliente</TableCell>
                 <TableCell sx={{ fontWeight: 700, color: grisRojizo.headerText }}>Vendedor</TableCell>
                 <TableCell sx={{ fontWeight: 700, color: grisRojizo.headerText }}>Total</TableCell>
+                <TableCell sx={{ fontWeight: 700, color: grisRojizo.headerText }}>Forma de Pago</TableCell>
                 <TableCell sx={{ fontWeight: 700, color: grisRojizo.headerText }}>Estado</TableCell>
                 <TableCell sx={{ fontWeight: 700, color: grisRojizo.headerText, textAlign: "center" }}>Acciones</TableCell>
               </TableRow>
@@ -420,7 +497,7 @@ export function TablaVentas() {
             <TableBody>
               {loading ? (
                 <TableRow>
-                  <TableCell colSpan={7}>
+                  <TableCell colSpan={9}>
                     <Skeleton variant="rounded" height={48} animation="wave" />
                   </TableCell>
                 </TableRow>
@@ -434,6 +511,11 @@ export function TablaVentas() {
                       "&:hover": { bgcolor: grisRojizo.rowHover },
                     }}
                   >
+                    <TableCell>
+                      <Typography variant="body2" fontWeight={700}>
+                        {page * rowsPerPage + idx + 1}
+                      </Typography>
+                    </TableCell>
                     <TableCell>
                       <Typography variant="body2" fontWeight={500}>
                         {formatInArgentina(v.fecha, {
@@ -471,13 +553,21 @@ export function TablaVentas() {
                       </Typography>
                     </TableCell>
                     <TableCell>
+                      <Typography variant="body2" color="text.secondary">
+                        {formatMediosPago(v.mediosPago)}
+                      </Typography>
+                    </TableCell>
+                    <TableCell>
                       <Chip
                         size="small"
                         label={v.estado}
                         sx={{
-                          bgcolor: v.estado === 'PAGADA' ? '#e8f5e9' : v.estado === 'PENDIENTE' ? '#fff3e0' : '#ffebee',
-                          color: v.estado === 'PAGADA' ? '#2e7d32' : v.estado === 'PENDIENTE' ? '#ef6c00' : '#c62828',
-                          fontWeight: 600
+                          borderRadius: 1,
+                          height: 24,
+                          fontSize: '0.75rem',
+                          fontWeight: 700,
+                          border: '1px solid',
+                          ...getEstadoChipSx(v.estado),
                         }}
                       />
                     </TableCell>
@@ -486,7 +576,10 @@ export function TablaVentas() {
                         <Tooltip title="Ver detalles">
                           <IconButton
                             size="small"
-                            sx={{ color: grisRojizo.primary, bgcolor: grisRojizo.rowHover }}
+                            sx={{
+                              color: grisRojizo.primary,
+                              '&:hover': { bgcolor: alpha(grisRojizo.primary, 0.1) }
+                            }}
                             onClick={() => setVentaSeleccionada(v)}
                           >
                             <IconEye size={18} />
@@ -499,7 +592,7 @@ export function TablaVentas() {
               )}
               {!loading && rows.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={7} sx={{ textAlign: 'center', py: 4 }}>
+                  <TableCell colSpan={9} sx={{ textAlign: 'center', py: 4 }}>
                     <Typography variant="body2" color="text.secondary">No se encontraron ventas con los filtros seleccionados</Typography>
                   </TableCell>
                 </TableRow>
@@ -516,7 +609,7 @@ export function TablaVentas() {
           onRowsPerPageChange={handleRowsPerPageChange}
           itemLabel="ventas"
           accentColor={grisRojizo.primary}
-          rowsPerPageOptions={[50, 100, 150, 300, 500]}
+          rowsPerPageOptions={[50]}
         />
 
         <ModalDetalleVenta

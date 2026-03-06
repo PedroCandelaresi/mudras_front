@@ -64,6 +64,7 @@ export const OBTENER_HISTORIAL_VENTAS = gql`
         tipoVenta
         estado
         total
+        mediosPago
         nombreUsuario
         nombrePuesto
         nombreCliente
@@ -87,6 +88,7 @@ export interface HistorialVentaItem {
   tipoVenta: string;
   estado: string;
   total: number;
+  mediosPago?: string[] | null;
   nombreUsuario?: string | null;
   nombrePuesto?: string | null;
   nombreCliente?: string | null;
@@ -166,6 +168,7 @@ export const OBTENER_DETALLE_VENTA = gql`
       pagos {
         id
         medioPago
+        submedioPago
         monto
         numeroComprobante
         marcaTarjeta
@@ -358,6 +361,8 @@ export interface FiltrosHistorialInput {
   clienteId?: number;
   usuarioAuthId?: string; // Updated from usuarioId to match backend DTO
   numeroVenta?: string;
+  busquedaArticulo?: string;
+  submedioPago?: string;
   pagina?: number;
   limite?: number;
   offset?: number;

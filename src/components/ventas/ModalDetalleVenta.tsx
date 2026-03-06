@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useMemo } from 'react';
+import React from 'react';
 import {
     Dialog,
     DialogTitle,
@@ -20,9 +20,12 @@ import {
     TableRow,
     Paper,
     CircularProgress,
-    Chip
+    Chip,
+    Card,
+    CardContent
 } from '@mui/material';
 import { IconX } from '@tabler/icons-react';
+import { alpha } from '@mui/material/styles';
 import { useQuery } from '@apollo/client/react';
 import { grisRojizo } from '@/ui/colores';
 import { OBTENER_DETALLE_VENTA, DetalleVentaResponse } from './caja-registradora/graphql/queries';
@@ -46,6 +49,46 @@ const formatDateTime = (val: string) => {
         minute: '2-digit',
         hour12: false
     });
+};
+
+const formatMetodoPago = (pago: any) => {
+    const medio = String(pago?.medioPago || '').toUpperCase();
+    const submedio = String(pago?.submedioPago || '').toUpperCase();
+    if (medio === 'QR') {
+        if (submedio === 'QR_MODO') return 'QR MODO';
+        if (submedio === 'QR_MERCADOPAGO') return 'QR MercadoPago';
+        return 'QR';
+    }
+    return {
+        EFECTIVO: 'Efectivo',
+        DEBITO: 'Tarjeta Débito',
+        CREDITO: 'Tarjeta Crédito',
+        TRANSFERENCIA: 'Transferencia',
+        CUENTA_CORRIENTE: 'Cuenta Corriente',
+    }[medio] || pago?.medioPago || '-';
+};
+
+const getEstadoChipSx = (estado?: string) => {
+    const normalizado = String(estado || '').toUpperCase();
+    if (normalizado === 'PAGADA' || normalizado === 'CONFIRMADA') {
+        return {
+            bgcolor: '#e8f5e9',
+            color: '#2e7d32',
+            borderColor: alpha('#2e7d32', 0.25),
+        };
+    }
+    if (normalizado === 'CANCELADA') {
+        return {
+            bgcolor: '#ffebee',
+            color: '#c62828',
+            borderColor: alpha('#c62828', 0.25),
+        };
+    }
+    return {
+        bgcolor: '#fff3e0',
+        color: '#ef6c00',
+        borderColor: alpha('#ef6c00', 0.25),
+    };
 };
 
 const ModalDetalleVenta: React.FC<ModalDetalleVentaProps> = ({ open, onClose, ventaId }) => {
@@ -122,6 +165,39 @@ const ModalDetalleVenta: React.FC<ModalDetalleVentaProps> = ({ open, onClose, ve
 
                 {venta && !loading && (
                     <Box sx={{ p: { xs: 3, md: 4 }, display: 'grid', gap: 3 }}>
+                        <Box
+                            sx={{
+                                display: 'grid',
+                                gap: 1,
+                                gridTemplateColumns: { xs: '1fr 1fr', md: 'repeat(3, 1fr)' },
+                            }}
+                        >
+                            <Card sx={{ borderRadius: 0, border: '1px solid #e0e0e0', boxShadow: 'none', bgcolor: '#f9f9f9' }}>
+                                <CardContent sx={{ py: 1.5, '&:last-child': { pb: 1.5 } }}>
+                                    <Typography variant="caption" color="text.secondary" fontWeight={700}>Comprobante</Typography>
+                                    <Typography variant="subtitle1" fontWeight={700} color={grisRojizo.textStrong}>
+                                        {venta.numeroVenta || '—'}
+                                    </Typography>
+                                </CardContent>
+                            </Card>
+                            <Card sx={{ borderRadius: 0, border: '1px solid #e0e0e0', boxShadow: 'none', bgcolor: '#f9f9f9' }}>
+                                <CardContent sx={{ py: 1.5, '&:last-child': { pb: 1.5 } }}>
+                                    <Typography variant="caption" color="text.secondary" fontWeight={700}>Total</Typography>
+                                    <Typography variant="subtitle1" fontWeight={700} color={grisRojizo.primary}>
+                                        {formatCurrency(venta.total || 0)}
+                                    </Typography>
+                                </CardContent>
+                            </Card>
+                            <Card sx={{ borderRadius: 0, border: '1px solid #e0e0e0', boxShadow: 'none', bgcolor: '#f9f9f9' }}>
+                                <CardContent sx={{ py: 1.5, '&:last-child': { pb: 1.5 } }}>
+                                    <Typography variant="caption" color="text.secondary" fontWeight={700}>Items</Typography>
+                                    <Typography variant="subtitle1" fontWeight={700} color={grisRojizo.textStrong}>
+                                        {venta.detalles?.length || 0}
+                                    </Typography>
+                                </CardContent>
+                            </Card>
+                        </Box>
+
                         {/* Header info card */}
                         <Paper elevation={0} sx={{ p: 3, borderRadius: 0, border: '1px solid #e0e0e0', bgcolor: '#fff' }}>
                             <Grid container spacing={3}>
@@ -155,10 +231,8 @@ const ModalDetalleVenta: React.FC<ModalDetalleVentaProps> = ({ open, onClose, ve
                                                 height: 24,
                                                 fontSize: '0.75rem',
                                                 fontWeight: 700,
-                                                bgcolor: venta.estado === 'PAGADA' || venta.estado === 'CONFIRMADA' ? '#e8f5e9' : '#fff3e0',
-                                                color: venta.estado === 'PAGADA' || venta.estado === 'CONFIRMADA' ? '#2e7d32' : '#ef6c00',
                                                 border: '1px solid',
-                                                borderColor: venta.estado === 'PAGADA' || venta.estado === 'CONFIRMADA' ? 'transparent' : '#ffcc80'
+                                                ...getEstadoChipSx(venta.estado),
                                             }}
                                         />
                                     </Box>
@@ -180,8 +254,19 @@ const ModalDetalleVenta: React.FC<ModalDetalleVentaProps> = ({ open, onClose, ve
                                         </Typography>
                                     </Box>
                                     <TableContainer sx={{ background: 'transparent', boxShadow: 'none' }}>
-                                        <Table size="small">
-                                            <TableHead sx={{ bgcolor: '#fafafa' }}>
+                                        <Table
+                                            size="small"
+                                            sx={{
+                                                '& .MuiTableCell-root': {
+                                                    borderBottom: '1px solid #f0f0f0',
+                                                    fontSize: '0.85rem',
+                                                },
+                                                '& .MuiTableBody-root .MuiTableRow-root:nth-of-type(even)': {
+                                                    bgcolor: '#fafafa',
+                                                },
+                                            }}
+                                        >
+                                            <TableHead sx={{ bgcolor: grisRojizo.alternateRow }}>
                                                 <TableRow>
                                                     <TableCell sx={{ fontWeight: 600, fontSize: '0.75rem', color: 'text.secondary' }}>CÓDIGO</TableCell>
                                                     <TableCell sx={{ fontWeight: 600, fontSize: '0.75rem', color: 'text.secondary' }}>DESCRIPCIÓN</TableCell>
@@ -192,12 +277,12 @@ const ModalDetalleVenta: React.FC<ModalDetalleVentaProps> = ({ open, onClose, ve
                                             </TableHead>
                                             <TableBody>
                                                 {venta.detalles?.map((det: any, idx: number) => (
-                                                    <TableRow key={det.id} hover sx={{ '&:last-child td, &:last-child th': { border: 0 }, bgcolor: idx % 2 === 0 ? '#fff' : '#fafafa' }}>
-                                                        <TableCell sx={{ fontSize: '0.85rem' }}>{det.articulo?.Codigo || '-'}</TableCell>
-                                                        <TableCell sx={{ fontSize: '0.85rem' }}>{det.articulo?.Descripcion || '-'}</TableCell>
-                                                        <TableCell align="right" sx={{ fontSize: '0.85rem' }}>{det.cantidad}</TableCell>
-                                                        <TableCell align="right" sx={{ fontSize: '0.85rem' }}>{formatCurrency(det.precioUnitario)}</TableCell>
-                                                        <TableCell align="right" sx={{ fontSize: '0.85rem', fontWeight: 600 }}>{formatCurrency(det.subtotal)}</TableCell>
+                                                    <TableRow key={det.id} hover sx={{ '&:last-child td, &:last-child th': { border: 0 } }}>
+                                                        <TableCell sx={{ fontFamily: 'monospace', fontWeight: 600 }}>{det.articulo?.Codigo || '-'}</TableCell>
+                                                        <TableCell>{det.articulo?.Descripcion || '-'}</TableCell>
+                                                        <TableCell align="right">{det.cantidad}</TableCell>
+                                                        <TableCell align="right">{formatCurrency(det.precioUnitario)}</TableCell>
+                                                        <TableCell align="right" sx={{ fontWeight: 700 }}>{formatCurrency(det.subtotal)}</TableCell>
                                                     </TableRow>
                                                 ))}
                                             </TableBody>
@@ -248,9 +333,18 @@ const ModalDetalleVenta: React.FC<ModalDetalleVentaProps> = ({ open, onClose, ve
                                                     <TableBody>
                                                         {venta.pagos.map((pago: any) => (
                                                             <TableRow key={pago.id}>
-                                                                <TableCell sx={{ fontSize: '0.85rem', color: 'text.secondary' }}>
-                                                                    {pago.medioPago}
-                                                                    {pago.cuotas ? ` (${pago.cuotas} ctas)` : ''}
+                                                                <TableCell sx={{ fontSize: '0.85rem' }}>
+                                                                    <Chip
+                                                                        size="small"
+                                                                        variant="outlined"
+                                                                        label={`${formatMetodoPago(pago)}${pago.cuotas ? ` (${pago.cuotas} ctas)` : ''}`}
+                                                                        sx={{
+                                                                            borderRadius: 1,
+                                                                            fontWeight: 600,
+                                                                            borderColor: alpha(grisRojizo.primary, 0.3),
+                                                                            color: grisRojizo.textStrong,
+                                                                        }}
+                                                                    />
                                                                 </TableCell>
                                                                 <TableCell align="right" sx={{ fontSize: '0.85rem', fontWeight: 600 }}>
                                                                     {formatCurrency(pago.monto)}
