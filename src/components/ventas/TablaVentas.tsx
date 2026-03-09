@@ -542,6 +542,12 @@ export function TablaVentas() {
   }, [recaudacionFiltrada, recaudacionPrevia, cantidadVentasFiltradas, cantidadVentasPrevias, ticketPromedio, ticketPromedioPrevio]);
   const formatVariacion = (valor: number) => `${valor >= 0 ? '+' : ''}${valor.toFixed(1)}%`;
   const getVariacionColor = (valor: number) => (valor >= 0 ? '#2e7d32' : '#c62828');
+  const kpiPalette = {
+    recaudacion: { icon: '#1565c0', title: '#0d47a1', value: '#0b3d91', border: '#90caf9', bg: '#e3f2fd' },
+    ventas: { icon: '#c62828', title: '#8e0000', value: '#b71c1c', border: '#ef9a9a', bg: '#ffebee' },
+    ticket: { icon: '#f9a825', title: '#8d6e00', value: '#a66a00', border: '#ffe082', bg: '#fff8e1' },
+    maxima: { icon: '#2e7d32', title: '#1b5e20', value: '#1b5e20', border: '#a5d6a7', bg: '#e8f5e9' },
+  };
   const mediosPagoOptions = useMemo<ApexOptions>(() => ({
     chart: {
       type: 'donut',
@@ -549,7 +555,7 @@ export function TablaVentas() {
       fontFamily: "'Plus Jakarta Sans', sans-serif",
     },
     labels: estadisticasVentas.mediosPagoOrdenados.slice(0, 5).map((item) => item.label),
-    colors: ['#7B5E57', '#A1887F', '#D7CCC8', '#BCAAA4', '#8D6E63'],
+    colors: ['#1976d2', '#d32f2f', '#f9a825', '#2e7d32', '#512da8'],
     legend: {
       position: 'bottom',
       fontSize: '12px',
@@ -558,7 +564,7 @@ export function TablaVentas() {
       enabled: true,
       formatter: (val: number) => `${val.toFixed(0)}%`,
     },
-    stroke: { width: 1, colors: ['#fffaf5'] },
+    stroke: { width: 1, colors: ['#ffffff'] },
     plotOptions: {
       pie: {
         donut: {
@@ -594,25 +600,33 @@ export function TablaVentas() {
         variant="outlined"
         sx={{
           borderRadius: 0,
-          borderColor: '#d9cfc3',
-          background: 'linear-gradient(145deg, #fffaf5 0%, #f8f3ed 100%)',
+          borderColor: '#90caf9',
+          background: 'linear-gradient(140deg, #edf4ff 0%, #f8fbff 100%)',
         }}
       >
         <CardContent sx={{ p: 2.5 }}>
-          <Typography variant="h6" sx={{ color: '#5a463a', fontWeight: 700, mb: 0.5 }}>
+          <Typography variant="h6" sx={{ color: '#0d47a1', fontWeight: 800, mb: 0.5 }}>
             Panel de Recaudación del Período
           </Typography>
-          <Typography variant="body2" sx={{ color: '#8c7b70', mb: 2 }}>
+          <Typography variant="body2" sx={{ color: '#355a8a', mb: 2 }}>
             Lectura rápida para tomar decisiones comerciales con los filtros actuales.
           </Typography>
           <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'repeat(4, 1fr)' }, gap: 1.5, mb: 2 }}>
-            <Card variant="outlined" sx={{ borderColor: '#e8ddd2', bgcolor: '#fff', borderRadius: 0 }}>
+            <Card
+              variant="outlined"
+              sx={{
+                borderColor: kpiPalette.recaudacion.border,
+                bgcolor: kpiPalette.recaudacion.bg,
+                borderRadius: 0,
+                borderLeft: `6px solid ${kpiPalette.recaudacion.icon}`,
+              }}
+            >
               <CardContent sx={{ py: 1.5 }}>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                  <IconCurrencyDollar size={18} color="#7B5E57" />
-                  <Typography variant="caption" sx={{ color: '#8c7b70' }}>Recaudación total</Typography>
+                  <IconCurrencyDollar size={18} color={kpiPalette.recaudacion.icon} />
+                  <Typography variant="caption" sx={{ color: kpiPalette.recaudacion.title, fontWeight: 700 }}>Recaudación total</Typography>
                 </Box>
-                <Typography variant="h5" sx={{ mt: 0.5, color: '#5a463a', fontWeight: 700 }}>
+                <Typography variant="h5" sx={{ mt: 0.5, color: kpiPalette.recaudacion.value, fontWeight: 800 }}>
                   {loadingResumen ? "..." : `$${recaudacionFiltrada.toLocaleString("es-AR")}`}
                 </Typography>
                 {!loadingResumen && !loadingResumenPrevio && rangoComparativo && (
@@ -622,13 +636,21 @@ export function TablaVentas() {
                 )}
               </CardContent>
             </Card>
-            <Card variant="outlined" sx={{ borderColor: '#e8ddd2', bgcolor: '#fff', borderRadius: 0 }}>
+            <Card
+              variant="outlined"
+              sx={{
+                borderColor: kpiPalette.ventas.border,
+                bgcolor: kpiPalette.ventas.bg,
+                borderRadius: 0,
+                borderLeft: `6px solid ${kpiPalette.ventas.icon}`,
+              }}
+            >
               <CardContent sx={{ py: 1.5 }}>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                  <IconShoppingBag size={18} color="#7B5E57" />
-                  <Typography variant="caption" sx={{ color: '#8c7b70' }}>Cantidad de ventas</Typography>
+                  <IconShoppingBag size={18} color={kpiPalette.ventas.icon} />
+                  <Typography variant="caption" sx={{ color: kpiPalette.ventas.title, fontWeight: 700 }}>Cantidad de ventas</Typography>
                 </Box>
-                <Typography variant="h5" sx={{ mt: 0.5, color: '#5a463a', fontWeight: 700 }}>
+                <Typography variant="h5" sx={{ mt: 0.5, color: kpiPalette.ventas.value, fontWeight: 800 }}>
                   {loadingResumen ? "..." : cantidadVentasFiltradas}
                 </Typography>
                 {!loadingResumen && !loadingResumenPrevio && rangoComparativo && (
@@ -638,13 +660,21 @@ export function TablaVentas() {
                 )}
               </CardContent>
             </Card>
-            <Card variant="outlined" sx={{ borderColor: '#e8ddd2', bgcolor: '#fff', borderRadius: 0 }}>
+            <Card
+              variant="outlined"
+              sx={{
+                borderColor: kpiPalette.ticket.border,
+                bgcolor: kpiPalette.ticket.bg,
+                borderRadius: 0,
+                borderLeft: `6px solid ${kpiPalette.ticket.icon}`,
+              }}
+            >
               <CardContent sx={{ py: 1.5 }}>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                  <IconTrendingUp size={18} color="#7B5E57" />
-                  <Typography variant="caption" sx={{ color: '#8c7b70' }}>Ticket promedio</Typography>
+                  <IconTrendingUp size={18} color={kpiPalette.ticket.icon} />
+                  <Typography variant="caption" sx={{ color: kpiPalette.ticket.title, fontWeight: 700 }}>Ticket promedio</Typography>
                 </Box>
-                <Typography variant="h5" sx={{ mt: 0.5, color: '#5a463a', fontWeight: 700 }}>
+                <Typography variant="h5" sx={{ mt: 0.5, color: kpiPalette.ticket.value, fontWeight: 800 }}>
                   {loadingResumen ? "..." : `$${ticketPromedio.toLocaleString("es-AR", { maximumFractionDigits: 0 })}`}
                 </Typography>
                 {!loadingResumen && !loadingResumenPrevio && rangoComparativo && (
@@ -654,13 +684,21 @@ export function TablaVentas() {
                 )}
               </CardContent>
             </Card>
-            <Card variant="outlined" sx={{ borderColor: '#e8ddd2', bgcolor: '#fff', borderRadius: 0 }}>
+            <Card
+              variant="outlined"
+              sx={{
+                borderColor: kpiPalette.maxima.border,
+                bgcolor: kpiPalette.maxima.bg,
+                borderRadius: 0,
+                borderLeft: `6px solid ${kpiPalette.maxima.icon}`,
+              }}
+            >
               <CardContent sx={{ py: 1.5 }}>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                  <IconCashBanknote size={18} color="#7B5E57" />
-                  <Typography variant="caption" sx={{ color: '#8c7b70' }}>Venta máxima</Typography>
+                  <IconCashBanknote size={18} color={kpiPalette.maxima.icon} />
+                  <Typography variant="caption" sx={{ color: kpiPalette.maxima.title, fontWeight: 700 }}>Venta máxima</Typography>
                 </Box>
-                <Typography variant="h5" sx={{ mt: 0.5, color: '#5a463a', fontWeight: 700 }}>
+                <Typography variant="h5" sx={{ mt: 0.5, color: kpiPalette.maxima.value, fontWeight: 800 }}>
                   {loadingResumen ? "..." : `$${estadisticasVentas.ventaMaxima.toLocaleString("es-AR")}`}
                 </Typography>
               </CardContent>
@@ -668,9 +706,9 @@ export function TablaVentas() {
           </Box>
 
           <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', lg: '2fr 1fr' }, gap: 2 }}>
-            <Card variant="outlined" sx={{ borderColor: '#e8ddd2', borderRadius: 0, bgcolor: '#fff' }}>
+            <Card variant="outlined" sx={{ borderColor: '#bbdefb', borderRadius: 0, bgcolor: '#ffffff' }}>
               <CardContent sx={{ py: 2 }}>
-                <Typography variant="subtitle2" sx={{ color: '#7b6a5f', mb: 1 }}>
+                <Typography variant="subtitle2" sx={{ color: '#0d47a1', mb: 1, fontWeight: 700 }}>
                   Recaudación en el tiempo ({agruparPorHora ? 'por hora' : 'por día'})
                 </Typography>
                 {loadingResumen ? (
@@ -685,9 +723,9 @@ export function TablaVentas() {
               </CardContent>
             </Card>
 
-            <Card variant="outlined" sx={{ borderColor: '#e8ddd2', borderRadius: 0, bgcolor: '#fff' }}>
+            <Card variant="outlined" sx={{ borderColor: '#ffcdd2', borderRadius: 0, bgcolor: '#ffffff' }}>
               <CardContent sx={{ py: 2 }}>
-                <Typography variant="subtitle2" sx={{ color: '#7b6a5f', mb: 1 }}>
+                <Typography variant="subtitle2" sx={{ color: '#b71c1c', mb: 1, fontWeight: 700 }}>
                   Medios de pago más usados
                 </Typography>
                 {loadingResumen ? (
@@ -700,7 +738,7 @@ export function TablaVentas() {
                   </Typography>
                 )}
                 {!loadingResumen && estadisticasVentas.medioPrincipal && (
-                  <Typography variant="caption" sx={{ display: 'block', mt: 1, color: '#7b6a5f' }}>
+                  <Typography variant="caption" sx={{ display: 'block', mt: 1, color: '#7b1fa2', fontWeight: 700 }}>
                     Medio principal: <strong>{estadisticasVentas.medioPrincipal.label}</strong> ({estadisticasVentas.medioPrincipal.cantidad} operaciones)
                   </Typography>
                 )}
