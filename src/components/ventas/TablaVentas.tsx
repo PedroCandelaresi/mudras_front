@@ -90,6 +90,16 @@ type HistorialVentasSnapshot = {
 
 const tablaVentasUiStateCache = new Map<string, TablaVentasUiState>();
 const HISTORIAL_BATCH_SIZE = 500;
+const CHART_COLORS = {
+  line: '#173f7a',
+  lineFill: '#4f79b5',
+  lineMarker: '#0f2c57',
+  axisText: '#3d4f66',
+  grid: '#d7e3f3',
+  donut: ['#0d47a1', '#b71c1c', '#f57c00', '#1b5e20', '#4a148c'],
+  donutCenter: '#26364d',
+  donutLegend: '#34495e',
+};
 
 const ARG_TIMEZONE = "America/Argentina/Buenos_Aires";
 const formatInArgentina = (
@@ -596,42 +606,87 @@ export function TablaVentas() {
       type: 'line',
       toolbar: { show: false },
       fontFamily: "'Plus Jakarta Sans', sans-serif",
-      foreColor: '#6d5d53',
+      foreColor: CHART_COLORS.axisText,
+      zoom: { enabled: false },
+      dropShadow: {
+        enabled: true,
+        top: 6,
+        left: 0,
+        blur: 10,
+        color: CHART_COLORS.line,
+        opacity: 0.18,
+      },
     },
     stroke: {
       curve: 'straight',
-      width: 4,
+      width: 5,
+      lineCap: 'round',
     },
-    colors: ['#8D6E63'],
+    colors: [CHART_COLORS.line],
     fill: {
       type: 'gradient',
       gradient: {
         shadeIntensity: 1,
-        opacityFrom: 0.25,
-        opacityTo: 0.05,
+        opacityFrom: 0.38,
+        opacityTo: 0.08,
         stops: [0, 100],
       },
     },
     xaxis: {
       categories: serieRecaudacion.map((item) => item.label),
-      labels: { rotate: -35, trim: true },
+      axisBorder: { color: '#b9cbe2' },
+      axisTicks: { color: '#b9cbe2' },
+      labels: {
+        rotate: -35,
+        trim: true,
+        style: {
+          colors: serieRecaudacion.map(() => CHART_COLORS.axisText),
+          fontSize: '12px',
+          fontWeight: 600,
+        },
+      },
       title: {
         text: agruparPorHora ? 'Hora' : 'Día',
+        style: {
+          color: CHART_COLORS.axisText,
+          fontSize: '13px',
+          fontWeight: 700,
+        },
       },
     },
     yaxis: {
       labels: {
         formatter: (value: number) => `$${value.toLocaleString("es-AR")}`,
+        style: {
+          colors: [CHART_COLORS.axisText],
+          fontSize: '12px',
+          fontWeight: 600,
+        },
       },
     },
     tooltip: {
+      theme: 'light',
+      marker: { show: true },
       y: {
         formatter: (value: number) => `$${value.toLocaleString("es-AR")}`,
       },
     },
     dataLabels: { enabled: false },
-    grid: { borderColor: '#efe8e1' },
-    markers: { size: 5, colors: ['#ffffff'], strokeColors: '#8D6E63', strokeWidth: 2 },
+    grid: {
+      borderColor: CHART_COLORS.grid,
+      strokeDashArray: 4,
+      padding: {
+        top: 8,
+        right: 12,
+      },
+    },
+    markers: {
+      size: 6,
+      hover: { size: 8 },
+      colors: [CHART_COLORS.lineMarker],
+      strokeColors: '#ffffff',
+      strokeWidth: 3,
+    },
   }), [serieRecaudacion, agruparPorHora]);
   const lineChartSeries = useMemo(() => ([{
     name: 'Recaudación',
@@ -667,6 +722,10 @@ export function TablaVentas() {
     ticket: { icon: '#f9a825', title: '#8d6e00', value: '#a66a00', border: '#ffe082', bg: '#fff8e1' },
     maxima: { icon: '#2e7d32', title: '#1b5e20', value: '#1b5e20', border: '#a5d6a7', bg: '#e8f5e9' },
   };
+  const mediosPagoSeries = useMemo(
+    () => estadisticasVentas.mediosPagoOrdenados.slice(0, 5).map((item) => item.cantidad),
+    [estadisticasVentas.mediosPagoOrdenados]
+  );
   const mediosPagoOptions = useMemo<ApexOptions>(() => ({
     chart: {
       type: 'donut',
@@ -674,33 +733,86 @@ export function TablaVentas() {
       fontFamily: "'Plus Jakarta Sans', sans-serif",
     },
     labels: estadisticasVentas.mediosPagoOrdenados.slice(0, 5).map((item) => item.label),
-    colors: ['#1976d2', '#d32f2f', '#f9a825', '#2e7d32', '#512da8'],
+    colors: CHART_COLORS.donut,
     legend: {
       position: 'bottom',
-      fontSize: '12px',
+      fontSize: '13px',
+      fontWeight: 600,
+      horizontalAlign: 'center',
+      labels: {
+        colors: CHART_COLORS.donutLegend,
+      },
+      markers: {
+        size: 10,
+        strokeWidth: 0,
+      },
+      itemMargin: {
+        horizontal: 10,
+        vertical: 6,
+      },
     },
     dataLabels: {
       enabled: true,
       formatter: (val: number) => `${val.toFixed(0)}%`,
+      style: {
+        fontSize: '13px',
+        fontWeight: 800,
+        colors: ['#ffffff'],
+      },
+      dropShadow: {
+        enabled: false,
+      },
     },
-    stroke: { width: 1, colors: ['#ffffff'] },
+    stroke: { width: 3, colors: ['#ffffff'] },
     plotOptions: {
       pie: {
+        expandOnClick: false,
         donut: {
-          size: '62%',
+          size: '58%',
+          labels: {
+            show: true,
+            name: {
+              show: true,
+              offsetY: 18,
+              color: CHART_COLORS.donutLegend,
+              fontSize: '12px',
+              fontWeight: 700,
+            },
+            value: {
+              show: true,
+              offsetY: -10,
+              color: CHART_COLORS.donutCenter,
+              fontSize: '24px',
+              fontWeight: 800,
+              formatter: (value: string) => `${value}%`,
+            },
+            total: {
+              show: true,
+              showAlways: true,
+              label: 'Operaciones',
+              color: CHART_COLORS.donutLegend,
+              fontSize: '12px',
+              fontWeight: 700,
+              formatter: () => `${mediosPagoSeries.reduce((acc, value) => acc + value, 0)}`,
+            },
+          },
         },
       },
     },
     tooltip: {
+      theme: 'light',
       y: {
         formatter: (value: number) => `${value} operaciones`,
       },
     },
-  }), [estadisticasVentas.mediosPagoOrdenados]);
-  const mediosPagoSeries = useMemo(
-    () => estadisticasVentas.mediosPagoOrdenados.slice(0, 5).map((item) => item.cantidad),
-    [estadisticasVentas.mediosPagoOrdenados]
-  );
+    states: {
+      active: {
+        filter: {
+          type: 'none',
+        },
+      },
+    },
+  }), [estadisticasVentas.mediosPagoOrdenados, mediosPagoSeries]);
 
   const handlePageChange = (newPage: number) => {
     setPage(newPage);
@@ -830,15 +942,15 @@ export function TablaVentas() {
           </Box>
 
           <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', lg: '2fr 1fr' }, gap: 2 }}>
-            <Card variant="outlined" sx={{ borderColor: '#bbdefb', borderRadius: 0, bgcolor: '#ffffff' }}>
+            <Card variant="outlined" sx={{ borderColor: '#bbdefb', borderRadius: 0, bgcolor: '#fcfdff' }}>
               <CardContent sx={{ py: 2 }}>
                 <Typography variant="subtitle2" sx={{ color: '#0d47a1', mb: 1, fontWeight: 700 }}>
                   Recaudación en el tiempo ({agruparPorHora ? 'por hora' : 'por día'})
                 </Typography>
                 {loadingResumen ? (
-                  <Skeleton variant="rounded" height={220} animation="wave" />
+                  <Skeleton variant="rounded" height={260} animation="wave" />
                 ) : serieRecaudacion.length > 0 ? (
-                  <Chart options={lineChartOptions} series={lineChartSeries} type="line" height={240} width="100%" />
+                  <Chart options={lineChartOptions} series={lineChartSeries} type="line" height={280} width="100%" />
                 ) : (
                   <Typography variant="body2" color="text.secondary">
                     Sin datos para graficar con los filtros actuales.
@@ -847,15 +959,15 @@ export function TablaVentas() {
               </CardContent>
             </Card>
 
-            <Card variant="outlined" sx={{ borderColor: '#ffcdd2', borderRadius: 0, bgcolor: '#ffffff' }}>
+            <Card variant="outlined" sx={{ borderColor: '#ffcdd2', borderRadius: 0, bgcolor: '#fffdfd' }}>
               <CardContent sx={{ py: 2 }}>
                 <Typography variant="subtitle2" sx={{ color: '#b71c1c', mb: 1, fontWeight: 700 }}>
                   Medios de pago más usados
                 </Typography>
                 {loadingResumen ? (
-                  <Skeleton variant="rounded" height={220} animation="wave" />
+                  <Skeleton variant="rounded" height={260} animation="wave" />
                 ) : mediosPagoSeries.length > 0 ? (
-                  <Chart options={mediosPagoOptions} series={mediosPagoSeries} type="donut" height={240} width="100%" />
+                  <Chart options={mediosPagoOptions} series={mediosPagoSeries} type="donut" height={280} width="100%" />
                 ) : (
                   <Typography variant="body2" color="text.secondary">
                     Sin datos de medios de pago.
