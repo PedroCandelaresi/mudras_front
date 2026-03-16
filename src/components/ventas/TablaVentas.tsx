@@ -847,11 +847,32 @@ export function TablaVentas() {
     },
     tooltip: {
       theme: 'light',
-      y: {
-        formatter: (value: number) => {
-          const porcentaje = totalOperacionesMediosPago > 0 ? (value / totalOperacionesMediosPago) * 100 : 0;
-          return `${value} operaciones (${porcentaje.toFixed(1)}%)`;
-        },
+      fillSeriesColor: false,
+      marker: { show: false },
+      style: {
+        fontSize: '12px',
+        fontFamily: "'Plus Jakarta Sans', sans-serif",
+      },
+      custom: ({ series, seriesIndex, w }) => {
+        const label = String(w.globals.labels?.[seriesIndex] || '');
+        const value = Number(series?.[seriesIndex] || 0);
+        const porcentaje = totalOperacionesMediosPago > 0 ? (value / totalOperacionesMediosPago) * 100 : 0;
+        const color = CHART_COLORS.donut[seriesIndex % CHART_COLORS.donut.length];
+
+        return `
+          <div style="min-width: 190px; border-radius: 12px; border: 1px solid rgba(196, 209, 226, 0.92); background: rgba(255, 255, 255, 0.97); box-shadow: 0 14px 28px rgba(17, 39, 71, 0.14); padding: 10px 12px; color: #24384f;">
+            <div style="display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 800; color: #20344b;">
+              <span style="display: inline-block; width: 10px; height: 10px; border-radius: 999px; background: ${color}; box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.85);"></span>
+              <span>${label}</span>
+            </div>
+            <div style="margin-top: 7px; font-size: 12px; font-weight: 700; color: #607287;">
+              ${value} operaciones
+            </div>
+            <div style="margin-top: 2px; font-size: 12px; font-weight: 800; color: #20344b;">
+              ${porcentaje.toFixed(1)}%
+            </div>
+          </div>
+        `;
       },
     },
     states: {
@@ -1156,14 +1177,9 @@ export function TablaVentas() {
               <Box component="span" sx={{ display: 'flex', color: grisRojizo.primary }}>
                 <IconReceipt style={{ verticalAlign: 'middle' }} />
               </Box>
-              <Box>
-                <Typography variant="subtitle1" sx={{ fontWeight: 800, color: '#2d3f52' }}>
-                  Listado de Detalle
-                </Typography>
-                <Typography variant="caption" sx={{ color: '#667a90', display: 'block' }}>
-                  Filtros, búsqueda y exportación integrados en una sola cabecera.
-                </Typography>
-              </Box>
+              <Typography variant="subtitle1" sx={{ fontWeight: 800, color: '#2d3f52' }}>
+                Listado de Detalle
+              </Typography>
             </Box>
 
             <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
@@ -1338,7 +1354,7 @@ export function TablaVentas() {
                   }
                 }}
                 sx={{
-                  gridColumn: { xs: '1 / -1', sm: 'span 2', lg: 'span 2' },
+                  gridColumn: { xs: '1 / -1', sm: 'span 2', lg: 'span 6' },
                   '& .MuiOutlinedInput-root': { bgcolor: '#fff' },
                 }}
                 InputProps={{
@@ -1365,7 +1381,7 @@ export function TablaVentas() {
                   }
                 }}
                 sx={{
-                  gridColumn: { xs: '1 / -1', sm: 'span 2', lg: 'span 7' },
+                  gridColumn: { xs: '1 / -1', sm: 'span 2', lg: 'span 6' },
                   '& .MuiOutlinedInput-root': { bgcolor: '#fff' },
                 }}
                 InputProps={{
@@ -1379,7 +1395,7 @@ export function TablaVentas() {
 
               <Box
                 sx={{
-                  gridColumn: { xs: '1 / -1', lg: 'span 5' },
+                  gridColumn: '1 / -1',
                   display: 'flex',
                   justifyContent: { xs: 'stretch', lg: 'flex-end' },
                   gap: 1,
