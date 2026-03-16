@@ -13,7 +13,6 @@ import useMediaQuery from '@mui/material/useMediaQuery';
 import { styled, useTheme } from '@mui/material/styles';
 import { alpha } from '@mui/material/styles';
 import { CustomizerContext } from "@/app/context/customizerContext";
-import { useTranslation } from "react-i18next";
 import { ItemType } from "@/app/types/layout/sidebar";
 import { verdeMilitar } from "@/ui/colores";
 
@@ -31,7 +30,6 @@ export default function NavItem({
   const { isBorderRadius } = useContext(CustomizerContext);
   const Icon = item?.icon;
   const theme = useTheme();
-  const { t } = useTranslation();
 
 
   const itemIcon = Icon ? (
@@ -110,7 +108,7 @@ export default function NavItem({
                 textOverflow: 'ellipsis',
               }
             }}>
-            {hideMenu ? "" : <>{t(`${item?.title}`)}</>}
+            {hideMenu ? "" : item?.title}
             <br />
             {item?.subtitle ? (
               <Typography

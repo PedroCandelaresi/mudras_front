@@ -5,8 +5,6 @@ import { styled, useTheme } from "@mui/material/styles";
 import React, { useContext, useEffect, useState } from "react";
 import Header from "./layout/vertical/header/Header";
 import Sidebar from "./layout/vertical/sidebar/Sidebar";
-import Navigation from "./layout/horizontal/navbar/Navigation";
-import HorizontalHeader from "./layout/horizontal/header/Header";
 import { CustomizerContext } from "@/app/context/customizerContext";
 import config from '@/app/context/config';
 import { useRouter, usePathname } from "next/navigation";
@@ -26,10 +24,6 @@ const PageWrapper = styled("div")(() => ({
   width: "100%",
   backgroundColor: "transparent",
 }));
-
-interface Props {
-  children: React.ReactNode;
-}
 
 export default function RootLayout({
   children,
@@ -103,18 +97,12 @@ export default function RootLayout({
     };
   }, [pathname, router]);
 
-  const { activeLayout, isLayout, activeMode } = useContext(CustomizerContext);
+  const { isLayout, activeMode } = useContext(CustomizerContext);
   const theme = useTheme();
   return (
     <MainWrapper className={activeMode === 'dark' ? 'darkbg mainwrapper' : 'mainwrapper'}>
       <title>Mudras Gestión</title>
-      {/* ------------------------------------------- */}
-      {/* Sidebar */}
-      {/* ------------------------------------------- */}
-      {activeLayout === 'horizontal' ? "" : <Sidebar />}
-      {/* ------------------------------------------- */}
-      {/* Main Wrapper */}
-      {/* ------------------------------------------- */}
+      <Sidebar />
       <PageWrapper
         className="page-wrapper"
         sx={{
@@ -125,22 +113,13 @@ export default function RootLayout({
           },
         }}
       >
-        {/* ------------------------------------------- */}
-        {/* Header */}
-        {/* ------------------------------------------- */}
-        {activeLayout === 'horizontal' ? <HorizontalHeader /> : <Header />}
-        {/* PageContent */}
-        {activeLayout === 'horizontal' ? <Navigation /> : ""}
+        <Header />
         <Container
           sx={{
             paddingTop: `${config.topbarHeight + 30}px`, // Espacio para topbar fija
             maxWidth: isLayout === "boxed" ? "lg" : "100%!important",
           }}
         >
-          {/* ------------------------------------------- */}
-          {/* PageContent */}
-          {/* ------------------------------------------- */}
-
           <Box sx={{ minHeight: "calc(100vh - 170px)" }}>
             {checkingAuth ? null : authError ? (
               <Box
@@ -158,10 +137,6 @@ export default function RootLayout({
               children
             )}
           </Box>
-
-          {/* ------------------------------------------- */}
-          {/* End Page */}
-          {/* ------------------------------------------- */}
         </Container>
       </PageWrapper>
     </MainWrapper>

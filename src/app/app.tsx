@@ -7,7 +7,6 @@ import CssBaseline from "@mui/material/CssBaseline";
 import RTL from "@/app/components/shared/RTL";
 import { ThemeSettings } from "@/utils/theme/Theme";
 import { AppRouterCacheProvider } from '@mui/material-nextjs/v14-appRouter';
-import "@/utils/i18n";
 import { CustomizerContext } from '@/app/context/customizerContext';
 import { PieDePagina } from '@/app/components/shared/PieDePagina';
 

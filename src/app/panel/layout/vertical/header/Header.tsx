@@ -6,19 +6,14 @@ import Typography from "@mui/material/Typography";
 import useMediaQuery from "@mui/material/useMediaQuery";
 import { styled } from "@mui/material/styles";
 import { IconMenu2 } from "@tabler/icons-react";
-import Notifications from "./Notification";
 import Profile from "./Profile";
-import Search from "./Search";
 import { CustomizerContext } from "@/app/context/customizerContext";
-import MobileRightSidebar from "./MobileRightSidebar";
 import config from '@/app/context/config'
 import { useContext, useState, useEffect } from "react";
-import { ProductProvider } from '@/app/context/Ecommercecontext/index'
 import AppBar from "@mui/material/AppBar";
 
 const Header = () => {
   const lgUp = useMediaQuery((theme) => theme.breakpoints.up("lg"));
-  const lgDown = useMediaQuery((theme) => theme.breakpoints.down("lg"));
   const TopbarHeight = config.topbarHeight;
 
   // Estado para fecha y hora
@@ -27,12 +22,7 @@ const Header = () => {
 
   // drawer
   const {
-    isSidebarHover,
-    activeMode,
-    setActiveMode,
     setIsCollapse,
-    isCollapse,
-    setIsSidebarHover,
     isMobileSidebar,
     setIsMobileSidebar,
     isSidebarPinned,
@@ -68,11 +58,7 @@ const Header = () => {
 
   const SidebarWidth = config.sidebarWidth;
 
-  // En escritorio, si la sidebar está fija, el header se corre;
-  // en modo overlay ocupa todo el ancho.
-  const leftOffsetPx = lgUp && isSidebarPinned ? SidebarWidth : 0;
-
-  const ToolbarStyled = styled(Toolbar)(({ theme }) => ({
+  const ToolbarStyled = styled(Toolbar)(() => ({
     width: '100%',
     color: '#ffffff',
     minHeight: TopbarHeight,
@@ -81,83 +67,65 @@ const Header = () => {
   }));
 
   return (
-    <ProductProvider>
-      <AppBar
-        position="fixed"
-        sx={(theme) => ({
-          boxShadow: 'none',
-          background: '#3E2723',
-          justifyContent: 'center',
-          backdropFilter: 'blur(4px)',
-          [theme.breakpoints.up('lg')]: {
-            minHeight: TopbarHeight,
-          },
-          borderBottom: `1px solid ${theme.palette.divider}`,
-          zIndex: 1300,
-          width: lgUp && isSidebarPinned ? `calc(100% - ${SidebarWidth}px)` : '100%',
-          transition: 'width 0.3s ease',
-        })}
-      >
-        <ToolbarStyled>
-          {/* ------------------------------------------- */}
-          {/* Toggle Button Sidebar (izquierda) */}
-          {/* ------------------------------------------- */}
-          <IconButton
-            color="inherit"
-            aria-label="menu"
-            size="small"
-            onClick={() => {
-              if (lgUp) {
-                // En escritorio: alternar entre modo fijo (pinned) y overlay.
-                if (isSidebarPinned) {
-                  setIsSidebarPinned(false);
-                  setIsCollapse("mini-sidebar");
-                } else {
-                  setIsSidebarPinned(true);
-                  setIsCollapse("full-sidebar");
-                }
+    <AppBar
+      position="fixed"
+      sx={(theme) => ({
+        boxShadow: 'none',
+        background: '#3E2723',
+        justifyContent: 'center',
+        backdropFilter: 'blur(4px)',
+        [theme.breakpoints.up('lg')]: {
+          minHeight: TopbarHeight,
+        },
+        borderBottom: `1px solid ${theme.palette.divider}`,
+        zIndex: 1300,
+        width: lgUp && isSidebarPinned ? `calc(100% - ${SidebarWidth}px)` : '100%',
+        transition: 'width 0.3s ease',
+      })}
+    >
+      <ToolbarStyled>
+        <IconButton
+          color="inherit"
+          aria-label="menu"
+          size="small"
+          onClick={() => {
+            if (lgUp) {
+              if (isSidebarPinned) {
+                setIsSidebarPinned(false);
+                setIsCollapse("mini-sidebar");
               } else {
-                // En móviles, seguir usando el drawer temporal clásico.
-                setIsMobileSidebar(!isMobileSidebar);
+                setIsSidebarPinned(true);
+                setIsCollapse("full-sidebar");
               }
+            } else {
+              setIsMobileSidebar(!isMobileSidebar);
+            }
+          }}
+          sx={{ color: 'inherit' }}
+        >
+          <IconMenu2 size="20" />
+        </IconButton>
+
+        <Box flexGrow={1} display="flex" justifyContent="center" alignItems="center">
+          <Typography
+            variant="body1"
+            sx={{
+              fontWeight: 500,
+              color: 'inherit',
+              textAlign: 'center',
+              fontSize: { xs: '0.8rem', md: '0.9rem' },
+              display: { xs: 'none', sm: 'block' }
             }}
-            sx={{ color: 'inherit' }}
           >
-            <IconMenu2 size="20" />
-          </IconButton>
+            {isMounted && currentDateTime ? formatDateTime(currentDateTime) : ''}
+          </Typography>
+        </Box>
 
-          {/* ------------------------------------------- */}
-          {/* Fecha y Hora Central */}
-          {/* ------------------------------------------- */}
-          <Box flexGrow={1} display="flex" justifyContent="center" alignItems="center">
-            <Typography
-              variant="body1"
-              sx={{
-                fontWeight: 500,
-                color: 'inherit',
-                textAlign: 'center',
-                fontSize: { xs: '0.8rem', md: '0.9rem' },
-                display: { xs: 'none', sm: 'block' }
-              }}
-            >
-              {isMounted && currentDateTime ? formatDateTime(currentDateTime) : ''}
-            </Typography>
-          </Box>
-
-          <Stack spacing={1} direction="row" alignItems="center">
-            {/* Search a la derecha */}
-            <Search />
-            <Notifications />
-            {/* ------------------------------------------- */}
-            {/* Toggle Right Sidebar for mobile */}
-            {/* ------------------------------------------- */}
-            {lgDown ? <MobileRightSidebar /> : null}
-            <Profile />
-          </Stack>
-        </ToolbarStyled>
-      </AppBar>
-    </ProductProvider>
-
+        <Stack spacing={1} direction="row" alignItems="center">
+          <Profile />
+        </Stack>
+      </ToolbarStyled>
+    </AppBar>
   );
 };
 

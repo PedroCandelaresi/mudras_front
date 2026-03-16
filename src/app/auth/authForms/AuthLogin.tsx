@@ -3,80 +3,57 @@ import React from 'react';
 import {
   Box,
   Typography,
-  FormGroup,
-  FormControlLabel,
   Button,
   Stack,
-  Divider,
   Alert,
   IconButton,
   InputAdornment,
 } from "@mui/material";
-import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { loginType } from "@/app/types/auth/auth";
-import CustomCheckbox from "@/app/components/forms/theme-elements/CustomCheckbox";
 import CustomTextField from "@/app/components/forms/theme-elements/CustomTextField";
 import CustomFormLabel from "@/app/components/forms/theme-elements/CustomFormLabel";
-import AuthSocialButtons from "./AuthSocialButtons";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { IconEye, IconEyeOff } from '@tabler/icons-react';
 
 const esquema = z.object({
-  username: z.string().min(1, 'Usuario o email requerido'),
+  username: z.string().min(1, 'Usuario requerido'),
   password: z.string().min(1, 'Contraseña requerida'),
-  recordar: z.boolean().optional(),
 });
 
 type Formulario = z.infer<typeof esquema>;
 
 const AuthLogin = ({ title, subtitle, subtext }: loginType) => {
-  const router = useRouter();
   const params = useSearchParams();
   const siguiente = params.get('siguiente') || '/panel';
 
   const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm<Formulario>({
     resolver: zodResolver(esquema),
-    defaultValues: { username: '', password: '', recordar: true },
+    defaultValues: { username: '', password: '' },
   });
 
   const [mostrarPassword, setMostrarPassword] = React.useState(false);
+  const [errorMensaje, setErrorMensaje] = React.useState<string | null>(null);
 
   const onSubmit = async (data: Formulario) => {
-    console.log('[AuthLogin] Submitting form...', data.username);
     try {
-      // Si ingresa un email, derivar al login de clientes (OAuth)
-      if (/@/.test(data.username)) {
-        console.log('[AuthLogin] Email detected, redirecting to OAuth...');
-        const next = encodeURIComponent(siguiente || '/cliente/panel');
-        router.replace(`/cliente?next=${next}`);
-        return;
-      }
-      console.log('[AuthLogin] Sending POST to /api/auth/login');
+      setErrorMensaje(null);
       const res = await fetch('/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username: data.username, password: data.password }),
       });
-      console.log('[AuthLogin] Fetch response status:', res.status);
       if (!res.ok) {
         const text = await res.text();
-        console.error('[AuthLogin] Login failed:', text);
         throw new Error(text || 'Credenciales inválidas');
       }
-      console.log('[AuthLogin] Login successful. Redirecting to:', siguiente);
-      // Forzamos navegación completa para asegurar que las cookies se envíen y el middleware las procese
       window.location.href = siguiente;
     } catch (e: unknown) {
-      console.error('[AuthLogin] Exception during login:', e);
-      // se maneja visualmente con estado local
       setErrorMensaje(e instanceof Error ? e.message : 'Error inesperado');
     }
   };
-
-  const [errorMensaje, setErrorMensaje] = React.useState<string | null>(null);
 
   return (
     <>
@@ -94,26 +71,10 @@ const AuthLogin = ({ title, subtitle, subtext }: loginType) => {
         </Alert>
       )}
 
-      <AuthSocialButtons title="Ingresar con" />
-      <Box mt={3}>
-        <Divider>
-          <Typography
-            component="span"
-            color="textSecondary"
-            variant="h6"
-            fontWeight="400"
-            position="relative"
-            px={2}
-          >
-            ingresar con usuario nombre.apellido
-          </Typography>
-        </Divider>
-      </Box>
-
       <form onSubmit={handleSubmit(onSubmit)}>
-        <Stack>
+        <Stack spacing={2}>
           <Box>
-            <CustomFormLabel htmlFor="username">Email o Usuario</CustomFormLabel>
+            <CustomFormLabel htmlFor="username">Usuario</CustomFormLabel>
             <CustomTextField id="username" variant="outlined" fullWidth
               error={!!errors.username}
               helperText={errors.username?.message}
@@ -141,32 +102,8 @@ const AuthLogin = ({ title, subtitle, subtext }: loginType) => {
               }}
             />
           </Box>
-          <Stack
-            justifyContent="space-between"
-            direction="row"
-            alignItems="center"
-            my={2}
-          >
-            <FormGroup>
-              <FormControlLabel
-                control={<CustomCheckbox defaultChecked {...register('recordar')} />}
-                label="Recordar este dispositivo"
-              />
-            </FormGroup>
-            <Typography
-              component={Link}
-              href="/auth/auth1/forgot-password"
-              fontWeight="500"
-              sx={{
-                textDecoration: "none",
-                color: "primary.main",
-              }}
-            >
-              ¿Olvidaste tu contraseña?
-            </Typography>
-          </Stack>
         </Stack>
-        <Box>
+        <Box mt={3}>
           <Button
             color="primary"
             variant="contained"

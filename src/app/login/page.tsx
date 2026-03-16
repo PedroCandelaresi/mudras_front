@@ -1,15 +1,12 @@
 'use client';
 
-import Link from "next/link";
-import { Grid, Box, Stack, Typography, useTheme, alpha } from "@mui/material";
+import { Grid, Box, Typography } from "@mui/material";
 import PageContainer from "@/components/container/PageContainer";
 
-import AuthLogin from "../auth/authForms/AuthLogin"; // Updated import path
+import AuthLogin from "../auth/authForms/AuthLogin";
 import Image from "next/image";
 
 export default function Login() {
-  const theme = useTheme();
-
   return (
     <PageContainer title="Iniciar Sesión - Mudras" description="Accede a tu cuenta de Mudras">
       <Grid
@@ -69,32 +66,9 @@ export default function Login() {
               title="Bienvenido a Mudras"
               subtext={
                 <Typography variant="subtitle1" color="textSecondary" mb={1}>
-                  Accede a tu espacio personal
+                  Accede al panel de administración
                 </Typography>
               }
-            // POR AHORA COMENTAMOS ESTO, NO SE PUEDEN CREAR NUEVAS CUENTAS HASTA QUE EL SISTEMA ESTE FUNCIONANDO CORRECTAMENTE.
-            /* subtitle={
-              <Stack direction="row" spacing={1} mt={3}>
-                <Typography
-                  color="textSecondary"
-                  variant="h6"
-                  fontWeight="500"
-                >
-                  ¿Nuevo en Mudras?
-                </Typography>
-                <Typography
-                  component={Link}
-                  href="/auth/auth1/register"
-                  fontWeight="500"
-                  sx={{
-                    textDecoration: "none",
-                    color: "primary.main",
-                  }}
-                >
-                  Crear cuenta
-                </Typography>
-              </Stack>
-            } */
             />
           </Box>
         </Grid>

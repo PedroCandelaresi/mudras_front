@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import Link from 'next/link';
 import {
   Box,
   Menu,
@@ -9,9 +8,7 @@ import {
   Button,
   IconButton,
 } from '@mui/material';
-import * as dropdownData from './data';
-
-import { IconUser, IconLogout } from '@tabler/icons-react';
+import { IconLogout } from '@tabler/icons-react';
 import { Stack } from '@mui/system';
 import { useRouter } from 'next/navigation';
 import { usePermisos } from '@/lib/permisos';
@@ -35,6 +32,10 @@ const Profile = () => {
     router.replace('/login');
   };
 
+  const nombreUsuario = perfil?.username || perfil?.sub || 'Usuario';
+  const inicial = nombreUsuario.charAt(0).toUpperCase();
+  const rolPrincipal = (perfil?.roles && perfil.roles[0]) ? perfil.roles[0] : 'Cuenta';
+
   return (
     <Box>
       <IconButton
@@ -50,17 +51,16 @@ const Profile = () => {
         onClick={handleClick2}
       >
         <Avatar
-          src={"/images/profile/user-1.jpg"}
-          alt={'ProfileImg'}
+          alt={nombreUsuario}
           sx={{
             width: 35,
             height: 35,
+            bgcolor: 'secondary.main',
           }}
-        />
+        >
+          {inicial}
+        </Avatar>
       </IconButton>
-      {/* ------------------------------------------- */}
-      {/* Message Dropdown */}
-      {/* ------------------------------------------- */}
       <Menu
         id="msgs-menu"
         anchorEl={anchorEl2}
@@ -77,56 +77,19 @@ const Profile = () => {
         }}
       >
         <Stack direction="row" py={2} spacing={2} alignItems="center">
-          <Avatar src={"/images/profile/user-1.jpg"} alt={"ProfileImg"} sx={{ width: 50, height: 50 }} />
+          <Avatar alt={nombreUsuario} sx={{ width: 50, height: 50, bgcolor: 'secondary.main' }}>
+            {inicial}
+          </Avatar>
           <Box>
             <Typography variant="subtitle2" color="textPrimary" fontWeight={600}>
-              {perfil?.username || perfil?.sub || 'Usuario'}
+              {nombreUsuario}
             </Typography>
             <Typography variant="subtitle2" color="textSecondary">
-              {(perfil?.roles && perfil.roles[0]) ? perfil.roles[0] : 'Cuenta'}
+              {rolPrincipal}
             </Typography>
           </Box>
         </Stack>
         <Divider />
-
-        {/* Mi Perfil */}
-        <Box sx={{ py: 1.5, px: 0 }} className="hover-text-primary">
-          <Link href="#">
-            <Stack direction="row" spacing={2} alignItems="center">
-              <Box
-                width="40px"
-                height="40px"
-                bgcolor="primary.light"
-                display="flex"
-                alignItems="center"
-                justifyContent="center"
-                borderRadius={1}
-              >
-                <IconUser size={20} />
-              </Box>
-              <Box>
-                <Typography
-                  variant="subtitle2"
-                  fontWeight={600}
-                  color="textPrimary"
-                  className="text-hover"
-                >
-                  Mi Perfil
-                </Typography>
-                <Typography
-                  color="textSecondary"
-                  variant="caption"
-                >
-                  Configuración de cuenta
-                </Typography>
-              </Box>
-            </Stack>
-          </Link>
-        </Box>
-
-        <Divider />
-
-        {/* Cerrar Sesión */}
         <Box sx={{ py: 1.5, px: 0 }}>
           <Button onClick={handleLogout} variant="text" color="error" sx={{ p: 0, textTransform: 'none', width: '100%' }}>
             <Stack direction="row" spacing={2} alignItems="center" sx={{ width: '100%', justifyContent: 'flex-start' }}>

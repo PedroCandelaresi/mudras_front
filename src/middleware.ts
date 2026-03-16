@@ -4,7 +4,6 @@ import { NextRequest, NextResponse } from 'next/server';
 const PUBLIC_PATHS = new Set<string>([
   '/',
   '/login',
-  '/registro',
 ]);
 
 export async function middleware(req: NextRequest) {
@@ -12,9 +11,6 @@ export async function middleware(req: NextRequest) {
 
   // Permitir siempre APIs y assets
   if (pathname.startsWith('/api/') || pathname.startsWith('/_next/') || pathname.startsWith('/favicon')) {
-    if (pathname.startsWith('/api/roles')) {
-      console.log('Middleware: allowing /api/roles. Token present:', !!(req.cookies.get('mudras_token') || req.cookies.get('mudras_jwt') || req.cookies.get('access_token') || req.cookies.get('auth_token')));
-    }
     return NextResponse.next();
   }
 

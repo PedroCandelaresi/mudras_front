@@ -12,7 +12,7 @@ import ListItemIcon from '@mui/material/ListItemIcon';
 import ListItemText from '@mui/material/ListItemText';
 import { Theme } from '@mui/material/styles';
 import useMediaQuery from '@mui/material/useMediaQuery';
-import { styled, useTheme } from '@mui/material/styles';
+import { styled } from '@mui/material/styles';
 import { alpha } from '@mui/material/styles';
 
 // custom imports
@@ -21,7 +21,6 @@ import { isNull } from "lodash";
 
 // plugins
 import { IconChevronDown, IconChevronUp } from "@tabler/icons-react";
-import { useTranslation } from "react-i18next";
 import { NavCollapseProps, NavGroup } from "@/app/types/layout/sidebar";
 import { verdeMilitar } from "@/ui/colores";
 
@@ -40,9 +39,7 @@ export default function NavCollapse({
 
   const { isBorderRadius } = useContext(CustomizerContext);
   const Icon = menu?.icon;
-  const theme = useTheme();
   const pathname = usePathname();
-  const { t } = useTranslation();
   const [open, setOpen] = useState(false);
 
 
@@ -129,7 +126,7 @@ export default function NavCollapse({
           {menuIcon}
         </ListItemIcon>
         <ListItemText color="inherit">
-          {hideMenu ? "" : <>{t(`${menu.title}`)}</>}
+          {hideMenu ? "" : menu.title}
         </ListItemText>
         {!open ? (
           <IconChevronDown size="1rem" />

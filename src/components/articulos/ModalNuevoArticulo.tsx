@@ -116,6 +116,12 @@ const parseNumericInput = (value: string) => {
   return Number.isFinite(parsed) ? parsed : 0;
 };
 
+const normalizeStockMap = (mapa: Record<string, string>) =>
+  Object.entries(mapa)
+    .map(([k, v]) => [k, parseNumericInput(v || '0')] as const)
+    .filter(([, v]) => Number.isFinite(v) && Math.abs(v) > 0.0001)
+    .sort(([a], [b]) => a.localeCompare(b));
+
 const obtenerStockEditable = (articulo?: Articulo | null): number | null => {
   if (!articulo) return null;
   if (typeof articulo.totalStock === 'number' && Number.isFinite(articulo.totalStock)) {
@@ -474,16 +480,11 @@ const ModalNuevoArticulo = ({ open, onClose, articulo, onSuccess, accentColor }:
         (articulo?.rubro?.Rubro ? articulo.rubro.Rubro.trim() : undefined);
       const autorPayload = esRubroLibros ? (form.autor.trim() || null) : null;
 
-      const normalizarStockMap = (mapa: Record<string, string>) =>
-        Object.entries(mapa)
-          .map(([k, v]) => [k, Number.parseFloat(v || '0')] as const)
-          .filter(([, v]) => Number.isFinite(v) && Math.abs(v) > 0.0001)
-          .sort(([a], [b]) => a.localeCompare(b));
       const stockTotalActual = parseNumericInput(form.stock);
       const stockTotalInicial = parseNumericInput(stockInicialEdicion);
       const stockTotalModificado = Math.abs(stockTotalActual - stockTotalInicial) > 0.01;
       const stockDistribucionModificada =
-        JSON.stringify(normalizarStockMap(form.stockPorPunto)) !== JSON.stringify(normalizarStockMap(stockPorPuntoInicial));
+        JSON.stringify(normalizeStockMap(form.stockPorPunto)) !== JSON.stringify(normalizeStockMap(stockPorPuntoInicial));
       const debeActualizarStock = !editando || (canEditStock && (stockTotalModificado || stockDistribucionModificada));
 
       const common = {
@@ -517,16 +518,27 @@ const ModalNuevoArticulo = ({ open, onClose, articulo, onSuccess, accentColor }:
 
       // ASIGNACIÓN DE STOCK POR PUNTO
       if (articuloGuardadoId && debeActualizarStock) {
-        const promesasTicket = Object.entries(form.stockPorPunto).map(async ([puntoId, cantidadStr]) => {
-          const cant = parseFloat(cantidadStr);
-          if (!isNaN(cant) && cant > 0) { // Solo enviamos si hay cantidad positiva explícita
+        const puntoIdsAActualizar = Array.from(
+          new Set([
+            ...Object.keys(stockPorPuntoInicial),
+            ...Object.keys(form.stockPorPunto),
+          ])
+        );
+        const promesasTicket = puntoIdsAActualizar.map(async (puntoId) => {
+          const cant = parseNumericInput(form.stockPorPunto[puntoId] || '0');
+          const cantInicial = parseNumericInput(stockPorPuntoInicial[puntoId] || '0');
+          const debeSincronizarPunto = editando ? Math.abs(cant - cantInicial) > 0.01 : cant > 0.01;
+
+          if (debeSincronizarPunto) {
             await ajustarStock({
               variables: {
                 input: {
                   puntoMudrasId: Number(puntoId),
                   articuloId: Number(articuloGuardadoId),
                   nuevaCantidad: cant,
-                  motivo: 'Stock Inicial nuevo artículo'
+                  motivo: editando
+                    ? 'Ajuste de stock desde edicion de articulo'
+                    : 'Stock inicial nuevo articulo'
                 }
               }
             });
@@ -553,25 +565,17 @@ const ModalNuevoArticulo = ({ open, onClose, articulo, onSuccess, accentColor }:
 
     // En edición, permitir guardar aunque no se modifique stock (ej: solo estantería/estante).
     if (!editando || canEditStock) {
-      const normalizarStockMap = (mapa: Record<string, string>) =>
-        Object.entries(mapa)
-          .map(([k, v]) => [k, Number.parseFloat(v || '0')] as const)
-          .filter(([, v]) => Number.isFinite(v) && Math.abs(v) > 0.0001)
-          .sort(([a], [b]) => a.localeCompare(b));
-
       const stockTotal = parseNumericInput(form.stock);
       const stockTotalInicial = parseNumericInput(stockInicialEdicion);
       const stockTotalModificado = Math.abs(stockTotal - stockTotalInicial) > 0.01;
       const stockDistribucionModificada =
-        JSON.stringify(normalizarStockMap(form.stockPorPunto)) !== JSON.stringify(normalizarStockMap(stockPorPuntoInicial));
+        JSON.stringify(normalizeStockMap(form.stockPorPunto)) !== JSON.stringify(normalizeStockMap(stockPorPuntoInicial));
 
       // Solo exigimos cuadrar distribución cuando efectivamente se está modificando stock.
       if (!editando || stockTotalModificado || stockDistribucionModificada) {
-        if (stockTotal > 0) {
-          const asignadoTotal = Object.values(form.stockPorPunto).reduce((acc, curr) => acc + (parseFloat(curr) || 0), 0);
-          if (Math.abs(stockTotal - asignadoTotal) > 0.01) {
-            return false;
-          }
+        const asignadoTotal = Object.values(form.stockPorPunto).reduce((acc, curr) => acc + parseNumericInput(curr || '0'), 0);
+        if (Math.abs(stockTotal - asignadoTotal) > 0.01) {
+          return false;
         }
       }
     }
@@ -1043,6 +1047,7 @@ const ModalNuevoArticulo = ({ open, onClose, articulo, onSuccess, accentColor }:
                     .sort((a: any, b: any) => a.nombre.localeCompare(b.nombre))
                     .map((punto: any) => {
                       const valStr = form.stockPorPunto[punto.id] || '';
+                      const stockActualPunto = parseNumericInput(stockPorPuntoInicial[punto.id] || '0');
                       const stockTotal = parseNumericInput(form.stock);
                       const asignadoTotal = Object.values(form.stockPorPunto).reduce((acc, curr) => acc + (parseFloat(curr) || 0), 0);
                       const currentVal = parseFloat(valStr || '0');
@@ -1067,22 +1072,7 @@ const ModalNuevoArticulo = ({ open, onClose, articulo, onSuccess, accentColor }:
                               </Box>
                               {editando && (
                                 <Typography variant="caption" color="text.secondary">
-                                  {/* Aquí idealmente mostraríamos el stock actual que trajimos en useEffect */}
-                                  Stock actual: {
-                                    // Recuperar valor original si lo tenemos, o fallback a lo que sea
-                                    // Como no tenemos el stock 'original' por punto guardado en state separado fácilmente accesible aquí sin recorrer,
-                                    // simplificamos. En el useEffect de carga poblamos `stockPorPunto` con el actual? 
-                                    // Si poblamos `stockPorPunto` con el actual, entonces `form.stock` debería ser la SUMA de stocks actuales?
-                                    // REVISAR LOGICA DE CARGA:
-                                    // En useEffect: setForm(.. stockPorPunto: { ...nuevoStockPorPunto } ..)
-                                    // O sea que stockPorPunto YA trae valores.
-                                    // Entonces `stock` (global) debería reflejar la suma de esos valores al abrir modal editar.
-                                    // Ver abajo corrección en useEffect.
-
-                                    // Si es edición, el usuario puede querer sumar o corregir.
-                                    // Si corregimos, el input es el valor final.
-                                    "Consultar"
-                                  }
+                                  Stock actual: {stockActualPunto}
                                 </Typography>
                               )}
                             </Box>
@@ -1129,7 +1119,7 @@ const ModalNuevoArticulo = ({ open, onClose, articulo, onSuccess, accentColor }:
                                   }
                                 }}
                                 placeholder="0"
-                                disabled={stockTotal <= 0}
+                                disabled={!canEditStock}
                                 sx={{ width: 90 }}
                                 InputProps={{ sx: { textAlign: 'right', fontWeight: 700 } }}
                               />
