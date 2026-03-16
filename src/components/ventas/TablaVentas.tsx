@@ -5,6 +5,8 @@ import {
   Button,
   Chip,
   IconButton,
+  InputAdornment,
+  MenuItem,
   Paper,
   Skeleton,
   Table,
@@ -13,6 +15,9 @@ import {
   TableContainer,
   TableHead,
   TableRow,
+  TextField,
+  ToggleButton,
+  ToggleButtonGroup,
   Tooltip,
   Typography,
   Card,
@@ -26,7 +31,8 @@ import {
   IconCurrencyDollar,
   IconShoppingBag,
   IconCashBanknote,
-  IconTrendingUp
+  IconTrendingUp,
+  IconSearch
 } from "@tabler/icons-react";
 import { grisRojizo } from "@/ui/colores";
 import { alpha } from '@mui/material/styles';
@@ -34,6 +40,10 @@ import { ApexOptions } from "apexcharts";
 import { useQuery, useApolloClient } from "@apollo/client/react";
 import type { ApolloClient } from "@apollo/client";
 import { exportToExcel, exportToPdf, ExportColumn } from '@/utils/exportUtils';
+import { DatePicker } from '@mui/x-date-pickers/DatePicker';
+import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
+import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
+import { es } from 'date-fns/locale';
 import {
   OBTENER_HISTORIAL_VENTAS,
   type FiltrosHistorialInput,
@@ -41,10 +51,8 @@ import {
   type ObtenerHistorialVentasResponse,
 } from "@/components/ventas/caja-registradora/graphql/queries";
 import { USUARIOS_CAJA_AUTH_QUERY } from "@/components/usuarios/graphql/queries";
-import SearchToolbar from "@/components/ui/SearchToolbar";
 import PaginacionMudras from "@/components/ui/PaginacionMudras";
 import ModalDetalleVenta from "./ModalDetalleVenta";
-import { VentasFilterBar } from "./VentasFilterBar";
 import { startOfDay, endOfDay, startOfWeek, endOfWeek, startOfMonth, endOfMonth, isSameDay } from 'date-fns';
 const Chart = dynamic(() => import("react-apexcharts"), { ssr: false });
 
@@ -90,6 +98,15 @@ type HistorialVentasSnapshot = {
 
 const tablaVentasUiStateCache = new Map<string, TablaVentasUiState>();
 const HISTORIAL_BATCH_SIZE = 500;
+const METODOS_PAGO_CAJA = [
+  { value: 'EFECTIVO', label: 'Efectivo' },
+  { value: 'TARJETA_DEBITO', label: 'Tarjeta de Débito' },
+  { value: 'TARJETA_CREDITO', label: 'Tarjeta de Crédito' },
+  { value: 'TRANSFERENCIA', label: 'Transferencia' },
+  { value: 'QR_MODO', label: 'QR MODO' },
+  { value: 'QR_MERCADOPAGO', label: 'QR MercadoPago' },
+  { value: 'CUENTA_CORRIENTE', label: 'Cuenta Corriente' },
+] as const;
 const CHART_COLORS = {
   line: '#102f5c',
   lineFill: '#295fa8',
@@ -254,6 +271,7 @@ export function TablaVentas() {
   const [fechaHasta, setFechaHasta] = useState<Date | null>(cachedState?.fechaHasta ?? endOfMonth(new Date()));
   const [usuarioId, setUsuarioId] = useState(cachedState?.usuarioId ?? "");
   const [medioPago, setMedioPago] = useState(cachedState?.medioPago ?? "");
+  const [quickDateRange, setQuickDateRange] = useState<'hoy' | 'semana' | 'mes' | null>(null);
 
   // Query variables
   const queryVariables = useMemo(() => ({
@@ -430,6 +448,25 @@ export function TablaVentas() {
       // Clear or Custom
       setFechaDesde(null);
       setFechaHasta(null);
+    }
+    setPage(0);
+  };
+
+  const handleClearHeaderFilters = () => {
+    setQuickDateRange(null);
+    setFechaDesde(null);
+    setFechaHasta(null);
+    setUsuarioId("");
+    setMedioPago("");
+    setBusqueda("");
+    setBusquedaArticulo("");
+    setPage(0);
+  };
+
+  const handleApplyHeaderFilters = () => {
+    if (page === 0) {
+      refetch();
+      return;
     }
     setPage(0);
   };
@@ -1006,8 +1043,11 @@ export function TablaVentas() {
                             px: 1.15,
                             py: 0.95,
                             borderRadius: 1.25,
-                            border: `1px solid ${alpha(item.color, 0.18)}`,
-                            bgcolor: alpha(item.color, 0.05),
+                            border: '1px solid rgba(198, 210, 226, 0.92)',
+                            borderLeft: `4px solid ${alpha(item.color, 0.85)}`,
+                            bgcolor: alpha('#ffffff', 0.78),
+                            boxShadow: '0 10px 22px rgba(24, 48, 79, 0.05)',
+                            backdropFilter: 'blur(8px)',
                           }}
                         >
                           <Box sx={{ display: 'grid', gridTemplateColumns: 'auto minmax(0, 1fr) auto auto', alignItems: 'center', gap: 1 }}>
@@ -1023,19 +1063,29 @@ export function TablaVentas() {
                             <Typography variant="body2" sx={{ color: '#2d4059', fontWeight: 700 }}>
                               {item.label}
                             </Typography>
-                            <Typography variant="caption" sx={{ color: '#5f6f82', fontWeight: 700, whiteSpace: 'nowrap' }}>
+                            <Typography variant="caption" sx={{ color: '#607287', fontWeight: 700, whiteSpace: 'nowrap' }}>
                               {item.cantidad} ops
                             </Typography>
-                            <Typography variant="body2" sx={{ color: item.color, fontWeight: 800 }}>
-                              {item.porcentaje.toFixed(0)}%
-                            </Typography>
+                            <Box
+                              sx={{
+                                px: 0.8,
+                                py: 0.2,
+                                borderRadius: 999,
+                                bgcolor: alpha(item.color, 0.09),
+                                border: `1px solid ${alpha(item.color, 0.16)}`,
+                              }}
+                            >
+                              <Typography variant="caption" sx={{ color: '#23364d', fontWeight: 800, display: 'block' }}>
+                                {item.porcentaje.toFixed(0)}%
+                              </Typography>
+                            </Box>
                           </Box>
                           <Box
                             sx={{
                               mt: 0.8,
                               height: 6,
                               borderRadius: 999,
-                              bgcolor: '#ebf1f7',
+                              bgcolor: 'rgba(220, 230, 242, 0.72)',
                               overflow: 'hidden',
                             }}
                           >
@@ -1083,43 +1133,40 @@ export function TablaVentas() {
         </CardContent>
       </Card>
 
-      <VentasFilterBar
-        fechaDesde={fechaDesde}
-        fechaHasta={fechaHasta}
-        usuarioId={usuarioId}
-        medioPago={medioPago}
-        busquedaArticulo={busquedaArticulo}
-        usuarios={usuarios}
-        onFechaDesdeChange={(d) => { setFechaDesde(d); setPage(0); }}
-        onFechaHastaChange={(d) => { setFechaHasta(d); setPage(0); }}
-        onUsuarioChange={(u) => { setUsuarioId(u); setPage(0); }}
-        onMedioPagoChange={(m) => { setMedioPago(m); setPage(0); }}
-        onBusquedaArticuloChange={(value) => { setBusquedaArticulo(value); setPage(0); }}
-        onQuickDateChange={handleQuickDate}
-        onClear={() => {
-          setFechaDesde(null);
-          setFechaHasta(null);
-          setUsuarioId("");
-          setMedioPago("");
-          setBusqueda("");
-          setBusquedaArticulo("");
-          setPage(0);
-        }}
-        onFilter={() => refetch()}
-      />
-
       <Paper elevation={0} variant="outlined" sx={{ p: 0, overflow: 'hidden', borderRadius: 0 }}>
-        <SearchToolbar
-          title="Listado de Detalle"
-          icon={<IconReceipt style={{ marginRight: 8, verticalAlign: 'middle' }} />}
-          baseColor={grisRojizo.primary}
-          placeholder="Buscar por Nº comprobante..."
-          searchValue={busqueda}
-          onSearchValueChange={(v) => { setBusqueda(v); setPage(0); }}
-          onSubmitSearch={() => setPage(0)}
-          onClear={() => { setBusqueda(""); setPage(0); }}
-          customActions={
-            <Box display="flex" gap={1}>
+        <Box
+          sx={{
+            px: { xs: 1.5, md: 2 },
+            py: 2,
+            borderBottom: '1px solid #ead9d3',
+            bgcolor: '#fffdfa',
+          }}
+        >
+          <Box
+            sx={{
+              display: 'flex',
+              alignItems: { xs: 'flex-start', md: 'center' },
+              justifyContent: 'space-between',
+              gap: 1.5,
+              flexWrap: 'wrap',
+              mb: 2,
+            }}
+          >
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              <Box component="span" sx={{ display: 'flex', color: grisRojizo.primary }}>
+                <IconReceipt style={{ verticalAlign: 'middle' }} />
+              </Box>
+              <Box>
+                <Typography variant="subtitle1" sx={{ fontWeight: 800, color: '#2d3f52' }}>
+                  Listado de Detalle
+                </Typography>
+                <Typography variant="caption" sx={{ color: '#667a90', display: 'block' }}>
+                  Filtros, búsqueda y exportación integrados en una sola cabecera.
+                </Typography>
+              </Box>
+            </Box>
+
+            <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
               <Button
                 variant="outlined"
                 size="small"
@@ -1141,20 +1188,249 @@ export function TablaVentas() {
                 {exporting ? '...' : 'PDF'}
               </Button>
             </Box>
-          }
-        />
+          </Box>
+
+          <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={es}>
+            <Box
+              sx={{
+                display: 'grid',
+                gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, minmax(0, 1fr))', lg: 'repeat(12, minmax(0, 1fr))' },
+                gap: 1.5,
+                alignItems: 'center',
+              }}
+            >
+              <Box sx={{ gridColumn: { xs: '1 / -1', sm: 'span 1', lg: 'span 2' } }}>
+                <DatePicker
+                  label="Desde"
+                  format="dd/MM/yyyy"
+                  value={fechaDesde}
+                  onChange={(value) => {
+                    setQuickDateRange(null);
+                    setFechaDesde(value);
+                    setPage(0);
+                  }}
+                  slotProps={{
+                    textField: {
+                      size: 'small',
+                      fullWidth: true,
+                      sx: {
+                        bgcolor: '#fff',
+                        minWidth: 190,
+                        '& .MuiInputBase-input': { fontWeight: 600 },
+                      },
+                    },
+                  }}
+                />
+              </Box>
+
+              <Box sx={{ gridColumn: { xs: '1 / -1', sm: 'span 1', lg: 'span 2' } }}>
+                <DatePicker
+                  label="Hasta"
+                  format="dd/MM/yyyy"
+                  value={fechaHasta}
+                  onChange={(value) => {
+                    setQuickDateRange(null);
+                    setFechaHasta(value);
+                    setPage(0);
+                  }}
+                  slotProps={{
+                    textField: {
+                      size: 'small',
+                      fullWidth: true,
+                      sx: {
+                        bgcolor: '#fff',
+                        minWidth: 190,
+                        '& .MuiInputBase-input': { fontWeight: 600 },
+                      },
+                    },
+                  }}
+                />
+              </Box>
+
+              <Box sx={{ gridColumn: { xs: '1 / -1', sm: 'span 2', lg: 'span 2' } }}>
+                <ToggleButtonGroup
+                  value={quickDateRange}
+                  exclusive
+                  onChange={(_event, value: 'hoy' | 'semana' | 'mes' | null) => {
+                    setQuickDateRange(value);
+                    handleQuickDate(value);
+                  }}
+                  size="small"
+                  fullWidth
+                  sx={{
+                    width: '100%',
+                    '& .MuiToggleButton-root': {
+                      flex: 1,
+                      color: grisRojizo.primary,
+                      borderRadius: 0,
+                      borderColor: alpha(grisRojizo.primary, 0.2),
+                      bgcolor: '#fff',
+                      textTransform: 'none',
+                      '&.Mui-selected': {
+                        bgcolor: alpha(grisRojizo.primary, 0.12),
+                        color: grisRojizo.textStrong,
+                      },
+                    },
+                  }}
+                >
+                  <ToggleButton value="hoy">Hoy</ToggleButton>
+                  <ToggleButton value="semana">Semana</ToggleButton>
+                  <ToggleButton value="mes">Mes</ToggleButton>
+                </ToggleButtonGroup>
+              </Box>
+
+              <TextField
+                select
+                label="Vendedor"
+                size="small"
+                value={usuarioId}
+                onChange={(e) => {
+                  setUsuarioId(e.target.value);
+                  setPage(0);
+                }}
+                sx={{
+                  gridColumn: { xs: '1 / -1', sm: 'span 1', lg: 'span 2' },
+                  '& .MuiOutlinedInput-root': { bgcolor: '#fff' },
+                }}
+              >
+                <MenuItem value="">Todos los usuarios</MenuItem>
+                {usuarios.map((u) => (
+                  <MenuItem key={u.id} value={u.id}>
+                    {u.label}
+                  </MenuItem>
+                ))}
+              </TextField>
+
+              <TextField
+                select
+                label="Medio de pago"
+                size="small"
+                value={medioPago}
+                onChange={(e) => {
+                  setMedioPago(e.target.value);
+                  setPage(0);
+                }}
+                sx={{
+                  gridColumn: { xs: '1 / -1', sm: 'span 1', lg: 'span 2' },
+                  '& .MuiOutlinedInput-root': { bgcolor: '#fff' },
+                }}
+              >
+                <MenuItem value="">Todos</MenuItem>
+                {METODOS_PAGO_CAJA.map((m) => (
+                  <MenuItem key={m.value} value={m.value}>
+                    {m.label}
+                  </MenuItem>
+                ))}
+              </TextField>
+
+              <TextField
+                label="N° comprobante"
+                size="small"
+                value={busqueda}
+                onChange={(e) => {
+                  setBusqueda(e.target.value);
+                  setPage(0);
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                    handleApplyHeaderFilters();
+                  }
+                }}
+                sx={{
+                  gridColumn: { xs: '1 / -1', sm: 'span 2', lg: 'span 2' },
+                  '& .MuiOutlinedInput-root': { bgcolor: '#fff' },
+                }}
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <IconSearch size={18} />
+                    </InputAdornment>
+                  ),
+                }}
+              />
+
+              <TextField
+                label="Artículo: código o descripción"
+                size="small"
+                value={busquedaArticulo}
+                onChange={(e) => {
+                  setBusquedaArticulo(e.target.value);
+                  setPage(0);
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                    handleApplyHeaderFilters();
+                  }
+                }}
+                sx={{
+                  gridColumn: { xs: '1 / -1', sm: 'span 2', lg: 'span 7' },
+                  '& .MuiOutlinedInput-root': { bgcolor: '#fff' },
+                }}
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <IconSearch size={18} />
+                    </InputAdornment>
+                  ),
+                }}
+              />
+
+              <Box
+                sx={{
+                  gridColumn: { xs: '1 / -1', lg: 'span 5' },
+                  display: 'flex',
+                  justifyContent: { xs: 'stretch', lg: 'flex-end' },
+                  gap: 1,
+                  flexWrap: 'wrap',
+                }}
+              >
+                <Button
+                  variant="outlined"
+                  onClick={handleClearHeaderFilters}
+                  sx={{
+                    minWidth: 120,
+                    color: grisRojizo.primary,
+                    borderColor: grisRojizo.borderOuter,
+                    borderRadius: 0,
+                    textTransform: 'none',
+                  }}
+                >
+                  Limpiar
+                </Button>
+                <Button
+                  variant="contained"
+                  startIcon={<IconSearch size={16} />}
+                  onClick={handleApplyHeaderFilters}
+                  sx={{
+                    minWidth: 150,
+                    bgcolor: grisRojizo.primary,
+                    borderRadius: 0,
+                    textTransform: 'none',
+                    '&:hover': { bgcolor: grisRojizo.primaryHover },
+                  }}
+                >
+                  Filtrar
+                </Button>
+              </Box>
+            </Box>
+          </LocalizationProvider>
+        </Box>
 
         <Box ref={tableTopRef} />
-        <PaginacionMudras
-          page={page}
-          rowsPerPage={rowsPerPage}
-          total={totalRegistros}
-          onPageChange={handlePageChange}
-          onRowsPerPageChange={handleRowsPerPageChange}
-          itemLabel="ventas"
-          accentColor={grisRojizo.primary}
-          rowsPerPageOptions={[50]}
-        />
+        <Box sx={{ px: { xs: 1.5, md: 2 } }}>
+          <PaginacionMudras
+            page={page}
+            rowsPerPage={rowsPerPage}
+            total={totalRegistros}
+            onPageChange={handlePageChange}
+            onRowsPerPageChange={handleRowsPerPageChange}
+            itemLabel="ventas"
+            accentColor={grisRojizo.primary}
+            rowsPerPageOptions={[50]}
+          />
+        </Box>
 
         <TableContainer component={Paper} elevation={0} sx={{ borderRadius: 0, border: '1px solid #e0e0e0', borderLeft: 'none', borderRight: 'none' }}>
           <Table
@@ -1308,16 +1584,18 @@ export function TablaVentas() {
           </Table>
         </TableContainer>
 
-        <PaginacionMudras
-          page={page}
-          rowsPerPage={rowsPerPage}
-          total={totalRegistros}
-          onPageChange={handlePageChange}
-          onRowsPerPageChange={handleRowsPerPageChange}
-          itemLabel="ventas"
-          accentColor={grisRojizo.primary}
-          rowsPerPageOptions={[50]}
-        />
+        <Box sx={{ px: { xs: 1.5, md: 2 } }}>
+          <PaginacionMudras
+            page={page}
+            rowsPerPage={rowsPerPage}
+            total={totalRegistros}
+            onPageChange={handlePageChange}
+            onRowsPerPageChange={handleRowsPerPageChange}
+            itemLabel="ventas"
+            accentColor={grisRojizo.primary}
+            rowsPerPageOptions={[50]}
+          />
+        </Box>
 
         <ModalDetalleVenta
           open={Boolean(ventaSeleccionada)}
