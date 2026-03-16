@@ -774,10 +774,10 @@ export function TablaVentas() {
     plotOptions: {
       pie: {
         expandOnClick: false,
-        customScale: 0.96,
-        offsetY: -8,
+        customScale: 0.82,
+        offsetY: 0,
         donut: {
-          size: '74%',
+          size: '70%',
           labels: {
             show: true,
             name: {
@@ -959,7 +959,7 @@ export function TablaVentas() {
             </Card>
           </Box>
 
-          <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', lg: '2fr 1fr' }, gap: 2 }}>
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
             <Card variant="outlined" sx={{ borderColor: '#bbdefb', borderRadius: 0, bgcolor: '#fcfdff' }}>
               <CardContent sx={{ py: 2, px: { xs: 1.5, md: 2 } }}>
                 <Typography variant="subtitle2" sx={{ color: '#0d47a1', mb: 1, fontWeight: 700 }}>
@@ -978,30 +978,39 @@ export function TablaVentas() {
             </Card>
 
             <Card variant="outlined" sx={{ borderColor: '#f0d7df', borderRadius: 0, bgcolor: '#fffdfd' }}>
-              <CardContent sx={{ py: 2, px: 1.75 }}>
+              <CardContent sx={{ py: 2, px: { xs: 1.5, md: 2 } }}>
                 <Typography variant="subtitle2" sx={{ color: '#b71c1c', mb: 1, fontWeight: 700 }}>
                   Medios de pago más usados
                 </Typography>
                 {loadingResumen ? (
                   <Skeleton variant="rounded" height={260} animation="wave" />
                 ) : mediosPagoSeries.length > 0 ? (
-                  <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.25 }}>
-                    <Box sx={{ display: 'flex', justifyContent: 'center' }}>
-                      <Chart options={mediosPagoOptions} series={mediosPagoSeries} type="donut" height={260} width="100%" />
+                  <Box
+                    sx={{
+                      display: 'grid',
+                      gridTemplateColumns: { xs: '1fr', md: '280px minmax(0, 1fr)' },
+                      alignItems: 'center',
+                      gap: { xs: 1.5, md: 2.5 },
+                    }}
+                  >
+                    <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+                      <Box sx={{ width: '100%', maxWidth: 250 }}>
+                        <Chart options={mediosPagoOptions} series={mediosPagoSeries} type="donut" height={220} width="100%" />
+                      </Box>
                     </Box>
-                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.9 }}>
+                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.85 }}>
                       {mediosPagoLegendItems.map((item) => (
                         <Box
                           key={item.label}
                           sx={{
-                            px: 1.2,
-                            py: 1,
-                            borderRadius: 1.5,
+                            px: 1.15,
+                            py: 0.95,
+                            borderRadius: 1.25,
                             border: `1px solid ${alpha(item.color, 0.18)}`,
                             bgcolor: alpha(item.color, 0.05),
                           }}
                         >
-                          <Box sx={{ display: 'grid', gridTemplateColumns: 'auto 1fr auto', alignItems: 'center', gap: 1 }}>
+                          <Box sx={{ display: 'grid', gridTemplateColumns: 'auto minmax(0, 1fr) auto auto', alignItems: 'center', gap: 1 }}>
                             <Box
                               sx={{
                                 width: 11,
@@ -1014,14 +1023,17 @@ export function TablaVentas() {
                             <Typography variant="body2" sx={{ color: '#2d4059', fontWeight: 700 }}>
                               {item.label}
                             </Typography>
+                            <Typography variant="caption" sx={{ color: '#5f6f82', fontWeight: 700, whiteSpace: 'nowrap' }}>
+                              {item.cantidad} ops
+                            </Typography>
                             <Typography variant="body2" sx={{ color: item.color, fontWeight: 800 }}>
                               {item.porcentaje.toFixed(0)}%
                             </Typography>
                           </Box>
                           <Box
                             sx={{
-                              mt: 0.9,
-                              height: 7,
+                              mt: 0.8,
+                              height: 6,
                               borderRadius: 999,
                               bgcolor: '#ebf1f7',
                               overflow: 'hidden',
@@ -1036,21 +1048,18 @@ export function TablaVentas() {
                               }}
                             />
                           </Box>
-                          <Typography variant="caption" sx={{ display: 'block', mt: 0.65, color: '#5f6f82', fontWeight: 600 }}>
-                            {item.cantidad} operaciones
-                          </Typography>
                         </Box>
                       ))}
+                      {!loadingResumen && estadisticasVentas.medioPrincipal && (
+                        <Typography variant="caption" sx={{ display: 'block', pt: 0.5, color: '#7b1fa2', fontWeight: 700 }}>
+                          Medio principal: <strong>{estadisticasVentas.medioPrincipal.label}</strong> ({estadisticasVentas.medioPrincipal.cantidad} operaciones)
+                        </Typography>
+                      )}
                     </Box>
                   </Box>
                 ) : (
                   <Typography variant="body2" color="text.secondary">
                     Sin datos de medios de pago.
-                  </Typography>
-                )}
-                {!loadingResumen && estadisticasVentas.medioPrincipal && (
-                  <Typography variant="caption" sx={{ display: 'block', mt: 1, color: '#7b1fa2', fontWeight: 700 }}>
-                    Medio principal: <strong>{estadisticasVentas.medioPrincipal.label}</strong> ({estadisticasVentas.medioPrincipal.cantidad} operaciones)
                   </Typography>
                 )}
               </CardContent>
