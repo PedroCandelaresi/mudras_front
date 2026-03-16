@@ -75,6 +75,24 @@ type HistorialVentasUiState = {
 
 const historialVentasUiStateCache = new Map<string, HistorialVentasUiState>();
 
+const formatMetodoPagoDetalle = (pago: any) => {
+  const medio = String(pago?.medioPago || pago?.metodoPago || '').toUpperCase();
+  const submedio = String(pago?.submedioPago || '').toUpperCase();
+
+  if (medio === 'QR') {
+    if (submedio === 'QR_MODO') return 'QR MODO';
+    return 'QR MercadoPago';
+  }
+
+  return {
+    EFECTIVO: 'Efectivo',
+    DEBITO: 'Tarjeta Débito',
+    CREDITO: 'Tarjeta Crédito',
+    TRANSFERENCIA: 'Transferencia',
+    CUENTA_CORRIENTE: 'Cuenta Corriente',
+  }[medio] || pago?.medioPago || pago?.metodoPago || '-';
+};
+
 export const HistorialVentas: React.FC = () => {
   const cacheKey = 'historial-ventas-caja';
   const cachedState = historialVentasUiStateCache.get(cacheKey);
@@ -554,7 +572,7 @@ export const HistorialVentas: React.FC = () => {
                       <TableBody>
                         {detalleData.obtenerDetalleVenta.pagos?.map((pago: any) => (
                           <TableRow key={pago.id}>
-                            <TableCell>{pago.metodoPago}</TableCell>
+                            <TableCell>{formatMetodoPagoDetalle(pago)}</TableCell>
                             <TableCell align="right">${pago.monto.toFixed(2)}</TableCell>
                             <TableCell>{pago.referencia || '-'}</TableCell>
                           </TableRow>

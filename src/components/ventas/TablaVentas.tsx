@@ -91,12 +91,12 @@ type HistorialVentasSnapshot = {
 const tablaVentasUiStateCache = new Map<string, TablaVentasUiState>();
 const HISTORIAL_BATCH_SIZE = 500;
 const CHART_COLORS = {
-  line: '#173f7a',
-  lineFill: '#4f79b5',
-  lineMarker: '#0f2c57',
-  axisText: '#3d4f66',
-  grid: '#d7e3f3',
-  donut: ['#0d47a1', '#b71c1c', '#f57c00', '#1b5e20', '#4a148c'],
+  line: '#102f5c',
+  lineFill: '#295fa8',
+  lineMarker: '#0c2343',
+  axisText: '#314560',
+  grid: '#d4e1f2',
+  donut: ['#123c7c', '#8b1e2d', '#c56a0a', '#1f5a37', '#4d257f'],
   donutCenter: '#26364d',
   donutLegend: '#34495e',
 };
@@ -152,7 +152,7 @@ const getMetodoPagoLabel = (metodoPago: string): string => {
     CREDITO: 'Tarjeta de Crédito',
     QR_MODO: 'QR MODO',
     QR_MERCADOPAGO: 'QR MercadoPago',
-    QR: 'QR',
+    QR: 'QR MercadoPago',
     CUENTA_CORRIENTE: 'Cuenta Corriente',
   }[normalizado] || metodoPago;
 };
@@ -603,33 +603,36 @@ export function TablaVentas() {
   }, [ventasFiltradasResumen, agruparPorHora]);
   const lineChartOptions = useMemo<ApexOptions>(() => ({
     chart: {
-      type: 'line',
+      type: 'area',
       toolbar: { show: false },
       fontFamily: "'Plus Jakarta Sans', sans-serif",
       foreColor: CHART_COLORS.axisText,
       zoom: { enabled: false },
-      dropShadow: {
-        enabled: true,
-        top: 6,
-        left: 0,
-        blur: 10,
-        color: CHART_COLORS.line,
-        opacity: 0.18,
-      },
+      animations: { easing: 'easeinout', speed: 450 },
+      parentHeightOffset: 0,
     },
     stroke: {
-      curve: 'straight',
-      width: 5,
+      curve: 'smooth',
+      width: 4,
       lineCap: 'round',
+      colors: [CHART_COLORS.line],
     },
     colors: [CHART_COLORS.line],
     fill: {
       type: 'gradient',
       gradient: {
-        shadeIntensity: 1,
-        opacityFrom: 0.38,
-        opacityTo: 0.08,
-        stops: [0, 100],
+        shade: 'light',
+        shadeIntensity: 0.4,
+        opacityFrom: 0.28,
+        opacityTo: 0.02,
+        stops: [0, 90, 100],
+        colorStops: [
+          [
+            { offset: 0, color: CHART_COLORS.lineFill, opacity: 0.32 },
+            { offset: 70, color: CHART_COLORS.lineFill, opacity: 0.12 },
+            { offset: 100, color: '#ffffff', opacity: 0.02 },
+          ],
+        ],
       },
     },
     xaxis: {
@@ -655,6 +658,9 @@ export function TablaVentas() {
       },
     },
     yaxis: {
+      min: 0,
+      forceNiceScale: true,
+      tickAmount: 6,
       labels: {
         formatter: (value: number) => `$${value.toLocaleString("es-AR")}`,
         style: {
@@ -667,6 +673,7 @@ export function TablaVentas() {
     tooltip: {
       theme: 'light',
       marker: { show: true },
+      x: { show: true },
       y: {
         formatter: (value: number) => `$${value.toLocaleString("es-AR")}`,
       },
@@ -674,15 +681,21 @@ export function TablaVentas() {
     dataLabels: { enabled: false },
     grid: {
       borderColor: CHART_COLORS.grid,
-      strokeDashArray: 4,
+      strokeDashArray: 3,
+      row: {
+        colors: ['#f7faff', 'transparent'],
+        opacity: 0.75,
+      },
       padding: {
-        top: 8,
-        right: 12,
+        top: 16,
+        right: 16,
+        bottom: 8,
+        left: 10,
       },
     },
     markers: {
-      size: 6,
-      hover: { size: 8 },
+      size: 5,
+      hover: { size: 7 },
       colors: [CHART_COLORS.lineMarker],
       strokeColors: '#ffffff',
       strokeWidth: 3,
@@ -722,9 +735,26 @@ export function TablaVentas() {
     ticket: { icon: '#f9a825', title: '#8d6e00', value: '#a66a00', border: '#ffe082', bg: '#fff8e1' },
     maxima: { icon: '#2e7d32', title: '#1b5e20', value: '#1b5e20', border: '#a5d6a7', bg: '#e8f5e9' },
   };
-  const mediosPagoSeries = useMemo(
-    () => estadisticasVentas.mediosPagoOrdenados.slice(0, 5).map((item) => item.cantidad),
+  const mediosPagoTop = useMemo(
+    () => estadisticasVentas.mediosPagoOrdenados.slice(0, 5),
     [estadisticasVentas.mediosPagoOrdenados]
+  );
+  const totalOperacionesMediosPago = useMemo(
+    () => mediosPagoTop.reduce((acc, item) => acc + item.cantidad, 0),
+    [mediosPagoTop]
+  );
+  const mediosPagoSeries = useMemo(
+    () => mediosPagoTop.map((item) => item.cantidad),
+    [mediosPagoTop]
+  );
+  const mediosPagoLegendItems = useMemo(
+    () =>
+      mediosPagoTop.map((item, index) => ({
+        ...item,
+        color: CHART_COLORS.donut[index % CHART_COLORS.donut.length],
+        porcentaje: totalOperacionesMediosPago > 0 ? (item.cantidad / totalOperacionesMediosPago) * 100 : 0,
+      })),
+    [mediosPagoTop, totalOperacionesMediosPago]
   );
   const mediosPagoOptions = useMemo<ApexOptions>(() => ({
     chart: {
@@ -732,43 +762,22 @@ export function TablaVentas() {
       toolbar: { show: false },
       fontFamily: "'Plus Jakarta Sans', sans-serif",
     },
-    labels: estadisticasVentas.mediosPagoOrdenados.slice(0, 5).map((item) => item.label),
+    labels: mediosPagoTop.map((item) => item.label),
     colors: CHART_COLORS.donut,
     legend: {
-      position: 'bottom',
-      fontSize: '13px',
-      fontWeight: 600,
-      horizontalAlign: 'center',
-      labels: {
-        colors: CHART_COLORS.donutLegend,
-      },
-      markers: {
-        size: 10,
-        strokeWidth: 0,
-      },
-      itemMargin: {
-        horizontal: 10,
-        vertical: 6,
-      },
+      show: false,
     },
     dataLabels: {
-      enabled: true,
-      formatter: (val: number) => `${val.toFixed(0)}%`,
-      style: {
-        fontSize: '13px',
-        fontWeight: 800,
-        colors: ['#ffffff'],
-      },
-      dropShadow: {
-        enabled: false,
-      },
+      enabled: false,
     },
-    stroke: { width: 3, colors: ['#ffffff'] },
+    stroke: { width: 5, colors: ['#ffffff'] },
     plotOptions: {
       pie: {
         expandOnClick: false,
+        customScale: 0.96,
+        offsetY: -8,
         donut: {
-          size: '58%',
+          size: '74%',
           labels: {
             show: true,
             name: {
@@ -780,11 +789,11 @@ export function TablaVentas() {
             },
             value: {
               show: true,
-              offsetY: -10,
+              offsetY: -8,
               color: CHART_COLORS.donutCenter,
-              fontSize: '24px',
+              fontSize: '28px',
               fontWeight: 800,
-              formatter: (value: string) => `${value}%`,
+              formatter: (value: string) => value,
             },
             total: {
               show: true,
@@ -793,7 +802,7 @@ export function TablaVentas() {
               color: CHART_COLORS.donutLegend,
               fontSize: '12px',
               fontWeight: 700,
-              formatter: () => `${mediosPagoSeries.reduce((acc, value) => acc + value, 0)}`,
+              formatter: () => `${totalOperacionesMediosPago}`,
             },
           },
         },
@@ -802,17 +811,26 @@ export function TablaVentas() {
     tooltip: {
       theme: 'light',
       y: {
-        formatter: (value: number) => `${value} operaciones`,
+        formatter: (value: number) => {
+          const porcentaje = totalOperacionesMediosPago > 0 ? (value / totalOperacionesMediosPago) * 100 : 0;
+          return `${value} operaciones (${porcentaje.toFixed(1)}%)`;
+        },
       },
     },
     states: {
+      hover: {
+        filter: {
+          type: 'darken',
+          value: 0.16,
+        },
+      },
       active: {
         filter: {
           type: 'none',
         },
       },
     },
-  }), [estadisticasVentas.mediosPagoOrdenados, mediosPagoSeries]);
+  }), [mediosPagoTop, totalOperacionesMediosPago]);
 
   const handlePageChange = (newPage: number) => {
     setPage(newPage);
@@ -943,14 +961,14 @@ export function TablaVentas() {
 
           <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', lg: '2fr 1fr' }, gap: 2 }}>
             <Card variant="outlined" sx={{ borderColor: '#bbdefb', borderRadius: 0, bgcolor: '#fcfdff' }}>
-              <CardContent sx={{ py: 2 }}>
+              <CardContent sx={{ py: 2, px: { xs: 1.5, md: 2 } }}>
                 <Typography variant="subtitle2" sx={{ color: '#0d47a1', mb: 1, fontWeight: 700 }}>
                   Recaudación en el tiempo ({agruparPorHora ? 'por hora' : 'por día'})
                 </Typography>
                 {loadingResumen ? (
                   <Skeleton variant="rounded" height={260} animation="wave" />
                 ) : serieRecaudacion.length > 0 ? (
-                  <Chart options={lineChartOptions} series={lineChartSeries} type="line" height={280} width="100%" />
+                  <Chart options={lineChartOptions} series={lineChartSeries} type="area" height={300} width="100%" />
                 ) : (
                   <Typography variant="body2" color="text.secondary">
                     Sin datos para graficar con los filtros actuales.
@@ -959,15 +977,72 @@ export function TablaVentas() {
               </CardContent>
             </Card>
 
-            <Card variant="outlined" sx={{ borderColor: '#ffcdd2', borderRadius: 0, bgcolor: '#fffdfd' }}>
-              <CardContent sx={{ py: 2 }}>
+            <Card variant="outlined" sx={{ borderColor: '#f0d7df', borderRadius: 0, bgcolor: '#fffdfd' }}>
+              <CardContent sx={{ py: 2, px: 1.75 }}>
                 <Typography variant="subtitle2" sx={{ color: '#b71c1c', mb: 1, fontWeight: 700 }}>
                   Medios de pago más usados
                 </Typography>
                 {loadingResumen ? (
                   <Skeleton variant="rounded" height={260} animation="wave" />
                 ) : mediosPagoSeries.length > 0 ? (
-                  <Chart options={mediosPagoOptions} series={mediosPagoSeries} type="donut" height={280} width="100%" />
+                  <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.25 }}>
+                    <Box sx={{ display: 'flex', justifyContent: 'center' }}>
+                      <Chart options={mediosPagoOptions} series={mediosPagoSeries} type="donut" height={260} width="100%" />
+                    </Box>
+                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.9 }}>
+                      {mediosPagoLegendItems.map((item) => (
+                        <Box
+                          key={item.label}
+                          sx={{
+                            px: 1.2,
+                            py: 1,
+                            borderRadius: 1.5,
+                            border: `1px solid ${alpha(item.color, 0.18)}`,
+                            bgcolor: alpha(item.color, 0.05),
+                          }}
+                        >
+                          <Box sx={{ display: 'grid', gridTemplateColumns: 'auto 1fr auto', alignItems: 'center', gap: 1 }}>
+                            <Box
+                              sx={{
+                                width: 11,
+                                height: 11,
+                                borderRadius: '50%',
+                                bgcolor: item.color,
+                                boxShadow: `0 0 0 3px ${alpha(item.color, 0.14)}`,
+                              }}
+                            />
+                            <Typography variant="body2" sx={{ color: '#2d4059', fontWeight: 700 }}>
+                              {item.label}
+                            </Typography>
+                            <Typography variant="body2" sx={{ color: item.color, fontWeight: 800 }}>
+                              {item.porcentaje.toFixed(0)}%
+                            </Typography>
+                          </Box>
+                          <Box
+                            sx={{
+                              mt: 0.9,
+                              height: 7,
+                              borderRadius: 999,
+                              bgcolor: '#ebf1f7',
+                              overflow: 'hidden',
+                            }}
+                          >
+                            <Box
+                              sx={{
+                                width: `${Math.max(item.porcentaje, 6)}%`,
+                                height: '100%',
+                                borderRadius: 999,
+                                bgcolor: item.color,
+                              }}
+                            />
+                          </Box>
+                          <Typography variant="caption" sx={{ display: 'block', mt: 0.65, color: '#5f6f82', fontWeight: 600 }}>
+                            {item.cantidad} operaciones
+                          </Typography>
+                        </Box>
+                      ))}
+                    </Box>
+                  </Box>
                 ) : (
                   <Typography variant="body2" color="text.secondary">
                     Sin datos de medios de pago.

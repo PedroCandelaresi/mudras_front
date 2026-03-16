@@ -57,7 +57,7 @@ const formatMetodoPago = (pago: any) => {
     if (medio === 'QR') {
         if (submedio === 'QR_MODO') return 'QR MODO';
         if (submedio === 'QR_MERCADOPAGO') return 'QR MercadoPago';
-        return 'QR';
+        return 'QR MercadoPago';
     }
     return {
         EFECTIVO: 'Efectivo',
