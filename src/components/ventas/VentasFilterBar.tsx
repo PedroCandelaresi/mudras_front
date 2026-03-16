@@ -4,9 +4,7 @@ import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { es } from 'date-fns/locale';
-import { useQuery } from '@apollo/client/react';
 import { alpha } from '@mui/material/styles';
-import { USUARIOS_CAJA_AUTH_QUERY } from '@/components/usuarios/graphql/queries';
 import { grisRojizo } from '@/ui/colores';
 
 export interface VentasFilterBarProps {
@@ -15,6 +13,7 @@ export interface VentasFilterBarProps {
     usuarioId: string;
     medioPago: string;
     busquedaArticulo: string;
+    usuarios: Array<{ id: string; label: string }>;
     onFechaDesdeChange: (date: Date | null) => void;
     onFechaHastaChange: (date: Date | null) => void;
     onUsuarioChange: (userId: string) => void;
@@ -23,17 +22,6 @@ export interface VentasFilterBarProps {
     onQuickDateChange: (range: 'hoy' | 'semana' | 'mes' | null) => void;
     onClear: () => void;
     onFilter: () => void;
-}
-
-interface UsuarioCajaAuth {
-    id: string;
-    username?: string | null;
-    email?: string | null;
-    displayName?: string | null;
-}
-
-interface UsuariosCajaAuthResponse {
-    usuariosCajaAuth?: UsuarioCajaAuth[];
 }
 
 const METODOS_PAGO_CAJA = [
@@ -52,6 +40,7 @@ export function VentasFilterBar({
     usuarioId,
     medioPago,
     busquedaArticulo,
+    usuarios,
     onFechaDesdeChange,
     onFechaHastaChange,
     onUsuarioChange,
@@ -62,17 +51,6 @@ export function VentasFilterBar({
     onFilter,
 }: VentasFilterBarProps) {
     const [quickDate, setQuickDate] = React.useState<'hoy' | 'semana' | 'mes' | null>(null);
-
-    const { data: userData } = useQuery<UsuariosCajaAuthResponse>(USUARIOS_CAJA_AUTH_QUERY, {
-        fetchPolicy: 'cache-and-network'
-    });
-
-    const usuarios = React.useMemo(() => {
-        return (userData?.usuariosCajaAuth || []).map((u) => ({
-            id: u.id,
-            label: u.displayName?.trim() || u.username?.trim() || u.email?.trim() || `Usuario ${u.id.substring(0, 6)}`,
-        }));
-    }, [userData]);
 
     const handleQuickDate = (event: React.MouseEvent<HTMLElement>, newAlignment: 'hoy' | 'semana' | 'mes' | null) => {
         setQuickDate(newAlignment);

@@ -32,9 +32,12 @@ import { grisRojizo } from "@/ui/colores";
 import { alpha } from '@mui/material/styles';
 import { ApexOptions } from "apexcharts";
 import { useQuery, useApolloClient } from "@apollo/client/react";
+import type { ApolloClient } from "@apollo/client";
 import { exportToExcel, exportToPdf, ExportColumn } from '@/utils/exportUtils';
 import {
   OBTENER_HISTORIAL_VENTAS,
+  type FiltrosHistorialInput,
+  type HistorialVentaItem,
   type ObtenerHistorialVentasResponse,
 } from "@/components/ventas/caja-registradora/graphql/queries";
 import { USUARIOS_CAJA_AUTH_QUERY } from "@/components/usuarios/graphql/queries";
@@ -78,7 +81,15 @@ interface UsuariosCajaAuthResponse {
   usuariosCajaAuth?: UsuarioCajaAuth[];
 }
 
+type HistorialVentasSnapshot = {
+  ventas: HistorialVentaItem[];
+  total: number;
+  loading: boolean;
+  error: string | null;
+};
+
 const tablaVentasUiStateCache = new Map<string, TablaVentasUiState>();
+const HISTORIAL_BATCH_SIZE = 500;
 
 const ARG_TIMEZONE = "America/Argentina/Buenos_Aires";
 const formatInArgentina = (
@@ -167,6 +178,43 @@ const getEstadoChipSx = (estado: VentaListado["estado"]) => {
   };
 };
 
+const fetchHistorialVentasCompleto = async (
+  client: ApolloClient,
+  filtros: FiltrosHistorialInput
+): Promise<{ ventas: HistorialVentaItem[]; total: number }> => {
+  const ventasAcumuladas: HistorialVentaItem[] = [];
+  let total = 0;
+
+  for (let offset = 0; ; offset += HISTORIAL_BATCH_SIZE) {
+    const { data } = await client.query<ObtenerHistorialVentasResponse>({
+      query: OBTENER_HISTORIAL_VENTAS,
+      variables: {
+        filtros: {
+          ...filtros,
+          limite: HISTORIAL_BATCH_SIZE,
+          offset,
+        },
+      },
+      fetchPolicy: "network-only",
+    });
+
+    const historial = data?.obtenerHistorialVentas;
+    const lote = historial?.ventas || [];
+    total = historial?.total || total;
+
+    ventasAcumuladas.push(...lote);
+
+    if (lote.length === 0 || ventasAcumuladas.length >= total) {
+      break;
+    }
+  }
+
+  return {
+    ventas: ventasAcumuladas,
+    total: total || ventasAcumuladas.length,
+  };
+};
+
 export function TablaVentas() {
   const tableTopRef = React.useRef<HTMLDivElement>(null);
   const cacheKey = "tabla-ventas";
@@ -219,19 +267,6 @@ export function TablaVentas() {
       fetchPolicy: "cache-and-network",
     }
   );
-  const { data: dataResumen, loading: loadingResumen } = useQuery<ObtenerHistorialVentasResponse>(
-    OBTENER_HISTORIAL_VENTAS,
-    {
-      variables: {
-        filtros: {
-          ...queryVariables.filtros,
-          limite: 100000,
-          offset: 0,
-        }
-      },
-      fetchPolicy: "cache-and-network",
-    }
-  );
   const rangoComparativo = useMemo(() => {
     if (!fechaDesde || !fechaHasta) return null;
     const msDesde = fechaDesde.getTime();
@@ -241,22 +276,121 @@ export function TablaVentas() {
     const prevDesde = new Date(msDesde - duracion - 1);
     return { prevDesde, prevHasta };
   }, [fechaDesde, fechaHasta]);
-  const { data: dataResumenPrevio, loading: loadingResumenPrevio } = useQuery<ObtenerHistorialVentasResponse>(
-    OBTENER_HISTORIAL_VENTAS,
-    {
-      variables: {
-        filtros: {
-          ...queryVariables.filtros,
-          limite: 100000,
-          offset: 0,
-          fechaDesde: rangoComparativo?.prevDesde.toISOString(),
-          fechaHasta: rangoComparativo?.prevHasta.toISOString(),
-        }
-      },
-      skip: !rangoComparativo,
-      fetchPolicy: "cache-and-network",
+  const filtrosResumen = useMemo<FiltrosHistorialInput>(() => ({
+    ...queryVariables.filtros,
+    limite: HISTORIAL_BATCH_SIZE,
+    offset: 0,
+  }), [queryVariables]);
+  const filtrosResumenPrevio = useMemo<FiltrosHistorialInput | null>(() => {
+    if (!rangoComparativo) return null;
+    return {
+      ...queryVariables.filtros,
+      limite: HISTORIAL_BATCH_SIZE,
+      offset: 0,
+      fechaDesde: rangoComparativo.prevDesde.toISOString(),
+      fechaHasta: rangoComparativo.prevHasta.toISOString(),
+    };
+  }, [queryVariables, rangoComparativo]);
+  const [resumenVentasState, setResumenVentasState] = useState<HistorialVentasSnapshot>({
+    ventas: [],
+    total: 0,
+    loading: true,
+    error: null,
+  });
+  const [resumenVentasPrevioState, setResumenVentasPrevioState] = useState<HistorialVentasSnapshot>({
+    ventas: [],
+    total: 0,
+    loading: false,
+    error: null,
+  });
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const cargarResumen = async () => {
+      setResumenVentasState((prev) => ({
+        ventas: prev.ventas,
+        total: prev.total,
+        loading: true,
+        error: null,
+      }));
+
+      try {
+        const resultado = await fetchHistorialVentasCompleto(client, filtrosResumen);
+        if (cancelled) return;
+        setResumenVentasState({
+          ventas: resultado.ventas,
+          total: resultado.total,
+          loading: false,
+          error: null,
+        });
+      } catch (error) {
+        if (cancelled) return;
+        setResumenVentasState({
+          ventas: [],
+          total: 0,
+          loading: false,
+          error: error instanceof Error ? error.message : "No se pudo cargar el resumen de ventas",
+        });
+      }
+    };
+
+    cargarResumen();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [client, filtrosResumen]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    if (!filtrosResumenPrevio) {
+      setResumenVentasPrevioState({
+        ventas: [],
+        total: 0,
+        loading: false,
+        error: null,
+      });
+      return () => {
+        cancelled = true;
+      };
     }
-  );
+
+    const cargarResumenPrevio = async () => {
+      setResumenVentasPrevioState((prev) => ({
+        ventas: prev.ventas,
+        total: prev.total,
+        loading: true,
+        error: null,
+      }));
+
+      try {
+        const resultado = await fetchHistorialVentasCompleto(client, filtrosResumenPrevio);
+        if (cancelled) return;
+        setResumenVentasPrevioState({
+          ventas: resultado.ventas,
+          total: resultado.total,
+          loading: false,
+          error: null,
+        });
+      } catch (error) {
+        if (cancelled) return;
+        setResumenVentasPrevioState({
+          ventas: [],
+          total: 0,
+          loading: false,
+          error: error instanceof Error ? error.message : "No se pudo cargar el resumen comparativo",
+        });
+      }
+    };
+
+    cargarResumenPrevio();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [client, filtrosResumenPrevio]);
 
   useEffect(() => {
     tablaVentasUiStateCache.set(cacheKey, {
@@ -314,19 +448,7 @@ export function TablaVentas() {
   const handleExportar = async (type: 'pdf' | 'excel') => {
     try {
       setExporting(true);
-      const { data: exportData } = await client.query({
-        query: OBTENER_HISTORIAL_VENTAS,
-        variables: {
-          filtros: {
-            ...queryVariables.filtros,
-            limite: 100000,
-            offset: 0,
-          }
-        },
-        fetchPolicy: 'network-only',
-      });
-
-      const ventasExport = (exportData as any)?.obtenerHistorialVentas?.ventas || [];
+      const { ventas: ventasExport } = await fetchHistorialVentasCompleto(client, filtrosResumen);
       // Mapear al formato listado
       const ventasListado = ventasExport.map((v: any) => ({
         id: String(v.id),
@@ -386,15 +508,14 @@ export function TablaVentas() {
 
   // Server-side pagination details
   const totalRegistros = data?.obtenerHistorialVentas?.total || 0;
-  const ventasFiltradasResumen = useMemo(
-    () => dataResumen?.obtenerHistorialVentas?.ventas || [],
-    [dataResumen]
-  );
+  const loadingResumen = resumenVentasState.loading;
+  const loadingResumenPrevio = resumenVentasPrevioState.loading;
+  const ventasFiltradasResumen = resumenVentasState.ventas;
   const recaudacionFiltrada = useMemo(
     () => ventasFiltradasResumen.reduce((acc, venta) => acc + Number(venta?.total || 0), 0),
     [ventasFiltradasResumen]
   );
-  const cantidadVentasFiltradas = ventasFiltradasResumen.length;
+  const cantidadVentasFiltradas = resumenVentasState.total || ventasFiltradasResumen.length;
   const ticketPromedio = useMemo(
     () => (cantidadVentasFiltradas > 0 ? recaudacionFiltrada / cantidadVentasFiltradas : 0),
     [recaudacionFiltrada, cantidadVentasFiltradas]
@@ -516,15 +637,12 @@ export function TablaVentas() {
     name: 'Recaudación',
     data: serieRecaudacion.map((item) => Number(item.total.toFixed(2))),
   }]), [serieRecaudacion]);
-  const ventasPrevias = useMemo(
-    () => dataResumenPrevio?.obtenerHistorialVentas?.ventas || [],
-    [dataResumenPrevio]
-  );
+  const ventasPrevias = resumenVentasPrevioState.ventas;
   const recaudacionPrevia = useMemo(
     () => ventasPrevias.reduce((acc, venta) => acc + Number(venta?.total || 0), 0),
     [ventasPrevias]
   );
-  const cantidadVentasPrevias = ventasPrevias.length;
+  const cantidadVentasPrevias = resumenVentasPrevioState.total || ventasPrevias.length;
   const ticketPromedioPrevio = useMemo(
     () => (cantidadVentasPrevias > 0 ? recaudacionPrevia / cantidadVentasPrevias : 0),
     [recaudacionPrevia, cantidadVentasPrevias]
@@ -542,6 +660,7 @@ export function TablaVentas() {
   }, [recaudacionFiltrada, recaudacionPrevia, cantidadVentasFiltradas, cantidadVentasPrevias, ticketPromedio, ticketPromedioPrevio]);
   const formatVariacion = (valor: number) => `${valor >= 0 ? '+' : ''}${valor.toFixed(1)}%`;
   const getVariacionColor = (valor: number) => (valor >= 0 ? '#2e7d32' : '#c62828');
+  const mensajeErrorResumen = resumenVentasState.error || resumenVentasPrevioState.error;
   const kpiPalette = {
     recaudacion: { icon: '#1565c0', title: '#0d47a1', value: '#0b3d91', border: '#90caf9', bg: '#e3f2fd' },
     ventas: { icon: '#c62828', title: '#8e0000', value: '#b71c1c', border: '#ef9a9a', bg: '#ffebee' },
@@ -611,6 +730,11 @@ export function TablaVentas() {
           <Typography variant="body2" sx={{ color: '#355a8a', mb: 2 }}>
             Lectura rápida para tomar decisiones comerciales con los filtros actuales.
           </Typography>
+          {mensajeErrorResumen && (
+            <Typography variant="caption" sx={{ display: 'block', color: '#b71c1c', mb: 1.5, fontWeight: 700 }}>
+              No se pudo cargar completamente el resumen estadístico. {mensajeErrorResumen}
+            </Typography>
+          )}
           <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'repeat(4, 1fr)' }, gap: 1.5, mb: 2 }}>
             <Card
               variant="outlined"
@@ -769,6 +893,7 @@ export function TablaVentas() {
         usuarioId={usuarioId}
         medioPago={medioPago}
         busquedaArticulo={busquedaArticulo}
+        usuarios={usuarios}
         onFechaDesdeChange={(d) => { setFechaDesde(d); setPage(0); }}
         onFechaHastaChange={(d) => { setFechaHasta(d); setPage(0); }}
         onUsuarioChange={(u) => { setUsuarioId(u); setPage(0); }}
