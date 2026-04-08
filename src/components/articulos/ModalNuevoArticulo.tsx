@@ -152,6 +152,7 @@ const obtenerStockMinimoEditable = (articulo?: Articulo | null): number | null =
 
 type IvaOption = '0' | '10.5' | '21';
 const IVA_OPTIONS: IvaOption[] = ['0', '10.5', '21'];
+const DESCRIPCION_MAX_LENGTH = 255;
 
 const ModalNuevoArticulo = ({ open, onClose, articulo, onSuccess, accentColor }: ModalNuevoArticuloProps) => {
   const COLORS = useMemo(() => makeColors(accentColor), [accentColor]);
@@ -176,6 +177,8 @@ const ModalNuevoArticulo = ({ open, onClose, articulo, onSuccess, accentColor }:
   const [proveedorInput, setProveedorInput] = useState('');
   const costo = useMemo(() => parseNumericInput(form.costo), [form.costo]);
   const porcentajeGananciaValor = useMemo(() => parseNumericInput(form.porcentajeGanancia), [form.porcentajeGanancia]);
+  const descripcionLength = form.descripcion.trim().length;
+  const descripcionExcedida = descripcionLength > DESCRIPCION_MAX_LENGTH;
 
   const [crearArticulo] = useMutation(CREAR_ARTICULO, {
     refetchQueries: [{ query: BUSCAR_ARTICULOS }],
@@ -461,6 +464,11 @@ const ModalNuevoArticulo = ({ open, onClose, articulo, onSuccess, accentColor }:
       return;
     }
 
+    if (descripcionExcedida) {
+      setError(`La descripción no puede exceder ${DESCRIPCION_MAX_LENGTH} caracteres.`);
+      return;
+    }
+
     try {
       setSaving(true);
       setError('');
@@ -647,6 +655,12 @@ const ModalNuevoArticulo = ({ open, onClose, articulo, onSuccess, accentColor }:
               onChange={handleChange}
               fullWidth
               required
+              error={descripcionExcedida}
+              helperText={
+                descripcionExcedida
+                  ? `La descripción no puede exceder ${DESCRIPCION_MAX_LENGTH} caracteres.`
+                  : `${descripcionLength}/${DESCRIPCION_MAX_LENGTH}`
+              }
               sx={{
                 '& .MuiOutlinedInput-root': {
                   borderRadius: 0,

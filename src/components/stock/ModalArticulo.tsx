@@ -44,6 +44,8 @@ interface ModalArticuloProps {
   onCerrar: () => void;
 }
 
+const DESCRIPCION_MAX_LENGTH = 255;
+
 export default function ModalArticulo({ abierto, articulo, onCerrar }: ModalArticuloProps) {
   const [formData, setFormData] = useState({
     Codigo: '',
@@ -76,6 +78,8 @@ export default function ModalArticulo({ abierto, articulo, onCerrar }: ModalArti
 
   const [crearArticulo, { loading: creando }] = useMutation(CREAR_ARTICULO);
   const [actualizarArticulo, { loading: actualizando }] = useMutation(ACTUALIZAR_ARTICULO);
+  const descripcionLength = formData.Descripcion.trim().length;
+  const descripcionExcedida = descripcionLength > DESCRIPCION_MAX_LENGTH;
 
   useEffect(() => {
     if (articulo) {
@@ -144,6 +148,10 @@ export default function ModalArticulo({ abierto, articulo, onCerrar }: ModalArti
 
     if (!formData.Descripcion?.trim()) {
       errores.push('La descripción es obligatoria');
+    }
+
+    if (descripcionExcedida) {
+      errores.push(`La descripción no puede exceder ${DESCRIPCION_MAX_LENGTH} caracteres`);
     }
 
     if (!(parseFloat(formData.precioVenta) || 0) || (parseFloat(formData.precioVenta) || 0) <= 0) {
@@ -298,6 +306,12 @@ export default function ModalArticulo({ abierto, articulo, onCerrar }: ModalArti
                 label="Descripción *"
                 value={formData.Descripcion}
                 onChange={(e) => setFormData({ ...formData, Descripcion: e.target.value })}
+                error={descripcionExcedida}
+                helperText={
+                  descripcionExcedida
+                    ? `La descripción no puede exceder ${DESCRIPCION_MAX_LENGTH} caracteres`
+                    : `${descripcionLength}/${DESCRIPCION_MAX_LENGTH}`
+                }
               />
             </Grid>
 
